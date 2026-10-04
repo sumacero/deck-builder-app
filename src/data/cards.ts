@@ -6,6 +6,7 @@ export const STRIKE: CardDefinition = {
   type: 'attack',
   cost: 1,
   target: 'enemy',
+  attuned: true,
   effects: [{ kind: 'damage', amount: 6 }],
   upgrade: { effects: [{ kind: 'damage', amount: 9 }] },
 };
@@ -27,7 +28,6 @@ export const BASH: CardDefinition = {
   archetypes: ['debuff'],
   cost: 2,
   target: 'enemy',
-  attributes: ['blunt'],
   effects: [
     { kind: 'damage', amount: 8 },
     { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
@@ -47,6 +47,7 @@ export const ULTIMATE_STRIKE: CardDefinition = {
   type: 'attack',
   cost: 1,
   target: 'enemy',
+  attuned: true,
   effects: [{ kind: 'damage', amount: 13 }],
   upgrade: { effects: [{ kind: 'damage', amount: 18 }] },
 };
@@ -70,7 +71,6 @@ export const CRIMSON_PHOENIX: CardDefinition = {
   cost: 0,
   target: 'allEnemies',
   effects: [{ kind: 'damage', amount: 7, hits: 3 }],
-  attributes: ['slash', 'blunt', 'fire', 'ice', 'thunder'],
   mysticArte: true,
   exhaust: true,
   motion: 'heavy',
@@ -79,11 +79,10 @@ export const CRIMSON_PHOENIX: CardDefinition = {
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
-/** 紅蓮のカイルの初期デッキ。 */
+/** 紅蓮のカイルの初期デッキ。ストライクはラン開始時にエージェントの属性になる。 */
 export const CRIMSON_STARTER_DECK: CardDefinition[] = [
-  ...copies(STRIKE, 5),
-  ...copies(DEFEND, 4),
-  BASH,
+  ...copies(STRIKE, 3),
+  ...copies(DEFEND, 3),
 ];
 
 /** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。 */
@@ -104,7 +103,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'attack',
     cost: 1,
     target: 'enemy',
-    attributes: ['blunt'],
     effects: [
       { kind: 'damage', amount: 9 },
       { kind: 'draw', amount: 1 },
@@ -123,7 +121,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 1,
     target: 'enemy',
-    attributes: ['blunt'],
     effects: [
       { kind: 'damage', amount: 5 },
       { kind: 'block', amount: 5 },
@@ -151,7 +148,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['debuff'],
     cost: 2,
     target: 'enemy',
-    attributes: ['blunt'],
     effects: [
       { kind: 'damage', amount: 12 },
       { kind: 'applyDebuff', status: 'weak', turns: 2 },
@@ -170,7 +166,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['sacrifice'],
     cost: 1,
     target: 'enemy',
-    attributes: ['fire'],
+    attribute: 'fire',
     effects: [
       { kind: 'loseHp', amount: 3 },
       { kind: 'damage', amount: 14 },
@@ -188,7 +184,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'attack',
     cost: 0,
     target: 'enemy',
-    attributes: ['fire'],
+    attribute: 'fire',
     effects: [{ kind: 'damage', amount: 6 }],
     addCopyToDiscard: true,
     upgrade: { effects: [{ kind: 'damage', amount: 8 }] },
@@ -209,7 +205,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['debuff', 'element'],
     cost: 1,
     target: 'allEnemies',
-    attributes: ['thunder'],
     effects: [
       { kind: 'damage', amount: 4 },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
@@ -359,7 +354,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['debuff'],
     cost: 2,
     target: 'enemy',
-    attributes: ['blunt'],
     effects: [
       { kind: 'damage', amount: 10 },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
@@ -399,7 +393,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 1,
     target: 'enemy',
-    attributes: ['blunt'],
     effects: [{ kind: 'damageFromBlock' }],
     upgrade: { cost: 0 },
   },
@@ -477,12 +470,12 @@ export const REWARD_CARDS: CardDefinition[] = [
   // --- 属性: 敵の弱点を突いてダウンさせる ---
   {
     id: 'frost-edge',
-    name: '氷結の刃',
+    name: '水刃',
     type: 'attack',
     archetypes: ['element', 'debuff'],
     cost: 1,
     target: 'enemy',
-    attributes: ['ice'],
+    attribute: 'water',
     effects: [
       { kind: 'damage', amount: 6 },
       { kind: 'applyDebuff', status: 'weak', turns: 1 },
@@ -496,34 +489,34 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'ice-lances',
-    name: '氷槍乱舞',
+    name: '水槍乱舞',
     type: 'attack',
     archetypes: ['element'],
     cost: 2,
     target: 'enemy',
-    attributes: ['ice'],
+    attribute: 'water',
     effects: [{ kind: 'damage', amount: 3, hits: 4 }],
     upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 4 }] },
   },
   {
-    id: 'swift-thunder',
-    name: '迅雷',
+    id: 'leaf-flash',
+    name: '若葉の一閃',
     type: 'attack',
     archetypes: ['element'],
     cost: 0,
     target: 'enemy',
-    attributes: ['thunder'],
+    attribute: 'grass',
     effects: [{ kind: 'damage', amount: 4 }],
     upgrade: { effects: [{ kind: 'damage', amount: 6 }] },
   },
   {
-    id: 'lightning-flurry',
-    name: '雷光連斬',
+    id: 'leaf-storm',
+    name: '木の葉乱舞',
     type: 'attack',
     archetypes: ['element'],
     cost: 1,
     target: 'enemy',
-    attributes: ['thunder', 'slash'],
+    attribute: 'grass',
     effects: [{ kind: 'damage', amount: 3, hits: 3 }],
     upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 3 }] },
   },
@@ -534,7 +527,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['element', 'strength'],
     cost: 1,
     target: 'enemy',
-    attributes: ['fire', 'slash'],
+    attribute: 'fire',
     effects: [
       { kind: 'damage', amount: 7 },
       { kind: 'gainBuff', status: 'blazing', turns: 1 },
@@ -548,8 +541,9 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'enchant-fire',
-    name: '魔法剣・炎',
+    name: '魔法剣・火',
     type: 'skill',
+    attribute: 'fire',
     archetypes: ['element'],
     cost: 1,
     target: 'self',
@@ -560,27 +554,29 @@ export const REWARD_CARDS: CardDefinition[] = [
     upgrade: { cost: 0 },
   },
   {
-    id: 'enchant-ice',
-    name: '魔法剣・氷',
+    id: 'enchant-water',
+    name: '魔法剣・水',
     type: 'skill',
+    attribute: 'water',
     archetypes: ['element'],
     cost: 1,
     target: 'self',
     effects: [
-      { kind: 'enchant', attribute: 'ice' },
+      { kind: 'enchant', attribute: 'water' },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: { cost: 0 },
   },
   {
-    id: 'enchant-thunder',
-    name: '魔法剣・雷',
+    id: 'enchant-grass',
+    name: '魔法剣・草',
     type: 'skill',
+    attribute: 'grass',
     archetypes: ['element'],
     cost: 1,
     target: 'self',
     effects: [
-      { kind: 'enchant', attribute: 'thunder' },
+      { kind: 'enchant', attribute: 'grass' },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: { cost: 0 },
@@ -614,7 +610,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['debuff'],
     cost: 1,
     target: 'enemy',
-    attributes: ['blunt'],
     effects: [
       { kind: 'damage', amount: 5 },
       {
@@ -647,7 +642,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['debuff'],
     cost: 2,
     target: 'enemy',
-    attributes: ['fire'],
+    attribute: 'fire',
     effects: [{ kind: 'detonateDebuffs', perTurn: 3 }],
     upgrade: { effects: [{ kind: 'detonateDebuffs', perTurn: 4 }] },
   },
@@ -682,7 +677,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 1,
     target: 'enemy',
-    attributes: ['blunt'],
     effects: [{ kind: 'consumeBlock', multiplier: 2 }],
     upgrade: { cost: 0 },
   },
@@ -752,7 +746,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['growth'],
     cost: 1,
     target: 'enemy',
-    attributes: ['fire'],
+    attribute: 'fire',
     effects: [{ kind: 'feed', damage: 10, maxHp: 3 }],
     exhaust: true,
     upgrade: { effects: [{ kind: 'feed', damage: 12, maxHp: 4 }] },

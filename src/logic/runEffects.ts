@@ -2,7 +2,8 @@ import type { RelicDefinition } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import { canUpgrade, countBase, fuseInDeck, upgradeCard } from './cards';
-import { pickRewardChoices } from './archetype';
+import { draftPool, pickRewardChoices } from './archetype';
+import { attuneDeck } from './attribute';
 import { pickOne, shuffle } from './random';
 
 /** pool のうち、まだ持っていないレリック。 */
@@ -89,7 +90,8 @@ export function applyRunEffect(run: RunState, effect: RunEffect): RunState {
     case 'changeDrawPerTurn':
       return { ...run, drawPerTurn: Math.max(MIN_PER_TURN, run.drawPerTurn + effect.amount) };
     case 'fuseCards': {
-      const deck = fuseInDeck(run.deck, effect.from.id, effect.count, effect.into);
+      const [into] = attuneDeck([effect.into], run.agent.attribute);
+      const deck = fuseInDeck(run.deck, effect.from.id, effect.count, into);
       return deck ? { ...run, deck } : run;
     }
   }
@@ -152,7 +154,7 @@ export function applyEffectsThenChoice(
 
 /** 3 枚から 1 枚選んでデッキに加える（ゴールド・レリック無しの報酬画面）。 */
 function offerCardPick(run: RunState): RunState {
-  const offered = pickRewardChoices(run.rewardPool, run.deck, 3, run.rngSeed);
+  const offered = pickRewardChoices(draftPool(run), run.deck, 3, run.rngSeed);
   return {
     ...run,
     rngSeed: offered.seed,

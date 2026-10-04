@@ -8,7 +8,8 @@ import { generateBlessingOptions } from './blessing';
 import { soloEncounter, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
-import { pickRewardChoices } from './archetype';
+import { draftPool, pickRewardChoices } from './archetype';
+import { attuneDeck, isDraftable } from './attribute';
 import { pickOne, pickUnique, randomInt } from './random';
 import { grantRandomRelic, obtainRelic, unownedRelics } from './runEffects';
 import { generateShopStock } from './shop';
@@ -66,7 +67,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     agent: setup.agent,
     player: { hp: setup.playerMaxHp, maxHp: setup.playerMaxHp },
     gold: setup.economy.startingGold,
-    deck: setup.deck,
+    deck: attuneDeck(setup.deck, setup.agent.attribute),
     relics: setup.relics,
     potions: [...setup.potions],
     energyPerTurn: setup.energyPerTurn,
@@ -108,7 +109,8 @@ export function reachedFloor(run: RunState): number {
 
 function openShop(run: RunState): RunState {
   const generated = generateShopStock(
-    run.rewardPool,
+    draftPool(run),
+    run.rewardPool.filter((card) => !isDraftable(card, run.agent)),
     unownedRelics(run, run.relicPool),
     run.potionPool,
     run.economy,
@@ -170,7 +172,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
-  const offered = pickRewardChoices(looted.run.rewardPool, looted.run.deck, 3, looted.run.rngSeed);
+  const offered = pickRewardChoices(draftPool(looted.run), looted.run.deck, 3, looted.run.rngSeed);
   return {
     ...looted.run,
     rngSeed: offered.seed,

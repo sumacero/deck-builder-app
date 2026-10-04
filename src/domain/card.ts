@@ -70,7 +70,13 @@ export type CardDefinition = {
   turnEndInHand?: Effect[];
   growth?: CardGrowth;
   /** 攻撃の属性。アタックで省略すると斬。秘奥義は全属性を持つ。 */
-  attributes?: Attribute[];
+  /**
+   * カードの属性。省略で無属性（誰でも報酬で手に入る）。
+   * エージェントと違う属性のカードは通常の報酬に出ず、ショップでのみ買える。
+   */
+  attribute?: Attribute;
+  /** ストライクのように、エージェントの属性を受け継ぐ初期カード。 */
+  attuned?: boolean;
   /** 秘奥義（ゲージが溜まると手札に来る必殺技）。 */
   mysticArte?: boolean;
   archetypes?: Archetype[];

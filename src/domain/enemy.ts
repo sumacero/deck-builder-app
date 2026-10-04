@@ -59,8 +59,11 @@ export type EnemyDefinition = {
   /** 先頭から順に使い、最後まで行ったら先頭に戻る。 */
   moves: EnemyMove[];
   traits?: EnemyTrait[];
-  /** 弱点の属性。弱点を突いた 1 ヒットごとにダウンゲージが 1 減る。 */
-  weaknesses: Attribute[];
+  /**
+   * 敵の属性。これに強い属性（三つ巴）が弱点で、弱点を突いた 1 ヒットごとにダウンゲージが 1 減る。
+   * 省略で無属性（機械など）: どの属性の攻撃でも弱点になる。
+   */
+  attribute?: Attribute;
   /** ダウンゲージの最大値。省略すると格と HP から決まる。 */
   breakGauge?: number;
 };

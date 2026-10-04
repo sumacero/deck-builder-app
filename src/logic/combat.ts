@@ -20,7 +20,7 @@ import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
 import type { DebuffId, PowerId } from '../domain/status';
-import { breakGaugeOf, cardAttributes, isWeakTo } from './attribute';
+import { breakGaugeOf, cardAttributes, isWeakTo, weaknessesOf } from './attribute';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import { DOWN_MOVE, SLEEP_MOVE, traitOf } from './enemyTraits';
@@ -289,7 +289,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       traits: enemy.traits ?? [],
       asleep: traitOf(enemy, 'sleep')?.turns ?? 0,
       stunned: false,
-      weaknesses: enemy.weaknesses,
+      attribute: enemy.attribute ?? null,
+      weaknesses: weaknessesOf(enemy.attribute),
       stagger: breakGaugeOf(enemy),
       breakGauge: breakGaugeOf(enemy),
       ward: traitOf(enemy, 'ward')?.charges ?? 0,

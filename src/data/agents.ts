@@ -6,5 +6,6 @@ export const CRIMSON_HERO: AgentDefinition = {
   id: 'crimson-hero',
   name: '紅蓮のカイル',
   icon: '🔥',
+  attribute: 'fire',
   mysticArte: CRIMSON_PHOENIX,
 };

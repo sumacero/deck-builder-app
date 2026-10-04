@@ -91,26 +91,26 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
 }
 
 export const ATTRIBUTE_LABEL: Record<Attribute, string> = {
-  slash: '斬',
-  blunt: '打',
-  fire: '炎',
-  ice: '氷',
-  thunder: '雷',
+  grass: '草',
+  fire: '火',
+  water: '水',
 };
 
 export const ATTRIBUTE_ICON: Record<Attribute, string> = {
-  slash: '🗡️',
-  blunt: '🔨',
+  grass: '🌿',
   fire: '🔥',
-  ice: '❄️',
-  thunder: '⚡',
+  water: '💧',
 };
 
-const attributeText = (attribute: Attribute) => `${ATTRIBUTE_ICON[attribute]}${ATTRIBUTE_LABEL[attribute]}`;
+export const attributeText = (attribute: Attribute) =>
+  `${ATTRIBUTE_ICON[attribute]}${ATTRIBUTE_LABEL[attribute]}`;
 
-/** 敵の詳細に出す弱点の説明。 */
-export const describeWeaknesses = (weaknesses: readonly Attribute[]) =>
-  `弱点: ${weaknesses.map(attributeText).join('・')}（弱点を突くとダウンゲージが減る）`;
+/** 敵の詳細に出す属性と弱点の説明。 */
+export function describeEnemyAttribute(attribute: Attribute | null, weaknesses: readonly Attribute[]): string {
+  const own = attribute ? `${attributeText(attribute)}属性` : '無属性';
+  const weak = attribute ? weaknesses.map(attributeText).join('・') : '属性攻撃すべて';
+  return `${own}。弱点: ${weak}（弱点を突くとダウンゲージが減る）`;
+}
 
 /** カードの属性の短い表記（秘奥義のように全属性なら「全属性」）。iconOnly は狭い手札用。 */
 export function describeAttributes(attributes: readonly Attribute[], iconOnly = false): string {

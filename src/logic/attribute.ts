@@ -1,14 +1,36 @@
+import type { AgentDefinition } from '../domain/agent';
 import type { Attribute } from '../domain/attribute';
 import type { CardDefinition } from '../domain/card';
 import type { EnemyDefinition } from '../domain/enemy';
 
-export const ALL_ATTRIBUTES: readonly Attribute[] = ['slash', 'blunt', 'fire', 'ice', 'thunder'];
+export const ALL_ATTRIBUTES: readonly Attribute[] = ['grass', 'fire', 'water'];
 
-/** カードの攻撃の属性。アタックで指定が無ければ斬。アタック以外は属性なし。 */
-export function cardAttributes(card: CardDefinition): Attribute[] {
-  if (card.attributes) return card.attributes;
-  return card.type === 'attack' ? ['slash'] : [];
+/** 三つ巴: キーの属性は、値の属性に強い。 */
+export const STRONG_AGAINST: Record<Attribute, Attribute> = {
+  grass: 'water',
+  water: 'fire',
+  fire: 'grass',
+};
+
+/** その属性の敵の弱点。無属性（undefined / null）ならすべての属性。 */
+export function weaknessesOf(attribute: Attribute | null | undefined): Attribute[] {
+  if (!attribute) return [...ALL_ATTRIBUTES];
+  return ALL_ATTRIBUTES.filter((strong) => STRONG_AGAINST[strong] === attribute);
 }
+
+/** カードの攻撃の属性。秘奥義は全属性。無属性なら空。 */
+export function cardAttributes(card: CardDefinition): Attribute[] {
+  if (card.mysticArte) return [...ALL_ATTRIBUTES];
+  return card.attribute ? [card.attribute] : [];
+}
+
+/** 通常の報酬に出せるか（無属性か、エージェントと同じ属性）。違う属性はショップ限定。 */
+export const isDraftable = (card: CardDefinition, agent: AgentDefinition) =>
+  card.attribute === undefined || card.attribute === agent.attribute;
+
+/** ストライクなど attuned のカードにエージェントの属性を付ける。 */
+export const attuneDeck = (deck: readonly CardDefinition[], attribute: Attribute): CardDefinition[] =>
+  deck.map((card) => (card.attuned ? { ...card, attribute } : card));
 
 /** 群れで出る小型の敵（HP がこれ未満）はダウンゲージが短い。 */
 const SMALL_ENEMY_HP = 20;

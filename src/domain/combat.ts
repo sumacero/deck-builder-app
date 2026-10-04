@@ -64,6 +64,9 @@ export type EnemyState = Fighter & {
   asleep: number;
   /** ダウンして、次の行動を休む。 */
   stunned: boolean;
+  /** null は無属性。 */
+  attribute: Attribute | null;
+  /** 属性から決まる弱点（三つ巴で強い属性。無属性ならすべての属性）。 */
   weaknesses: Attribute[];
   /** ダウンゲージの残り（あと何回弱点を突くとダウンするか）。 */
   stagger: number;

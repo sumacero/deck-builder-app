@@ -4,6 +4,7 @@ import type { RunState } from '../../domain/run';
 import type { ShopStock } from '../../domain/shop';
 import { useMusic } from '../../hooks/useMusic';
 import type { ShopActions } from '../../hooks/useRun';
+import { isDraftable } from '../../logic/attribute';
 import { stackCards } from '../../logic/cards';
 import { describeCard, describePotion, describeRelic } from '../../logic/describe';
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
@@ -62,6 +63,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
               offer={offer}
               affordable={canAfford(run, offer.price)}
               selected={selection?.offerId === offer.offerId}
+              exclusive={!isDraftable(offer.item, run.agent)}
               onPress={() => setSelection({ kind: 'card', offerId: offer.offerId })}
             />
           ))}

@@ -34,22 +34,27 @@ export function removalPrice(economy: EconomyConfig, removalCount: number): numb
   return economy.removalBasePrice + economy.removalPriceStep * removalCount;
 }
 
-/** relicPool にはまだ持っていないレリックだけを渡す。 */
+/**
+ * relicPool にはまだ持っていないレリックだけを渡す。
+ * exclusivePool（エージェントと違う属性のカード）からは 1 枚を必ず並べる。ここでしか手に入らないため。
+ */
 export function generateShopStock(
   cardPool: readonly CardDefinition[],
+  exclusivePool: readonly CardDefinition[],
   relicPool: readonly RelicDefinition[],
   potionPool: readonly PotionDefinition[],
   economy: EconomyConfig,
   removalCount: number,
   seed: number,
 ): { stock: ShopStock; seed: number } {
-  const pickedCards = pickUnique(cardPool, economy.shopCardCount, seed);
+  const exclusive = pickUnique(exclusivePool, 1, seed);
+  const regular = pickUnique(cardPool, economy.shopCardCount - exclusive.items.length, exclusive.seed);
   const cards = toOffers(
-    pickedCards.items,
+    [...regular.items, ...exclusive.items],
     'card',
     (card) => economy.cardPrice[card.type],
     economy.priceVariance,
-    pickedCards.seed,
+    regular.seed,
   );
   const pickedRelics = pickUnique(relicPool, economy.shopRelicCount, cards.seed);
   const relics = toOffers(

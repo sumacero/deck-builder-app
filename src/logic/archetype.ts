@@ -1,5 +1,11 @@
 import type { Archetype, CardDefinition } from '../domain/card';
+import type { RunState } from '../domain/run';
+import { isDraftable } from './attribute';
 import { pickUnique } from './random';
+
+/** 戦闘報酬・カード選択イベントの候補（違う属性のカードはショップ限定なので除く）。 */
+export const draftPool = (run: RunState): CardDefinition[] =>
+  run.rewardPool.filter((card) => isDraftable(card, run.agent));
 
 export type ArchetypeCount = { archetype: Archetype; count: number };
 
