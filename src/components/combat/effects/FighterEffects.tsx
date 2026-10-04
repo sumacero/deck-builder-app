@@ -62,21 +62,23 @@ export function FighterEffects({
   const [popups, setPopups] = useState<Popup[]>([]);
 
   const addPopup = (popup: Omit<Popup, 'offsetX'>) =>
-    setPopups((prev) => [...prev, { ...popup, offsetX: ((popup.id % 3) - 1) * 28 }]);
+    setPopups((prev) => [...prev, { ...popup, offsetX: ((Math.abs(popup.id) % 3) - 1) * 28 }]);
   const removePopup = (id: number) => setPopups((prev) => prev.filter((p) => p.id !== id));
 
   useCombatEvents(events, (event) => {
     if (event.target !== target) return;
     switch (event.kind) {
       case 'hit': {
+        const broke = event.blocked > 0 && event.after.block === 0;
         if (event.hpLoss > 0) {
           const big = event.hpLoss >= BIG_HIT;
           Animated.parallel([shake(shakeX, big ? 16 : 10), flash(damageFlash, 0.55)]).start();
           addPopup({ id: event.id, text: `-${event.hpLoss}`, tone: 'damage', large: big });
         } else {
           Animated.parallel([bump(scale), flash(guardFlash, 0.5)]).start();
-          addPopup({ id: event.id, text: 'ガード！', tone: 'guard', large: false });
+          if (!broke) addPopup({ id: event.id, text: 'ガード！', tone: 'guard', large: false });
         }
+        if (broke) addPopup({ id: -event.id - 1, text: 'ブレイク！', tone: 'guard', large: false });
         return;
       }
       case 'blockGain':

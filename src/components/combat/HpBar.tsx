@@ -18,6 +18,7 @@ export function HpBar({ hp, maxHp, block, compact = false }: HpBarProps) {
   const ratio = maxHp > 0 ? hp / maxHp : 0;
   const [fill] = useState(() => new Animated.Value(ratio));
   const [trail] = useState(() => new Animated.Value(ratio));
+  const [badgeScale] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     const animation = Animated.parallel([
@@ -33,15 +34,32 @@ export function HpBar({ hp, maxHp, block, compact = false }: HpBarProps) {
     return () => animation.stop();
   }, [ratio, fill, trail]);
 
+  useEffect(() => {
+    badgeScale.setValue(1.35);
+    const animation = Animated.spring(badgeScale, {
+      toValue: 1,
+      friction: 4,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [block, badgeScale]);
+
   return (
     <View style={[styles.row, compact && styles.compactRow]}>
       {block > 0 && (
-        <View style={[styles.blockBadge, compact && styles.compactBlockBadge]}>
+        <Animated.View
+          style={[
+            styles.blockBadge,
+            compact && styles.compactBlockBadge,
+            { transform: [{ scale: badgeScale }] },
+          ]}
+        >
           <Text style={[styles.blockText, compact && styles.compactText]}>
             🛡️{compact ? '' : ' '}
             {block}
           </Text>
-        </View>
+        </Animated.View>
       )}
       <View style={[styles.track, compact && styles.compactTrack]}>
         <Animated.View style={[styles.bar, styles.trail, { width: toWidth(trail) }]} />

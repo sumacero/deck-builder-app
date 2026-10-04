@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState } from '../../domain/combat';
+import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
 import { currentIntent, isAlive } from '../../logic/combat';
 import { describeIntent, ENEMY_RANK_LABEL } from '../../logic/describe';
 import { enemyStatuses, keywordsForIntent } from '../../logic/glossary';
@@ -51,6 +52,7 @@ export function EnemyPanel({
   const move = currentIntent(enemy);
   const rankLabel = ENEMY_RANK_LABEL[enemy.rank];
   const statuses = enemyStatuses(enemy);
+  const vitals = useDisplayedVitals(enemy.uid, events, enemy);
   return (
     <View ref={viewRef} style={styles.slot}>
       <Pressable
@@ -98,7 +100,7 @@ export function EnemyPanel({
             {enemy.name}
           </Text>
           <StatusRow statuses={statuses} />
-          <HpBar hp={enemy.hp} maxHp={enemy.maxHp} block={enemy.block} compact={compact} />
+          <HpBar hp={vitals.hp} maxHp={enemy.maxHp} block={vitals.block} compact={compact} />
         </FighterEffects>
         {preview && (
           <View style={styles.previewLayer}>

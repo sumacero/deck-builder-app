@@ -45,6 +45,8 @@ export type CombatLogEntry = {
   text: string;
 };
 
+export type Vitals = { hp: number; block: number };
+
 export type CombatEventBody =
   /** targets はカードが狙った敵（自分に使うカードは空）。 */
   | {
@@ -58,9 +60,10 @@ export type CombatEventBody =
   | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
   | { kind: 'potionUsed'; target: 'player'; potionId: string }
   | { kind: 'relicTriggered'; target: 'player'; relicId: string }
-  | { kind: 'hit'; target: ActorId; hpLoss: number; blocked: number }
-  | { kind: 'blockGain'; target: ActorId; amount: number }
-  | { kind: 'heal'; target: ActorId; amount: number }
+  /** after は起きた直後の HP とブロック。演出に合わせて 1 発ずつ表示を進めるのに使う。 */
+  | { kind: 'hit'; target: ActorId; hpLoss: number; blocked: number; after: Vitals }
+  | { kind: 'blockGain'; target: ActorId; amount: number; after: Vitals }
+  | { kind: 'heal'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'defeated'; target: ActorId }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }

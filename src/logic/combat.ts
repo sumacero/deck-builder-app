@@ -10,6 +10,7 @@ import type {
   EnemyState,
   EnemyUid,
   Fighter,
+  Vitals,
 } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
@@ -32,6 +33,8 @@ export function applyDamage<T extends Fighter>(target: T, amount: number): Damag
     hpLoss,
   };
 }
+
+const vitalsOf = (fighter: Fighter): Vitals => ({ hp: fighter.hp, block: fighter.block });
 
 export function gainBlock<T extends Fighter>(target: T, amount: number): T {
   return { ...target, block: target.block + amount };
@@ -250,7 +253,13 @@ function hitEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatStat
   const result = applyDamage(enemy, amount);
   const hit = withEvent(
     withLog(updateEnemy(state, uid, () => result.target), formatHit(enemy.name, result)),
-    { kind: 'hit', target: uid, hpLoss: result.hpLoss, blocked: result.blocked },
+    {
+      kind: 'hit',
+      target: uid,
+      hpLoss: result.hpLoss,
+      blocked: result.blocked,
+      after: vitalsOf(result.target),
+    },
   );
   if (isAlive(result.target)) return hit;
   return withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
@@ -268,17 +277,23 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
     case 'heal': {
       const healed = Math.min(effect.amount, state.player.maxHp - state.player.hp);
       if (healed === 0) return state;
-      return withEvent(
-        withLog({ ...state, player: { ...state.player, hp: state.player.hp + healed } }, `HP +${healed}`),
-        { kind: 'heal', target: 'player', amount: healed },
-      );
+      const player = { ...state.player, hp: state.player.hp + healed };
+      return withEvent(withLog({ ...state, player }, `HP +${healed}`), {
+        kind: 'heal',
+        target: 'player',
+        amount: healed,
+        after: vitalsOf(player),
+      });
     }
     case 'loseHp': {
-      const hp = Math.max(0, state.player.hp - effect.amount);
-      return withEvent(
-        withLog({ ...state, player: { ...state.player, hp } }, `HP -${effect.amount}`),
-        { kind: 'hit', target: 'player', hpLoss: effect.amount, blocked: 0 },
-      );
+      const player = { ...state.player, hp: Math.max(0, state.player.hp - effect.amount) };
+      return withEvent(withLog({ ...state, player }, `HP -${effect.amount}`), {
+        kind: 'hit',
+        target: 'player',
+        hpLoss: effect.amount,
+        blocked: 0,
+        after: vitalsOf(player),
+      });
     }
     case 'gainStrength': {
       const key = effect.duration === 'turn' ? 'tempStrength' : 'strength';
@@ -304,14 +319,15 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
       }
       return next;
     }
-    case 'block':
-      return withEvent(
-        withLog(
-          { ...state, player: gainBlock(state.player, effect.amount) },
-          `ブロック +${effect.amount}`,
-        ),
-        { kind: 'blockGain', target: 'player', amount: effect.amount },
-      );
+    case 'block': {
+      const player = gainBlock(state.player, effect.amount);
+      return withEvent(withLog({ ...state, player }, `ブロック +${effect.amount}`), {
+        kind: 'blockGain',
+        target: 'player',
+        amount: effect.amount,
+        after: vitalsOf(player),
+      });
+    }
   }
 }
 
@@ -457,19 +473,26 @@ function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction
         const result = applyDamage(next.player, amount);
         next = withEvent(
           withLog({ ...next, player: result.target }, formatHit('あなた', result)),
-          { kind: 'hit', target: 'player', hpLoss: result.hpLoss, blocked: result.blocked },
+          {
+            kind: 'hit',
+            target: 'player',
+            hpLoss: result.hpLoss,
+            blocked: result.blocked,
+            after: vitalsOf(result.target),
+          },
         );
       }
       return next;
     }
     case 'block': {
       const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'block' });
+      const guarded = gainBlock(enemy, action.amount);
       return withEvent(
         withLog(
-          updateEnemy(acted, uid, (e) => gainBlock(e, action.amount)),
+          updateEnemy(acted, uid, () => guarded),
           `${enemy.name}はブロック +${action.amount}`,
         ),
-        { kind: 'blockGain', target: uid, amount: action.amount },
+        { kind: 'blockGain', target: uid, amount: action.amount, after: vitalsOf(guarded) },
       );
     }
     case 'buff': {

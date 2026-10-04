@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AgentDefinition } from '../../domain/agent';
 import type { CombatEvent, PlayerState } from '../../domain/combat';
+import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
 import { playerStatuses } from '../../logic/glossary';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { FighterEffects } from './effects/FighterEffects';
@@ -34,6 +35,7 @@ export function PlayerPanel({
 }: PlayerPanelProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   const statuses = playerStatuses(player);
+  const vitals = useDisplayedVitals('player', events, player);
   return (
     <>
       <Pressable
@@ -67,7 +69,7 @@ export function PlayerPanel({
             {agent.name}
           </Text>
           <StatusRow statuses={statuses} />
-          <HpBar hp={player.hp} maxHp={player.maxHp} block={player.block} />
+          <HpBar hp={vitals.hp} maxHp={player.maxHp} block={vitals.block} />
         </FighterEffects>
       </Pressable>
       {infoOpen && (
