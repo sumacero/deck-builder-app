@@ -36,6 +36,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# local 3D preview (see docs/KNOWLEDGE.md)
+/.preview/out
+
 # generated native folders
 /ios
 /android

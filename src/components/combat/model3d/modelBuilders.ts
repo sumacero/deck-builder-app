@@ -76,7 +76,22 @@ export type HumanoidOptions = {
   eyeColor?: string;
   /** マント。 */
   cape?: string;
+  /** 前髪。 */
+  hair?: string;
 };
+
+/** 額にかかる前髪。 */
+function bangs(color: string): ModelPart[] {
+  return [-0.12, -0.04, 0.04, 0.12].map((x, index) =>
+    cone(0.06, 0.15, color, [x, 0.5, 0.18], {
+      rotation: [Math.PI + 0.7, 0, (index - 1.5) * 0.3],
+    }),
+  );
+}
+
+/** 目に入れるアニメ調のハイライト。 */
+const eyeShine = (x: number, y: number, z: number): ModelPart =>
+  sphere(0.018, '#FFFFFF', [x + 0.012, y + 0.018, z], { glow: true });
 
 function headgearParts(headgear: Headgear, color: string): ModelPart[] {
   switch (headgear) {
@@ -158,8 +173,10 @@ export function humanoid(options: HumanoidOptions, extra?: Partial<ActorModel>):
     shield = false,
     eyeColor,
     cape,
+    hair,
   } = options;
   const eye = eyeColor ?? EYE_COLOR;
+  const glowEyes = eyeColor !== undefined;
   const parts: ModelPart[] = [
     box([0.18, 0.5, 0.2], legs, [0.13, -0.72, 0]),
     box([0.18, 0.5, 0.2], legs, [-0.13, -0.72, 0]),
@@ -170,12 +187,10 @@ export function humanoid(options: HumanoidOptions, extra?: Partial<ActorModel>):
     sphere(0.07, skin, [0.37, -0.42, 0.02]),
     sphere(0.07, skin, [-0.37, -0.42, 0.02]),
     sphere(0.24, skin, [0, 0.38, 0]),
-    box([0.06, 0.06, 0.04], eye, [0.08, 0.4, 0.22], {
-      glow: eyeColor !== undefined,
-    }),
-    box([0.06, 0.06, 0.04], eye, [-0.08, 0.4, 0.22], {
-      glow: eyeColor !== undefined,
-    }),
+    box([0.06, glowEyes ? 0.06 : 0.09, 0.04], eye, [0.08, 0.4, 0.22], { glow: glowEyes }),
+    box([0.06, glowEyes ? 0.06 : 0.09, 0.04], eye, [-0.08, 0.4, 0.22], { glow: glowEyes }),
+    ...(glowEyes ? [] : [eyeShine(0.08, 0.4, 0.245), eyeShine(-0.08, 0.4, 0.245)]),
+    ...(hair ? bangs(hair) : []),
     ...headgearParts(headgear, accent),
     ...weaponParts(weapon),
   ];

@@ -151,6 +151,12 @@ export const ACTOR_FIGURE = {
   leanDuration: 320,
   /** 被弾してのけぞる時間。 */
   recoilDuration: 280,
+  /** セル塗りの輪郭線。 */
+  outline: COLORS.textOutline,
+  /** 足元の魔法陣と漂う光の粒の色。 */
+  aura: { player: COLORS.gold, enemy: '#B85CFF' },
+  /** 背後から当てて輪郭を光らせるリムライト。 */
+  rimLight: '#8FB8FF',
 } as const;
 
 /**

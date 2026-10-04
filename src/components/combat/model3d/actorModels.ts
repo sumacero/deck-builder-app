@@ -26,6 +26,7 @@ export const AGENT_MODELS: Record<string, ActorModel> = {
     headgear: 'hood',
     weapon: 'sword',
     cape: '#7A2E2E',
+    hair: '#4A2E1E',
   }),
 };
 

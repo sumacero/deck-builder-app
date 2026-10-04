@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <body style="margin:0;background:#141A2E;display:flex;flex-wrap:wrap;gap:8px;padding:8px">
+    <script type="importmap">
+      { "imports": { "three": "/three" } }
+    </script>
+    <script type="module">
+      import { createActorStage } from '/out/components/combat/model3d/actorStage';
+      import { AGENT_MODELS, ENEMY_MODELS } from '/out/components/combat/model3d/actorModels';
+
+      const params = new URLSearchParams(location.search);
+      const recoilAt = Number(params.get('recoil') ?? -1);
+      const entries = [
+        ['wandering-swordsman', AGENT_MODELS['wandering-swordsman'], 1],
+        ...Object.entries(ENEMY_MODELS)
+          .slice(Number(params.get('from') ?? 0), Number(params.get('to') ?? 11))
+          .map(([id, model]) => [id, model, -1]),
+      ];
+      const stages = entries.map(([id, model, facing]) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        canvas.style.cssText = 'width:200px;height:200px;background:#1E2742;border-radius:8px';
+        canvas.title = id;
+        document.body.append(canvas);
+        const gl = canvas.getContext('webgl2', { antialias: true, alpha: true });
+        gl.endFrameEXP = () => {};
+        return createActorStage(gl, model, facing);
+      });
+      const start = performance.now();
+      const loop = () => {
+        const time = (performance.now() - start) / 1000;
+        stages.forEach((stage, i) =>
+          stage.render({ time, lean: 0, recoil: i === recoilAt ? 1 : 0 }),
+        );
+        requestAnimationFrame(loop);
+      };
+      loop();
+    </script>
+  </body>
+</html>
