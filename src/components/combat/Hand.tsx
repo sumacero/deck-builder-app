@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: HAND_LAYOUT.gap,
     paddingHorizontal: HAND_LAYOUT.edgePadding,
-    paddingTop: SPACING.sm,
+    paddingTop: HAND_LAYOUT.topPadding,
     paddingBottom: SPACING.xs,
   },
   emptyText: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center' },

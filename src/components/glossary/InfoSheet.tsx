@@ -27,12 +27,13 @@ export function InfoSheet({ visible, title, onClose, aside, children }: InfoShee
       onRequestClose={onClose}
       supportedOrientations={MODAL_ORIENTATIONS}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        {/* 中身のタップでは閉じないよう、ここでタッチを受け止める。 */}
-        <Pressable
-          style={[styles.sheet, landscape && styles.landscapeSheet]}
-          onPress={() => undefined}
-        >
+      <View style={styles.backdrop}>
+        {/*
+          外側タップで閉じるボタンは小窓の「後ろ」に敷く。小窓をボタンで包むと、ボタンが指を握って
+          中のスクロールがゆっくりした指の動きに反応しなくなる。
+        */}
+        <Pressable style={styles.dismissArea} onPress={onClose} />
+        <View style={[styles.sheet, landscape && styles.landscapeSheet]}>
           <Text style={styles.title}>{title}</Text>
           {landscape ? (
             <View style={styles.columns}>
@@ -55,8 +56,8 @@ export function InfoSheet({ visible, title, onClose, aside, children }: InfoShee
               <Text style={styles.closeText}>閉じる</Text>
             </Pressable>
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -68,6 +69,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.lg,
   },
+  dismissArea: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   sheet: {
     maxHeight: '85%',
     backgroundColor: COLORS.panel,

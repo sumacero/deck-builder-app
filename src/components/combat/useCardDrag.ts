@@ -7,8 +7,11 @@ import { HAND_LAYOUT } from '../../theme';
 import { type DropTarget, type Point, type Rect, resolveDrop, sameDrop } from './cardDrop';
 import type { CardDragHandlers } from './DraggableCard';
 
-/** 手札の上端からこれだけ上まで持ち上げたら「使う」位置。 */
-const RELEASE_MARGIN = 24;
+/**
+ * 指がこの高さより上に来たら「使う」位置。手札のカードの上端から、カードの高さのこの割合だけ下。
+ * 指はふつうカードの真ん中あたりを押すので、カード半分弱持ち上げれば届く。
+ */
+const RELEASE_LINE_IN_CARD = 0.2;
 /** 指の位置に対して、持ち上げたカードを描く位置（指がカードの下寄りに来るように）。 */
 const GHOST_ANCHOR_Y = 0.8;
 
@@ -62,7 +65,8 @@ export function useCardDrag({ hand, enemies, cardWidth, onPlay }: UseCardDragOpt
     const measureAll = () => {
       measureContainer();
       handView.current?.measureInWindow((_x, y) => {
-        layout.current.releaseLineY = y - RELEASE_MARGIN;
+        const cardHeight = latest.current.cardWidth * HAND_LAYOUT.aspectRatio;
+        layout.current.releaseLineY = y + HAND_LAYOUT.topPadding + cardHeight * RELEASE_LINE_IN_CARD;
       });
       const rects: Layout['enemyRects'] = [];
       layout.current.enemyRects = rects;

@@ -79,6 +79,8 @@ export function DraggableCard({
       cancel: reset,
       responder: PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+        // 既定（true）だと Android で手札の ScrollView が指を奪えず、横スクロールできなくなる。
+        onShouldBlockNativeResponder: () => false,
         onPanResponderGrant: () => {
           reset();
           gesture.timer = setTimeout(() => {

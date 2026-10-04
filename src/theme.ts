@@ -138,6 +138,8 @@ export const HAND_LAYOUT = {
   gap: 6,
   /** 左上のコスト表示がはみ出す分の余白。 */
   edgePadding: SPACING.sm,
+  /** 手札の枠の上端からカードの上端まで（同じくコスト表示の分）。 */
+  topPadding: SPACING.sm,
   /** カードの縦横比（高さ / 幅）。 */
   aspectRatio: 1.375,
 } as const;
