@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Animated,
   type LayoutChangeEvent,
@@ -107,18 +107,17 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     if (potionNeedsTarget(slot)) setPendingPotion(slot);
     else drinkPotion(slot);
   };
-  const onTapCard = (instanceId: string) => {
-    const instance = state.hand.find((c) => c.instanceId === instanceId);
-    if (!instance || !isPlayable(instanceId)) return;
-    if (canPlayByTap(instance.card.target, living.length)) playCard(instanceId);
-    else setTapHint(true);
-  };
-  const hint = hintText({
-    dragging: drag !== null,
-    hover,
-    needsEnemy: drag?.card.target === 'enemy' && living.length > 1,
-    tapHint,
-  });
+  // 手札のジェスチャーはこの関数ごと作られるので、戦闘の状態が変わらない間は同じ関数を渡す。
+  const onTapCard = useCallback(
+    (instanceId: string) => {
+      const instance = state.hand.find((c) => c.instanceId === instanceId);
+      if (!instance || !isPlayable(instanceId)) return;
+      if (canPlayByTap(instance.card.target, livingEnemies(state).length)) playCard(instanceId);
+      else setTapHint(true);
+    },
+    [state, isPlayable, playCard],
+  );
+  const hint = hintText({ dragging: drag !== null, hover, tapHint });
 
   const itemBar = (
     <ItemBar
@@ -313,13 +312,9 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
 function hintText(options: {
   dragging: boolean;
   hover: DropTarget | null;
-  needsEnemy: boolean;
   tapHint: boolean;
 }): string | null {
-  if (options.dragging) {
-    if (options.hover) return '離して使う';
-    return options.needsEnemy ? '狙う敵の上で離す' : 'もっと上まで持ち上げて離す';
-  }
+  if (options.dragging) return options.hover ? '離して使う' : 'もっと上まで持ち上げて離す';
   return options.tapHint ? '敵が複数いるときは、狙う敵へスワイプ' : null;
 }
 

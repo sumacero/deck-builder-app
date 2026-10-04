@@ -11,14 +11,22 @@ export type DropTarget =
   | { kind: 'allEnemies' }
   | { kind: 'self' };
 
-const contains = (rect: Rect, { x, y }: Point) =>
-  x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+const centerX = (rect: Rect) => rect.x + rect.width / 2;
+
+/** 指の横位置に一番近い敵。敵の真上まで指を運ばなくても、横位置が合えば狙える。 */
+function nearestByX<T extends { rect: Rect }>(items: readonly T[], x: number): T | undefined {
+  let best: T | undefined;
+  for (const item of items) {
+    if (!best || Math.abs(centerX(item.rect) - x) < Math.abs(centerX(best.rect) - x)) best = item;
+  }
+  return best;
+}
 
 /**
  * 指を離した位置から、カードの使い道を決める。座標はすべて画面（ウィンドウ）基準。
  * - 自分に使うカードは、少しでも持ち上げたらどこで離しても自分に使う。
  * - それ以外は、手札より上（releaseLineY より上）まで持ち上げていなければ使わない。
- * - 敵 1 体を狙うカードは、生きている敵の上で離す。敵が 1 体だけなら上のどこで離してもよい。
+ * - 敵 1 体を狙うカードは、指の横位置に一番近い生きている敵を狙う（高さは問わない）。
  * - 敵全体に使うカードは、上まで持ち上げて離せば使える。
  */
 export function resolveDrop(
@@ -31,9 +39,8 @@ export function resolveDrop(
   if (point.y > releaseLineY) return null;
   switch (target) {
     case 'enemy': {
-      const hovered = livingEnemyRects.find(({ rect }) => contains(rect, point));
-      if (hovered) return { kind: 'enemy', uid: hovered.uid };
-      return livingEnemyRects.length === 1 ? { kind: 'enemy', uid: livingEnemyRects[0].uid } : null;
+      const aimed = nearestByX(livingEnemyRects, point.x);
+      return aimed ? { kind: 'enemy', uid: aimed.uid } : null;
     }
     case 'allEnemies':
       return { kind: 'allEnemies' };
