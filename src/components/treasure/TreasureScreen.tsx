@@ -5,6 +5,7 @@ import type { RunState } from '../../domain/run';
 import type { TreasureActions } from '../../hooks/useRun';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { RelicCard } from '../items/RelicCard';
+import { ScreenScroll } from '../layout/ScreenScroll';
 import { RunHud } from '../run/RunHud';
 
 type TreasureScreenProps = {
@@ -28,7 +29,7 @@ export function TreasureScreen({ run, opened, relic, gold, actions }: TreasureSc
   const scale = pop.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.3, 1.1] });
 
   return (
-    <View style={styles.root}>
+    <ScreenScroll contentStyle={styles.root}>
       <RunHud run={run} />
 
       <View style={styles.body}>
@@ -58,12 +59,12 @@ export function TreasureScreen({ run, opened, relic, gold, actions }: TreasureSc
       >
         <Text style={styles.buttonText}>{opened ? '先へ進む' : '宝箱を開ける'}</Text>
       </Pressable>
-    </View>
+    </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, padding: SPACING.lg, gap: SPACING.md },
+  root: { padding: SPACING.lg, gap: SPACING.md },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING.md },
   chest: { fontSize: 80 },
   title: { color: COLORS.gold, fontSize: 24, fontWeight: '800', letterSpacing: 4 },

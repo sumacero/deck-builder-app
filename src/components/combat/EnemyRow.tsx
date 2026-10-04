@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, EnemyUid } from '../../domain/combat';
-import { ACTOR_FIGURE, SPACING } from '../../theme';
+import { SPACING } from '../../theme';
 import { EnemyPanel } from './EnemyPanel';
 
 type EnemyRowProps = {
@@ -9,6 +8,11 @@ type EnemyRowProps = {
   events: CombatEvent[];
   defeatDelay: number;
   agentId: string;
+  /** 3D の一辺（`stageLayout` で舞台の大きさと敵の数から決める）。0 なら測り終わるまで描かない。 */
+  figureSize: number;
+  compact: boolean;
+  /** 1 体だけのとき、行の幅のどれだけを使うか（右に寄せる）。 */
+  soloWidthRatio: number;
   previews: DamagePreview[];
   highlighted: readonly EnemyUid[];
   /** ポーションの対象を選んでいる間だけ渡す。 */
@@ -16,30 +20,23 @@ type EnemyRowProps = {
   registerView: (uid: EnemyUid, node: View | null) => void;
 };
 
-/**
- * 敵を左から順に横一列に並べる。1 体なら舞台の右上に寄せ、
- * 複数なら横幅いっぱいに並べて 3D の絵を小さくする。
- */
+/** 敵を左から順に横一列に並べる。1 体なら右に寄せ、自分と斜めに向かい合う。 */
 export function EnemyRow({
   enemies,
   events,
   defeatDelay,
   agentId,
+  figureSize,
+  compact,
+  soloWidthRatio,
   previews,
   highlighted,
   onSelect,
   registerView,
 }: EnemyRowProps) {
-  const [width, setWidth] = useState(0);
   const solo = enemies.length === 1;
-  const perEnemy = width / enemies.length - SPACING.sm;
-  const figureSize = solo || width === 0 ? ACTOR_FIGURE.size : Math.min(ACTOR_FIGURE.size, perEnemy);
-
   return (
-    <View
-      style={[styles.row, solo && styles.solo]}
-      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-    >
+    <View style={[styles.row, solo && { alignSelf: 'flex-end', width: `${soloWidthRatio * 100}%` }]}>
       {enemies.map((enemy) => (
         <EnemyPanel
           key={enemy.uid}
@@ -48,6 +45,7 @@ export function EnemyRow({
           defeatDelay={defeatDelay}
           agentId={agentId}
           figureSize={figureSize}
+          compact={compact}
           preview={previews.find((p) => p.uid === enemy.uid)}
           highlighted={highlighted.includes(enemy.uid)}
           onSelect={onSelect ? () => onSelect(enemy.uid) : undefined}
@@ -65,6 +63,4 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: SPACING.sm,
   },
-  /** 1 体だけのときは右上に寄せ、左下のエージェントと斜めに向かい合う。 */
-  solo: { alignSelf: 'flex-end', width: '60%' },
 });

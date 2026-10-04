@@ -8,6 +8,7 @@ import { currentAct } from '../../logic/run';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { DeckButton } from '../cards/DeckButton';
 import { ItemBar } from '../items/ItemBar';
+import { ScreenScroll } from '../layout/ScreenScroll';
 import { GoldBadge } from '../run/GoldBadge';
 
 type BlessingScreenProps = {
@@ -22,7 +23,7 @@ export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
   const act = currentAct(run);
 
   return (
-    <View style={styles.root}>
+    <ScreenScroll contentStyle={styles.root}>
       <View style={styles.hud}>
         <ItemBar relics={run.relics} potions={run.potions} />
         <View style={styles.status}>
@@ -67,7 +68,7 @@ export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
       >
         <Text style={styles.confirmText}>この恩恵を受ける</Text>
       </Pressable>
-    </View>
+    </ScreenScroll>
   );
 }
 
@@ -94,7 +95,7 @@ function BlessingOption({ blessing, selected, onPress }: BlessingOptionProps) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, padding: SPACING.lg, gap: SPACING.md },
+  root: { padding: SPACING.lg, gap: SPACING.md },
   hud: { gap: SPACING.sm, zIndex: 10 },
   status: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   statusRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },

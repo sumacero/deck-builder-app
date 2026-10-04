@@ -166,7 +166,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       maxHp: enemy.maxHp,
       block: 0,
       moves: enemy.moves,
-      moveIndex: 0,
+      // 群れで同じ行動を一斉にしないよう、並び順で行動パターンの開始位置をずらす。
+      moveIndex: index % enemy.moves.length,
     })),
     drawPerTurn: setup.drawPerTurn,
     drawPile: shuffled.items,
@@ -180,9 +181,18 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
     events: [],
     nextEventId: 0,
   };
-  const names = setup.enemies.map((enemy) => enemy.name).join('と');
+  const names = groupedNames(setup.enemies.map((enemy) => enemy.name));
   const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
   return triggerRelics(firstTurn, 'combatStart');
+}
+
+/** ["小スライム", "苔の芽", "小スライム"] → "小スライム×2と苔の芽" */
+function groupedNames(names: string[]): string {
+  const counts = new Map<string, number>();
+  for (const name of names) counts.set(name, (counts.get(name) ?? 0) + 1);
+  return [...counts]
+    .map(([name, count]) => (count > 1 ? `${name}×${count}` : name))
+    .join('と');
 }
 
 /** damage が当たる先。敵 1 体か、生きている敵全員。 */

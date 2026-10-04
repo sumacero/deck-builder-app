@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  type LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import type { CombatSetup, DamagePreview, EnemyUid } from '../../domain/combat';
 import type { CombatResult } from '../../domain/run';
 import { useBattleMusic } from '../../hooks/useBattleMusic';
 import { useCombat } from '../../hooks/useCombat';
 import { eventsDuration } from '../../hooks/useCombatEvents';
 import { useCombatSounds } from '../../hooks/useCombatSounds';
+import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
 import { livingEnemies } from '../../logic/combat';
-import { COLORS, MOTION, RADIUS, SPACING } from '../../theme';
+import { COLORS, COMBAT_LAYOUT, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
 import { CardView } from '../cards/CardView';
@@ -23,6 +32,7 @@ import { EnemyRow } from './EnemyRow';
 import { EnergyOrb } from './EnergyOrb';
 import { Hand } from './Hand';
 import { PlayerPanel } from './PlayerPanel';
+import { landscapeFigures, portraitFigures, type Size } from './stageLayout';
 import { useCardDrag } from './useCardDrag';
 
 type OpenPile = 'draw' | 'discard' | null;
@@ -38,6 +48,17 @@ type CombatScreenProps = {
 /** カードをタップしたときに出す、使い方の案内の表示時間（ミリ秒）。 */
 const TAP_HINT_MS = 1800;
 
+const NO_SIZE: Size = { width: 0, height: 0 };
+
+const sizeOf = (e: LayoutChangeEvent): Size => ({
+  width: e.nativeEvent.layout.width,
+  height: e.nativeEvent.layout.height,
+});
+
+/**
+ * 戦闘画面。縦向きは上に敵・左下に自分・下に手札。
+ * 横向きは左の列に所持品・自分・エナジー、右に敵と手札を置く。
+ */
 export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps) {
   const {
     state,
@@ -49,9 +70,13 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     potionNeedsTarget,
     previewDamage,
   } = useCombat(setup, seed);
+  const landscape = useIsLandscape();
+  const { height: windowHeight } = useWindowDimensions();
   const [openPile, setOpenPile] = useState<OpenPile>(null);
   const [pendingPotion, setPendingPotion] = useState<number | null>(null);
   const [tapHint, setTapHint] = useState(false);
+  const [stageSize, setStageSize] = useState(NO_SIZE);
+  const [playerSlotSize, setPlayerSlotSize] = useState(NO_SIZE);
   const inProgress = state.status === 'playerTurn';
   const effectsTime = eventsDuration(state.events);
   useCombatSounds(state.events);
@@ -67,117 +92,176 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     return () => clearTimeout(timer);
   }, [tapHint]);
 
+  const enemyCount = state.enemies.length;
+  const figures = landscape
+    ? landscapeFigures(stageSize, playerSlotSize, enemyCount)
+    : portraitFigures(stageSize, enemyCount);
+
   const previews: DamagePreview[] =
-    drag && hover && hover.kind !== 'self'
+    drag && hover
       ? previewDamage(drag.instanceId, hover.kind === 'enemy' ? hover.uid : undefined)
       : [];
-  const highlighted = highlightedEnemies(
-    hover,
-    livingEnemies(state).map((enemy) => enemy.uid),
-  );
+  const living = livingEnemies(state).map((enemy) => enemy.uid);
 
   const onDrink = (slot: number) => {
     if (potionNeedsTarget(slot)) setPendingPotion(slot);
     else drinkPotion(slot);
   };
+  const onTapCard = (instanceId: string) => {
+    const instance = state.hand.find((c) => c.instanceId === instanceId);
+    if (instance?.card.target !== 'self') {
+      setTapHint(true);
+      return;
+    }
+    if (isPlayable(instanceId)) playCard(instanceId);
+  };
   const hint = hintText({
     dragging: drag !== null,
     hover,
-    needsEnemy: drag?.card.target === 'enemy' && livingEnemies(state).length > 1,
+    needsEnemy: drag?.card.target === 'enemy' && living.length > 1,
     tapHint,
   });
+
+  const itemBar = (
+    <ItemBar
+      relics={state.relics}
+      potions={state.potions}
+      events={state.events}
+      potionUse={{ isDrinkable, onDrink }}
+    />
+  );
+  const enemyRow = (
+    <EnemyRow
+      enemies={state.enemies}
+      events={state.events}
+      defeatDelay={effectsTime}
+      agentId={setup.agent.id}
+      figureSize={figures.enemy}
+      compact={figures.compact}
+      soloWidthRatio={landscape ? 0.5 : COMBAT_LAYOUT.soloEnemyWidthRatio}
+      previews={previews}
+      highlighted={highlightedEnemies(hover, living)}
+      onSelect={
+        pendingPotion === null
+          ? undefined
+          : (uid: EnemyUid) => {
+              drinkPotion(pendingPotion, uid);
+              setPendingPotion(null);
+            }
+      }
+      registerView={bindEnemy}
+    />
+  );
+  const playerPanel = (
+    <PlayerPanel
+      agent={setup.agent}
+      player={state.player}
+      events={state.events}
+      defeatDelay={effectsTime}
+      figureSize={figures.player}
+    />
+  );
+  const hintRow =
+    pendingPotion !== null ? (
+      <View style={styles.hintRow}>
+        <Text style={styles.hint}>ポーションを使う敵をタップ</Text>
+        <Pressable
+          onPress={() => setPendingPotion(null)}
+          style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
+        >
+          <Text style={styles.cancelText}>やめる</Text>
+        </Pressable>
+      </View>
+    ) : (
+      hint && (
+        <View style={[styles.hintRow, styles.passThrough]}>
+          <Text style={styles.hint}>{hint}</Text>
+        </View>
+      )
+    );
+  const energyOrb = <EnergyOrb energy={state.player.energy} maxEnergy={state.player.maxEnergy} />;
+  const turnLabel = <Text style={styles.turn}>TURN {state.turn}</Text>;
+  const hand = (
+    <Hand
+      cards={state.hand}
+      isPlayable={isPlayable}
+      draggingId={drag?.instanceId ?? null}
+      viewRef={bindHand}
+      onCardWidth={setCardWidth}
+      maxCardHeight={landscape ? windowHeight * COMBAT_LAYOUT.landscapeCardHeightRatio : undefined}
+      {...handlers}
+      onTap={onTapCard}
+      style={landscape ? styles.landscapeHand : styles.portraitHand}
+    />
+  );
+  const footer = (
+    <CombatFooter
+      drawCount={state.drawPile.length}
+      discardCount={state.discardPile.length}
+      canEndTurn={inProgress}
+      onEndTurn={endTurn}
+      onOpenDraw={() => setOpenPile('draw')}
+      onOpenDiscard={() => setOpenPile('discard')}
+      vertical={landscape}
+    />
+  );
 
   return (
     <SceneBackground actId={actId} scene="combat">
       <View
         ref={bindContainer}
         onLayout={measureContainer}
-        style={styles.container}
+        style={landscape ? styles.landscape : styles.portrait}
       >
-        <ItemBar
-          relics={state.relics}
-          potions={state.potions}
-          events={state.events}
-          potionUse={{ isDrinkable, onDrink }}
-        />
-        <View style={styles.turnRow}>
-          <Text style={styles.turn}>TURN {state.turn}</Text>
-          <View style={styles.deck}>
-            <DeckButton deck={setup.deck} />
-          </View>
-        </View>
-        <View style={styles.stage}>
-          <EnemyRow
-            enemies={state.enemies}
-            events={state.events}
-            defeatDelay={effectsTime}
-            agentId={setup.agent.id}
-            previews={previews}
-            highlighted={highlighted}
-            onSelect={
-              pendingPotion === null
-                ? undefined
-                : (uid: EnemyUid) => {
-                    drinkPotion(pendingPotion, uid);
-                    setPendingPotion(null);
-                  }
-            }
-            registerView={bindEnemy}
-          />
-          <View style={styles.playerSlot}>
-            <PlayerPanel
-              agent={setup.agent}
-              player={state.player}
-              events={state.events}
-              defeatDelay={effectsTime}
-              highlighted={hover?.kind === 'self'}
-            />
-          </View>
-          {pendingPotion !== null ? (
-            <View style={styles.hintRow}>
-              <Text style={styles.hint}>ポーションを使う敵をタップ</Text>
-              <Pressable
-                onPress={() => setPendingPotion(null)}
-                style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
-              >
-                <Text style={styles.cancelText}>やめる</Text>
-              </Pressable>
-            </View>
-          ) : (
-            hint && (
-              <View style={[styles.hintRow, styles.passThrough]}>
-                <Text style={styles.hint}>{hint}</Text>
+        {landscape ? (
+          <>
+            <View style={styles.side}>
+              {itemBar}
+              <View style={styles.sidePlayer} onLayout={(e) => setPlayerSlotSize(sizeOf(e))}>
+                {playerPanel}
               </View>
-            )
-          )}
-        </View>
-        <View style={styles.infoRow}>
-          <EnergyOrb energy={state.player.energy} maxEnergy={state.player.maxEnergy} />
-          <CombatLog entries={state.log} />
-        </View>
-        <Hand
-          cards={state.hand}
-          isPlayable={isPlayable}
-          draggingId={drag?.instanceId ?? null}
-          viewRef={bindHand}
-          onCardWidth={setCardWidth}
-          {...handlers}
-          onTap={() => setTapHint(true)}
-          style={styles.hand}
-        />
-        <CombatFooter
-          drawCount={state.drawPile.length}
-          discardCount={state.discardPile.length}
-          canEndTurn={inProgress}
-          onEndTurn={endTurn}
-          onOpenDraw={() => setOpenPile('draw')}
-          onOpenDiscard={() => setOpenPile('discard')}
-        />
+              <View style={styles.sideBottom}>
+                {energyOrb}
+                {turnLabel}
+                <DeckButton deck={setup.deck} />
+              </View>
+            </View>
+            <View style={styles.main}>
+              <View style={styles.landscapeStage} onLayout={(e) => setStageSize(sizeOf(e))}>
+                {enemyRow}
+                {hintRow}
+              </View>
+              <View style={styles.bottomRow}>
+                {hand}
+                <View style={styles.landscapeFooter}>{footer}</View>
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            {itemBar}
+            <View style={styles.turnRow}>
+              {turnLabel}
+              <View style={styles.deck}>
+                <DeckButton deck={setup.deck} />
+              </View>
+            </View>
+            <View style={styles.portraitStage} onLayout={(e) => setStageSize(sizeOf(e))}>
+              {enemyRow}
+              <View style={styles.playerSlot}>{playerPanel}</View>
+              {hintRow}
+            </View>
+            <View style={styles.infoRow}>
+              {energyOrb}
+              <CombatLog entries={state.log} />
+            </View>
+            {hand}
+            {footer}
+          </>
+        )}
         <DamageVignette events={state.events} />
         {drag && (
-          <Animated.View
-            style={[styles.ghost, { transform: ghost.getTranslateTransform() }]}
-          >
+          <Animated.View style={[styles.ghost, { transform: ghost.getTranslateTransform() }]}>
             <CardView
               card={drag.card}
               width={cardWidth}
@@ -236,19 +320,28 @@ function hintText(options: {
     if (options.hover) return '離して使う';
     return options.needsEnemy ? '狙う敵の上で離す' : 'もっと上まで持ち上げて離す';
   }
-  return options.tapHint ? 'カードは上へスワイプして使う' : null;
+  return options.tapHint ? '攻撃カードは敵へスワイプして使う' : null;
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: SPACING.lg, gap: SPACING.md },
-  /** 手札は画面の左右いっぱいまで使う。 */
-  hand: { marginHorizontal: -SPACING.lg },
+  portrait: { flex: 1, padding: SPACING.lg, gap: SPACING.md },
+  landscape: { flex: 1, flexDirection: 'row', padding: SPACING.sm, gap: SPACING.md },
+  /** 縦向きの手札は画面の左右いっぱいまで使う。 */
+  portraitHand: { marginHorizontal: -SPACING.lg },
+  landscapeHand: { flex: 1 },
   turnRow: { justifyContent: 'center' },
   /** 上に敵、左下にエージェント。斜めに向かい合って画面を広く使う。 */
-  stage: { flex: 1, justifyContent: 'space-between', paddingBottom: SPACING.sm },
-  playerSlot: { alignSelf: 'flex-start', width: '60%' },
+  portraitStage: { flex: 1, justifyContent: 'space-between', paddingBottom: SPACING.sm },
+  playerSlot: { alignSelf: 'flex-start', width: `${COMBAT_LAYOUT.playerWidthRatio * 100}%` },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 64 },
   deck: { position: 'absolute', right: 0 },
+  side: { width: `${COMBAT_LAYOUT.landscapeSideRatio * 100}%`, gap: SPACING.sm },
+  sidePlayer: { flex: 1, justifyContent: 'center' },
+  sideBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  main: { flex: 1, gap: SPACING.xs },
+  landscapeStage: { flex: 1, justifyContent: 'center' },
+  bottomRow: { flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.sm },
+  landscapeFooter: { width: COMBAT_LAYOUT.landscapeFooterWidth, alignSelf: 'center' },
   turn: {
     color: COLORS.gold,
     fontSize: 14,

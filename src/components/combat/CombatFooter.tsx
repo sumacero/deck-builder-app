@@ -8,6 +8,8 @@ type CombatFooterProps = {
   onEndTurn: () => void;
   onOpenDraw: () => void;
   onOpenDiscard: () => void;
+  /** 横向きでは手札の横に置くので、ボタンの下に山札・捨て札を並べる。 */
+  vertical?: boolean;
 };
 
 export function CombatFooter({
@@ -17,22 +19,41 @@ export function CombatFooter({
   onEndTurn,
   onOpenDraw,
   onOpenDiscard,
+  vertical = false,
 }: CombatFooterProps) {
+  const endTurn = (
+    <Pressable
+      onPress={onEndTurn}
+      disabled={!canEndTurn}
+      style={({ pressed }) => [
+        styles.endTurn,
+        vertical ? styles.endTurnVertical : styles.endTurnRow,
+        !canEndTurn && styles.disabled,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text style={styles.endTurnText}>ターン終了</Text>
+    </Pressable>
+  );
+  const draw = <PileCounter label="山札" count={drawCount} onPress={onOpenDraw} />;
+  const discard = <PileCounter label="捨て札" count={discardCount} onPress={onOpenDiscard} />;
+
+  if (vertical) {
+    return (
+      <View style={styles.column}>
+        {endTurn}
+        <View style={styles.row}>
+          {draw}
+          {discard}
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={styles.row}>
-      <PileCounter label="山札" count={drawCount} onPress={onOpenDraw} />
-      <Pressable
-        onPress={onEndTurn}
-        disabled={!canEndTurn}
-        style={({ pressed }) => [
-          styles.endTurn,
-          !canEndTurn && styles.disabled,
-          pressed && styles.pressed,
-        ]}
-      >
-        <Text style={styles.endTurnText}>ターン終了</Text>
-      </Pressable>
-      <PileCounter label="捨て札" count={discardCount} onPress={onOpenDiscard} />
+      {draw}
+      {endTurn}
+      {discard}
     </View>
   );
 }
@@ -56,17 +77,18 @@ function PileCounter({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  column: { gap: SPACING.xs, justifyContent: 'center' },
   pile: { width: 64, alignItems: 'center', paddingVertical: SPACING.xs },
   pileCount: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
   pileLabel: { color: COLORS.textMuted, fontSize: 11 },
   endTurn: {
-    flex: 1,
-    marginHorizontal: SPACING.md,
     backgroundColor: COLORS.gold,
     borderRadius: RADIUS.md,
     paddingVertical: SPACING.md,
     alignItems: 'center',
   },
+  endTurnRow: { flex: 1, marginHorizontal: SPACING.md },
+  endTurnVertical: { alignSelf: 'stretch' },
   endTurnText: { color: COLORS.onGold, fontSize: 16, fontWeight: '800', letterSpacing: 2 },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },

@@ -5,6 +5,7 @@ import { describeRelic } from '../../logic/describe';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
+import { ScreenScroll } from '../layout/ScreenScroll';
 
 type RewardScreenProps = {
   choices: CardDefinition[];
@@ -28,7 +29,7 @@ export function RewardScreen({
   onPick,
 }: RewardScreenProps) {
   return (
-    <View style={styles.root}>
+    <ScreenScroll contentStyle={styles.root}>
       <View style={styles.corner}>
         <DeckButton deck={deck} />
       </View>
@@ -56,13 +57,12 @@ export function RewardScreen({
         <Text style={styles.skipText}>スキップ</Text>
       </Pressable>
       {toBossRelic && <Text style={styles.note}>このあとボスの宝箱からレリックを選べる</Text>}
-    </View>
+    </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
     padding: SPACING.lg,
     alignItems: 'center',
     justifyContent: 'center',

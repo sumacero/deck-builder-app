@@ -4,7 +4,7 @@ import type { CombatEvent, DamagePreview, EnemyState } from '../../domain/combat
 import { currentIntent, isAlive } from '../../logic/combat';
 import { describeIntent, ENEMY_RANK_LABEL } from '../../logic/describe';
 import { enemyStatuses, keywordsForIntent } from '../../logic/glossary';
-import { COLORS, RADIUS, SPACING } from '../../theme';
+import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { DamagePreviewBadge } from './DamagePreviewBadge';
 import { FighterEffects } from './effects/FighterEffects';
 import { FighterInfoSheet } from './FighterInfoSheet';
@@ -21,6 +21,8 @@ type EnemyPanelProps = {
   defeatDelay: number;
   agentId: string;
   figureSize: number;
+  /** 敵が多い・横向きのときの詰めた表示（技名を省き、文字を小さくする）。 */
+  compact: boolean;
   /** カードをこの敵に向けているときの実ダメージ。 */
   preview: DamagePreview | undefined;
   /** カードやポーションの対象として選ばれている（狙われている）。 */
@@ -38,6 +40,7 @@ export function EnemyPanel({
   defeatDelay,
   agentId,
   figureSize,
+  compact,
   preview,
   highlighted,
   onSelect,
@@ -56,12 +59,14 @@ export function EnemyPanel({
         onPress={onSelect ?? (() => setInfoOpen(true))}
       >
         <View style={[styles.intent, !alive && styles.hidden]}>
-          <Text style={styles.caption} numberOfLines={1}>
-            「{move.name}」
-          </Text>
+          {!compact && (
+            <Text style={styles.caption} numberOfLines={1}>
+              「{move.name}」
+            </Text>
+          )}
           <View style={styles.badges}>
             {describeIntent(move, enemy.strength).map((intent) => (
-              <IntentBadge key={intent.key} intent={intent} />
+              <IntentBadge key={intent.key} intent={intent} compact={compact} />
             ))}
           </View>
         </View>
@@ -73,22 +78,27 @@ export function EnemyPanel({
           style={styles.body}
         >
           <ActorMotion actorId={enemy.uid} events={events} agentId={agentId}>
-            <ActorFigure
-              key={enemy.uid}
-              model={ENEMY_MODELS[enemy.id]}
-              icon={enemy.icon}
-              actorId={enemy.uid}
-              events={events}
-              agentId={agentId}
-              size={figureSize}
-            />
+            {figureSize > 0 ? (
+              <ActorFigure
+                // GL の描画バッファは作成時の大きさのままなので、大きさが変わったら作り直す。
+                key={`${enemy.uid}-${figureSize}`}
+                model={ENEMY_MODELS[enemy.id]}
+                icon={enemy.icon}
+                actorId={enemy.uid}
+                events={events}
+                agentId={agentId}
+                size={figureSize}
+              />
+            ) : (
+              <View style={styles.unmeasured} />
+            )}
           </ActorMotion>
           {rankLabel && <Text style={styles.rank}>{rankLabel}</Text>}
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={[styles.name, compact && styles.compactName]} numberOfLines={1}>
             {enemy.name}
           </Text>
           <StatusRow statuses={statuses} />
-          <HpBar hp={enemy.hp} maxHp={enemy.maxHp} block={enemy.block} />
+          <HpBar hp={enemy.hp} maxHp={enemy.maxHp} block={enemy.block} compact={compact} />
         </FighterEffects>
         {preview && (
           <View style={styles.previewLayer}>
@@ -130,6 +140,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   name: { color: COLORS.text, fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  compactName: { fontSize: 11 },
+  unmeasured: { height: ACTOR_FIGURE.minSize },
   previewLayer: {
     position: 'absolute',
     left: 0,

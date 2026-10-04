@@ -483,3 +483,168 @@ export const VOID_MOTE: EnemyDefinition = {
     { id: 'scatter', name: '飛散', actions: [{ kind: 'attack', damage: 4, hits: 2 }] },
   ],
 };
+
+// ---- 群れの敵（第 1 章） ----
+
+export const MOSS_SPROUT: EnemyDefinition = {
+  id: 'moss-sprout',
+  name: '苔の芽',
+  icon: '🌱',
+  rank: 'normal',
+  maxHp: 13,
+  moves: [
+    { id: 'lash', name: 'つるの鞭', actions: [{ kind: 'attack', damage: 4, hits: 1 }] },
+    { id: 'grow', name: '根を張る', actions: [{ kind: 'block', amount: 4 }] },
+    { id: 'spores', name: '胞子', actions: [{ kind: 'attack', damage: 2, hits: 2 }] },
+  ],
+};
+
+export const CAVE_SPIDER: EnemyDefinition = {
+  id: 'cave-spider',
+  name: '洞窟グモ',
+  icon: '🕷️',
+  rank: 'normal',
+  maxHp: 16,
+  moves: [
+    { id: 'bite', name: '噛みつき', actions: [{ kind: 'attack', damage: 5, hits: 1 }] },
+    {
+      id: 'web',
+      name: '糸を張る',
+      actions: [
+        { kind: 'block', amount: 5 },
+        { kind: 'attack', damage: 2, hits: 1 },
+      ],
+    },
+    { id: 'skitter', name: '素早い連撃', actions: [{ kind: 'attack', damage: 2, hits: 3 }] },
+  ],
+};
+
+export const GOBLIN_SCOUT: EnemyDefinition = {
+  id: 'goblin-scout',
+  name: 'ゴブリン斥候',
+  icon: '👺',
+  rank: 'normal',
+  maxHp: 22,
+  moves: [
+    { id: 'stab', name: '突き', actions: [{ kind: 'attack', damage: 6, hits: 1 }] },
+    {
+      id: 'war-cry',
+      name: '雄叫び',
+      actions: [
+        { kind: 'buff', strength: 1 },
+        { kind: 'block', amount: 3 },
+      ],
+    },
+    { id: 'jab', name: '小突き', actions: [{ kind: 'attack', damage: 3, hits: 2 }] },
+  ],
+};
+
+// ---- 群れの敵（第 2 章） ----
+
+export const RUST_MITE: EnemyDefinition = {
+  id: 'rust-mite',
+  name: '錆ダニ',
+  icon: '🪲',
+  rank: 'normal',
+  maxHp: 15,
+  moves: [
+    { id: 'gnaw', name: 'かじる', actions: [{ kind: 'attack', damage: 5, hits: 1 }] },
+    { id: 'nibble', name: 'かじり続ける', actions: [{ kind: 'attack', damage: 2, hits: 3 }] },
+    {
+      id: 'shell',
+      name: '殻にこもる',
+      actions: [
+        { kind: 'block', amount: 5 },
+        { kind: 'attack', damage: 3, hits: 1 },
+      ],
+    },
+  ],
+};
+
+export const SHIELD_BEARER: EnemyDefinition = {
+  id: 'shield-bearer',
+  name: '盾持ちの兵',
+  icon: '🛡️',
+  rank: 'normal',
+  maxHp: 34,
+  moves: [
+    {
+      id: 'shield-up',
+      name: '盾を構える',
+      actions: [
+        { kind: 'block', amount: 10 },
+        { kind: 'attack', damage: 4, hits: 1 },
+      ],
+    },
+    { id: 'shield-bash', name: '盾殴り', actions: [{ kind: 'attack', damage: 10, hits: 1 }] },
+    { id: 'hold-line', name: '戦列維持', actions: [{ kind: 'block', amount: 14 }] },
+  ],
+};
+
+export const GARGOYLE_PUP: EnemyDefinition = {
+  id: 'gargoyle-pup',
+  name: '小ガーゴイル',
+  icon: '🗿',
+  rank: 'normal',
+  maxHp: 26,
+  moves: [
+    { id: 'claw', name: '石の爪', actions: [{ kind: 'attack', damage: 8, hits: 1 }] },
+    {
+      id: 'petrify',
+      name: '石化',
+      actions: [
+        { kind: 'block', amount: 8 },
+        { kind: 'attack', damage: 3, hits: 1 },
+      ],
+    },
+    { id: 'dive', name: '急降下', actions: [{ kind: 'attack', damage: 4, hits: 2 }] },
+  ],
+};
+
+// ---- 群れの敵（第 3 章） ----
+
+export const STAR_FRAGMENT: EnemyDefinition = {
+  id: 'star-fragment',
+  name: '星の欠片',
+  icon: '⭐',
+  rank: 'normal',
+  maxHp: 20,
+  moves: [
+    { id: 'shard', name: '破片', actions: [{ kind: 'attack', damage: 7, hits: 1 }] },
+    { id: 'shine', name: '輝き', actions: [{ kind: 'buff', strength: 2 }] },
+    { id: 'splinter', name: '砕け散る光', actions: [{ kind: 'attack', damage: 3, hits: 3 }] },
+  ],
+};
+
+export const NEBULA_JELLY: EnemyDefinition = {
+  id: 'nebula-jelly',
+  name: '星雲クラゲ',
+  icon: '🪼',
+  rank: 'normal',
+  maxHp: 28,
+  moves: [
+    { id: 'sting', name: '刺胞', actions: [{ kind: 'attack', damage: 3, hits: 3 }] },
+    {
+      id: 'drift',
+      name: '漂う',
+      actions: [
+        { kind: 'block', amount: 9 },
+        { kind: 'attack', damage: 4, hits: 1 },
+      ],
+    },
+    { id: 'pulse', name: '脈動', actions: [{ kind: 'attack', damage: 10, hits: 1 }] },
+  ],
+};
+
+export const COMET_HOUND: EnemyDefinition = {
+  id: 'comet-hound',
+  name: '彗星の猟犬',
+  icon: '🐺',
+  rank: 'normal',
+  maxHp: 38,
+  moves: [
+    { id: 'pounce', name: '飛びかかり', actions: [{ kind: 'attack', damage: 13, hits: 1 }] },
+    { id: 'howl', name: '遠吠え', actions: [{ kind: 'buff', strength: 3 }] },
+    { id: 'rend', name: '引き裂き', actions: [{ kind: 'attack', damage: 5, hits: 2 }] },
+  ],
+};

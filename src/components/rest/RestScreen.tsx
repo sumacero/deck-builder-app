@@ -8,6 +8,7 @@ import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardPickerModal } from '../cards/CardPickerModal';
 import { DeckButton } from '../cards/DeckButton';
 import { HpBar } from '../combat/HpBar';
+import { ScreenScroll } from '../layout/ScreenScroll';
 
 type RestScreenProps = {
   run: RunState;
@@ -21,7 +22,7 @@ export function RestScreen({ run, actions }: RestScreenProps) {
   const upgradable = hasUpgradableCard(run);
 
   return (
-    <View style={styles.root}>
+    <ScreenScroll contentStyle={styles.root}>
       <View style={styles.corner}>
         <DeckButton deck={run.deck} />
       </View>
@@ -57,7 +58,7 @@ export function RestScreen({ run, actions }: RestScreenProps) {
           onCancel={() => setPicking(false)}
         />
       )}
-    </View>
+    </ScreenScroll>
   );
 }
 
@@ -85,7 +86,6 @@ function RestOption({ icon, label, detail, disabled = false, onPress }: RestOpti
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
     padding: SPACING.lg,
     alignItems: 'center',
     justifyContent: 'center',

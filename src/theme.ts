@@ -95,10 +95,36 @@ export const RADIUS = {
 /** 戦闘画面のキャラクター（3D 表示）。size は描画領域の一辺、duration はミリ秒。 */
 export const ACTOR_FIGURE = {
   size: 128,
+  /** 敵が多い・画面が低いときに縮めても、これより小さくはしない。 */
+  minSize: 48,
+  /** サイズはこの刻みに丸める（わずかなレイアウトの揺れで 3D を作り直さないため）。 */
+  step: 8,
   /** 行動したときに相手の方へ体を傾ける時間。 */
   leanDuration: 320,
   /** 被弾してのけぞる時間。 */
   recoilDuration: 280,
+} as const;
+
+/**
+ * 戦闘画面の舞台の割り付け。chrome はキャラの絵以外（行動予告・名前・HP など）が使う高さの目安。
+ * 敵が compactEnemyCount 体以上いるときと横向きのときは、文字を小さくした詰めた表示にする。
+ */
+export const COMBAT_LAYOUT = {
+  enemyChrome: 130,
+  compactEnemyChrome: 108,
+  playerChrome: 84,
+  /** パネルの枠線と内側の余白の合計（左右）。 */
+  panelInset: 12,
+  compactEnemyCount: 3,
+  /** 縦向きで敵が 1 体のとき・自分の、舞台の幅に対する割合。 */
+  soloEnemyWidthRatio: 0.6,
+  playerWidthRatio: 0.6,
+  /** 横向きの左の列（所持品・自分・エナジー）の幅の割合。 */
+  landscapeSideRatio: 0.27,
+  /** 横向きのとき、手札のカードの高さを画面の高さのこの割合までにする。 */
+  landscapeCardHeightRatio: 0.3,
+  /** 横向きでターン終了ボタンと山札・捨て札を縦に積む列の幅。 */
+  landscapeFooterWidth: 136,
 } as const;
 
 /** 手札の並べ方。visibleCards 枚がちょうど画面幅に収まるようにカード幅を決める。 */

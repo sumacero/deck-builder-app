@@ -4,6 +4,7 @@ import type { RelicDefinition } from '../../domain/relic';
 import type { RunState } from '../../domain/run';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { RelicCard } from '../items/RelicCard';
+import { ScreenScroll } from '../layout/ScreenScroll';
 import { RunHud } from './RunHud';
 
 type BossRelicScreenProps = {
@@ -18,7 +19,7 @@ export function BossRelicScreen({ run, choices, onChoose }: BossRelicScreenProps
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
-    <View style={styles.root}>
+    <ScreenScroll contentStyle={styles.root}>
       <RunHud run={run} />
 
       <View style={styles.body}>
@@ -57,12 +58,12 @@ export function BossRelicScreen({ run, choices, onChoose }: BossRelicScreenProps
           <Text style={styles.skipText}>何も取らない</Text>
         </Pressable>
       </View>
-    </View>
+    </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, padding: SPACING.lg, gap: SPACING.md },
+  root: { padding: SPACING.lg, gap: SPACING.md },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING.sm },
   chest: { fontSize: 56 },
   title: { color: COLORS.gold, fontSize: 24, fontWeight: '800', letterSpacing: 4 },

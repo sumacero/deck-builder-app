@@ -6,13 +6,15 @@ type HpBarProps = {
   hp: number;
   maxHp: number;
   block: number;
+  /** 敵が多いときの細い表示。 */
+  compact?: boolean;
 };
 
 const toWidth = (value: Animated.Value) =>
   value.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
 /** 減った分は明るい残像が少し遅れて追いかける。 */
-export function HpBar({ hp, maxHp, block }: HpBarProps) {
+export function HpBar({ hp, maxHp, block, compact = false }: HpBarProps) {
   const ratio = maxHp > 0 ? hp / maxHp : 0;
   const [fill] = useState(() => new Animated.Value(ratio));
   const [trail] = useState(() => new Animated.Value(ratio));
@@ -32,17 +34,20 @@ export function HpBar({ hp, maxHp, block }: HpBarProps) {
   }, [ratio, fill, trail]);
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact && styles.compactRow]}>
       {block > 0 && (
-        <View style={styles.blockBadge}>
-          <Text style={styles.blockText}>🛡️ {block}</Text>
+        <View style={[styles.blockBadge, compact && styles.compactBlockBadge]}>
+          <Text style={[styles.blockText, compact && styles.compactText]}>
+            🛡️{compact ? '' : ' '}
+            {block}
+          </Text>
         </View>
       )}
-      <View style={styles.track}>
+      <View style={[styles.track, compact && styles.compactTrack]}>
         <Animated.View style={[styles.bar, styles.trail, { width: toWidth(trail) }]} />
         <Animated.View style={[styles.bar, styles.fill, { width: toWidth(fill) }]} />
-        <Text style={styles.label}>
-          {hp} / {maxHp}
+        <Text style={[styles.label, compact && styles.compactLabel]}>
+          {compact ? `${hp}/${maxHp}` : `${hp} / ${maxHp}`}
         </Text>
       </View>
     </View>
@@ -50,9 +55,15 @@ export function HpBar({ hp, maxHp, block }: HpBarProps) {
 }
 
 const BAR_HEIGHT = 18;
+const COMPACT_BAR_HEIGHT = 14;
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  compactRow: { gap: 2 },
+  compactTrack: { height: COMPACT_BAR_HEIGHT },
+  compactLabel: { fontSize: 10, lineHeight: COMPACT_BAR_HEIGHT },
+  compactBlockBadge: { paddingHorizontal: 3, paddingVertical: 0 },
+  compactText: { fontSize: 11 },
   track: {
     flex: 1,
     height: BAR_HEIGHT,

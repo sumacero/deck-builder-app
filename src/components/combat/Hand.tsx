@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -21,6 +21,8 @@ type HandProps = CardDragHandlers & {
   viewRef: (node: View | null) => void;
   /** カード幅が決まったら知らせる（持ち上げたカードを同じ大きさで描くため）。 */
   onCardWidth: (width: number) => void;
+  /** カードの高さの上限（横向きで画面が低いとき）。 */
+  maxCardHeight?: number;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -31,22 +33,25 @@ export function Hand({
   draggingId,
   viewRef,
   onCardWidth,
+  maxCardHeight = Number.POSITIVE_INFINITY,
   style,
   ...handlers
 }: HandProps) {
   const [width, setWidth] = useState(0);
-  const cardWidth = handCardWidth(width);
-  const overflowing = cards.length > HAND_LAYOUT.visibleCards;
+  const cardWidth = handCardWidth(width, maxCardHeight);
+  const fitting = Math.floor(
+    (width - HAND_LAYOUT.edgePadding * 2 + HAND_LAYOUT.gap) / (cardWidth + HAND_LAYOUT.gap),
+  );
+  const overflowing = cards.length > fitting;
+  useEffect(() => {
+    onCardWidth(cardWidth);
+  }, [cardWidth, onCardWidth]);
 
   return (
     <View
       ref={viewRef}
       style={[styles.container, { minHeight: cardWidth * HAND_LAYOUT.aspectRatio }, style]}
-      onLayout={(e) => {
-        const next = e.nativeEvent.layout.width;
-        setWidth(next);
-        onCardWidth(handCardWidth(next));
-      }}
+      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
     >
       {cards.length === 0 ? (
         <Text style={styles.emptyText}>手札がありません</Text>
