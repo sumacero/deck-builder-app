@@ -1,6 +1,8 @@
 import { View } from 'react-native';
 import type { RunState } from '../../domain/run';
 import { findNode, reachableNodeIds } from '../../logic/run';
+import { MAP_LAYOUT } from '../../theme';
+import { MapCurrentMarker } from './MapCurrentMarker';
 import { MapEdge } from './MapEdge';
 import type { MapLayout } from './mapLayout';
 import { MapNodeView } from './MapNodeView';
@@ -19,6 +21,8 @@ type MapCanvasProps = {
 export function MapCanvas({ run, layout, ended, selectedId, onMove }: MapCanvasProps) {
   const reachable = new Set(reachableNodeIds(run));
   const visited = new Set(run.visitedNodeIds);
+  const current = run.currentNodeId ? findNode(run.map, run.currentNodeId) : undefined;
+  const currentPosition = current ? layout.positions[current.id] : undefined;
   return (
     <View style={{ width: layout.width, height: layout.height }}>
       {run.map.nodes.flatMap((node) =>
@@ -53,6 +57,13 @@ export function MapCanvas({ run, layout, ended, selectedId, onMove }: MapCanvasP
           />
         );
       })}
+      {current && currentPosition && (
+        <MapCurrentMarker
+          position={currentPosition}
+          nodeSize={current.type === 'boss' ? MAP_LAYOUT.bossSize : MAP_LAYOUT.nodeSize}
+          icon={run.agent.icon}
+        />
+      )}
     </View>
   );
 }

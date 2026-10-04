@@ -19,7 +19,7 @@ type MapNodeViewProps = {
 /** 光の輪がどこまで広がるか（マスの大きさに対する倍率）。 */
 const RIPPLE_SCALE = 2.8;
 
-/** 進めるマスは脈打つ。今いるマスは金枠。 */
+/** 進めるマスは脈打つ。今いるマスは金色の下地（目印は MapCurrentMarker）。 */
 export function MapNodeView({
   node,
   position,
@@ -132,7 +132,7 @@ export function MapNodeView({
         style={[
           styles.node,
           {
-            backgroundColor: selected ? COLORS.goldDark : COLORS.panel,
+            backgroundColor: selected || current ? COLORS.goldDark : COLORS.panel,
             borderColor: current || reachable || selected ? COLORS.gold : color,
             borderWidth: current || reachable || selected ? 3 : 2,
             opacity: visited && !current && !reachable && !selected ? 0.55 : 1,

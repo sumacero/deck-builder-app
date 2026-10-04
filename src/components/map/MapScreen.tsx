@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { type LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { playSound } from '../../audio/soundPlayer';
+import type { GameMap } from '../../domain/map';
 import type { RunState } from '../../domain/run';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { currentAct, mapHint, reachedFloor } from '../../logic/run';
@@ -34,12 +35,12 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
   const landscape = useIsLandscape();
   const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [contentSize, setContentSize] = useState<Size>({ width: 0, height: 0 });
   const scrollRef = useRef<ScrollView>(null);
-  const aligned = useRef(false);
   const ended = run.phase.kind === 'gameOver' || run.phase.kind === 'cleared';
   const act = currentAct(run);
 
-  const layout = mapLayoutFor(run, viewport, landscape);
+  const layout = useMemo(() => mapLayoutFor(run.map, viewport, landscape), [run.map, viewport, landscape]);
 
   /** 押したマスを光らせ、効果音と暗転のあとで移動する。演出中はほかのマスを押せない。 */
   const selectNode = (nodeId: string) => {
@@ -54,32 +55,41 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
     return () => clearTimeout(timer);
   }, [selectedId, onMove]);
 
-  /** 今いるマスが、この先のマスが広く見える位置に来るようにスクロールする。 */
-  const alignScroll = () => {
-    if (!layout || aligned.current) return;
-    aligned.current = true;
+  /**
+   * 今いるマスが、この先のマスが広く見える位置に来るようにスクロールする。
+   * 表示領域は HUD の高さが決まるまで何度か変わるので、一度きりにせず、表示領域・中身の大きさ・
+   * 今いるマスが変わるたびに合わせ直す。中身の配置が終わる前の scrollTo は無視されるので 1 フレーム待つ。
+   */
+  useEffect(() => {
+    if (!layout || contentSize.width === 0 || contentSize.height === 0) return;
     const current = run.currentNodeId ? layout.positions[run.currentNodeId] : undefined;
-    if (landscape) {
-      const target = current ? current.x - MAP_LAYOUT.currentNodeLeftOffset : 0;
-      const maxScroll = Math.max(0, layout.width - viewport.width);
-      scrollRef.current?.scrollTo({ x: clamp(target, 0, maxScroll), animated: false });
-      return;
-    }
-    if (!current) {
-      scrollRef.current?.scrollToEnd({ animated: false });
-      return;
-    }
-    const maxScroll = Math.max(0, layout.height - viewport.height);
-    const target = current.y - (viewport.height - MAP_LAYOUT.currentNodeBottomOffset);
-    scrollRef.current?.scrollTo({ y: clamp(target, 0, maxScroll), animated: false });
-  };
+    const frame = requestAnimationFrame(() => {
+      if (landscape) {
+        const target = current ? current.x - MAP_LAYOUT.currentNodeLeftOffset : 0;
+        const maxScroll = Math.max(0, contentSize.width - viewport.width);
+        scrollRef.current?.scrollTo({ x: clamp(target, 0, maxScroll), animated: false });
+        return;
+      }
+      if (!current) {
+        scrollRef.current?.scrollToEnd({ animated: false });
+        return;
+      }
+      const maxScroll = Math.max(0, contentSize.height - viewport.height);
+      const target = current.y - viewport.height * MAP_LAYOUT.currentNodeViewportRatio;
+      scrollRef.current?.scrollTo({ y: clamp(target, 0, maxScroll), animated: false });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [layout, contentSize, viewport, landscape, run.currentNodeId]);
 
   const onViewportLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     if (width === viewport.width && height === viewport.height) return;
-    // 向きが変わったら、今いるマスへ合わせ直す。
-    aligned.current = false;
     setViewport({ width, height });
+  };
+
+  const onContentSizeChange = (width: number, height: number) => {
+    if (width === contentSize.width && height === contentSize.height) return;
+    setContentSize({ width, height });
   };
 
   const itemBar = <ItemBar relics={run.relics} potions={run.potions} />;
@@ -108,7 +118,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
       contentContainerStyle={landscape ? styles.landscapeContent : styles.portraitContent}
       showsHorizontalScrollIndicator={false}
       onLayout={onViewportLayout}
-      onContentSizeChange={alignScroll}
+      onContentSizeChange={onContentSizeChange}
     >
       {layout && (
         <MapCanvas
@@ -181,12 +191,12 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
   );
 }
 
-function mapLayoutFor(run: RunState, viewport: Size, landscape: boolean): MapLayout | null {
+function mapLayoutFor(map: GameMap, viewport: Size, landscape: boolean): MapLayout | null {
   if (viewport.width === 0 || viewport.height === 0) return null;
   if (landscape) {
-    return layoutMapHorizontal(run.map, viewport.height - SPACING.sm * 2, viewport.width);
+    return layoutMapHorizontal(map, viewport.height - SPACING.sm * 2, viewport.width);
   }
-  return layoutMap(run.map, viewport.width - SPACING.lg * 2);
+  return layoutMap(map, viewport.width - SPACING.lg * 2);
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));

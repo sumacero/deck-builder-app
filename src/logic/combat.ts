@@ -20,7 +20,14 @@ import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
 import type { DebuffId, PowerId } from '../domain/status';
-import { affinityMultiplier, cardAttributes, hasAdvantage, weaknessesOf } from './attribute';
+import {
+  affinityMultiplier,
+  cardAttributes,
+  ENEMY_AFFINITY_MULTIPLIER,
+  enemyAffinity,
+  hasAdvantage,
+  weaknessesOf,
+} from './attribute';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import { SLEEP_MOVE, traitOf } from './enemyTraits';
@@ -877,7 +884,7 @@ export function previewCardDamage(
 
 /** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
 export function enemyAttackDamage(enemy: EnemyState, base: number, player: PlayerState): number {
-  const affinity = affinityMultiplier(enemy.attribute ? [enemy.attribute] : [], player.attribute);
+  const affinity = ENEMY_AFFINITY_MULTIPLIER[enemyAffinity(enemy.attribute, player.attribute)];
   return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses, affinity);
 }
 
@@ -904,13 +911,15 @@ function applyEnemyAction(
   switch (action.kind) {
     case 'attack': {
       const amount = enemyAttackDamage(enemy, action.damage, state.player);
-      const weak = hasAdvantage(enemy.attribute ? [enemy.attribute] : [], state.player.attribute);
+      const affinity = enemyAffinity(enemy.attribute, state.player.attribute);
+      const weak = affinity === 'weak';
+      const note = weak ? '（弱点）' : affinity === 'resist' ? '（相性で軽減）' : '';
       let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
         next = act(next);
         const result = applyDamage(next.player, amount);
         next = withEvent(
-          withLog({ ...next, player: result.target }, formatHit('あなた', result) + (weak ? '（弱点）' : '')),
+          withLog({ ...next, player: result.target }, formatHit('あなた', result) + note),
           {
             kind: 'hit',
             target: 'player',

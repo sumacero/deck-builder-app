@@ -74,8 +74,14 @@ export const MAP_LAYOUT = {
   jitter: 8,
   dotSpacing: 9,
   dotSize: 4,
-  /** マップを開いたとき、今いるマスを表示領域の下端からこれだけ上に置く。 */
-  currentNodeBottomOffset: 80,
+  /** マップを開いたとき、今いるマスを表示領域の上からこの割合の位置に置く（上の、この先のマスを広く見せる）。 */
+  currentNodeViewportRatio: 0.7,
+  /** 今いるマスの目印: 輪とマスの隙間、ピンの大きさ・マスとの隙間・弾む高さ。 */
+  markerRingPadding: 7,
+  markerWidth: 76,
+  markerHeight: 26,
+  markerGap: 4,
+  markerBob: 4,
   /** 横向き: 左右の余白、階の間隔の下限（画面が狭いときはスクロール）、今いるマスを左端からどれだけ右に置くか。 */
   horizontalPadding: 48,
   minFloorSpacing: 60,
@@ -99,6 +105,8 @@ export const MOTION = {
   hpTrail: 400,
   defeat: 700,
   mapPulse: 650,
+  /** マップの「現在地」のピンが上がる（下がる）時間。 */
+  mapMarkerBob: 700,
   resultFadeIn: 400,
   resultExtraDelay: 600,
   /** 斬撃・盾などのエフェクト絵文字が出て消えるまで。 */

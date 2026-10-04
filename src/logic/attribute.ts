@@ -11,7 +11,7 @@ export const STRONG_AGAINST: Record<Attribute, Attribute> = {
   fire: 'grass',
 };
 
-/** 相性で有利な攻撃のダメージ倍率（攻めでも受けでも同じ）。 */
+/** 相性で有利な攻撃のダメージ倍率（あなたの攻撃でも敵の攻撃でも同じ）。 */
 export const ADVANTAGE_MULTIPLIER = 1.25;
 
 /** その属性の相手の弱点（それに強い属性）。無属性なら弱点なし。 */
@@ -27,6 +27,29 @@ export const hasAdvantage = (attacking: readonly Attribute[], defending: Attribu
 /** 相性によるダメージ倍率。 */
 export const affinityMultiplier = (attacking: readonly Attribute[], defending: Attribute | null | undefined) =>
   hasAdvantage(attacking, defending) ? ADVANTAGE_MULTIPLIER : 1;
+
+/** 不利な属性の敵から受けるダメージの倍率（あなたの属性が敵の属性に強いとき）。 */
+export const RESIST_MULTIPLIER = 0.8;
+
+/** 敵の攻撃の相性。weak = 敵が有利（あなたの弱点）、resist = あなたが有利。 */
+export type EnemyAffinity = 'weak' | 'resist' | 'neutral';
+
+/** 敵の攻撃の相性: 敵が有利なら ×1.25、あなたが有利なら ×0.8、それ以外は等倍。 */
+export function enemyAffinity(
+  enemy: Attribute | null | undefined,
+  player: Attribute | null | undefined,
+): EnemyAffinity {
+  if (!enemy || !player) return 'neutral';
+  if (STRONG_AGAINST[enemy] === player) return 'weak';
+  if (STRONG_AGAINST[player] === enemy) return 'resist';
+  return 'neutral';
+}
+
+export const ENEMY_AFFINITY_MULTIPLIER: Record<EnemyAffinity, number> = {
+  weak: ADVANTAGE_MULTIPLIER,
+  resist: RESIST_MULTIPLIER,
+  neutral: 1,
+};
 
 /** カードの攻撃の属性。秘奥義は全属性。無属性なら空。 */
 export function cardAttributes(card: CardDefinition): Attribute[] {
