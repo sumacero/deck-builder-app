@@ -3,7 +3,7 @@ import type { AgentDefinition } from './agent';
 import type { BlessingDefinition, GuideCharacter } from './blessing';
 import type { CardDefinition } from './card';
 import type { PotionSlot } from './combat';
-import type { EnemyDefinition } from './enemy';
+import type { EnemyDefinition, Encounter } from './enemy';
 import type { EventDefinition } from './event';
 import type { GameMap } from './map';
 import type { PotionDefinition } from './potion';
@@ -45,7 +45,7 @@ export type RunPhase =
   | { kind: 'blessing'; options: BlessingDefinition[] }
   | { kind: 'deckEdit'; mode: DeckEditMode }
   | { kind: 'map' }
-  | { kind: 'combat'; nodeId: string; enemy: EnemyDefinition; seed: number }
+  | { kind: 'combat'; nodeId: string; encounter: Encounter; seed: number }
   | {
       kind: 'reward';
       choices: CardDefinition[];

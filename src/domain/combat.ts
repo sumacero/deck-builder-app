@@ -18,7 +18,16 @@ export type PlayerState = Fighter & {
   endTurnBlock: number;
 };
 
+/** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
+export type EnemyUid = `enemy-${number}`;
+
+/** 戦闘に参加しているキャラクター。イベントの対象や演出の振り分けに使う。 */
+export type ActorId = 'player' | EnemyUid;
+
+export type CombatSide = 'player' | 'enemy';
+
 export type EnemyState = Fighter & {
+  uid: EnemyUid;
   id: string;
   name: string;
   icon: string;
@@ -36,18 +45,25 @@ export type CombatLogEntry = {
   text: string;
 };
 
-export type CombatTarget = 'player' | 'enemy';
-
 export type CombatEventBody =
-  | { kind: 'cardPlayed'; target: CombatTarget; cardType: CardType; motion: CardMotion }
-  /** 敵が行動した（攻撃は 1 発ごと）。target は行動した側（敵）。 */
-  | { kind: 'enemyAct'; target: CombatTarget; action: EnemyAction['kind'] }
-  | { kind: 'potionUsed'; target: CombatTarget; potionId: string }
-  | { kind: 'relicTriggered'; target: CombatTarget; relicId: string }
-  | { kind: 'hit'; target: CombatTarget; hpLoss: number; blocked: number }
-  | { kind: 'blockGain'; target: CombatTarget; amount: number }
-  | { kind: 'heal'; target: CombatTarget; amount: number }
-  | { kind: 'defeated'; target: CombatTarget };
+  /** targets はカードが狙った敵（自分に使うカードは空）。 */
+  | {
+      kind: 'cardPlayed';
+      target: 'player';
+      targets: EnemyUid[];
+      cardType: CardType;
+      motion: CardMotion;
+    }
+  /** 敵が行動した（攻撃は 1 発ごと）。target は行動した敵。 */
+  | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
+  | { kind: 'potionUsed'; target: 'player'; potionId: string }
+  | { kind: 'relicTriggered'; target: 'player'; relicId: string }
+  | { kind: 'hit'; target: ActorId; hpLoss: number; blocked: number }
+  | { kind: 'blockGain'; target: ActorId; amount: number }
+  | { kind: 'heal'; target: ActorId; amount: number }
+  | { kind: 'defeated'; target: ActorId }
+  /** 敵が全滅した。 */
+  | { kind: 'won'; target: 'player' };
 
 /** 直前の操作で起きた出来事。UI はこれを見て演出を再生する。 */
 export type CombatEvent = CombatEventBody & { id: number };
@@ -58,7 +74,10 @@ export type PotionSlot = PotionDefinition | null;
 export type CombatSetup = {
   agent: AgentDefinition;
   deck: CardDefinition[];
-  enemy: EnemyDefinition;
+  /** 左から順に並ぶ敵。 */
+  enemies: EnemyDefinition[];
+  /** 戦闘の格（通常・エリート・ボス）。BGM の切り替えに使う。 */
+  rank: EnemyRank;
   /** ラン途中の戦闘を想定し、最大 HP とは別に現在 HP を持つ。 */
   playerHp: number;
   playerMaxHp: number;
@@ -72,7 +91,8 @@ export type CombatState = {
   status: CombatStatus;
   turn: number;
   player: PlayerState;
-  enemy: EnemyState;
+  /** 倒した敵も HP 0 のまま残す（並び位置を保つため）。 */
+  enemies: EnemyState[];
   drawPerTurn: number;
   drawPile: CardInstance[];
   hand: CardInstance[];
@@ -86,4 +106,12 @@ export type CombatState = {
   /** 直前の操作 1 回分のイベント。操作のたびに作り直す。 */
   events: CombatEvent[];
   nextEventId: number;
+};
+
+/** カードを敵の上で離したときに、その敵が受ける実ダメージの予告。 */
+export type DamagePreview = {
+  uid: EnemyUid;
+  hpLoss: number;
+  blocked: number;
+  lethal: boolean;
 };

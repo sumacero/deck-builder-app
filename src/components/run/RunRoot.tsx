@@ -50,7 +50,7 @@ export function RunRoot() {
       return (
         <CombatScreen
           key={`${run.actIndex}-${run.phase.nodeId}-${run.phase.seed}`}
-          setup={buildCombatSetup(run, run.phase.enemy)}
+          setup={buildCombatSetup(run, run.phase.encounter)}
           seed={run.phase.seed}
           actId={currentAct(run).id}
           onFinish={finishCombat}

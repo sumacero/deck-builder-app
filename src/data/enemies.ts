@@ -368,3 +368,118 @@ export const VOID_KING: EnemyDefinition = {
     },
   ],
 };
+
+// ---- 群れで出てくる小型の敵（1 体ずつは弱い） ----
+
+export const SMALL_SLIME: EnemyDefinition = {
+  id: 'small-slime',
+  name: '小スライム',
+  icon: '🟢',
+  rank: 'normal',
+  maxHp: 15,
+  moves: [
+    { id: 'bump', name: 'ぶつかる', actions: [{ kind: 'attack', damage: 5, hits: 1 }] },
+    {
+      id: 'wobble',
+      name: 'ぷるぷる',
+      actions: [
+        { kind: 'block', amount: 4 },
+        { kind: 'attack', damage: 3, hits: 1 },
+      ],
+    },
+    { id: 'spit', name: '粘液飛ばし', actions: [{ kind: 'attack', damage: 3, hits: 2 }] },
+  ],
+};
+
+export const CAVE_BAT: EnemyDefinition = {
+  id: 'cave-bat',
+  name: '洞窟コウモリ',
+  icon: '🦇',
+  rank: 'normal',
+  maxHp: 12,
+  moves: [
+    { id: 'peck', name: 'ついばみ', actions: [{ kind: 'attack', damage: 3, hits: 2 }] },
+    { id: 'swoop', name: '急襲', actions: [{ kind: 'attack', damage: 6, hits: 1 }] },
+    {
+      id: 'hover',
+      name: '旋回',
+      actions: [
+        { kind: 'block', amount: 3 },
+        { kind: 'attack', damage: 2, hits: 1 },
+      ],
+    },
+  ],
+};
+
+export const BONE_ARCHER: EnemyDefinition = {
+  id: 'bone-archer',
+  name: '骸骨弓兵',
+  icon: '💀',
+  rank: 'normal',
+  maxHp: 26,
+  moves: [
+    { id: 'aimed-shot', name: '狙い撃ち', actions: [{ kind: 'attack', damage: 9, hits: 1 }] },
+    { id: 'volley', name: '連射', actions: [{ kind: 'attack', damage: 4, hits: 2 }] },
+    {
+      id: 'take-cover',
+      name: '物陰へ',
+      actions: [
+        { kind: 'block', amount: 6 },
+        { kind: 'attack', damage: 4, hits: 1 },
+      ],
+    },
+  ],
+};
+
+export const CURSED_CANDLE: EnemyDefinition = {
+  id: 'cursed-candle',
+  name: '呪いの燭台',
+  icon: '🕯️',
+  rank: 'normal',
+  maxHp: 22,
+  moves: [
+    {
+      id: 'flare',
+      name: '燃え上がり',
+      actions: [
+        { kind: 'buff', strength: 2 },
+        { kind: 'block', amount: 4 },
+      ],
+    },
+    { id: 'wax-drip', name: '蝋垂らし', actions: [{ kind: 'attack', damage: 7, hits: 1 }] },
+    { id: 'embers', name: '火の粉', actions: [{ kind: 'attack', damage: 3, hits: 3 }] },
+  ],
+};
+
+export const STAR_WISP: EnemyDefinition = {
+  id: 'star-wisp',
+  name: '星の精',
+  icon: '💫',
+  rank: 'normal',
+  maxHp: 30,
+  moves: [
+    { id: 'twinkle', name: 'またたき', actions: [{ kind: 'attack', damage: 11, hits: 1 }] },
+    { id: 'shower', name: '星の雨', actions: [{ kind: 'attack', damage: 4, hits: 3 }] },
+    {
+      id: 'glow',
+      name: '光の膜',
+      actions: [
+        { kind: 'block', amount: 8 },
+        { kind: 'attack', damage: 5, hits: 1 },
+      ],
+    },
+  ],
+};
+
+export const VOID_MOTE: EnemyDefinition = {
+  id: 'void-mote',
+  name: '虚空の粒',
+  icon: '⚫',
+  rank: 'normal',
+  maxHp: 22,
+  moves: [
+    { id: 'absorb', name: '吸収', actions: [{ kind: 'buff', strength: 2 }] },
+    { id: 'pierce', name: '貫き', actions: [{ kind: 'attack', damage: 10, hits: 1 }] },
+    { id: 'scatter', name: '飛散', actions: [{ kind: 'attack', damage: 4, hits: 2 }] },
+  ],
+};

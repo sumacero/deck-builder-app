@@ -4,6 +4,7 @@ export type KeywordId =
   | 'skill'
   | 'power'
   | 'damage'
+  | 'areaAttack'
   | 'block'
   | 'energy'
   | 'draw'

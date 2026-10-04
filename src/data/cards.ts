@@ -126,6 +126,41 @@ export const REWARD_CARDS: CardDefinition[] = [
     upgrade: { effects: [{ kind: 'damage', amount: 8 }] },
   },
   {
+    id: 'cleave',
+    name: '薙ぎ払い',
+    type: 'attack',
+    cost: 1,
+    target: 'allEnemies',
+    effects: [{ kind: 'damage', amount: 8 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 11 }] },
+  },
+  {
+    id: 'thunderclap',
+    name: '雷鳴',
+    type: 'attack',
+    cost: 1,
+    target: 'allEnemies',
+    effects: [
+      { kind: 'damage', amount: 4 },
+      { kind: 'block', amount: 4 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'damage', amount: 6 },
+        { kind: 'block', amount: 6 },
+      ],
+    },
+  },
+  {
+    id: 'whirlwind',
+    name: '旋風',
+    type: 'attack',
+    cost: 2,
+    target: 'allEnemies',
+    effects: [{ kind: 'damage', amount: 5, hits: 2 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 7, hits: 2 }] },
+  },
+  {
     id: 'shrug-it-off',
     name: '肩をすくめる',
     type: 'skill',

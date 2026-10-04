@@ -26,6 +26,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     description:
       '相手の HP を減らす。相手にブロックがあれば先にブロックが削られ、残った分だけ HP が減る。筋力の分だけ 1 回ごとに増える。',
   },
+  areaAttack: {
+    id: 'areaAttack',
+    name: '敵全体',
+    icon: '🌀',
+    description:
+      '生きている敵全員に同じダメージを与える。ブロックは敵ごとに別々に削られる。対象を選ばないので、上にスワイプするだけで使える。',
+  },
   block: {
     id: 'block',
     name: 'ブロック',

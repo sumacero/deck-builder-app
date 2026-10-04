@@ -31,6 +31,7 @@ const unique = (ids: KeywordId[]): KeywordId[] => [...new Set(ids)];
 export function keywordsForCard(card: CardDefinition): KeywordId[] {
   return unique([
     card.type,
+    ...(card.target === 'allEnemies' ? (['areaAttack'] as const) : []),
     ...card.effects.map(keywordForEffect),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),

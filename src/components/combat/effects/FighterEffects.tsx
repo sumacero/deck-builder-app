@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import type { CombatEvent, CombatTarget } from '../../../domain/combat';
+import type { ActorId, CombatEvent } from '../../../domain/combat';
 import { COLORS, MOTION, RADIUS } from '../../../theme';
 import { FloatingText, type FloatingTextTone } from './FloatingText';
 import { useCombatEvents } from '../../../hooks/useCombatEvents';
@@ -14,7 +14,7 @@ type Popup = {
 };
 
 type FighterEffectsProps = {
-  target: CombatTarget;
+  target: ActorId;
   events: CombatEvent[];
   defeated: boolean;
   defeatDelay: number;
@@ -92,6 +92,7 @@ export function FighterEffects({
       case 'relicTriggered':
       case 'enemyAct':
       case 'defeated':
+      case 'won':
         return;
     }
   });

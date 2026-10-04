@@ -22,6 +22,9 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
     case 'blockGain':
       return 'blockGain';
     case 'defeated':
-      return event.target === 'enemy' ? 'victory' : 'defeat';
+      // 敵が倒れたときは打撃音が鳴っているので重ねない。
+      return event.target === 'player' ? 'defeat' : null;
+    case 'won':
+      return 'victory';
   }
 }

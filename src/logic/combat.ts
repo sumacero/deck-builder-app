@@ -1,13 +1,17 @@
 import type { CardInstance } from '../domain/card';
 import type {
+  ActorId,
   CombatEventBody,
   CombatLogEntry,
   CombatSetup,
+  CombatSide,
   CombatState,
+  DamagePreview,
   EnemyState,
+  EnemyUid,
   Fighter,
 } from '../domain/combat';
-import type { Effect } from '../domain/effect';
+import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
 import { cardMotion } from './motion';
@@ -35,6 +39,29 @@ export function gainBlock<T extends Fighter>(target: T, amount: number): T {
 
 export function currentIntent(enemy: EnemyState): EnemyMove {
   return enemy.moves[enemy.moveIndex % enemy.moves.length];
+}
+
+export const sideOf = (actor: ActorId): CombatSide => (actor === 'player' ? 'player' : 'enemy');
+
+export const isAlive = (enemy: EnemyState) => enemy.hp > 0;
+
+export const livingEnemies = (state: CombatState) => state.enemies.filter(isAlive);
+
+const enemyUid = (index: number): EnemyUid => `enemy-${index}`;
+
+function findEnemy(state: CombatState, uid: EnemyUid): EnemyState | undefined {
+  return state.enemies.find((enemy) => enemy.uid === uid);
+}
+
+function updateEnemy(
+  state: CombatState,
+  uid: EnemyUid,
+  update: (enemy: EnemyState) => EnemyState,
+): CombatState {
+  return {
+    ...state,
+    enemies: state.enemies.map((enemy) => (enemy.uid === uid ? update(enemy) : enemy)),
+  };
 }
 
 function withLog(state: CombatState, text: string): CombatState {
@@ -128,18 +155,19 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       tempStrength: 0,
       endTurnBlock: 0,
     },
-    enemy: {
-      id: setup.enemy.id,
-      name: setup.enemy.name,
-      icon: setup.enemy.icon,
-      rank: setup.enemy.rank,
+    enemies: setup.enemies.map((enemy, index) => ({
+      uid: enemyUid(index),
+      id: enemy.id,
+      name: enemy.name,
+      icon: enemy.icon,
+      rank: enemy.rank,
       strength: 0,
-      hp: setup.enemy.maxHp,
-      maxHp: setup.enemy.maxHp,
+      hp: enemy.maxHp,
+      maxHp: enemy.maxHp,
       block: 0,
-      moves: setup.enemy.moves,
+      moves: enemy.moves,
       moveIndex: 0,
-    },
+    })),
     drawPerTurn: setup.drawPerTurn,
     drawPile: shuffled.items,
     hand: [],
@@ -152,9 +180,28 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
     events: [],
     nextEventId: 0,
   };
-  const firstTurn = startPlayerTurn(withLog(initial, `${setup.enemy.name}が現れた！`));
+  const names = setup.enemies.map((enemy) => enemy.name).join('と');
+  const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
   return triggerRelics(firstTurn, 'combatStart');
 }
+
+/** damage が当たる先。敵 1 体か、生きている敵全員。 */
+type Aim = EnemyUid | 'all';
+
+/** 選ばれた敵が倒れていたり未指定だったりしたら、生きている先頭の敵を狙う。 */
+function resolveAim(state: CombatState, target: EffectTarget, chosen: EnemyUid | undefined): Aim {
+  if (target === 'allEnemies') return 'all';
+  const picked = chosen ? findEnemy(state, chosen) : undefined;
+  if (picked && isAlive(picked)) return picked.uid;
+  return livingEnemies(state)[0]?.uid ?? enemyUid(0);
+}
+
+const aimedUids = (state: CombatState, aim: Aim): EnemyUid[] =>
+  aim === 'all' ? livingEnemies(state).map((enemy) => enemy.uid) : [aim];
+
+/** enemy のカード・ポーションは、生きている敵が 2 体以上なら対象を選ぶ必要がある。 */
+export const needsTargetChoice = (state: CombatState, target: EffectTarget) =>
+  target === 'enemy' && livingEnemies(state).length > 1;
 
 export function canPlayCard(state: CombatState, instanceId: string): boolean {
   if (state.status !== 'playerTurn') return false;
@@ -166,7 +213,19 @@ function attackDamage(state: CombatState, base: number): number {
   return Math.max(0, base + state.player.strength + state.player.tempStrength);
 }
 
-function applyEffect(state: CombatState, effect: Effect): CombatState {
+function hitEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || !isAlive(enemy)) return state;
+  const result = applyDamage(enemy, amount);
+  const hit = withEvent(
+    withLog(updateEnemy(state, uid, () => result.target), formatHit(enemy.name, result)),
+    { kind: 'hit', target: uid, hpLoss: result.hpLoss, blocked: result.blocked },
+  );
+  if (isAlive(result.target)) return hit;
+  return withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
+}
+
+function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState {
   switch (effect.kind) {
     case 'gainEnergy':
       return withLog(
@@ -206,15 +265,11 @@ function applyEffect(state: CombatState, effect: Effect): CombatState {
         `ターン終了時ブロック +${effect.amount}`,
       );
     case 'damage': {
-      const hits = effect.hits ?? 1;
+      // 全体攻撃の連撃は、1 発目を全員に当ててから 2 発目へ。
       const amount = attackDamage(state, effect.amount);
       let next = state;
-      for (let i = 0; i < hits && next.enemy.hp > 0; i++) {
-        const result = applyDamage(next.enemy, amount);
-        next = withEvent(
-          withLog({ ...next, enemy: result.target }, formatHit(next.enemy.name, result)),
-          { kind: 'hit', target: 'enemy', hpLoss: result.hpLoss, blocked: result.blocked },
-        );
+      for (let i = 0; i < (effect.hits ?? 1); i++) {
+        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount), next);
       }
       return next;
     }
@@ -229,8 +284,8 @@ function applyEffect(state: CombatState, effect: Effect): CombatState {
   }
 }
 
-const applyEffects = (state: CombatState, effects: Effect[]): CombatState =>
-  effects.reduce(applyEffect, state);
+const applyEffects = (state: CombatState, effects: Effect[], aim: Aim): CombatState =>
+  effects.reduce((current, effect) => applyEffect(current, effect, aim), state);
 
 function conditionMet(state: CombatState, condition: RelicCondition | undefined): boolean {
   switch (condition) {
@@ -241,6 +296,7 @@ function conditionMet(state: CombatState, condition: RelicCondition | undefined)
   }
 }
 
+/** レリックは対象を選べないので、ダメージは敵全員に当たる。 */
 function triggerRelics(state: CombatState, trigger: RelicTrigger): CombatState {
   return state.relics.reduce((current, relic) => {
     if (relic.trigger !== trigger || !conditionMet(current, relic.condition)) return current;
@@ -249,15 +305,15 @@ function triggerRelics(state: CombatState, trigger: RelicTrigger): CombatState {
       target: 'player',
       relicId: relic.id,
     });
-    return applyEffects(announced, relic.effects);
+    return applyEffects(announced, relic.effects, 'all');
   }, state);
 }
 
 function finishIfWon(state: CombatState): CombatState {
-  if (state.status !== 'playerTurn' || state.enemy.hp > 0) return state;
-  const won = withEvent(withLog({ ...state, status: 'won' }, `${state.enemy.name}を倒した！`), {
-    kind: 'defeated',
-    target: 'enemy',
+  if (state.status !== 'playerTurn' || livingEnemies(state).length > 0) return state;
+  const won = withEvent(withLog({ ...state, status: 'won' }, '敵を全て倒した！'), {
+    kind: 'won',
+    target: 'player',
   });
   return triggerRelics(won, 'combatWon');
 }
@@ -278,7 +334,7 @@ export function canDrinkPotion(state: CombatState, slot: number): boolean {
   return state.status === 'playerTurn' && Boolean(state.potions[slot]);
 }
 
-export function drinkPotion(state: CombatState, slot: number): CombatState {
+export function drinkPotion(state: CombatState, slot: number, target?: EnemyUid): CombatState {
   const potion = state.potions[slot];
   if (!potion || !canDrinkPotion(state, slot)) return state;
   const used = withEvent(
@@ -288,34 +344,59 @@ export function drinkPotion(state: CombatState, slot: number): CombatState {
     ),
     { kind: 'potionUsed', target: 'player', potionId: potion.id },
   );
-  return settle(applyEffects(used, potion.effects));
+  return settle(applyEffects(used, potion.effects, resolveAim(state, potion.target, target)));
 }
 
-export function playCard(state: CombatState, instanceId: string): CombatState {
+/** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
+export function playCard(state: CombatState, instanceId: string, target?: EnemyUid): CombatState {
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || !canPlayCard(state, instanceId)) return state;
+  const { card } = instance;
+  const aim = resolveAim(state, card.target, target);
 
   const spent = {
     ...state,
     hand: state.hand.filter((c) => c.instanceId !== instanceId),
-    player: { ...state.player, energy: state.player.energy - instance.card.cost },
-    ...(instance.card.exhaust
+    player: { ...state.player, energy: state.player.energy - card.cost },
+    ...(card.exhaust
       ? { exhaustPile: [...state.exhaustPile, instance] }
       : { discardPile: [...state.discardPile, instance] }),
   };
-  const copied = instance.card.addCopyToDiscard
+  const copied = card.addCopyToDiscard
     ? {
         ...spent,
-        discardPile: [...spent.discardPile, { instanceId: `copy-${state.nextEventId}`, card: instance.card }],
+        discardPile: [...spent.discardPile, { instanceId: `copy-${state.nextEventId}`, card }],
       }
     : spent;
-  const played = withEvent(withLog(copied, `${instance.card.name}を使用`), {
+  const played = withEvent(withLog(copied, `${card.name}を使用`), {
     kind: 'cardPlayed',
     target: 'player',
-    cardType: instance.card.type,
-    motion: cardMotion(instance.card),
+    targets: card.target === 'self' ? [] : aimedUids(state, aim),
+    cardType: card.type,
+    motion: cardMotion(card),
   });
-  return settle(applyEffects(played, instance.card.effects));
+  return settle(applyEffects(played, card.effects, aim));
+}
+
+/**
+ * カードを使ったら各敵が受ける実ダメージ（筋力・ブロック込み）。実際に使った結果と比べて求めるので、
+ * 連撃や全体攻撃、途中で倒れる場合も本番と同じになる。ダメージを受けない敵は含めない。
+ */
+export function previewCardDamage(
+  state: CombatState,
+  instanceId: string,
+  target?: EnemyUid,
+): DamagePreview[] {
+  const after = playCard(state, instanceId, target);
+  if (after === state) return [];
+  return state.enemies.flatMap((before) => {
+    const now = findEnemy(after, before.uid);
+    if (!now || !isAlive(before)) return [];
+    const hpLoss = before.hp - now.hp;
+    const blocked = before.block - now.block;
+    if (hpLoss <= 0 && blocked <= 0) return [];
+    return [{ uid: before.uid, hpLoss, blocked, lethal: !isAlive(now) }];
+  });
 }
 
 /** 敵の攻撃 1 回分のダメージ（筋力込み）。インテント表示でも使う。 */
@@ -323,13 +404,15 @@ export function enemyAttackDamage(enemy: EnemyState, base: number): number {
   return Math.max(0, base + enemy.strength);
 }
 
-function applyEnemyAction(state: CombatState, action: EnemyAction): CombatState {
+function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy) return state;
   switch (action.kind) {
     case 'attack': {
-      const amount = enemyAttackDamage(state.enemy, action.damage);
+      const amount = enemyAttackDamage(enemy, action.damage);
       let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
-        next = withEvent(next, { kind: 'enemyAct', target: 'enemy', action: 'attack' });
+        next = withEvent(next, { kind: 'enemyAct', target: uid, action: 'attack' });
         const result = applyDamage(next.player, amount);
         next = withEvent(
           withLog({ ...next, player: result.target }, formatHit('あなた', result)),
@@ -338,45 +421,49 @@ function applyEnemyAction(state: CombatState, action: EnemyAction): CombatState 
       }
       return next;
     }
-    case 'block':
+    case 'block': {
+      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'block' });
       return withEvent(
         withLog(
-          {
-            ...withEvent(state, { kind: 'enemyAct', target: 'enemy', action: 'block' }),
-            enemy: gainBlock(state.enemy, action.amount),
-          },
-          `${state.enemy.name}はブロック +${action.amount}`,
+          updateEnemy(acted, uid, (e) => gainBlock(e, action.amount)),
+          `${enemy.name}はブロック +${action.amount}`,
         ),
-        { kind: 'blockGain', target: 'enemy', amount: action.amount },
+        { kind: 'blockGain', target: uid, amount: action.amount },
       );
-    case 'buff':
+    }
+    case 'buff': {
+      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'buff' });
       return withLog(
-        {
-          ...withEvent(state, { kind: 'enemyAct', target: 'enemy', action: 'buff' }),
-          enemy: { ...state.enemy, strength: state.enemy.strength + action.strength },
-        },
-        `${state.enemy.name}の筋力 +${action.strength}`,
+        updateEnemy(acted, uid, (e) => ({ ...e, strength: e.strength + action.strength })),
+        `${enemy.name}の筋力 +${action.strength}`,
       );
+    }
   }
 }
 
-/** 敵のブロックは敵自身のターン開始時に消える。 */
+/** 生きている敵が左から順に行動する。敵のブロックは敵のターン開始時に消える。 */
 function runEnemyTurn(state: CombatState): CombatState {
-  const move = currentIntent(state.enemy);
-  let next = withLog(
-    { ...state, enemy: { ...state.enemy, block: 0 } },
-    `${state.enemy.name}の「${move.name}」`,
-  );
-  for (const action of move.actions) {
-    next = applyEnemyAction(next, action);
-    if (next.player.hp <= 0) {
-      return withEvent(withLog({ ...next, status: 'lost' }, 'あなたは力尽きた…'), {
-        kind: 'defeated',
-        target: 'player',
-      });
+  let next: CombatState = {
+    ...state,
+    enemies: state.enemies.map((enemy) => (isAlive(enemy) ? { ...enemy, block: 0 } : enemy)),
+  };
+  for (const { uid } of livingEnemies(next)) {
+    const enemy = findEnemy(next, uid);
+    if (!enemy) continue;
+    const move = currentIntent(enemy);
+    next = withLog(next, `${enemy.name}の「${move.name}」`);
+    for (const action of move.actions) {
+      next = applyEnemyAction(next, uid, action);
+      if (next.player.hp <= 0) {
+        return withEvent(withLog({ ...next, status: 'lost' }, 'あなたは力尽きた…'), {
+          kind: 'defeated',
+          target: 'player',
+        });
+      }
     }
+    next = updateEnemy(next, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
   }
-  return { ...next, enemy: { ...next.enemy, moveIndex: next.enemy.moveIndex + 1 } };
+  return next;
 }
 
 export function endTurn(state: CombatState): CombatState {
@@ -384,7 +471,7 @@ export function endTurn(state: CombatState): CombatState {
   const afterRelics = triggerRelics(state, 'turnEnd');
   const afterMetal =
     afterRelics.player.endTurnBlock > 0
-      ? applyEffect(afterRelics, { kind: 'block', amount: afterRelics.player.endTurnBlock })
+      ? applyEffect(afterRelics, { kind: 'block', amount: afterRelics.player.endTurnBlock }, 'all')
       : afterRelics;
   const discarded = withLog(
     {

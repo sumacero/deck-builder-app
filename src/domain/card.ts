@@ -1,8 +1,9 @@
-import type { Effect } from './effect';
+import type { Effect, EffectTarget } from './effect';
 
 export type CardType = 'attack' | 'skill' | 'power';
 
-export type CardTarget = 'enemy' | 'self';
+/** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
+export type CardTarget = EffectTarget;
 
 /**
  * カードを使ったときのキャラクターの動きの種類。

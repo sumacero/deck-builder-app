@@ -9,26 +9,44 @@ import {
 } from 'react-native';
 import type { CardInstance } from '../../domain/card';
 import { COLORS, HAND_LAYOUT, SPACING } from '../../theme';
-import { CardView } from '../cards/CardView';
+import { type CardDragHandlers, DraggableCard } from './DraggableCard';
 import { handCardWidth } from './handLayout';
 
-type HandProps = {
+type HandProps = CardDragHandlers & {
   cards: CardInstance[];
   isPlayable: (instanceId: string) => boolean;
-  onPlay: (instanceId: string) => void;
+  /** 持ち上げている最中のカード。 */
+  draggingId: string | null;
+  /** カードを離した位置が手札より上かを判定するため、外枠の View を渡す。 */
+  viewRef: (node: View | null) => void;
+  /** カード幅が決まったら知らせる（持ち上げたカードを同じ大きさで描くため）。 */
+  onCardWidth: (width: number) => void;
   style?: StyleProp<ViewStyle>;
 };
 
 /** 5 枚でちょうど画面幅に収まるカード幅にし、それ以上は横にスクロールして見る。 */
-export function Hand({ cards, isPlayable, onPlay, style }: HandProps) {
+export function Hand({
+  cards,
+  isPlayable,
+  draggingId,
+  viewRef,
+  onCardWidth,
+  style,
+  ...handlers
+}: HandProps) {
   const [width, setWidth] = useState(0);
   const cardWidth = handCardWidth(width);
   const overflowing = cards.length > HAND_LAYOUT.visibleCards;
 
   return (
     <View
+      ref={viewRef}
       style={[styles.container, { minHeight: cardWidth * HAND_LAYOUT.aspectRatio }, style]}
-      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+      onLayout={(e) => {
+        const next = e.nativeEvent.layout.width;
+        setWidth(next);
+        onCardWidth(handCardWidth(next));
+      }}
     >
       {cards.length === 0 ? (
         <Text style={styles.emptyText}>手札がありません</Text>
@@ -36,16 +54,19 @@ export function Hand({ cards, isPlayable, onPlay, style }: HandProps) {
         cardWidth > 0 && (
           <ScrollView
             horizontal
+            scrollEnabled={draggingId === null}
             showsHorizontalScrollIndicator={overflowing}
             contentContainerStyle={[styles.row, { minWidth: width }]}
           >
             {cards.map(({ instanceId, card }) => (
-              <CardView
+              <DraggableCard
                 key={instanceId}
+                instanceId={instanceId}
                 card={card}
                 width={cardWidth}
-                dimmed={!isPlayable(instanceId)}
-                onPress={isPlayable(instanceId) ? () => onPlay(instanceId) : undefined}
+                playable={isPlayable(instanceId)}
+                dragging={draggingId === instanceId}
+                {...handlers}
               />
             ))}
           </ScrollView>

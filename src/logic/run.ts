@@ -1,11 +1,11 @@
 import type { ActConfig } from '../domain/act';
 import type { CardDefinition } from '../domain/card';
 import type { CombatSetup } from '../domain/combat';
-import type { EnemyDefinition } from '../domain/enemy';
+import type { Encounter } from '../domain/enemy';
 import type { GameMap, MapNode } from '../domain/map';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { generateBlessingOptions } from './blessing';
-import { startCombat, startRandomCombat } from './encounter';
+import { soloEncounter, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
 import { pickOne, pickUnique, randomInt } from './random';
@@ -116,7 +116,7 @@ export function moveTo(run: RunState, nodeId: string): RunState {
     case 'elite':
       return startRandomCombat(moved, nodeId, act.elitePool);
     case 'boss':
-      return startCombat(moved, nodeId, run.boss);
+      return startCombat(moved, nodeId, soloEncounter(run.boss));
     case 'rest':
       return { ...moved, phase: { kind: 'rest' } };
     case 'shop':
@@ -137,7 +137,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (result.status === 'lost') {
     return { ...run, player: { ...run.player, hp: 0 }, phase: { kind: 'gameOver' } };
   }
-  const { rank } = run.phase.enemy;
+  const { rank } = run.phase.encounter;
   const survived: RunState = {
     ...run,
     player: { ...run.player, hp: result.playerHp },
@@ -213,11 +213,12 @@ export function mapHint(run: RunState): string {
   }
 }
 
-export function buildCombatSetup(run: RunState, enemy: EnemyDefinition): CombatSetup {
+export function buildCombatSetup(run: RunState, encounter: Encounter): CombatSetup {
   return {
     agent: run.agent,
     deck: run.deck,
-    enemy,
+    enemies: encounter.enemies,
+    rank: encounter.rank,
     playerHp: run.player.hp,
     playerMaxHp: run.player.maxHp,
     energyPerTurn: run.energyPerTurn,

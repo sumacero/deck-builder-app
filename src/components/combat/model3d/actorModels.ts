@@ -116,4 +116,22 @@ export const ENEMY_MODELS: Record<string, ActorModel> = {
   'star-eater': dragon('#4A5CB8', '#A8B4E8', '#6A44B8'),
   'time-keeper': hourglass('#C9A227', '#BFE6FF', '#FFE08A'),
   'void-king': voidLord('#2A1A3E', '#9A6CFF'),
+
+  // 群れで出てくる小型の敵
+  'small-slime': slime('#8FDF6A', { scale: 0.7 }),
+  'cave-bat': {
+    ...winged('#4A3A3A', '#6A4A4A', { ears: true, eyeColor: '#FFB040' }),
+    scale: 0.8,
+  },
+  'bone-archer': humanoid({
+    skin: '#E8E2D0',
+    body: '#CFC8B4',
+    legs: '#B8B09A',
+    accent: '#8A8270',
+    weapon: 'spear',
+    eyeColor: '#60E0FF',
+  }),
+  'cursed-candle': ghost('#F0D890', { scale: 0.75 }),
+  'star-wisp': ghost('#BFD8FF', { scale: 0.8 }),
+  'void-mote': { ...floatingEye('#2A1A3E', '#9A6CFF'), scale: 0.75 },
 };

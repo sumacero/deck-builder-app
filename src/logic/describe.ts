@@ -1,6 +1,6 @@
 import type { BlessingDefinition } from '../domain/blessing';
 import type { CardDefinition, CardType } from '../domain/card';
-import type { Effect } from '../domain/effect';
+import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
 import type { MapNodeType } from '../domain/map';
@@ -24,12 +24,14 @@ export const CARD_TYPE_LABEL: Record<CardType, string> = {
   power: 'パワー',
 };
 
-function describeEffect(effect: Effect): string {
+function describeEffect(effect: Effect, target: EffectTarget): string {
   switch (effect.kind) {
-    case 'damage':
+    case 'damage': {
+      const whom = target === 'allEnemies' ? '敵全体に' : '';
       return effect.hits && effect.hits > 1
-        ? `${effect.amount} ダメージを ${effect.hits} 回与える。`
-        : `${effect.amount} ダメージを与える。`;
+        ? `${whom}${effect.amount} ダメージを ${effect.hits} 回与える。`
+        : `${whom}${effect.amount} ダメージを与える。`;
+    }
     case 'block':
       return `ブロック ${effect.amount} を得る。`;
     case 'gainEnergy':
@@ -49,18 +51,19 @@ function describeEffect(effect: Effect): string {
   }
 }
 
-const describeEffects = (effects: Effect[]) => effects.map(describeEffect).join('');
+const describeEffects = (effects: Effect[], target: EffectTarget) =>
+  effects.map((effect) => describeEffect(effect, target)).join('');
 
 export function describeCard(card: CardDefinition): string {
   const extras = [
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
     card.exhaust ? '廃棄。' : '',
   ].join('');
-  return describeEffects(card.effects) + extras;
+  return describeEffects(card.effects, card.target) + extras;
 }
 
 export function describePotion(potion: PotionDefinition): string {
-  return describeEffects(potion.effects);
+  return describeEffects(potion.effects, potion.target);
 }
 
 function relicTiming(relic: RelicDefinition): string {
@@ -77,7 +80,10 @@ function relicTiming(relic: RelicDefinition): string {
 }
 
 export function describeRelic(relic: RelicDefinition): string {
-  const triggered = relic.trigger ? relicTiming(relic) + describeEffects(relic.effects) : '';
+  // レリックは対象を選べないので、ダメージは敵全体に当たる。
+  const triggered = relic.trigger
+    ? relicTiming(relic) + describeEffects(relic.effects, 'allEnemies')
+    : '';
   const passive = (relic.onObtain ?? []).map((effect) => `${describeRunEffect(effect)}。`).join('');
   return triggered + passive;
 }

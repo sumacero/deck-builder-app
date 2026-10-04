@@ -1,19 +1,20 @@
 import { type ReactNode, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
-import type { CombatEvent, CombatTarget } from '../../../domain/combat';
+import type { ActorId, CombatEvent, CombatSide } from '../../../domain/combat';
 import { useCombatEvents } from '../../../hooks/useCombatEvents';
+import { sideOf } from '../../../logic/combat';
 import { MOTION } from '../../../theme';
-import { type Keyframe, motionForEvent } from './motionPresets';
+import { burstsOn, type Keyframe, motionForEvent } from './motionPresets';
 
 type ActorMotionProps = {
-  side: CombatTarget;
+  actorId: ActorId;
   events: CombatEvent[];
   agentId: string;
   children: ReactNode;
 };
 
 /** 相手のいる方向。プレイヤーは左下にいるので右上へ、敵は右上にいるので左下へ踏み込む。 */
-const FACING: Record<CombatTarget, 1 | -1> = { player: 1, enemy: -1 };
+const FACING: Record<CombatSide, 1 | -1> = { player: 1, enemy: -1 };
 
 /** 横に踏み込んだ距離に対する縦の移動量（斜めに向かい合っているため）。 */
 const DIAGONAL = 0.6;
@@ -24,14 +25,14 @@ type BurstState = { id: number; emoji: string };
  * キャラクターの絵（アイコン）を包み、カードや敵の行動に合わせて動かす。
  * 相手の技のエフェクト（斬撃など）が自分に当たる場合もここに表示する。
  */
-export function ActorMotion({ side, events, agentId, children }: ActorMotionProps) {
+export function ActorMotion({ actorId, events, agentId, children }: ActorMotionProps) {
   const [x] = useState(() => new Animated.Value(0));
   const [y] = useState(() => new Animated.Value(0));
   const [scale] = useState(() => new Animated.Value(1));
   const [rotate] = useState(() => new Animated.Value(0));
   const [burstValue] = useState(() => new Animated.Value(0));
   const [burst, setBurst] = useState<BurstState | null>(null);
-  const facing = FACING[side];
+  const facing = FACING[sideOf(actorId)];
 
   const toKeyframe = (frame: Keyframe) => {
     const to = (value: Animated.Value, toValue: number) =>
@@ -58,13 +59,13 @@ export function ActorMotion({ side, events, agentId, children }: ActorMotionProp
   };
 
   useCombatEvents(events, (event) => {
-    const motion = motionForEvent(event, agentId);
-    if (!motion) return;
-    const { actor, preset } = motion;
-    if (actor === side) Animated.sequence(preset.keyframes.map(toKeyframe)).start();
-    if (!preset.burst) return;
-    const burstOnMe = (preset.burst.on === 'self') === (actor === side);
-    if (burstOnMe) showBurst(event.id, preset.burst.emoji, preset.burst.delay);
+    const plan = motionForEvent(event, agentId);
+    if (!plan) return;
+    const { preset } = plan;
+    if (plan.actor === actorId) Animated.sequence(preset.keyframes.map(toKeyframe)).start();
+    if (preset.burst && burstsOn(plan, actorId)) {
+      showBurst(event.id, preset.burst.emoji, preset.burst.delay);
+    }
   });
 
   const rotateDeg = rotate.interpolate({

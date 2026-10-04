@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import type { AgentDefinition } from '../../domain/agent';
 import type { CombatEvent, PlayerState } from '../../domain/combat';
 import { playerStatuses } from '../../logic/glossary';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, RADIUS, SPACING } from '../../theme';
 import { FighterEffects } from './effects/FighterEffects';
 import { FighterInfoSheet } from './FighterInfoSheet';
 import { HpBar } from './HpBar';
@@ -17,15 +17,20 @@ type PlayerPanelProps = {
   player: PlayerState;
   events: CombatEvent[];
   defeatDelay: number;
+  /** 自分に使うカードを、離せば使える位置まで持ち上げている。 */
+  highlighted: boolean;
 };
 
 /** 舞台の左下。エージェントと HP。タップでかかっている状態の解説。 */
-export function PlayerPanel({ agent, player, events, defeatDelay }: PlayerPanelProps) {
+export function PlayerPanel({ agent, player, events, defeatDelay, highlighted }: PlayerPanelProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   const statuses = playerStatuses(player);
   return (
     <>
-      <Pressable onPress={() => setInfoOpen(true)}>
+      <Pressable
+        style={[styles.frame, highlighted && styles.highlighted]}
+        onPress={() => setInfoOpen(true)}
+      >
         <FighterEffects
           target="player"
           events={events}
@@ -33,12 +38,12 @@ export function PlayerPanel({ agent, player, events, defeatDelay }: PlayerPanelP
           defeatDelay={defeatDelay}
           style={styles.body}
         >
-          <ActorMotion side="player" events={events} agentId={agent.id}>
+          <ActorMotion actorId="player" events={events} agentId={agent.id}>
             <ActorFigure
               key={agent.id}
               model={AGENT_MODELS[agent.id]}
               icon={agent.icon}
-              side="player"
+              actorId="player"
               events={events}
               agentId={agent.id}
             />
@@ -58,6 +63,8 @@ export function PlayerPanel({ agent, player, events, defeatDelay }: PlayerPanelP
 }
 
 const styles = StyleSheet.create({
+  frame: { borderRadius: RADIUS.md, borderWidth: 2, borderColor: 'transparent' },
+  highlighted: { borderColor: COLORS.gold, backgroundColor: COLORS.goldDark },
   body: { gap: SPACING.xs, padding: SPACING.xs },
   name: { color: COLORS.text, fontSize: 14, fontWeight: '700', textAlign: 'center' },
 });

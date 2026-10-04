@@ -1,5 +1,5 @@
 import type { CardMotion } from '../../../domain/card';
-import type { CombatEvent, CombatTarget } from '../../../domain/combat';
+import type { ActorId, CombatEvent } from '../../../domain/combat';
 import type { EnemyAction } from '../../../domain/enemy';
 
 /**
@@ -122,19 +122,33 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
   },
 };
 
-/** イベントから「誰が・どう動くか」を決める。動きの無いイベントは null。 */
-export function motionForEvent(
-  event: CombatEvent,
-  agentId: string,
-): { actor: CombatTarget; preset: MotionPreset } | null {
+export type ActorMotionPlan = {
+  actor: ActorId;
+  /** opponent のエフェクトを出す相手。 */
+  opponents: ActorId[];
+  preset: MotionPreset;
+};
+
+/** イベントから「誰が・誰に向けて・どう動くか」を決める。動きの無いイベントは null。 */
+export function motionForEvent(event: CombatEvent, agentId: string): ActorMotionPlan | null {
   switch (event.kind) {
     case 'cardPlayed': {
       const motions = AGENT_MOTIONS[agentId] ?? SWORDSMAN_MOTIONS;
-      return { actor: 'player', preset: motions[event.motion] };
+      return { actor: 'player', opponents: event.targets, preset: motions[event.motion] };
     }
     case 'enemyAct':
-      return { actor: 'enemy', preset: ENEMY_MOTIONS[event.action] };
+      return {
+        actor: event.target,
+        opponents: event.action === 'attack' ? ['player'] : [],
+        preset: ENEMY_MOTIONS[event.action],
+      };
     default:
       return null;
   }
+}
+
+/** このキャラの位置にエフェクトを出すか。 */
+export function burstsOn(plan: ActorMotionPlan, me: ActorId): boolean {
+  if (!plan.preset.burst) return false;
+  return plan.preset.burst.on === 'self' ? plan.actor === me : plan.opponents.includes(me);
 }

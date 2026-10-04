@@ -22,3 +22,11 @@ export type EnemyDefinition = {
   /** 先頭から順に使い、最後まで行ったら先頭に戻る。 */
   moves: EnemyMove[];
 };
+
+/** 1 回の戦闘で出てくる敵の組み合わせ。rank で報酬や BGM が変わる。 */
+export type Encounter = {
+  id: string;
+  rank: EnemyRank;
+  /** 左から順に並び、この順に行動する。 */
+  enemies: EnemyDefinition[];
+};
