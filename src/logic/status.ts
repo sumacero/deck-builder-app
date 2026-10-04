@@ -2,7 +2,7 @@ import type { BuffId, DebuffId, EnemyStatusId, StatusId, Statuses } from '../dom
 
 export const DEBUFF_IDS: readonly DebuffId[] = ['vulnerable', 'weak'];
 export const BUFF_IDS: readonly BuffId[] = ['retainBlock', 'blazing'];
-export const ENEMY_STATUS_IDS: readonly EnemyStatusId[] = ['intangible', 'down'];
+export const ENEMY_STATUS_IDS: readonly EnemyStatusId[] = ['intangible'];
 
 /** 弱体・熱血のダメージ倍率と、衰弱の倍率。 */
 export const VULNERABLE_MULTIPLIER = 1.5;
@@ -35,20 +35,18 @@ export function tickStatuses(statuses: Statuses): Statuses {
   return next;
 }
 
-/** ダウン中の被ダメージ倍率と、霊体化中に攻撃 1 回で受けるダメージの上限。 */
-export const DOWN_MULTIPLIER = 1.5;
+/** 霊体化中に攻撃 1 回で受けるダメージの上限。 */
 export const INTANGIBLE_CAP = 1;
 
 /**
- * 攻撃 1 回分の最終ダメージ。base は筋力込みの値。
- * 攻撃側の熱血・衰弱と、受ける側の弱体・ダウンをかけて切り捨て、受ける側が霊体化なら上限で抑える。
+ * 攻撃 1 回分の最終ダメージ。base は筋力込みの値。affinity は属性相性の倍率。
+ * 攻撃側の熱血・衰弱、受ける側の弱体、相性をかけて切り捨て、受ける側が霊体化なら上限で抑える。
  */
-export function modifiedDamage(base: number, attacker: Statuses, defender: Statuses): number {
-  let amount = base;
+export function modifiedDamage(base: number, attacker: Statuses, defender: Statuses, affinity = 1): number {
+  let amount = base * affinity;
   if (hasStatus(attacker, 'blazing')) amount *= BLAZING_MULTIPLIER;
   if (hasStatus(attacker, 'weak')) amount *= WEAK_MULTIPLIER;
   if (hasStatus(defender, 'vulnerable')) amount *= VULNERABLE_MULTIPLIER;
-  if (hasStatus(defender, 'down')) amount *= DOWN_MULTIPLIER;
   const floored = Math.max(0, Math.floor(amount));
   return hasStatus(defender, 'intangible') ? Math.min(floored, INTANGIBLE_CAP) : floored;
 }

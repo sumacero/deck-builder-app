@@ -29,7 +29,7 @@ export function RunEndOverlay({ kind, run, onNewRun, onExitToTitle }: RunEndOver
     { label: '勝利した戦闘', value: `${stats.combatsWon} 回` },
     { label: '倒した敵', value: `${stats.enemiesDefeated} 体` },
     { label: '最大ダメージ', value: `${stats.maxHit}` },
-    { label: 'ダウンさせた回数', value: `${stats.downs} 回` },
+    { label: '弱点を突いた回数', value: `${stats.weakHits} 回` },
     { label: '秘奥義', value: `${stats.artes} 回` },
     { label: 'デッキの軸', value: archetype ? ARCHETYPE_LABEL[archetype] : 'なし（万能型）' },
   ];

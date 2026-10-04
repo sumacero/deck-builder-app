@@ -23,8 +23,8 @@ export type EnemyAction =
   | { kind: 'addCard'; card: CardDefinition; count: number }
   /** 霊体化: 次のプレイヤーのターンの間、攻撃 1 回で受けるダメージが最大 1。 */
   | { kind: 'intangible' }
-  /** 眠り・ダウン中で何もしない（行動パターンには書かない。状態から自動で決まる）。 */
-  | { kind: 'idle'; reason: 'sleep' | 'down' };
+  /** 眠っていて何もしない（行動パターンには書かない。状態から自動で決まる）。 */
+  | { kind: 'idle'; reason: 'sleep' };
 
 export type EnemyMove = {
   id: string;
@@ -60,12 +60,10 @@ export type EnemyDefinition = {
   moves: EnemyMove[];
   traits?: EnemyTrait[];
   /**
-   * 敵の属性。これに強い属性（三つ巴）が弱点で、弱点を突いた 1 ヒットごとにダウンゲージが 1 減る。
-   * 省略で無属性（機械など）: どの属性の攻撃でも弱点になる。
+   * 敵の属性。これに強い属性（三つ巴）が弱点で、弱点を突かれるとダメージ 1.25 倍。
+   * 省略で無属性（機械など）: 相性なし。
    */
   attribute?: Attribute;
-  /** ダウンゲージの最大値。省略すると格と HP から決まる。 */
-  breakGauge?: number;
 };
 
 /** 1 回の戦闘で出てくる敵の組み合わせ。rank で報酬や BGM が変わる。 */

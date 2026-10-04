@@ -9,15 +9,9 @@ export function traitOf<K extends EnemyTrait['kind']>(
   return enemy.traits?.find((trait): trait is TraitOf<K> => trait.kind === kind);
 }
 
-/** 眠っている間・ダウン中の行動。行動パターンの順番は進めない。 */
+/** 眠っている間の行動。行動パターンの順番は進めない。 */
 export const SLEEP_MOVE: EnemyMove = {
   id: 'sleep',
   name: '眠っている',
   actions: [{ kind: 'idle', reason: 'sleep' }],
-};
-
-export const DOWN_MOVE: EnemyMove = {
-  id: 'down',
-  name: 'ダウン中',
-  actions: [{ kind: 'idle', reason: 'down' }],
 };

@@ -1,7 +1,6 @@
 import type { AgentDefinition } from '../domain/agent';
 import type { Attribute } from '../domain/attribute';
 import type { CardDefinition } from '../domain/card';
-import type { EnemyDefinition } from '../domain/enemy';
 
 export const ALL_ATTRIBUTES: readonly Attribute[] = ['grass', 'fire', 'water'];
 
@@ -12,11 +11,22 @@ export const STRONG_AGAINST: Record<Attribute, Attribute> = {
   fire: 'grass',
 };
 
-/** その属性の敵の弱点。無属性（undefined / null）ならすべての属性。 */
+/** 相性で有利な攻撃のダメージ倍率（攻めでも受けでも同じ）。 */
+export const ADVANTAGE_MULTIPLIER = 1.25;
+
+/** その属性の相手の弱点（それに強い属性）。無属性なら弱点なし。 */
 export function weaknessesOf(attribute: Attribute | null | undefined): Attribute[] {
-  if (!attribute) return [...ALL_ATTRIBUTES];
+  if (!attribute) return [];
   return ALL_ATTRIBUTES.filter((strong) => STRONG_AGAINST[strong] === attribute);
 }
+
+/** 攻撃の属性のどれかが、受ける側の属性に強いか。 */
+export const hasAdvantage = (attacking: readonly Attribute[], defending: Attribute | null | undefined) =>
+  defending != null && attacking.some((attribute) => STRONG_AGAINST[attribute] === defending);
+
+/** 相性によるダメージ倍率。 */
+export const affinityMultiplier = (attacking: readonly Attribute[], defending: Attribute | null | undefined) =>
+  hasAdvantage(attacking, defending) ? ADVANTAGE_MULTIPLIER : 1;
 
 /** カードの攻撃の属性。秘奥義は全属性。無属性なら空。 */
 export function cardAttributes(card: CardDefinition): Attribute[] {
@@ -31,22 +41,3 @@ export const isDraftable = (card: CardDefinition, agent: AgentDefinition) =>
 /** ストライクなど attuned のカードにエージェントの属性を付ける。 */
 export const attuneDeck = (deck: readonly CardDefinition[], attribute: Attribute): CardDefinition[] =>
   deck.map((card) => (card.attuned ? { ...card, attribute } : card));
-
-/** 群れで出る小型の敵（HP がこれ未満）はダウンゲージが短い。 */
-const SMALL_ENEMY_HP = 20;
-
-/** ダウンゲージの最大値。指定が無ければ格で決まる。 */
-export function breakGaugeOf(enemy: EnemyDefinition): number {
-  if (enemy.breakGauge !== undefined) return enemy.breakGauge;
-  switch (enemy.rank) {
-    case 'boss':
-      return 8;
-    case 'elite':
-      return 6;
-    case 'normal':
-      return enemy.maxHp < SMALL_ENEMY_HP ? 2 : 3;
-  }
-}
-
-export const isWeakTo = (weaknesses: readonly Attribute[], attributes: readonly Attribute[]) =>
-  attributes.some((attribute) => weaknesses.includes(attribute));

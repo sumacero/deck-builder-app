@@ -5,7 +5,7 @@ import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { KeywordId, StatusView } from '../domain/glossary';
 import type { PowerId, StatusId, Statuses } from '../domain/status';
 import { cardAttributes } from './attribute';
-import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, hasStatus, statusTurns } from './status';
+import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, statusTurns } from './status';
 
 function keywordsForEffect(effect: Effect): KeywordId[] {
   switch (effect.kind) {
@@ -115,7 +115,6 @@ export function enemyStatuses(enemy: EnemyState): StatusView[] {
   return nonZero([
     { keyword: 'block', value: enemy.block },
     { keyword: 'strength', value: enemy.strength },
-    ...(hasStatus(enemy.statuses, 'down') ? [] : [{ keyword: 'stagger' as const, value: enemy.stagger }]),
     ...statusViews(enemy.statuses, [...DEBUFF_IDS, ...ENEMY_STATUS_IDS]),
     ...traitViews(enemy),
   ]);
@@ -146,7 +145,7 @@ function keywordForIntent(action: EnemyAction): KeywordId {
     case 'intangible':
       return 'intentIntangible';
     case 'idle':
-      return action.reason === 'sleep' ? 'intentSleep' : 'intentDown';
+      return 'intentSleep';
   }
 }
 

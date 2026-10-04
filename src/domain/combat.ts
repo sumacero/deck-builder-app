@@ -32,6 +32,8 @@ export type PlayerState = Fighter & {
   endTurnBlock: number;
   /** パワーカードで得た、戦闘の終わりまで続く能力。 */
   powers: Powers;
+  /** エージェントの基本属性。敵の攻撃を受けるときの相性に使う。 */
+  attribute: Attribute;
   /** 魔法剣で、このターンのアタックに加わっている属性。 */
   enchant: Attribute[];
   /** 秘奥義ゲージ。ARTE_GAUGE_MAX で秘奥義カードが手札に来る。 */
@@ -62,16 +64,10 @@ export type EnemyState = Fighter & {
   traits: EnemyTrait[];
   /** 眠りの残りターン。0 なら起きている。 */
   asleep: number;
-  /** ダウンして、次の行動を休む。 */
-  stunned: boolean;
   /** null は無属性。 */
   attribute: Attribute | null;
-  /** 属性から決まる弱点（三つ巴で強い属性。無属性ならすべての属性）。 */
+  /** 属性から決まる弱点（三つ巴で強い属性。無属性なら無し）。 */
   weaknesses: Attribute[];
-  /** ダウンゲージの残り（あと何回弱点を突くとダウンするか）。 */
-  stagger: number;
-  /** ダウンゲージの最大値。ダウンが明けるとここまで戻る。 */
-  breakGauge: number;
   /** 加護の残り回数。 */
   ward: number;
   /** 不屈: これまでに受けたデバフ。 */
@@ -120,7 +116,7 @@ export type CombatEventBody =
   | { kind: 'blockGain'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'heal'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'defeated'; target: ActorId }
-  /** 性質が発動した（目覚めた、ダウンした、デバフを防いだ など）。キャラの上に短い文字を出す。 */
+  /** 性質が発動した（目覚めた、デバフを防いだ など）。キャラの上に短い文字を出す。 */
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
@@ -135,7 +131,8 @@ export type CombatStats = {
   /** 1 ヒットで与えた最大ダメージ（HP に通った分）。 */
   maxHit: number;
   enemiesDefeated: number;
-  downs: number;
+  /** 相性で有利な属性で攻撃したヒット数。 */
+  weakHits: number;
   artes: number;
   /** 強化前のカード id ごとの使用回数。 */
   cardsPlayed: Record<string, number>;

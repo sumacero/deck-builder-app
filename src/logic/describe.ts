@@ -108,8 +108,8 @@ export const attributeText = (attribute: Attribute) =>
 /** 敵の詳細に出す属性と弱点の説明。 */
 export function describeEnemyAttribute(attribute: Attribute | null, weaknesses: readonly Attribute[]): string {
   const own = attribute ? `${attributeText(attribute)}属性` : '無属性';
-  const weak = attribute ? weaknesses.map(attributeText).join('・') : '属性攻撃すべて';
-  return `${own}。弱点: ${weak}（弱点を突くとダウンゲージが減る）`;
+  if (!attribute) return `${own}（相性なし）`;
+  return `${own}。弱点: ${weaknesses.map(attributeText).join('・')}（弱点を突くとダメージ 1.25 倍）`;
 }
 
 /** カードの属性の短い表記（秘奥義のように全属性なら「全属性」）。iconOnly は狭い手札用。 */
@@ -159,7 +159,6 @@ export const STATUS_LABEL: Record<StatusId, string> = {
   retainBlock: 'ブロック保持',
   blazing: '熱血',
   intangible: '霊体化',
-  down: 'ダウン',
 };
 
 /** インテントに出す、デバフのアイコン。 */
@@ -254,7 +253,7 @@ export function describeIntent(move: EnemyMove, damageOf: (base: number) => numb
       case 'intangible':
         return { key, tone: action.kind, icon: '👻', label: '' };
       case 'idle':
-        return { key, tone: action.kind, icon: action.reason === 'sleep' ? '💤' : '😵', label: '' };
+        return { key, tone: action.kind, icon: '💤', label: '' };
     }
   });
 }

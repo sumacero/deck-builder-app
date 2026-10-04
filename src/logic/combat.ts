@@ -20,10 +20,10 @@ import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
 import type { DebuffId, PowerId } from '../domain/status';
-import { breakGaugeOf, cardAttributes, isWeakTo, weaknessesOf } from './attribute';
+import { affinityMultiplier, cardAttributes, hasAdvantage, weaknessesOf } from './attribute';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
-import { DOWN_MOVE, SLEEP_MOVE, traitOf } from './enemyTraits';
+import { SLEEP_MOVE, traitOf } from './enemyTraits';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
 import {
@@ -62,7 +62,6 @@ export function gainBlock<T extends Fighter>(target: T, amount: number): T {
 
 export function currentIntent(enemy: EnemyState): EnemyMove {
   if (enemy.asleep > 0) return SLEEP_MOVE;
-  if (enemy.stunned) return DOWN_MOVE;
   return enemy.moves[enemy.moveIndex % enemy.moves.length];
 }
 
@@ -218,7 +217,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
 export const EMPTY_STATS: CombatStats = {
   maxHit: 0,
   enemiesDefeated: 0,
-  downs: 0,
+  weakHits: 0,
   artes: 0,
   cardsPlayed: {},
 };
@@ -227,7 +226,6 @@ export const EMPTY_STATS: CombatStats = {
 export const ARTE_GAUGE_MAX = 20;
 const ARTE_PER_CARD = 1;
 const ARTE_PER_WEAK_CARD = 1;
-const ARTE_PER_DOWN = 3;
 
 function gainArte(state: CombatState, amount: number): CombatState {
   const arteGauge = Math.min(ARTE_GAUGE_MAX, state.player.arteGauge + amount);
@@ -266,6 +264,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       tempStrength: 0,
       endTurnBlock: 0,
       powers: {},
+      attribute: setup.agent.attribute,
       enchant: [],
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
@@ -288,11 +287,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       moveIndex: index % enemy.moves.length,
       traits: enemy.traits ?? [],
       asleep: traitOf(enemy, 'sleep')?.turns ?? 0,
-      stunned: false,
       attribute: enemy.attribute ?? null,
       weaknesses: weaknessesOf(enemy.attribute),
-      stagger: breakGaugeOf(enemy),
-      breakGauge: breakGaugeOf(enemy),
       ward: traitOf(enemy, 'ward')?.charges ?? 0,
       debuffsTaken: [],
     })),
@@ -359,7 +355,7 @@ function attackDamage(state: CombatState, base: number): number {
 }
 
 /**
- * 攻撃の種類。attributes は弱点の判定に使う属性（無ければダウンゲージは減らない）。
+ * 攻撃の種類。attributes は相性の判定に使う属性（敵の弱点を突くとダメージ ×1.25）。
  * fixed（パワーの追加ダメージ）は倍率をかけず、霊体化の上限だけ効く。
  */
 type HitKind = { attributes: readonly Attribute[]; fixed?: boolean };
@@ -368,23 +364,24 @@ const FIXED_HIT: HitKind = { attributes: [], fixed: true };
 /** レリック・ポーションなど、属性の無い攻撃。 */
 const NO_ATTRIBUTE: HitKind = { attributes: [] };
 
-/** base は筋力込みの値。熱血・衰弱・弱体の倍率は敵ごとにここでかける。 */
+/** base は筋力込みの値。熱血・衰弱・弱体・相性の倍率は敵ごとにここでかける。 */
 function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || !isAlive(enemy)) return state;
+  const weak = !kind.fixed && hasAdvantage(kind.attributes, enemy.attribute);
   const amount = kind.fixed
     ? hasStatus(enemy.statuses, 'intangible')
       ? Math.min(base, INTANGIBLE_CAP)
       : base
-    : modifiedDamage(base, state.player.statuses, enemy.statuses);
+    : modifiedDamage(base, state.player.statuses, enemy.statuses, affinityMultiplier(kind.attributes, enemy.attribute));
   const result = applyDamage(enemy, amount);
-  const weak = isWeakTo(enemy.weaknesses, kind.attributes);
   const recorded: CombatState = {
     ...updateEnemy(state, uid, () => result.target),
     stats: {
       ...state.stats,
       maxHit: Math.max(state.stats.maxHit, Math.min(result.hpLoss, enemy.hp)),
       enemiesDefeated: state.stats.enemiesDefeated + (isAlive(result.target) ? 0 : 1),
+      weakHits: state.stats.weakHits + (weak ? 1 : 0),
     },
   };
   const hit = withEvent(withLog(recorded, formatHit(enemy.name, result) + (weak ? '（弱点）' : '')), {
@@ -397,8 +394,7 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
     weak,
   });
   if (isAlive(result.target)) {
-    const woken = result.hpLoss > 0 && enemy.asleep > 0 ? wakeEnemy(hit, uid) : hit;
-    return weak ? staggerEnemy(woken, uid) : woken;
+    return result.hpLoss > 0 && enemy.asleep > 0 ? wakeEnemy(hit, uid) : hit;
   }
   const defeated = withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
   return onEnemyDefeated(defeated, uid);
@@ -416,25 +412,6 @@ function wakeEnemy(state: CombatState, uid: EnemyUid): CombatState {
   const woken = updateEnemy(state, uid, (e) => ({ ...e, asleep: 0, strength: e.strength + gain }));
   const text = gain > 0 ? `${enemy.name}が目を覚ました！（筋力 +${gain}）` : `${enemy.name}が目を覚ました！`;
   return callout(withLog(woken, text), uid, '目覚めた！');
-}
-
-/** ダウン中の被ダメージ倍率がかかるターン数（このターンの残りと、次の自分のターン）。 */
-const DOWN_TURNS = 2;
-
-/** ダウンゲージを 1 減らし、尽きたらダウンさせる。ダウン中は減らない。 */
-function staggerEnemy(state: CombatState, uid: EnemyUid): CombatState {
-  const enemy = findEnemy(state, uid);
-  if (!enemy || enemy.stagger <= 0 || hasStatus(enemy.statuses, 'down')) return state;
-  const stagger = enemy.stagger - 1;
-  if (stagger > 0) return updateEnemy(state, uid, (e) => ({ ...e, stagger }));
-  const downed = updateEnemy(state, uid, (e) => ({
-    ...e,
-    stagger,
-    stunned: true,
-    statuses: addStatus(e.statuses, 'down', DOWN_TURNS),
-  }));
-  const counted = gainArte({ ...downed, stats: { ...downed.stats, downs: downed.stats.downs + 1 } }, ARTE_PER_DOWN);
-  return callout(withLog(counted, `${enemy.name}はダウンした！`), uid, 'ダウン！');
 }
 
 /** 仇討ち（残った仲間の筋力が上がる）と、倒れた敵の死に際の行動。 */
@@ -891,9 +868,10 @@ export function previewCardDamage(
   });
 }
 
-/** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体込み）。インテント表示でも使う。 */
+/** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
 export function enemyAttackDamage(enemy: EnemyState, base: number, player: PlayerState): number {
-  return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses);
+  const affinity = affinityMultiplier(enemy.attribute ? [enemy.attribute] : [], player.attribute);
+  return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses, affinity);
 }
 
 /**
@@ -919,12 +897,13 @@ function applyEnemyAction(
   switch (action.kind) {
     case 'attack': {
       const amount = enemyAttackDamage(enemy, action.damage, state.player);
+      const weak = hasAdvantage(enemy.attribute ? [enemy.attribute] : [], state.player.attribute);
       let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
         next = act(next);
         const result = applyDamage(next.player, amount);
         next = withEvent(
-          withLog({ ...next, player: result.target }, formatHit('あなた', result)),
+          withLog({ ...next, player: result.target }, formatHit('あなた', result) + (weak ? '（弱点）' : '')),
           {
             kind: 'hit',
             target: 'player',
@@ -932,6 +911,7 @@ function applyEnemyAction(
             blocked: result.blocked,
             before: vitalsOf(next.player),
             after: vitalsOf(result.target),
+            weak,
           },
         );
       }
@@ -1001,7 +981,7 @@ function applyEnemyAction(
     case 'idle':
       return withLog(
         act(state),
-        action.reason === 'sleep' ? `${enemy.name}は眠っている…` : `${enemy.name}はダウンしていて動けない`,
+        `${enemy.name}は眠っている…`,
       );
   }
 }
@@ -1063,25 +1043,18 @@ function runEnemyTurn(state: CombatState): CombatState {
     next = advanceEnemy(next, uid);
   }
   // 敵のバフ・デバフは敵のターンの終わりに 1 ターン進む（かけたターンの敵の行動までは効く）。
-  // ダウンが明けたら、よろめきゲージが元に戻る。
   return {
     ...next,
-    enemies: next.enemies.map((enemy) => {
-      const statuses = tickStatuses(enemy.statuses);
-      const recovered = hasStatus(enemy.statuses, 'down') && !hasStatus(statuses, 'down');
-      const stagger = recovered ? enemy.breakGauge : enemy.stagger;
-      return { ...enemy, statuses, stagger };
-    }),
+    enemies: next.enemies.map((enemy) => ({ ...enemy, statuses: tickStatuses(enemy.statuses) })),
   };
 }
 
-/** 行動を終えた敵を次へ進める。眠り・ダウン中は行動パターンの順番を進めない。 */
+/** 行動を終えた敵を次へ進める。眠り中は行動パターンの順番を進めない。 */
 function advanceEnemy(state: CombatState, uid: EnemyUid): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy) return state;
   if (enemy.asleep > 1) return updateEnemy(state, uid, (e) => ({ ...e, asleep: e.asleep - 1 }));
   if (enemy.asleep === 1) return wakeEnemy(state, uid);
-  if (enemy.stunned) return updateEnemy(state, uid, (e) => ({ ...e, stunned: false }));
   return updateEnemy(state, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
 }
 

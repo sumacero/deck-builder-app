@@ -6,7 +6,7 @@ export type CardType = 'attack' | 'skill' | 'power' | 'status';
 
 /**
  * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
- * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突いてダウン）。
+ * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突く）。
  */
 export type Archetype = 'debuff' | 'block' | 'strength' | 'sacrifice' | 'growth' | 'element';
 

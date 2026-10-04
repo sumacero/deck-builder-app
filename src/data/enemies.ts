@@ -5,8 +5,8 @@ import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
 /**
  * 敵は地域ごとに作る。数値は第 1 章の強さで書き、後の章では logic/scaling.ts の倍率で強くなる。
- * 属性: 火山 = 火 / 草原 = 草 / 水の古都 = 水 / 歯車塔 = 無属性（どの属性でも弱点を突ける）。
- * - 火・岩: 攻撃と防御が中心。火傷を混ぜる、かばう、眠れる巨像、よろめきでダウンする大物
+ * 属性: 火山 = 火 / 草原 = 草 / 水の古都 = 水 / 歯車塔 = 無属性（相性なし）。
+ * - 火・岩: 攻撃と防御が中心。火傷を混ぜる、かばう、眠れる巨像
  * - 草・風: 手数が多い連続攻撃と回復。仇討ちの群れ、蔦を混ぜる、風の衣（霊体化）
  * - 水・氷: 凍え・封印・衰弱で行動を制限し、加護でデバフを無効にする。霊体化する亡霊
  * - 電・機械: 麻痺とチャージからの大技。ガラクタを混ぜる、不屈の機械、休眠中のゴーレム
@@ -83,7 +83,6 @@ export const LAVA_KNIGHT: EnemyDefinition = {
     { id: 'flame-blade', name: '炎の大剣', actions: [atk(17)] },
     { id: 'lava-slash', name: '溶岩斬り', actions: [atk(7, 2)] },
   ],
-  breakGauge: 6,
 };
 
 export const BASALT_COLOSSUS: EnemyDefinition = {
@@ -114,7 +113,6 @@ export const FLAME_DRAGON: EnemyDefinition = {
     { id: 'crunch', name: '噛み砕き', actions: [atk(16)] },
     { id: 'volcanic-bomb', name: '火山弾', actions: [atk(20)] },
   ],
-  breakGauge: 7,
 };
 
 // ==================== 草・風（風わたる草原） ====================
@@ -280,7 +278,6 @@ export const ABYSS_SERPENT: EnemyDefinition = {
     { id: 'crunch', name: '噛み砕き', actions: [atk(17)] },
     { id: 'water-armor', name: '水の鎧', actions: [blk(14), buff(1)] },
   ],
-  breakGauge: 6,
 };
 
 export const FROZEN_EMPRESS: EnemyDefinition = {
@@ -369,7 +366,6 @@ export const CLOCKWORK_KNIGHT: EnemyDefinition = {
     { id: 'lightning-slash', name: '雷光斬り', actions: [atk(21)] },
     { id: 'twin-slash', name: '連続斬り', actions: [atk(6, 2), paralyze()] },
   ],
-  breakGauge: 5,
 };
 
 export const THUNDER_GOLEM: EnemyDefinition = {
@@ -399,7 +395,6 @@ export const GEAR_EMPEROR: EnemyDefinition = {
     { id: 'thunder-cannon', name: '雷神砲', actions: [atk(25)] },
     { id: 'gear-storm', name: '歯車の嵐', actions: [atk(4, 4), addCard(SCRAP, 2)] },
   ],
-  breakGauge: 8,
   traits: [{ kind: 'resolute' }],
 };
 

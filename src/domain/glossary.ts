@@ -39,8 +39,6 @@ export type KeywordId =
   | 'chill'
   | 'seal'
   | 'intangible'
-  | 'down'
-  | 'stagger'
   | 'sleep'
   | 'vengeance'
   | 'resolute'
@@ -59,8 +57,7 @@ export type KeywordId =
   | 'intentDebuff'
   | 'intentAddCard'
   | 'intentIntangible'
-  | 'intentSleep'
-  | 'intentDown';
+  | 'intentSleep';
 
 export type KeywordDefinition = {
   id: KeywordId;

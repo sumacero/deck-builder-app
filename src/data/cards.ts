@@ -467,7 +467,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     upgrade: { effects: [{ kind: 'extendBuffs', turns: 3 }] },
   },
 
-  // --- 属性: 敵の弱点を突いてダウンさせる ---
+  // --- 属性: 敵の弱点を突く ---
   {
     id: 'frost-edge',
     name: '水刃',

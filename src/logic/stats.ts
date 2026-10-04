@@ -6,7 +6,7 @@ import { baseCardId } from './cards';
 export const EMPTY_RUN_STATS: RunStats = {
   maxHit: 0,
   enemiesDefeated: 0,
-  downs: 0,
+  weakHits: 0,
   artes: 0,
   cardsPlayed: {},
   combatsWon: 0,
@@ -21,7 +21,7 @@ export function mergeStats(run: RunStats, combat: CombatStats, won: boolean): Ru
   return {
     maxHit: Math.max(run.maxHit, combat.maxHit),
     enemiesDefeated: run.enemiesDefeated + combat.enemiesDefeated,
-    downs: run.downs + combat.downs,
+    weakHits: run.weakHits + combat.weakHits,
     artes: run.artes + combat.artes,
     cardsPlayed,
     combatsWon: run.combatsWon + (won ? 1 : 0),
