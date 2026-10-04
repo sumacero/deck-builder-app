@@ -188,7 +188,7 @@
 - ファイル: `src/components/combat/effects/`（`useCombatEvents` / `FighterEffects` / `FloatingText` / `DamageVignette`）。タイミングは `src/theme.ts` の `MOTION`。
 - 効果音（2026-10-03）: `expo-audio` で再生。音源は `scripts/generate-sounds.mjs` で波形から合成した WAV（`npm run sounds` で `assets/sounds/` に再生成。権利問題なし）。
   - イベントと音の対応は純粋関数 `src/audio/combatSounds.ts` の `soundForEvent`。カード使用（`cardPlayed` イベント）・打撃・大ダメージ（10 以上）・ガード・ブロック獲得・被弾・勝利・敗北の 8 種。
-  - 再生は `src/audio/soundPlayer.ts`（起動時に全音を先読み。失敗してもゲームは止めない）。`src/hooks/useCombatSounds.ts` が演出と同じ時間差で鳴らす。
+  - 再生は `src/audio/soundPlayer.ts`（起動時に全音を先読み。失敗してもゲームは止めない）。音量 = 各音の `volume` × `SOUND_MASTER_VOLUME`（`src/audio/sounds.ts`。2026-10-04 に BGM より大きいとのことで 0.6 に）。`src/hooks/useCombatSounds.ts` が演出と同じ時間差で鳴らす。
   - ~~マナーモード中は鳴らさない（`playsInSilentMode: false`）~~（変更: 2026-10-03。Android 実機で音が出なかった。Android ではこの設定だとバイブモードでも消音される）→ `playsInSilentMode` は Android で true（メディア音量に従う）、iOS で false（消音スイッチに従う）。他アプリの音楽は止めない（`mixWithOthers`）。
   - 音声モードは起動時に 1 回だけ設定するので、変更を試すときは保存だけでなく `r` でリロードが必要。
   - `app.json` の expo-audio プラグインでマイク権限・録音権限・バックグラウンド再生を無効化（ネイティブビルド時のみ影響）。
