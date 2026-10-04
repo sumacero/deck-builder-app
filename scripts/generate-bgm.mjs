@@ -1,13 +1,12 @@
-// BGM（タイトル・通常戦闘・エリート戦・ボス戦・ショップ + 地域ごとのフィールド曲・戦闘アレンジ）を合成して
+// BGM（タイトル・通常戦闘・ボス戦・ショップ + 地域ごとのフィールド曲・エリート戦）を合成して
 // assets/music/*.wav に書き出す。地域の曲は bgm-regions.mjs、主題の素材は bgm-theme.mjs。
 // 実行: npm run bgm（`npm run bgm -- field-` でファイル名がその文字列で始まる曲だけ）
 //
 // 全曲がメインテーマ「三つの旗」の素材（導入の動機・A メロ・サビ・オルガンの駆け上がり、ニ短調）を共有する。
 // オーナーの方針:
-// - サビはタイトルと通常戦闘に入れず、エリート戦で初めて登場させる（ボスはさらに上へ転調する新しいサビが続く）。
+// - サビはボス戦（三つの旗 −試−）だけ。
 // - 曲の出だしは曲ごとに別のフレーズにし、共通の旋律は曲の途中にだけ置く。共通箇所は少なめに。
-//   A メロの頭: タイトル（倍の長さ）・通常（前半 4 小節）・エリート（全部）・ショップ（ニ長調）。サビ: エリート・ボス。
-// - 長さはタイトル ≒ 通常 < エリート < ボス。
+// - 通常戦闘は全地域共通で静かに。旋律は普通の人が気づかない程度にさりげなく入れる。
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +18,7 @@ import {
   CHORUS_CHORDS,
   D_MAJOR,
   INTRO,
+  INTRO_BARS,
   INTRO_CHORDS,
   RUN,
   RUN_CHORDS,
@@ -65,63 +65,47 @@ const mainTitle = {
   ],
 };
 
-/** 通常戦闘（100 BPM・約 38 秒）。02 と 03 の中間。ベルの新しい旋律 → 笛で A メロの前半と新しい後半 → 締め。サビなし。 */
+/**
+ * 通常戦闘（全地域共通・88 BPM・約 44 秒）。考えるのを邪魔しない、ハープの刻みとパッドだけの静かな曲。
+ * 旋律は前に出さず、A メロの頭を倍の長さにして低い弦が和音の中でなぞり、
+ * 終わりに導入の動機を倍の長さで小さなベルが鳴らす（気づく人だけ気づく程度の音量）。
+ */
 const mainNormal = {
   file: 'battle-normal',
-  bpm: 100,
-  mix: { reverbLevel: 0.75, tone: 0.45, echoLevel: 0.3 },
+  bpm: 88,
+  mix: { reverbLevel: 0.65, tone: 0.4, echoLevel: 0.2 },
   sections: [
     {
-      name: 'opening',
-      chords: bars('Dm', 'Am', 'Bb', 'A'),
-      parts: [
-        {
-          inst: 'bell',
-          vol: 0.4,
-          notes: join4('D5:0.5 F5:0.5 A5:1 G5:0.5 F5:0.5 E5:1', 'C5:0.5 E5:0.5 A5:1 G5:1 E5:1', 'D5:0.5 F5:0.5 Bb5:1 A5:0.5 G5:0.5 F5:1', 'E5:2 C#5:1 A4:1'),
-        },
-      ],
+      name: 'pulse',
+      chords: bars('Dm', 'Bb', 'Gm', 'A'),
       comp: ['arp8', 'pad'],
       bass: 'sustain',
       drums: 'none',
     },
     {
-      name: 'verse',
-      chords: bars(...VERSE_CHORDS),
-      parts: [
-        {
-          inst: 'flute',
-          vol: 0.4,
-          notes: join4(...VERSE_BARS.slice(0, 4), 'Bb4:1 D5:1 G5:1.5 F5:0.5', 'E5:2 C#5:1 A4:1', 'D5:1 F5:0.5 A5:0.5 Bb5:1 G5:1', 'A5:3 -:1'),
-        },
-      ],
+      name: 'veiled-verse',
+      chords: bars('Dm', 'Dm', 'C', 'C', 'Bb', 'Bb', 'A', 'A'),
+      parts: [{ inst: 'strings', vol: 0.14, send: 0.4, notes: shiftPhrase(stretchPhrase(join4(...VERSE_BARS.slice(0, 4)), 2), -1) }],
       comp: ['arp8', 'pad'],
-      bass: 'walk',
+      bass: 'sustain',
       drums: 'light',
-      energy: 0.7,
+      energy: 0.4,
     },
     {
-      name: 'closing',
-      chords: bars('Gm', 'Dm', 'Bb', 'A'),
-      parts: [
-        {
-          inst: 'bell',
-          vol: 0.38,
-          notes: join4('Bb5:1 A5:0.5 G5:0.5 D5:2', 'F5:1 E5:0.5 D5:0.5 A4:2', 'G4:0.5 Bb4:0.5 D5:0.5 F5:0.5 Bb5:1 A5:1', 'A5:2 E5:1 C#5:1'),
-        },
-      ],
-      comp: ['pad', 'arp8'],
-      bass: 'walk',
-      drums: 'half',
-      fill: 'snare',
-      energy: 0.6,
+      name: 'veiled-intro',
+      chords: bars('Dm', 'Dm', 'Bb', 'C'),
+      parts: [{ inst: 'bell', vol: 0.12, send: 0.5, notes: stretchPhrase(join4(...INTRO_BARS.slice(0, 2)), 2) }],
+      comp: ['arp8', 'pad'],
+      bass: 'sustain',
+      drums: 'light',
+      energy: 0.35,
     },
   ],
 };
 
-/** エリート戦（156 BPM・約 49 秒）。05 のテンポを落とし、サビの前に溜めを入れた。サビはここで初めて登場。 */
-const mainElite = {
-  file: 'battle-elite',
+/** ボス戦「三つの旗 −試−」（156 BPM・約 43 秒）。05 のテンポを落とし、サビの前に溜めを入れた。サビはここで初めて登場。 */
+const mainBoss = {
+  file: 'battle-boss',
   bpm: 156,
   mix: { drive: 0.5, tone: 0.7 },
   sections: [
@@ -156,125 +140,6 @@ const mainElite = {
         { inst: 'guitarLead', vol: 0.22, notes: shiftPhrase(CHORUS, -1) },
       ],
       comp: ['stabs', 'chug', 'brassHits'],
-      bass: 'drive8',
-      drums: 'double',
-      fill: 'toms',
-    },
-  ],
-};
-
-/** ボスのサビの後に続く新しいサビ（ホ短調）。付点のリズムはサビと同じで、さらに高く駆け上がる。 */
-const SUPER_CHORUS_BARS = [
-  'E6:0.75 G6:0.75 B6:0.5 A6:1 G6:1',
-  'F#6:0.75 A6:0.75 D7:0.5 C7:1 A6:1',
-  'B6:0.75 A6:0.75 F#6:0.5 D6:1 F#6:1',
-  'G6:2 B6:1 E7:1',
-  'C7:0.75 B6:0.75 A6:0.5 E6:1 C7:1',
-  'D7:0.75 C7:0.75 A6:0.5 F#6:0.5 D6:0.5 A6:1',
-];
-const SUPER_CHORUS = shiftPhrase(
-  join4(
-    ...SUPER_CHORUS_BARS,
-    'B6:1 D#7:1 F#7:1 D#7:1',
-    'E7:2 D#7:1 B6:1',
-    ...SUPER_CHORUS_BARS,
-    'E6:0.5 G6:0.5 C7:1 B6:0.5 G6:0.5 E6:1',
-    'C#7:1 A6:1 E6:1 C#6:1',
-  ),
-  -1,
-);
-const SUPER_CHORUS_CHORDS = ['C', 'D', 'Bm', 'Em', 'Am', 'D', 'B', 'B', 'C', 'D', 'Bm', 'Em', 'Am', 'D', 'C', 'A'];
-
-/** ボス戦（176 BPM・約 60 秒）。不穏な前奏と新しいリフで始まり、ボス専用の旋律 → 溜め → サビ → さらに盛り上がる新しいサビ。 */
-const mainBoss = {
-  file: 'battle-boss',
-  bpm: 176,
-  mix: { drive: 0.6, tone: 0.72, reverbLevel: 0.5 },
-  sections: [
-    {
-      name: 'prelude',
-      chords: bars('Dm', 'Eb', 'Dm', 'A'),
-      parts: [{ inst: 'organ', vol: 0.3, notes: join4('D4:4', 'Eb4:4', 'D4:4', 'C#4:4') }],
-      comp: ['strings'],
-      bass: 'sustain',
-      drums: 'timp',
-      fill: 'roll',
-    },
-    {
-      name: 'riff',
-      chords: bars('Dm', 'Dm', 'Eb', 'A'),
-      parts: [
-        {
-          inst: 'guitarLead',
-          vol: 0.38,
-          double: 1,
-          notes: join4(
-            'D4:0.5 D4:0.5 D5:0.5 D4:0.5 C5:0.5 D4:0.5 A4:0.5 Bb4:0.5',
-            'D4:0.5 D4:0.5 D5:0.5 D4:0.5 F5:0.5 E5:0.5 C5:0.5 A4:0.5',
-            'Eb4:0.5 Eb4:0.5 Eb5:0.5 Eb4:0.5 D5:0.5 Eb4:0.5 Bb4:0.5 G4:0.5',
-            'A4:0.5 C#5:0.5 E5:0.5 G5:0.5 A5:0.5 G5:0.5 E5:0.5 C#5:0.5',
-          ),
-        },
-      ],
-      comp: ['chug'],
-      bass: 'gallop',
-      drums: 'rock',
-      fill: 'toms',
-    },
-    {
-      name: 'boss-theme',
-      chords: bars('Dm', 'Eb', 'Dm', 'C', 'Bb', 'Gm', 'Eb', 'A'),
-      parts: [
-        {
-          inst: 'brassLead',
-          vol: 0.4,
-          double: -1,
-          notes: join4(
-            'A5:1.5 D6:0.5 F6:1 E6:1',
-            'Eb6:1.5 D6:0.5 Bb5:2',
-            'A5:1 D6:1 F6:1 A6:1',
-            'G6:1.5 E6:0.5 C6:2',
-            'D6:1 F6:1 Bb6:1.5 A6:0.5',
-            'G6:1 D6:1 Bb5:1 G5:1',
-            'Bb5:0.5 C6:0.5 Eb6:0.5 G6:0.5 F6:1 Eb6:1',
-            'E6:2 C#6:1 A5:1',
-          ),
-        },
-      ],
-      comp: ['stabs', 'strings'],
-      bass: 'drive8',
-      drums: 'drive',
-      fill: 'snare',
-    },
-    {
-      name: 'build',
-      chords: bars('Bb', 'C', 'Gm', 'A'),
-      parts: [{ inst: 'brassLead', vol: 0.38, notes: join4('D6:4', 'E6:4', 'D6:2 Bb5:2', 'C#6:4') }],
-      comp: ['strings', 'brassHits'],
-      bass: 'sustain',
-      drums: 'half',
-      fill: 'roll',
-    },
-    {
-      name: 'chorus',
-      chords: bars(...CHORUS_CHORDS),
-      parts: [
-        { inst: 'brassLead', vol: 0.4, notes: CHORUS },
-        { inst: 'guitarLead', vol: 0.22, notes: shiftPhrase(CHORUS, -1) },
-      ],
-      comp: ['stabs', 'chug'],
-      bass: 'drive8',
-      drums: 'double',
-      fill: 'roll',
-    },
-    {
-      name: 'super-chorus',
-      chords: bars(...SUPER_CHORUS_CHORDS),
-      parts: [
-        { inst: 'brassLead', vol: 0.42, double: -1, notes: SUPER_CHORUS },
-        { inst: 'guitarLead', vol: 0.18, notes: SUPER_CHORUS },
-      ],
-      comp: ['stabs', 'strings', 'brassHits', 'chug'],
       bass: 'drive8',
       drums: 'double',
       fill: 'toms',
@@ -372,7 +237,7 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, mainElite, mainBoss, shop, ...REGION_SONGS];
+const SONGS = [mainTitle, mainNormal, mainBoss, shop, ...REGION_SONGS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];

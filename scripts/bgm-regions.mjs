@@ -1,9 +1,8 @@
-// 地域ごとの BGM（マップ画面のフィールド曲と、通常戦闘のアレンジ）。generate-bgm.mjs が書き出す。
+// 地域ごとの BGM（マップ画面のフィールド曲と、エリート戦の曲）。generate-bgm.mjs が書き出す。
 //
 // 構成:
 // - フィールド曲（12 小節）: 地域の前奏 → 地域の旋律 → メインテーマの導入の動機を地域の調で引用。
-// - 戦闘アレンジ（16 小節）: 新しいリフ → 地域の前奏と旋律をテンポを上げて → 導入の動機の引用。
-//   洞窟の通常戦闘はメインの「三つの旗 −歩−」（battle-normal）をそのまま使う。
+// - エリート戦（16 小節）: 新しいリフ → 地域の前奏と旋律をテンポを上げて → 導入の動機の引用。
 // 曲の出だしはどれもメインテーマと違うフレーズにし、導入の動機は曲の後半にだけ置く。
 import { shiftPhrase } from './bgm-engine.mjs';
 import { bars, join4, transposePhrase } from './bgm-song.mjs';
@@ -71,6 +70,15 @@ const CAVE = {
     notes: join4('A5:1.5 C6:0.5 F6:1 E6:1', 'D6:1.5 B5:0.5 G5:2', 'E5:1 G#5:1 B5:1 E6:1', 'C6:2 A5:2'),
   },
   cameo: { chords: ['Am', 'F G', 'Am', 'E'], notes: introQuote({ semitones: 7 }) },
+  riff: {
+    chords: ['Am', 'F', 'G', 'E'],
+    notes: join4(
+      'A5:0.5 E5:0.5 A5:0.5 C6:0.5 B5:0.5 A5:0.5 G#5:0.5 E5:0.5',
+      'F5:0.5 A5:0.5 C6:0.5 F6:0.5 E6:1 C6:1',
+      'D5:0.5 G5:0.5 B5:0.5 D6:0.5 C6:1 B5:1',
+      'E5:0.5 G#5:0.5 B5:0.5 E6:0.5 D6:1 B5:1',
+    ),
+  },
 };
 
 /** 城塞（ニ短調・メインテーマと同じ調）。夕暮れのオルガンと行進。 */
@@ -325,7 +333,7 @@ const fields = [
   },
 ];
 
-// ===== 通常戦闘のアレンジ =====
+// ===== エリート戦 =====
 
 /** リフ → 地域の旋律 → 導入の動機の引用。考える余裕を残すため、テンポは 108〜132 にとどめる。 */
 function battle({ file, bpm, mix, region, riff, theme, cameo }) {
@@ -344,7 +352,7 @@ function battle({ file, bpm, mix, region, riff, theme, cameo }) {
 
 const battles = [
   battle({
-    file: 'battle-grassland',
+    file: 'elite-grassland',
     bpm: 116,
     mix: { reverbLevel: 0.5, tone: 0.6 },
     region: GRASSLAND,
@@ -353,7 +361,16 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.38, n), lead('flute', 0.18, n)], style: { comp: ['stabs', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
   }),
   battle({
-    file: 'battle-swamp',
+    file: 'elite-cave',
+    bpm: 116,
+    mix: { reverbLevel: 0.8, tone: 0.55, echoLevel: 0.35 },
+    region: CAVE,
+    riff: { parts: (n) => [lead('triLead', 0.32, n)], style: { comp: ['arp16', 'strings'], bass: 'octave', drums: 'drive', energy: 0.7, fill: 'snare' } },
+    theme: { parts: (n) => [lead('flute', 0.4, n), lead('bell', 0.14, n)], style: { comp: ['arp8', 'pad'], bass: 'walk', drums: 'rock', energy: 0.7 } },
+    cameo: { parts: (n) => [lead('brassLead', 0.36, n)], style: { comp: ['stabs', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
+  }),
+  battle({
+    file: 'elite-swamp',
     bpm: 108,
     mix: { reverbLevel: 0.65, tone: 0.5, echoLevel: 0.35 },
     region: SWAMP,
@@ -362,7 +379,7 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.36, n)], style: { comp: ['stabs', 'pad'], bass: 'octave', drums: 'drive', energy: 0.8, fill: 'toms' } },
   }),
   battle({
-    file: 'battle-castle',
+    file: 'elite-castle',
     bpm: 112,
     mix: { reverbLevel: 0.6, tone: 0.55 },
     region: CASTLE,
@@ -371,7 +388,7 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.36, n, { double: -1 }), lead('organ', 0.16, n)], style: { comp: ['strings', 'brassHits'], bass: 'gallop', drums: 'march', fill: 'toms' } },
   }),
   battle({
-    file: 'battle-desert',
+    file: 'elite-desert',
     bpm: 124,
     mix: { reverbLevel: 0.5, tone: 0.6, echoLevel: 0.3 },
     region: DESERT,
@@ -380,7 +397,7 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.36, n), lead('flute', 0.18, n)], style: { comp: ['stabs', 'arp8'], bass: 'octave', drums: 'desertDrive', fill: 'toms' } },
   }),
   battle({
-    file: 'battle-snowfield',
+    file: 'elite-snowfield',
     bpm: 120,
     mix: { reverbLevel: 0.7, tone: 0.55 },
     region: SNOWFIELD,
@@ -389,7 +406,7 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.34, shiftPhrase(n, -1))], style: { comp: ['arp16', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
   }),
   battle({
-    file: 'battle-stars',
+    file: 'elite-stars',
     bpm: 118,
     mix: { reverbLevel: 0.7, tone: 0.6 },
     region: STARS,
@@ -398,7 +415,7 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.36, n)], style: { comp: ['stabs', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
   }),
   battle({
-    file: 'battle-volcano',
+    file: 'elite-volcano',
     bpm: 132,
     mix: { drive: 0.45, tone: 0.65 },
     region: VOLCANO,
@@ -407,7 +424,7 @@ const battles = [
     cameo: { parts: (n) => [lead('guitarLead', 0.36, n), lead('organ', 0.2, shiftPhrase(n, 1))], style: { comp: ['chug', 'strings'], bass: 'gallop', drums: 'drive', fill: 'toms' } },
   }),
   battle({
-    file: 'battle-shadow',
+    file: 'elite-shadow',
     bpm: 126,
     mix: { drive: 0.3, reverbLevel: 0.7, tone: 0.55 },
     region: SHADOW,
