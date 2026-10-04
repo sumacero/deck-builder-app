@@ -40,6 +40,35 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   'soul-flame': require('../../../assets/cards/soul-flame.jpg'),
   'ultimate-strike': require('../../../assets/cards/ultimate-strike.jpg'),
   'ultimate-defend': require('../../../assets/cards/ultimate-defend.jpg'),
+  'crimson-phoenix': require('../../../assets/cards/crimson-phoenix.jpg'),
+  'frost-edge': require('../../../assets/cards/frost-edge.jpg'),
+  'ice-lances': require('../../../assets/cards/ice-lances.jpg'),
+  'leaf-flash': require('../../../assets/cards/leaf-flash.jpg'),
+  'leaf-storm': require('../../../assets/cards/leaf-storm.jpg'),
+  'flame-slash': require('../../../assets/cards/flame-slash.jpg'),
+  'enchant-fire': require('../../../assets/cards/enchant-fire.jpg'),
+  'enchant-water': require('../../../assets/cards/enchant-water.jpg'),
+  'enchant-grass': require('../../../assets/cards/enchant-grass.jpg'),
+  trip: require('../../../assets/cards/trip.jpg'),
+  exploit: require('../../../assets/cards/exploit.jpg'),
+  dropkick: require('../../../assets/cards/dropkick.jpg'),
+  'brand-burst': require('../../../assets/cards/brand-burst.jpg'),
+  'weak-point': require('../../../assets/cards/weak-point.jpg'),
+  impervious: require('../../../assets/cards/impervious.jpg'),
+  'shield-shatter': require('../../../assets/cards/shield-shatter.jpg'),
+  juggernaut: require('../../../assets/cards/juggernaut.jpg'),
+  'rise-from-ashes': require('../../../assets/cards/rise-from-ashes.jpg'),
+  'blood-price': require('../../../assets/cards/blood-price.jpg'),
+  'crimson-avatar': require('../../../assets/cards/crimson-avatar.jpg'),
+  'burning-blood': require('../../../assets/cards/burning-blood.jpg'),
+  rampage: require('../../../assets/cards/rampage.jpg'),
+  devour: require('../../../assets/cards/devour.jpg'),
+  'honed-blade': require('../../../assets/cards/honed-blade.jpg'),
+  'tempered-shield': require('../../../assets/cards/tempered-shield.jpg'),
+  burn: require('../../../assets/cards/burn.jpg'),
+  'tangling-vine': require('../../../assets/cards/tangling-vine.jpg'),
+  'ice-shard': require('../../../assets/cards/ice-shard.jpg'),
+  scrap: require('../../../assets/cards/scrap.jpg'),
 };
 
 /** イラストの隅に重ねる種類の紋章。小さな手札でも種類がひと目で分かるように。 */
@@ -50,7 +79,7 @@ export const CARD_TYPE_EMBLEM: Record<CardType, string> = {
   status: '💢',
 };
 
-/** 強化後のカードも強化前と同じ絵。絵が無いカードは undefined（種類の色だけの枠になる）。 */
+/** 強化後のカードも強化前と同じ絵。絵が未登録のカードは undefined（種類の色だけの枠になる）。 */
 export function cardArt(card: CardDefinition): ImageSourcePropType | undefined {
   return CARD_ART[baseCardId(card.id)];
 }

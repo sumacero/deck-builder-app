@@ -2,8 +2,17 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { cardAttributes } from '../../logic/attribute';
-import { CARD_TYPE_LABEL, describeAttributes, describeCard } from '../../logic/describe';
-import { CARD_ART, CARD_TYPE_COLORS, COLORS, HAND_LAYOUT, RADIUS, SPACING } from '../../theme';
+import { ATTRIBUTE_ICON, CARD_TYPE_LABEL, describeAttributes, describeCard } from '../../logic/describe';
+import {
+  ATTRIBUTE_COLORS,
+  ATTRIBUTE_TINT_ALPHA,
+  CARD_ART,
+  CARD_TYPE_COLORS,
+  COLORS,
+  HAND_LAYOUT,
+  RADIUS,
+  SPACING,
+} from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
 import { CARD_TYPE_EMBLEM, cardArt } from './cardArt';
 
@@ -23,7 +32,7 @@ type CardViewProps = {
 const LONG_PRESS_MS = 350;
 
 const BASE_WIDTH = 96;
-/** これより細いカードでは属性をアイコンだけで示す。 */
+/** これより細いカードでは種類の横の属性名を省く（絵の隅の紋章で分かる）。 */
 const NARROW_WIDTH = 90;
 const WIDE_WIDTH = 108;
 const BORDER_WIDTH = 2;
@@ -43,6 +52,8 @@ function scaledStyles(width: number) {
     body: { paddingHorizontal: Math.max(2, SPACING.xs * scale) },
     name: { fontSize: Math.max(9, 12 * scale) },
     emblemText: { fontSize: Math.max(9, 12 * scale) },
+    attributeBadge: { width: Math.max(14, 20 * scale), height: Math.max(14, 20 * scale) },
+    attributeIcon: { fontSize: Math.max(8, 12 * scale) },
     type: { fontSize: Math.max(8, 10 * scale) },
     description: { fontSize: Math.max(9, 11 * scale) },
   };
@@ -61,6 +72,10 @@ export function CardView({
   const [detailOpen, setDetailOpen] = useState(false);
   const typeColor = card.mysticArte ? COLORS.arte : CARD_TYPE_COLORS[card.type];
   const attributes = cardAttributes(card);
+  const attributeColor = card.mysticArte ? COLORS.arte : card.attribute && ATTRIBUTE_COLORS[card.attribute];
+  // 属性のカードは枠を属性の色に。無属性は種類の色のまま。
+  const frameColor = attributeColor ?? typeColor;
+  const narrow = width !== undefined && width < NARROW_WIDTH;
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width) : null;
   const art = cardArt(card);
@@ -75,7 +90,7 @@ export function CardView({
           styles.card,
           wide && styles.wide,
           scaled?.card,
-          { borderColor: selected ? COLORS.gold : typeColor },
+          { borderColor: selected ? COLORS.gold : frameColor },
           selected && styles.selected,
           dimmed && styles.dimmed,
           pressed && onPress && styles.pressed,
@@ -93,24 +108,40 @@ export function CardView({
             styles.art,
             wide && styles.wideArt,
             scaled?.art,
-            { borderColor: typeColor },
+            { borderColor: frameColor },
             !art && { backgroundColor: `${typeColor}${CARD_ART.fallbackAlpha}` },
           ]}
         >
           {art && <Image source={art} style={styles.artImage} resizeMode="cover" />}
+          {attributes.length > 0 && attributeColor !== undefined && (
+            <View
+              style={[styles.attributeBadge, scaled?.attributeBadge, { backgroundColor: attributeColor }]}
+            >
+              <Text style={[styles.attributeIcon, scaled?.attributeIcon]}>
+                {describeAttributes(attributes, true) || ATTRIBUTE_ICON[attributes[0]]}
+              </Text>
+            </View>
+          )}
           <View style={styles.emblem}>
             <Text style={[styles.emblemText, scaled?.emblemText]}>
               {CARD_TYPE_EMBLEM[card.type]}
             </Text>
           </View>
         </View>
-        <View style={[styles.body, wide && styles.wideBody, scaled?.body]}>
+        <View
+          style={[
+            styles.body,
+            wide && styles.wideBody,
+            scaled?.body,
+            attributeColor !== undefined && { backgroundColor: blend(attributeColor) },
+          ]}
+        >
           <Text style={[styles.type, scaled?.type, { color: typeColor }]} numberOfLines={1}>
             {CARD_TYPE_LABEL[card.type]}
-            {attributes.length > 0 && (
-              <Text style={styles.attribute}>
+            {attributes.length > 0 && !narrow && (
+              <Text style={[styles.attribute, attributeColor !== undefined && { color: attributeColor }]}>
                 {' '}
-                {describeAttributes(attributes, width !== undefined && width < NARROW_WIDTH)}
+                {describeAttributes(attributes)}
               </Text>
             )}
           </Text>
@@ -131,6 +162,10 @@ export function CardView({
 }
 
 const GEM_SIZE = 24;
+const BADGE_SIZE = 20;
+
+/** 属性の色を本文の背景にうっすら敷く。 */
+const blend = (color: string) => `${color}${ATTRIBUTE_TINT_ALPHA}`;
 
 const styles = StyleSheet.create({
   card: {
@@ -164,12 +199,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   emblemText: { fontSize: 12 },
+  attributeBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: BADGE_SIZE,
+    height: BADGE_SIZE,
+    borderRadius: RADIUS.round,
+    borderWidth: 1,
+    borderColor: COLORS.text,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attributeIcon: { fontSize: 12 },
   body: {
     flex: 1,
     alignItems: 'center',
     gap: SPACING.xs / 2,
     paddingTop: SPACING.xs / 2,
+    paddingBottom: SPACING.xs / 2,
     paddingHorizontal: SPACING.xs,
+    marginTop: 2,
+    marginHorizontal: ART_INSET,
+    borderRadius: RADIUS.sm,
   },
   wideBody: { paddingHorizontal: SPACING.sm, gap: SPACING.xs },
   costGem: {
@@ -207,6 +259,6 @@ const styles = StyleSheet.create({
   },
   upgradedName: { color: COLORS.upgraded },
   type: { fontSize: 10, fontWeight: '600' },
-  attribute: { color: COLORS.text },
+  attribute: { color: COLORS.text, fontWeight: '800' },
   description: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },
 });

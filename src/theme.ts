@@ -1,3 +1,4 @@
+import type { Attribute } from './domain/attribute';
 import type { CardType } from './domain/card';
 import type { MapNodeType } from './domain/map';
 
@@ -140,6 +141,16 @@ export const CARD_TYPE_COLORS: Record<CardType, string> = {
   power: '#D9A23A',
   status: '#6E6A80',
 };
+
+/** 属性のカードの枠・紋章の色。種類の色（赤・青）と見分けがつくよう、火は橙、水は水色にしている。 */
+export const ATTRIBUTE_COLORS: Record<Attribute, string> = {
+  grass: '#4CC96A',
+  fire: '#FF7A2B',
+  water: '#2FB8E8',
+};
+
+/** 属性カードの本文の背景にうっすら敷く色の不透明度（16 進 2 桁）。 */
+export const ATTRIBUTE_TINT_ALPHA = '22';
 
 export const SPACING = {
   xs: 4,
