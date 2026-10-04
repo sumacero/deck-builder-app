@@ -2,10 +2,10 @@ import type { EnemyDefinition, Encounter } from './enemy';
 import type { MapConfig } from './map';
 
 /**
- * 章の舞台になる地域。背景画像と BGM はこれで決まる。
- * 属性の仕組みは無いが、イメージは 草 / 毒 / 水 / 火 / 氷。
+ * 章の舞台になる地域。背景画像・BGM・出てくる敵の性質はこれで決まる。
+ * 火山 = 火・岩 / 草原 = 草・風 / 水の古都 = 水・氷 / 歯車塔 = 電・機械。
  */
-export type Region = 'grassland' | 'swamp' | 'sunkenCity' | 'desert' | 'snowfield';
+export type Region = 'volcano' | 'grassland' | 'sunkenCity' | 'clockwork';
 
 /** 1 つの章。マップの形と、出てくる敵の候補を持つ。 */
 export type ActConfig = {

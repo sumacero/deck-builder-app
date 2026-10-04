@@ -1,37 +1,51 @@
+import type { Region } from '../domain/act';
 import type { EnemyDefinition, Encounter } from '../domain/enemy';
 import { soloEncounter } from '../logic/encounter';
 import {
-  BONE_ARCHER,
-  CASTLE_BAT,
-  CAVE_BAT,
-  CAVE_HOUND,
-  CAVE_SLIME,
-  CAVE_SPIDER,
-  COMET_HOUND,
-  CURSED_CANDLE,
-  FANG_RAT,
-  GARGOYLE_PUP,
-  GOBLIN_SCOUT,
-  HEX_MAGE,
-  IRON_EXECUTIONER,
-  MOSS_SPROUT,
-  NEBULA_JELLY,
-  ROTTING_SOLDIER,
-  RUST_MITE,
-  RUSTED_KNIGHT,
-  SHIELD_BEARER,
-  SKY_EAGLE,
-  SMALL_SLIME,
-  STAR_EATER,
-  STAR_FRAGMENT,
-  STAR_WISP,
-  STARDUST_SOLDIER,
-  STONE_GUARDIAN,
-  TIME_KEEPER,
-  VOID_EYE,
-  VOID_MOTE,
-  WILL_O_WARDEN,
+  ABYSS_SERPENT,
+  BASALT_COLOSSUS,
+  BOLT_BUG,
+  BUBBLE_SLIME,
+  CINDER_IMP,
+  CLOCKWORK_KNIGHT,
+  COG_RAT,
+  DROWNED_GUARD,
+  EMBER_LIZARD,
+  FIRE_BAT,
+  FLAME_DRAGON,
+  FOREST_RANGER,
+  FROST_JELLY,
+  FROZEN_EMPRESS,
+  GEAR_EMPEROR,
+  GEAR_SOLDIER,
+  GRASS_WOLF,
+  GREAT_TREANT,
+  GUST_SPRITE,
+  HORN_RABBIT,
+  ICE_WISP,
+  ICE_WITCH,
+  IRON_HOUND,
+  LAVA_KNIGHT,
+  LEAF_FAIRY,
+  MAGMA_SLIME,
+  MIST_SIREN,
+  PEBBLE_GOLEM,
+  ROCK_SOLDIER,
+  RUIN_CRAB,
+  SEED_SPROUT,
+  SPARK_DRONE,
+  STORM_GRIFFIN,
+  TESLA_ORB,
+  THUNDER_GOLEM,
+  WIND_HAWK,
 } from './enemies';
+
+/** 地域ごとの敵の顔ぶれ（第 1 章の強さ）。章ごとの強さは acts.ts で倍率をかける。 */
+export type RegionEnemies = {
+  normal: Encounter[];
+  elite: Encounter[];
+  boss: EnemyDefinition[];
+};
 
 /** 戦闘画面は 4 体まで並べても収まるように作っているので、それより多くは出さない。 */
 const group = (id: string, enemies: EnemyDefinition[]): Encounter => ({
@@ -40,55 +54,62 @@ const group = (id: string, enemies: EnemyDefinition[]): Encounter => ({
   enemies,
 });
 
-// ---- 第 1 章 ----
-
-export const ACT1_ENCOUNTERS: Encounter[] = [
-  soloEncounter(CAVE_SLIME),
-  soloEncounter(FANG_RAT),
-  soloEncounter(ROTTING_SOLDIER),
-  group('slime-pair', [SMALL_SLIME, SMALL_SLIME]),
-  group('rat-and-slime', [FANG_RAT, SMALL_SLIME]),
-  group('goblin-pair', [GOBLIN_SCOUT, GOBLIN_SCOUT]),
-  group('bat-swarm', [CAVE_BAT, CAVE_BAT, CAVE_BAT]),
-  group('spider-nest', [CAVE_SPIDER, CAVE_BAT, CAVE_SPIDER]),
-  group('goblin-pack', [CAVE_SPIDER, GOBLIN_SCOUT, MOSS_SPROUT]),
-  group('sprout-patch', [MOSS_SPROUT, MOSS_SPROUT, MOSS_SPROUT, MOSS_SPROUT]),
-  group('slime-family', [SMALL_SLIME, MOSS_SPROUT, SMALL_SLIME, MOSS_SPROUT]),
-];
-
-export const ACT1_ELITES: Encounter[] = [soloEncounter(CAVE_HOUND), soloEncounter(STONE_GUARDIAN)];
-
-// ---- 第 2 章 ----
-
-export const ACT2_ENCOUNTERS: Encounter[] = [
-  soloEncounter(RUSTED_KNIGHT),
-  soloEncounter(HEX_MAGE),
-  soloEncounter(CASTLE_BAT),
-  group('archer-pair', [BONE_ARCHER, BONE_ARCHER]),
-  group('candle-and-bat', [CURSED_CANDLE, CASTLE_BAT]),
-  group('gargoyle-perch', [GARGOYLE_PUP, CURSED_CANDLE, GARGOYLE_PUP]),
-  group('shield-wall', [BONE_ARCHER, SHIELD_BEARER, BONE_ARCHER]),
-  group('mite-swarm', [RUST_MITE, RUST_MITE, RUST_MITE, RUST_MITE]),
-  group('candle-procession', [CURSED_CANDLE, RUST_MITE, CURSED_CANDLE, RUST_MITE]),
-];
-
-export const ACT2_ELITES: Encounter[] = [
-  soloEncounter(IRON_EXECUTIONER),
-  soloEncounter(WILL_O_WARDEN),
-];
-
-// ---- 第 3 章 ----
-
-export const ACT3_ENCOUNTERS: Encounter[] = [
-  soloEncounter(STARDUST_SOLDIER),
-  soloEncounter(VOID_EYE),
-  soloEncounter(SKY_EAGLE),
-  group('wisp-pair', [STAR_WISP, STAR_WISP]),
-  group('comet-pack', [COMET_HOUND, COMET_HOUND]),
-  group('mote-cluster', [VOID_MOTE, VOID_MOTE, VOID_MOTE]),
-  group('jelly-bloom', [NEBULA_JELLY, STAR_WISP, NEBULA_JELLY]),
-  group('fragment-shower', [STAR_FRAGMENT, STAR_FRAGMENT, STAR_FRAGMENT, STAR_FRAGMENT]),
-  group('void-court', [VOID_MOTE, NEBULA_JELLY, STAR_FRAGMENT, VOID_MOTE]),
-];
-
-export const ACT3_ELITES: Encounter[] = [soloEncounter(STAR_EATER), soloEncounter(TIME_KEEPER)];
+export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
+  volcano: {
+    normal: [
+      soloEncounter(EMBER_LIZARD),
+      soloEncounter(ROCK_SOLDIER),
+      soloEncounter(MAGMA_SLIME),
+      group('imp-pair', [CINDER_IMP, CINDER_IMP]),
+      group('fire-bat-swarm', [FIRE_BAT, FIRE_BAT, FIRE_BAT]),
+      group('pebble-wall', [PEBBLE_GOLEM, CINDER_IMP, PEBBLE_GOLEM]),
+      group('lizard-and-bat', [EMBER_LIZARD, FIRE_BAT]),
+      group('ember-troop', [CINDER_IMP, FIRE_BAT, PEBBLE_GOLEM, CINDER_IMP]),
+    ],
+    elite: [soloEncounter(LAVA_KNIGHT), soloEncounter(BASALT_COLOSSUS)],
+    boss: [FLAME_DRAGON],
+  },
+  grassland: {
+    normal: [
+      soloEncounter(WIND_HAWK),
+      soloEncounter(LEAF_FAIRY),
+      soloEncounter(GRASS_WOLF),
+      group('sprout-patch', [SEED_SPROUT, SEED_SPROUT, SEED_SPROUT]),
+      group('rabbit-pair', [HORN_RABBIT, HORN_RABBIT]),
+      group('gust-flock', [GUST_SPRITE, GUST_SPRITE, GUST_SPRITE]),
+      group('fairy-court', [HORN_RABBIT, LEAF_FAIRY, HORN_RABBIT]),
+      group('meadow-pack', [SEED_SPROUT, GUST_SPRITE, HORN_RABBIT, SEED_SPROUT]),
+    ],
+    elite: [soloEncounter(FOREST_RANGER), soloEncounter(GREAT_TREANT)],
+    boss: [STORM_GRIFFIN],
+  },
+  sunkenCity: {
+    normal: [
+      soloEncounter(FROST_JELLY),
+      soloEncounter(DROWNED_GUARD),
+      soloEncounter(MIST_SIREN),
+      group('wisp-pair', [ICE_WISP, ICE_WISP]),
+      group('bubble-trio', [BUBBLE_SLIME, BUBBLE_SLIME, BUBBLE_SLIME]),
+      group('crab-and-bubble', [RUIN_CRAB, BUBBLE_SLIME, RUIN_CRAB]),
+      group('jelly-escort', [BUBBLE_SLIME, FROST_JELLY]),
+      group('ruin-patrol', [RUIN_CRAB, ICE_WISP, BUBBLE_SLIME, RUIN_CRAB]),
+    ],
+    elite: [soloEncounter(ICE_WITCH), soloEncounter(ABYSS_SERPENT)],
+    boss: [FROZEN_EMPRESS],
+  },
+  clockwork: {
+    normal: [
+      soloEncounter(GEAR_SOLDIER),
+      soloEncounter(SPARK_DRONE),
+      soloEncounter(IRON_HOUND),
+      group('bug-swarm', [BOLT_BUG, BOLT_BUG, BOLT_BUG]),
+      group('rat-pair', [COG_RAT, COG_RAT]),
+      // チャージする宝珠は先頭に置き、チャージから始まるようにする。
+      group('orb-battery', [TESLA_ORB, COG_RAT]),
+      group('hound-and-bug', [IRON_HOUND, BOLT_BUG]),
+      group('workshop', [TESLA_ORB, BOLT_BUG, COG_RAT, BOLT_BUG]),
+    ],
+    elite: [soloEncounter(CLOCKWORK_KNIGHT), soloEncounter(THUNDER_GOLEM)],
+    boss: [GEAR_EMPEROR],
+  },
+};

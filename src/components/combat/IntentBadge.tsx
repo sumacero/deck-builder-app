@@ -12,6 +12,11 @@ const TONE_COLOR: Record<IntentView['tone'], string> = {
   attack: COLORS.hp,
   block: COLORS.block,
   buff: COLORS.energy,
+  heal: COLORS.heal,
+  paralyze: COLORS.hindrance,
+  chill: COLORS.hindrance,
+  seal: COLORS.hindrance,
+  charge: COLORS.charge,
 };
 
 export function IntentBadge({ intent, compact = false }: IntentBadgeProps) {

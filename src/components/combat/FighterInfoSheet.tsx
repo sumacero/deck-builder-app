@@ -21,7 +21,9 @@ export function FighterInfoSheet({ name, statuses, intent, onClose }: FighterInf
         {statuses.length === 0 ? (
           <Text style={styles.empty}>かかっているバフ・デバフはありません。</Text>
         ) : (
-          <KeywordList entries={statuses} />
+          <KeywordList
+            entries={statuses.map(({ keyword, value, flag }) => ({ keyword, value: flag ? undefined : value }))}
+          />
         )}
       </View>
       {intent && (

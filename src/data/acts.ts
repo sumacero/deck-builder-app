@@ -1,22 +1,15 @@
 import type { ActConfig, Region } from '../domain/act';
-import { CASTLE_PHANTOM, SLIME_KING, VOID_KING } from './enemies';
-import {
-  ACT1_ELITES,
-  ACT1_ENCOUNTERS,
-  ACT2_ELITES,
-  ACT2_ENCOUNTERS,
-  ACT3_ELITES,
-  ACT3_ENCOUNTERS,
-} from './encounters';
+import { scaleEncounter, scaleEnemy, type ChapterScale } from '../logic/scaling';
+import { REGION_ENEMIES } from './encounters';
 import { STANDARD_ACT_MAP } from './mapConfigs';
 
 /**
- * 章（敵の強さ）と地域（景色・BGM）は独立している。どの章にもどの地域も出られ、
+ * 章（敵の強さ）と地域（景色・BGM・敵の顔ぶれ）は独立している。どの章にもどの地域も出られ、
  * ランの開始時に章ごとに 1 つ、同じ地域が重ならないように選ばれる（pickActs）。
  */
 type ChapterDef = {
   number: number;
-  base: Pick<ActConfig, 'map' | 'enemyPool' | 'elitePool' | 'bossPool'>;
+  scale: ChapterScale;
   /** 案内役のセリフの前後。間に地域の一言が入る。 */
   greetingBefore: string;
   greetingAfter: string;
@@ -32,39 +25,57 @@ type RegionDef = {
 const CHAPTERS: ChapterDef[] = [
   {
     number: 1,
-    base: { map: STANDARD_ACT_MAP, enemyPool: ACT1_ENCOUNTERS, elitePool: ACT1_ELITES, bossPool: [SLIME_KING] },
+    scale: { hp: 1, power: 1 },
     greetingBefore: 'ようこそ、旅の人。',
     greetingAfter: '出発の前に、ひとつ贈り物を選んで。',
   },
   {
     number: 2,
-    base: { map: STANDARD_ACT_MAP, enemyPool: ACT2_ENCOUNTERS, elitePool: ACT2_ELITES, bossPool: [CASTLE_PHANTOM] },
+    scale: { hp: 1.35, power: 1.25 },
     greetingBefore: '最初の地を抜けたのね。',
     greetingAfter: 'さあ、また選んで。',
   },
   {
     number: 3,
-    base: { map: STANDARD_ACT_MAP, enemyPool: ACT3_ENCOUNTERS, elitePool: ACT3_ELITES, bossPool: [VOID_KING] },
+    scale: { hp: 1.7, power: 1.5 },
     greetingBefore: 'ここが最後の道。',
-    greetingAfter: '奥で待つ王を倒せば、旅は終わる。私の灯りを持っていって。',
+    greetingAfter: '奥で待つ主を倒せば、旅は終わる。私の灯りを持っていって。',
   },
 ];
 
-/** イメージは 草 / 毒 / 水 / 火 / 氷（属性の仕組みは無い）。 */
 const REGIONS: RegionDef[] = [
-  { region: 'grassland', name: '風わたる草原', greeting: '風の気持ちいい草原ね。でも油断は禁物。' },
-  { region: 'swamp', name: '霧の沼湿原', greeting: '霧が深くて足元も悪い沼地よ。毒の水には気をつけて。' },
-  { region: 'sunkenCity', name: '水の古都', greeting: '水の底に沈んだ幻の都。水面に映る街並みに見とれないで。' },
-  { region: 'desert', name: '灼熱の砂海', greeting: '果てしない砂の海よ。陽炎に惑わされないで。' },
-  { region: 'snowfield', name: '白銀の氷原', greeting: '吐く息も凍る氷原よ。私の灯りで温まって。' },
+  {
+    region: 'volcano',
+    name: '紅蓮の火山',
+    greeting: '燃える山よ。ここの魔物は力と守りだけで押してくる。正面から受け止めて。',
+  },
+  {
+    region: 'grassland',
+    name: '風わたる草原',
+    greeting: '風の気持ちいい草原ね。すばしこくて傷の治りも早い相手が多いわ。',
+  },
+  {
+    region: 'sunkenCity',
+    name: '水の古都',
+    greeting: '水の底に沈んだ幻の都。冷たい魔力で動きを封じてくるから気をつけて。',
+  },
+  {
+    region: 'clockwork',
+    name: '雷鳴の歯車塔',
+    greeting: '雷の鳴りやまない歯車の塔よ。光を溜め始めたら、大技の合図。',
+  },
 ];
 
 function buildAct(chapter: ChapterDef, region: RegionDef): ActConfig {
+  const enemies = REGION_ENEMIES[region.region];
   return {
-    ...chapter.base,
     id: `act-${chapter.number}-${region.region}`,
     name: `第 ${chapter.number} 章　${region.name}`,
     region: region.region,
+    map: STANDARD_ACT_MAP,
+    enemyPool: enemies.normal.map((encounter) => scaleEncounter(encounter, chapter.scale)),
+    elitePool: enemies.elite.map((encounter) => scaleEncounter(encounter, chapter.scale)),
+    bossPool: enemies.boss.map((boss) => scaleEnemy(boss, chapter.scale)),
     greeting: `${chapter.greetingBefore}${region.greeting}${chapter.greetingAfter}`,
   };
 }

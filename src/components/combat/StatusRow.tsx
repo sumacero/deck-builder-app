@@ -13,11 +13,11 @@ export function StatusRow({ statuses }: StatusRowProps) {
   if (shown.length === 0) return null;
   return (
     <View style={styles.row}>
-      {shown.map(({ keyword, value }) => (
+      {shown.map(({ keyword, value, flag }) => (
         <View key={keyword} style={styles.chip}>
           <Text style={styles.text}>
             {KEYWORDS[keyword].icon}
-            {value}
+            {flag ? '' : value}
           </Text>
         </View>
       ))}

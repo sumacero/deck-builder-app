@@ -10,12 +10,26 @@ export type Fighter = {
   block: number;
 };
 
+/** 敵の妨害。かけられた次の自分のターンだけ効く。 */
+export type Hindrance = {
+  /** 麻痺: エナジーが減る。 */
+  paralysis: number;
+  /** 凍え: 引く枚数が減る。 */
+  chill: number;
+  /** 封印: スキルカードを使えない。 */
+  seal: boolean;
+};
+
 export type PlayerState = Fighter & {
   energy: number;
   maxEnergy: number;
   strength: number;
   tempStrength: number;
   endTurnBlock: number;
+  /** 今のターンに効いている妨害。 */
+  hindrance: Hindrance;
+  /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
+  pendingHindrance: Hindrance;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */

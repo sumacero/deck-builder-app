@@ -10,6 +10,7 @@ import type {
   EnemyState,
   EnemyUid,
   Fighter,
+  Hindrance,
   Vitals,
 } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
@@ -143,8 +144,22 @@ export function drawCards(state: CombatState, count: number): CombatState {
   });
 }
 
+export const NO_HINDRANCE: Hindrance = { paralysis: 0, chill: 0, seal: false };
+
+/** 麻痺・凍えは重ねがけしても、1 ターンにこの値までしか効かない。 */
+export const MAX_HINDRANCE_STACK = 2;
+
+function hindranceLogs(hindrance: Hindrance): string[] {
+  return [
+    ...(hindrance.paralysis > 0 ? [`麻痺でエナジー -${hindrance.paralysis}`] : []),
+    ...(hindrance.chill > 0 ? [`凍えで引く枚数 -${hindrance.chill}`] : []),
+    ...(hindrance.seal ? ['封印でスキルを使えない'] : []),
+  ];
+}
+
 export function startPlayerTurn(state: CombatState): CombatState {
   const turn = state.turn + 1;
+  const hindrance = state.player.pendingHindrance;
   const started: CombatState = {
     ...state,
     turn,
@@ -152,11 +167,14 @@ export function startPlayerTurn(state: CombatState): CombatState {
     player: {
       ...state.player,
       block: 0,
-      energy: state.player.maxEnergy,
+      energy: Math.max(0, state.player.maxEnergy - hindrance.paralysis),
       tempStrength: 0,
+      hindrance,
+      pendingHindrance: NO_HINDRANCE,
     },
   };
-  return drawCards(withLog(started, `ターン ${turn} 開始`), state.drawPerTurn);
+  const logged = hindranceLogs(hindrance).reduce(withLog, withLog(started, `ターン ${turn} 開始`));
+  return drawCards(logged, Math.max(0, state.drawPerTurn - hindrance.chill));
 }
 
 export function createCombat(setup: CombatSetup, seed: number): CombatState {
@@ -178,6 +196,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       strength: 0,
       tempStrength: 0,
       endTurnBlock: 0,
+      hindrance: NO_HINDRANCE,
+      pendingHindrance: NO_HINDRANCE,
     },
     enemies: setup.enemies.map((enemy, index) => ({
       uid: enemyUid(index),
@@ -240,7 +260,8 @@ export const needsTargetChoice = (state: CombatState, target: EffectTarget) =>
 export function canPlayCard(state: CombatState, instanceId: string): boolean {
   if (state.status !== 'playerTurn') return false;
   const instance = state.hand.find((c) => c.instanceId === instanceId);
-  return instance !== undefined && instance.card.cost <= state.player.energy;
+  if (!instance || instance.card.cost > state.player.energy) return false;
+  return !(state.player.hindrance.seal && instance.card.type === 'skill');
 }
 
 function attackDamage(state: CombatState, base: number): number {
@@ -502,7 +523,60 @@ function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction
         `${enemy.name}の筋力 +${action.strength}`,
       );
     }
+    case 'heal': {
+      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'heal' });
+      const targets = action.allies ? livingEnemies(acted).map((e) => e.uid) : [uid];
+      return targets.reduce((current, targetUid) => healEnemy(current, targetUid, action.amount), acted);
+    }
+    case 'paralyze':
+    case 'chill':
+    case 'seal': {
+      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: action.kind });
+      const pending = addHindrance(acted.player.pendingHindrance, action);
+      return withLog(
+        { ...acted, player: { ...acted.player, pendingHindrance: pending } },
+        `${enemy.name}の妨害: ${HINDRANCE_LOG[action.kind]}`,
+      );
+    }
+    case 'charge': {
+      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'charge' });
+      return withLog(acted, `${enemy.name}は力を溜めている…`);
+    }
   }
+}
+
+const HINDRANCE_LOG = {
+  paralyze: '次のターン、麻痺でエナジーが減る',
+  chill: '次のターン、凍えで引く枚数が減る',
+  seal: '次のターン、スキルが封印される',
+} as const;
+
+function addHindrance(
+  current: Hindrance,
+  action: Extract<EnemyAction, { kind: 'paralyze' | 'chill' | 'seal' }>,
+): Hindrance {
+  switch (action.kind) {
+    case 'paralyze':
+      return { ...current, paralysis: Math.min(MAX_HINDRANCE_STACK, current.paralysis + action.amount) };
+    case 'chill':
+      return { ...current, chill: Math.min(MAX_HINDRANCE_STACK, current.chill + action.amount) };
+    case 'seal':
+      return { ...current, seal: true };
+  }
+}
+
+function healEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || !isAlive(enemy)) return state;
+  const healed = Math.min(amount, enemy.maxHp - enemy.hp);
+  if (healed === 0) return state;
+  const next = { ...enemy, hp: enemy.hp + healed };
+  return withEvent(withLog(updateEnemy(state, uid, () => next), `${enemy.name}の HP +${healed}`), {
+    kind: 'heal',
+    target: uid,
+    amount: healed,
+    after: vitalsOf(next),
+  });
 }
 
 /** 生きている敵が左から順に行動する。敵のブロックは敵のターン開始時に消える。 */

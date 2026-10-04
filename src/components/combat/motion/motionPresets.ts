@@ -120,7 +120,46 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
     ],
     burst: { emoji: '💢', on: 'self', delay: 100 },
   },
+  heal: {
+    keyframes: [
+      { y: -6, scale: 1.1, duration: 200 },
+      { duration: 220 },
+    ],
+    burst: { emoji: '🍃', on: 'self', delay: 80 },
+  },
+  paralyze: {
+    keyframes: [
+      { x: 16, scale: 1.05, duration: 120 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '💫', on: 'opponent', delay: 120 },
+  },
+  chill: {
+    keyframes: [
+      { x: 16, scale: 1.05, duration: 120 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '❄️', on: 'opponent', delay: 120 },
+  },
+  seal: {
+    keyframes: [
+      { x: 16, scale: 1.05, duration: 120 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '🔒', on: 'opponent', delay: 120 },
+  },
+  charge: {
+    keyframes: [
+      { scale: 0.9, duration: 160 },
+      { scale: 1.15, duration: 200 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '🔋', on: 'self', delay: 160 },
+  },
 };
+
+/** 相手（プレイヤー）に向けて行う敵の行動。 */
+const TARGETS_PLAYER: ReadonlySet<EnemyAction['kind']> = new Set(['attack', 'paralyze', 'chill', 'seal']);
 
 export type ActorMotionPlan = {
   actor: ActorId;
@@ -139,7 +178,7 @@ export function motionForEvent(event: CombatEvent, agentId: string): ActorMotion
     case 'enemyAct':
       return {
         actor: event.target,
-        opponents: event.action === 'attack' ? ['player'] : [],
+        opponents: TARGETS_PLAYER.has(event.action) ? ['player'] : [],
         preset: ENEMY_MOTIONS[event.action],
       };
     default:

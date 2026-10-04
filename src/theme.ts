@@ -24,6 +24,10 @@ export const COLORS = {
   overlay: 'rgba(8, 12, 26, 0.86)',
   damageText: '#FF6B6B',
   heal: '#4CC27A',
+  /** 敵の妨害（麻痺・凍え・封印）。 */
+  hindrance: '#A98BEB',
+  /** 敵がチャージ中（次に大技が来る）。 */
+  charge: '#F5D547',
   hpTrail: '#F5DFA0',
   /** 強化済みカードの名前。 */
   upgraded: '#6EE09A',

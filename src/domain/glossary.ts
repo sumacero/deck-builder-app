@@ -15,9 +15,18 @@ export type KeywordId =
   | 'endTurnBlock'
   | 'exhaust'
   | 'copyToDiscard'
+  | 'paralysis'
+  | 'chill'
+  | 'seal'
   | 'intentAttack'
   | 'intentBlock'
-  | 'intentBuff';
+  | 'intentBuff'
+  | 'intentHeal'
+  | 'intentAllyHeal'
+  | 'intentParalyze'
+  | 'intentChill'
+  | 'intentSeal'
+  | 'intentCharge';
 
 export type KeywordDefinition = {
   id: KeywordId;
@@ -30,4 +39,6 @@ export type KeywordDefinition = {
 export type StatusView = {
   keyword: KeywordId;
   value: number;
+  /** 量を持たない状態（封印など）。数値を表示しない。 */
+  flag?: boolean;
 };

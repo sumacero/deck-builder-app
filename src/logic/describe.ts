@@ -113,6 +113,16 @@ export function describeIntent(move: EnemyMove, strength: number): IntentView[] 
         return { key, tone: action.kind, icon: '🛡️', label: `${action.amount}` };
       case 'buff':
         return { key, tone: action.kind, icon: '💪', label: `+${action.strength}` };
+      case 'heal':
+        return { key, tone: action.kind, icon: action.allies ? '💞' : '💚', label: `+${action.amount}` };
+      case 'paralyze':
+        return { key, tone: action.kind, icon: '💫', label: `${action.amount}` };
+      case 'chill':
+        return { key, tone: action.kind, icon: '❄️', label: `${action.amount}` };
+      case 'seal':
+        return { key, tone: action.kind, icon: '🔒', label: '' };
+      case 'charge':
+        return { key, tone: action.kind, icon: '🔋', label: '' };
     }
   });
 }

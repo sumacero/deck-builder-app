@@ -112,4 +112,58 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '💪',
     description: '次のターン、筋力を得て以後の攻撃が強くなる。早めに倒すのが得策。',
   },
+  paralysis: {
+    id: 'paralysis',
+    name: '麻痺',
+    icon: '💫',
+    description: 'このターンのエナジーが、その数値の分だけ減っている。次のターンには元に戻る。',
+  },
+  chill: {
+    id: 'chill',
+    name: '凍え',
+    icon: '❄️',
+    description: 'このターンに引いたカードが、その数値の分だけ少ない。次のターンには元に戻る。',
+  },
+  seal: {
+    id: 'seal',
+    name: '封印',
+    icon: '🔒',
+    description: 'このターンはスキルカードを使えない。次のターンには元に戻る。',
+  },
+  intentHeal: {
+    id: 'intentHeal',
+    name: '回復の予告',
+    icon: '💚',
+    description: '次のターン、自分の HP を回復する。回復される前に削り切るか、大きなダメージで押し切ろう。',
+  },
+  intentAllyHeal: {
+    id: 'intentAllyHeal',
+    name: '全体回復の予告',
+    icon: '💞',
+    description: '次のターン、生きている敵全員の HP を回復する。回復役から先に倒すのが得策。',
+  },
+  intentParalyze: {
+    id: 'intentParalyze',
+    name: '麻痺の予告',
+    icon: '💫',
+    description: '次の自分のターン、エナジーが表示された数値だけ減る（重ねても 2 まで）。',
+  },
+  intentChill: {
+    id: 'intentChill',
+    name: '凍えの予告',
+    icon: '❄️',
+    description: '次の自分のターン、引く枚数が表示された数値だけ減る（重ねても 2 まで）。',
+  },
+  intentSeal: {
+    id: 'intentSeal',
+    name: '封印の予告',
+    icon: '🔒',
+    description: '次の自分のターン、スキルカードを使えなくなる。今のうちにブロックを積んでおこう。',
+  },
+  intentCharge: {
+    id: 'intentCharge',
+    name: 'チャージ',
+    icon: '🔋',
+    description: '力を溜めている。次の行動は強烈な大技なので、このターンのうちに備えよう。',
+  },
 };

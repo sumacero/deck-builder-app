@@ -46,6 +46,9 @@ export function playerStatuses(player: PlayerState): StatusView[] {
     { keyword: 'strength', value: player.strength },
     { keyword: 'tempStrength', value: player.tempStrength },
     { keyword: 'endTurnBlock', value: player.endTurnBlock },
+    { keyword: 'paralysis', value: player.hindrance.paralysis },
+    { keyword: 'chill', value: player.hindrance.chill },
+    { keyword: 'seal', value: player.hindrance.seal ? 1 : 0, flag: true },
   ]);
 }
 
@@ -56,13 +59,28 @@ export function enemyStatuses(enemy: EnemyState): StatusView[] {
   ]);
 }
 
-const INTENT_KEYWORD: Record<EnemyAction['kind'], KeywordId> = {
-  attack: 'intentAttack',
-  block: 'intentBlock',
-  buff: 'intentBuff',
-};
+function keywordForIntent(action: EnemyAction): KeywordId {
+  switch (action.kind) {
+    case 'attack':
+      return 'intentAttack';
+    case 'block':
+      return 'intentBlock';
+    case 'buff':
+      return 'intentBuff';
+    case 'heal':
+      return action.allies ? 'intentAllyHeal' : 'intentHeal';
+    case 'paralyze':
+      return 'intentParalyze';
+    case 'chill':
+      return 'intentChill';
+    case 'seal':
+      return 'intentSeal';
+    case 'charge':
+      return 'intentCharge';
+  }
+}
 
 /** 敵の次の行動に出ているアイコンの意味。 */
 export function keywordsForIntent(move: EnemyMove): KeywordId[] {
-  return unique(move.actions.map((action) => INTENT_KEYWORD[action.kind]));
+  return unique(move.actions.map(keywordForIntent));
 }
