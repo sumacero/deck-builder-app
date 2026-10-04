@@ -10,7 +10,9 @@ import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, statusTurns } from './status';
 function keywordsForEffect(effect: Effect): KeywordId[] {
   switch (effect.kind) {
     case 'damage':
-      return ['damage'];
+      return effect.strengthMultiplier ? ['damage', 'strength'] : ['damage'];
+    case 'damagePerSelfHpLost':
+      return ['damage', 'loseHp'];
     case 'damageFromBlock':
       return ['damage', 'block'];
     case 'block':

@@ -6,7 +6,10 @@ import type { BuffId, DebuffId, PowerId } from './status';
  * damage がどの敵に当たるかは、効果の持ち主（カード・ポーション）の EffectTarget で決まる。
  */
 export type Effect =
-  | { kind: 'damage'; amount: number; hits?: number }
+  /** strengthMultiplier: 筋力が N 倍で乗る（筋力を貯めるほど伸びる大技）。 */
+  | { kind: 'damage'; amount: number; hits?: number; strengthMultiplier?: number }
+  /** base + この戦闘でカードの効果で自分が失った HP × perHp のダメージ（敵の攻撃で減った分は数えない）。 */
+  | { kind: 'damagePerSelfHpLost'; base: number; perHp: number }
   /** 今のブロック値と同じダメージを与える（筋力などの補正も乗る）。 */
   | { kind: 'damageFromBlock' }
   | { kind: 'block'; amount: number }

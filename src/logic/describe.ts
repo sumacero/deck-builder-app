@@ -41,9 +41,11 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
   switch (effect.kind) {
     case 'damage': {
       const whom = target === 'allEnemies' ? '敵全体に' : '';
+      const scaling =
+        effect.strengthMultiplier && effect.strengthMultiplier > 1 ? `筋力が ${effect.strengthMultiplier} 倍で乗る。` : '';
       return effect.hits && effect.hits > 1
-        ? `${whom}${effect.amount} ダメージを ${effect.hits} 回与える。`
-        : `${whom}${effect.amount} ダメージを与える。`;
+        ? `${whom}${effect.amount} ダメージを ${effect.hits} 回与える。${scaling}`
+        : `${whom}${effect.amount} ダメージを与える。${scaling}`;
     }
     case 'block':
       return `ブロック ${effect.amount} を得る。`;
@@ -75,6 +77,8 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `自分のバフのターン数を ${effect.turns} 増やす。`;
     case 'gainPower':
       return describePower(effect.power, effect.amount);
+    case 'damagePerSelfHpLost':
+      return `${effect.base} ダメージ。この戦闘でカードの効果で失った HP 1 につき +${effect.perHp}。`;
     case 'damagePerDebuff':
       return `${effect.base} ダメージ。敵のデバフ 1 ターンにつき +${effect.perTurn}。`;
     case 'detonateDebuffs':

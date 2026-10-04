@@ -104,12 +104,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 9 },
+      { kind: 'damage', amount: 5 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 10 },
+        { kind: 'damage', amount: 7 },
         { kind: 'draw', amount: 2 },
       ],
     },
@@ -136,10 +136,11 @@ export const REWARD_CARDS: CardDefinition[] = [
     id: 'heavy-blade',
     name: '大剣',
     type: 'attack',
+    archetypes: ['strength'],
     cost: 2,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 18 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 24 }] },
+    effects: [{ kind: 'damage', amount: 12, strengthMultiplier: 3 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 14, strengthMultiplier: 5 }] },
   },
   {
     id: 'clothesline',
@@ -149,12 +150,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 2,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 12 },
+      { kind: 'damage', amount: 10 },
       { kind: 'applyDebuff', status: 'weak', turns: 2 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 14 },
+        { kind: 'damage', amount: 12 },
         { kind: 'applyDebuff', status: 'weak', turns: 3 },
       ],
     },
@@ -169,12 +170,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     attribute: 'fire',
     effects: [
       { kind: 'loseHp', amount: 3 },
-      { kind: 'damage', amount: 14 },
+      { kind: 'damage', amount: 12 },
     ],
     upgrade: {
       effects: [
         { kind: 'loseHp', amount: 3 },
-        { kind: 'damage', amount: 19 },
+        { kind: 'damage', amount: 16 },
       ],
     },
   },
@@ -182,12 +183,13 @@ export const REWARD_CARDS: CardDefinition[] = [
     id: 'anger',
     name: '怒気',
     type: 'attack',
+    archetypes: ['strength'],
     cost: 0,
     target: 'enemy',
     attribute: 'fire',
-    effects: [{ kind: 'damage', amount: 6 }],
+    effects: [{ kind: 'damage', amount: 4 }],
     addCopyToDiscard: true,
-    upgrade: { effects: [{ kind: 'damage', amount: 8 }] },
+    upgrade: { effects: [{ kind: 'damage', amount: 6 }] },
   },
   {
     id: 'cleave',
@@ -195,8 +197,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'attack',
     cost: 1,
     target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 8 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 11 }] },
+    effects: [{ kind: 'damage', amount: 7 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 10 }] },
   },
   {
     id: 'thunderclap',
@@ -236,12 +238,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'self',
     effects: [
-      { kind: 'block', amount: 8 },
+      { kind: 'block', amount: 7 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'block', amount: 11 },
+        { kind: 'block', amount: 10 },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -250,6 +252,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     id: 'seeing-red',
     name: '見切り',
     type: 'skill',
+    archetypes: ['strength'],
     cost: 1,
     target: 'self',
     effects: [{ kind: 'gainEnergy', amount: 2 }],
@@ -278,10 +281,19 @@ export const REWARD_CARDS: CardDefinition[] = [
     id: 'battle-trance',
     name: '戦闘トランス',
     type: 'skill',
+    archetypes: ['sacrifice'],
     cost: 0,
     target: 'self',
-    effects: [{ kind: 'draw', amount: 2 }],
-    upgrade: { effects: [{ kind: 'draw', amount: 3 }] },
+    effects: [
+      { kind: 'loseHp', amount: 2 },
+      { kind: 'draw', amount: 2 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'loseHp', amount: 2 },
+        { kind: 'draw', amount: 3 },
+      ],
+    },
   },
   {
     id: 'offering',
@@ -430,10 +442,10 @@ export const REWARD_CARDS: CardDefinition[] = [
     name: '倍返しの盾',
     type: 'skill',
     archetypes: ['block'],
-    cost: 2,
+    cost: 1,
     target: 'self',
     effects: [{ kind: 'doubleBlock' }],
-    upgrade: { cost: 1 },
+    upgrade: { cost: 0 },
   },
   {
     id: 'searing-decree',
@@ -600,8 +612,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['debuff'],
     cost: 1,
     target: 'enemy',
-    effects: [{ kind: 'damagePerDebuff', base: 3, perTurn: 2 }],
-    upgrade: { effects: [{ kind: 'damagePerDebuff', base: 4, perTurn: 3 }] },
+    effects: [{ kind: 'damagePerDebuff', base: 2, perTurn: 3 }],
+    upgrade: { effects: [{ kind: 'damagePerDebuff', base: 3, perTurn: 4 }] },
   },
   {
     id: 'dropkick',
@@ -666,9 +678,9 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 2,
     target: 'self',
-    effects: [{ kind: 'block', amount: 30 }],
+    effects: [{ kind: 'block', amount: 20 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'block', amount: 40 }] },
+    upgrade: { effects: [{ kind: 'block', amount: 28 }] },
   },
   {
     id: 'shield-shatter',
@@ -687,9 +699,9 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 2,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'juggernaut', amount: 5 }],
+    effects: [{ kind: 'gainPower', power: 'juggernaut', amount: 6 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'juggernaut', amount: 7 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'juggernaut', amount: 8 }] },
   },
   {
     id: 'rise-from-ashes',
@@ -702,6 +714,19 @@ export const REWARD_CARDS: CardDefinition[] = [
     exhaust: true,
     upgrade: { effects: [{ kind: 'gainPower', power: 'feelNoPain', amount: 4 }] },
   },
+
+  {
+    id: 'blood-price',
+    name: '血の代償',
+    type: 'attack',
+    archetypes: ['sacrifice'],
+    cost: 1,
+    target: 'enemy',
+    attribute: 'fire',
+    effects: [{ kind: 'damagePerSelfHpLost', base: 3, perHp: 2 }],
+    upgrade: { effects: [{ kind: 'damagePerSelfHpLost', base: 5, perHp: 3 }] },
+  },
+  BASH,
 
   // --- 戦闘を通じて強くなる ---
   {

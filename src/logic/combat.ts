@@ -266,6 +266,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       powers: {},
       attribute: setup.agent.attribute,
       enchant: [],
+      selfHpLost: 0,
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
       pendingHindrance: NO_HINDRANCE,
@@ -350,8 +351,9 @@ export function canPlayCard(state: CombatState, instanceId: string): boolean {
   return !(state.player.hindrance.seal && instance.card.type === 'skill');
 }
 
-function attackDamage(state: CombatState, base: number): number {
-  return Math.max(0, base + state.player.strength + state.player.tempStrength);
+/** strengthMultiplier は大剣のように筋力が何倍で乗るか。 */
+function attackDamage(state: CombatState, base: number, strengthMultiplier = 1): number {
+  return Math.max(0, base + (state.player.strength + state.player.tempStrength) * strengthMultiplier);
 }
 
 /**
@@ -506,6 +508,7 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         ...state.player,
         hp: Math.max(0, state.player.hp - effect.amount),
         strength: state.player.strength + rupture,
+        selfHpLost: state.player.selfHpLost + effect.amount,
       };
       const lost = withEvent(withLog({ ...state, player }, `HP -${effect.amount}`), {
         kind: 'hit',
@@ -534,12 +537,16 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       );
     case 'damage': {
       // 全体攻撃の連撃は、1 発目を全員に当ててから 2 発目へ。
-      const amount = attackDamage(state, effect.amount);
+      const amount = attackDamage(state, effect.amount, effect.strengthMultiplier);
       let next = state;
       for (let i = 0; i < (effect.hits ?? 1); i++) {
         next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), next);
       }
       return next;
+    }
+    case 'damagePerSelfHpLost': {
+      const amount = attackDamage(state, effect.base + state.player.selfHpLost * effect.perHp);
+      return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), state);
     }
     case 'damageFromBlock': {
       const amount = attackDamage(state, state.player.block);

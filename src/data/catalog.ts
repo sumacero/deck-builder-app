@@ -4,7 +4,7 @@ import type { EventDefinition } from '../domain/event';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import { STANDARD_BLESSINGS } from './blessings';
-import { BASH, CRIMSON_PHOENIX, DEFEND, REWARD_CARDS, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
+import { CRIMSON_PHOENIX, DEFEND, REWARD_CARDS, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
 import { STANDARD_EVENTS } from './events';
 import { STATUS_CARDS } from './statusCards';
 import { ALL_POTIONS } from './potions';
@@ -31,7 +31,6 @@ function uniqueById<T extends { id: string }>(items: readonly T[]): T[] {
 export const ALL_CARDS: CardDefinition[] = uniqueById([
   STRIKE,
   DEFEND,
-  BASH,
   ...REWARD_CARDS,
   ULTIMATE_STRIKE,
   ULTIMATE_DEFEND,
