@@ -24,8 +24,8 @@ export const CAVE_SLIME: EnemyDefinition = {
 
 export const FANG_RAT: EnemyDefinition = {
   id: 'fang-rat',
-  name: '牙ネズミ',
-  icon: '🐀',
+  name: 'いたずらネズミ',
+  icon: '🐭',
   rank: 'normal',
   maxHp: 30,
   moves: [
@@ -44,8 +44,8 @@ export const FANG_RAT: EnemyDefinition = {
 
 export const ROTTING_SOLDIER: EnemyDefinition = {
   id: 'rotting-soldier',
-  name: '朽ちた兵士',
-  icon: '🧟',
+  name: 'おんぼろ兵士',
+  icon: '🪖',
   rank: 'normal',
   maxHp: 40,
   moves: [
@@ -57,19 +57,19 @@ export const ROTTING_SOLDIER: EnemyDefinition = {
         { kind: 'attack', damage: 6, hits: 1 },
       ],
     },
-    { id: 'cleave', name: '叩き斬り', actions: [{ kind: 'attack', damage: 13, hits: 1 }] },
+    { id: 'cleave', name: '大振り', actions: [{ kind: 'attack', damage: 13, hits: 1 }] },
     { id: 'stomp', name: '踏みつけ', actions: [{ kind: 'attack', damage: 5, hits: 2 }] },
   ],
 };
 
 export const CAVE_HOUND: EnemyDefinition = {
   id: 'cave-hound',
-  name: '洞窟の番犬',
+  name: '洞窟オオカミ',
   icon: '🐺',
   rank: 'elite',
   maxHp: 72,
   moves: [
-    { id: 'crunch', name: '噛み砕き', actions: [{ kind: 'attack', damage: 14, hits: 1 }] },
+    { id: 'crunch', name: 'がぶり', actions: [{ kind: 'attack', damage: 14, hits: 1 }] },
     {
       id: 'howl',
       name: '遠吠え',
@@ -78,7 +78,7 @@ export const CAVE_HOUND: EnemyDefinition = {
         { kind: 'block', amount: 6 },
       ],
     },
-    { id: 'double-bite', name: '連続噛み', actions: [{ kind: 'attack', damage: 6, hits: 2 }] },
+    { id: 'double-bite', name: 'がぶがぶ', actions: [{ kind: 'attack', damage: 6, hits: 2 }] },
   ],
 };
 
@@ -117,9 +117,9 @@ export const SLIME_KING: EnemyDefinition = {
         { kind: 'buff', strength: 2 },
       ],
     },
-    { id: 'crush', name: '押し潰し', actions: [{ kind: 'attack', damage: 14, hits: 1 }] },
-    { id: 'acid-rain', name: '酸の雨', actions: [{ kind: 'attack', damage: 4, hits: 3 }] },
-    { id: 'engulf', name: '飲み込み', actions: [{ kind: 'attack', damage: 20, hits: 1 }] },
+    { id: 'crush', name: 'のしかかり', actions: [{ kind: 'attack', damage: 14, hits: 1 }] },
+    { id: 'acid-rain', name: 'ねばねば雨', actions: [{ kind: 'attack', damage: 4, hits: 3 }] },
+    { id: 'engulf', name: 'まるのみ', actions: [{ kind: 'attack', damage: 20, hits: 1 }] },
   ],
 };
 
@@ -127,7 +127,7 @@ export const SLIME_KING: EnemyDefinition = {
 
 export const RUSTED_KNIGHT: EnemyDefinition = {
   id: 'rusted-knight',
-  name: '錆びた騎士',
+  name: 'ブリキの騎士',
   icon: '🤺',
   rank: 'normal',
   maxHp: 55,
@@ -147,32 +147,32 @@ export const RUSTED_KNIGHT: EnemyDefinition = {
 
 export const HEX_MAGE: EnemyDefinition = {
   id: 'hex-mage',
-  name: '呪術師',
+  name: 'いたずら魔法使い',
   icon: '🧙',
   rank: 'normal',
   maxHp: 48,
   moves: [
     {
       id: 'hex-mark',
-      name: '呪いの印',
+      name: 'いたずらの印',
       actions: [
         { kind: 'buff', strength: 2 },
         { kind: 'block', amount: 6 },
       ],
     },
-    { id: 'dark-bolt', name: '闇の矢', actions: [{ kind: 'attack', damage: 10, hits: 1 }] },
-    { id: 'dark-rain', name: '闇の雨', actions: [{ kind: 'attack', damage: 4, hits: 3 }] },
+    { id: 'dark-bolt', name: '魔法の矢', actions: [{ kind: 'attack', damage: 10, hits: 1 }] },
+    { id: 'dark-rain', name: '魔法の雨', actions: [{ kind: 'attack', damage: 4, hits: 3 }] },
   ],
 };
 
 export const CASTLE_BAT: EnemyDefinition = {
   id: 'castle-bat',
-  name: '城の吸血蝙蝠',
+  name: 'お城のコウモリ',
   icon: '🦇',
   rank: 'normal',
   maxHp: 45,
   moves: [
-    { id: 'drain', name: '吸血', actions: [{ kind: 'attack', damage: 9, hits: 1 }] },
+    { id: 'drain', name: 'かみつき', actions: [{ kind: 'attack', damage: 9, hits: 1 }] },
     { id: 'whirl', name: '乱舞', actions: [{ kind: 'attack', damage: 3, hits: 4 }] },
     {
       id: 'flap',
@@ -187,7 +187,7 @@ export const CASTLE_BAT: EnemyDefinition = {
 
 export const IRON_EXECUTIONER: EnemyDefinition = {
   id: 'iron-executioner',
-  name: '黒鉄の処刑人',
+  name: '大斧の番兵',
   icon: '🪓',
   rank: 'elite',
   maxHp: 110,
@@ -200,19 +200,19 @@ export const IRON_EXECUTIONER: EnemyDefinition = {
         { kind: 'block', amount: 10 },
       ],
     },
-    { id: 'execute', name: '処刑', actions: [{ kind: 'attack', damage: 20, hits: 1 }] },
+    { id: 'execute', name: '大斧落とし', actions: [{ kind: 'attack', damage: 20, hits: 1 }] },
     { id: 'sweep', name: '薙ぎ払い', actions: [{ kind: 'attack', damage: 8, hits: 2 }] },
   ],
 };
 
 export const WILL_O_WARDEN: EnemyDefinition = {
   id: 'will-o-warden',
-  name: '鬼火の番人',
-  icon: '👹',
+  name: 'ひのたまの番人',
+  icon: '🔥',
   rank: 'elite',
   maxHp: 100,
   moves: [
-    { id: 'wisp', name: '鬼火', actions: [{ kind: 'attack', damage: 5, hits: 3 }] },
+    { id: 'wisp', name: 'ひのたま', actions: [{ kind: 'attack', damage: 5, hits: 3 }] },
     {
       id: 'roar',
       name: '怒号',
@@ -227,22 +227,22 @@ export const WILL_O_WARDEN: EnemyDefinition = {
 
 export const CASTLE_PHANTOM: EnemyDefinition = {
   id: 'castle-phantom',
-  name: '城主の亡霊',
+  name: 'おばけ城主',
   icon: '👻',
   rank: 'boss',
   maxHp: 150,
   moves: [
     {
       id: 'dread',
-      name: '威圧',
+      name: 'おどかし',
       actions: [
         { kind: 'buff', strength: 2 },
         { kind: 'block', amount: 12 },
       ],
     },
-    { id: 'soul-reap', name: '魂刈り', actions: [{ kind: 'attack', damage: 16, hits: 1 }] },
-    { id: 'grudge', name: '怨嗟', actions: [{ kind: 'attack', damage: 4, hits: 4 }] },
-    { id: 'underworld', name: '冥府の一撃', actions: [{ kind: 'attack', damage: 21, hits: 1 }] },
+    { id: 'soul-reap', name: 'ひんやりタッチ', actions: [{ kind: 'attack', damage: 16, hits: 1 }] },
+    { id: 'grudge', name: 'ぽかぽか連打', actions: [{ kind: 'attack', damage: 4, hits: 4 }] },
+    { id: 'underworld', name: 'おばけパンチ', actions: [{ kind: 'attack', damage: 21, hits: 1 }] },
   ],
 };
 
@@ -270,12 +270,12 @@ export const STARDUST_SOLDIER: EnemyDefinition = {
 
 export const VOID_EYE: EnemyDefinition = {
   id: 'void-eye',
-  name: '虚空の目',
+  name: 'ふしぎな目玉',
   icon: '👁️',
   rank: 'normal',
   maxHp: 62,
   moves: [
-    { id: 'gaze', name: '凝視', actions: [{ kind: 'buff', strength: 3 }] },
+    { id: 'gaze', name: 'じーっと見る', actions: [{ kind: 'buff', strength: 3 }] },
     { id: 'beam', name: '光線', actions: [{ kind: 'attack', damage: 16, hits: 1 }] },
     { id: 'barrage', name: '光線乱射', actions: [{ kind: 'attack', damage: 6, hits: 3 }] },
   ],
@@ -303,7 +303,7 @@ export const SKY_EAGLE: EnemyDefinition = {
 
 export const STAR_EATER: EnemyDefinition = {
   id: 'star-eater',
-  name: '星を喰らう竜',
+  name: '星くいドラゴン',
   icon: '🐉',
   rank: 'elite',
   maxHp: 150,
@@ -317,7 +317,7 @@ export const STAR_EATER: EnemyDefinition = {
       ],
     },
     { id: 'breath', name: '炎の息', actions: [{ kind: 'attack', damage: 10, hits: 3 }] },
-    { id: 'devour', name: '噛み砕き', actions: [{ kind: 'attack', damage: 26, hits: 1 }] },
+    { id: 'devour', name: 'がぶり', actions: [{ kind: 'attack', damage: 26, hits: 1 }] },
   ],
 };
 
@@ -337,26 +337,26 @@ export const TIME_KEEPER: EnemyDefinition = {
       ],
     },
     { id: 'time-blade', name: '時の刃', actions: [{ kind: 'attack', damage: 8, hits: 3 }] },
-    { id: 'final-bell', name: '終焉の鐘', actions: [{ kind: 'attack', damage: 24, hits: 1 }] },
+    { id: 'final-bell', name: '大きな鐘の音', actions: [{ kind: 'attack', damage: 24, hits: 1 }] },
   ],
 };
 
 export const VOID_KING: EnemyDefinition = {
   id: 'void-king',
-  name: '虚無の王',
+  name: 'まよなかの王',
   icon: '🌑',
   rank: 'boss',
   maxHp: 190,
   moves: [
     {
       id: 'abyss-stance',
-      name: '深淵の構え',
+      name: '夜空の構え',
       actions: [
         { kind: 'buff', strength: 2 },
         { kind: 'block', amount: 15 },
       ],
     },
-    { id: 'void-wave', name: '虚無の波', actions: [{ kind: 'attack', damage: 5, hits: 4 }] },
+    { id: 'void-wave', name: '夜の波', actions: [{ kind: 'attack', damage: 5, hits: 4 }] },
     { id: 'star-break', name: '星砕き', actions: [{ kind: 'attack', damage: 23, hits: 1 }] },
     {
       id: 'inhale',
@@ -413,8 +413,8 @@ export const CAVE_BAT: EnemyDefinition = {
 
 export const BONE_ARCHER: EnemyDefinition = {
   id: 'bone-archer',
-  name: '骸骨弓兵',
-  icon: '💀',
+  name: 'ほねほね弓兵',
+  icon: '🏹',
   rank: 'normal',
   maxHp: 26,
   moves: [
@@ -433,7 +433,7 @@ export const BONE_ARCHER: EnemyDefinition = {
 
 export const CURSED_CANDLE: EnemyDefinition = {
   id: 'cursed-candle',
-  name: '呪いの燭台',
+  name: 'いたずらキャンドル',
   icon: '🕯️',
   rank: 'normal',
   maxHp: 22,
@@ -473,7 +473,7 @@ export const STAR_WISP: EnemyDefinition = {
 
 export const VOID_MOTE: EnemyDefinition = {
   id: 'void-mote',
-  name: '虚空の粒',
+  name: 'まっくろつぶ',
   icon: '⚫',
   rank: 'normal',
   maxHp: 22,
@@ -543,7 +543,7 @@ export const GOBLIN_SCOUT: EnemyDefinition = {
 
 export const RUST_MITE: EnemyDefinition = {
   id: 'rust-mite',
-  name: '錆ダニ',
+  name: 'さびむし',
   icon: '🪲',
   rank: 'normal',
   maxHp: 15,
@@ -576,7 +576,7 @@ export const SHIELD_BEARER: EnemyDefinition = {
         { kind: 'attack', damage: 4, hits: 1 },
       ],
     },
-    { id: 'shield-bash', name: '盾殴り', actions: [{ kind: 'attack', damage: 10, hits: 1 }] },
+    { id: 'shield-bash', name: '盾アタック', actions: [{ kind: 'attack', damage: 10, hits: 1 }] },
     { id: 'hold-line', name: '戦列維持', actions: [{ kind: 'block', amount: 14 }] },
   ],
 };
@@ -645,6 +645,6 @@ export const COMET_HOUND: EnemyDefinition = {
   moves: [
     { id: 'pounce', name: '飛びかかり', actions: [{ kind: 'attack', damage: 13, hits: 1 }] },
     { id: 'howl', name: '遠吠え', actions: [{ kind: 'buff', strength: 3 }] },
-    { id: 'rend', name: '引き裂き', actions: [{ kind: 'attack', damage: 5, hits: 2 }] },
+    { id: 'rend', name: 'ひっかき', actions: [{ kind: 'attack', damage: 5, hits: 2 }] },
   ],
 };

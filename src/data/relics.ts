@@ -2,7 +2,7 @@ import type { RelicDefinition } from '../domain/relic';
 
 export const RUSTY_ANCHOR: RelicDefinition = {
   id: 'rusty-anchor',
-  name: '錆びた錨',
+  name: 'ふるい錨',
   icon: '⚓',
   rarity: 'common',
   trigger: 'combatStart',
@@ -30,7 +30,7 @@ export const STEADFAST_STONE: RelicDefinition = {
 
 export const FIGHTING_SPIRIT: RelicDefinition = {
   id: 'fighting-spirit',
-  name: '闘志の血潮',
+  name: '闘志のハート',
   icon: '🩸',
   rarity: 'common',
   trigger: 'combatWon',
@@ -131,7 +131,7 @@ export const BOSS_RELIC_POOL: RelicDefinition[] = [
   },
   {
     id: 'void-shard',
-    name: '虚空の欠片',
+    name: '夜空のかけら',
     icon: '🌀',
     rarity: 'boss',
     effects: [],
