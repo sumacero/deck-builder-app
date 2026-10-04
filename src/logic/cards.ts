@@ -21,6 +21,12 @@ export function canUpgrade(card: CardDefinition): boolean {
   return card.upgrade !== undefined && !card.upgraded;
 }
 
+const UPGRADED_SUFFIX = '+';
+
+/** 強化後のカード id（`xxx+`）から、強化前の id を得る。 */
+export const baseCardId = (id: string) =>
+  id.endsWith(UPGRADED_SUFFIX) ? id.slice(0, -UPGRADED_SUFFIX.length) : id;
+
 /** 強化後のカード定義。id と名前に + が付くので、強化前とは別のカードとして数える。 */
 export function upgradeCard(card: CardDefinition): CardDefinition {
   if (!card.upgrade || card.upgraded) return card;
@@ -28,8 +34,8 @@ export function upgradeCard(card: CardDefinition): CardDefinition {
   return {
     ...base,
     ...upgrade,
-    id: `${card.id}+`,
-    name: `${card.name}+`,
+    id: `${card.id}${UPGRADED_SUFFIX}`,
+    name: `${card.name}${UPGRADED_SUFFIX}`,
     upgraded: true,
   };
 }

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { CARD_TYPE_LABEL, describeCard } from '../../logic/describe';
-import { CARD_TYPE_COLORS, COLORS, HAND_LAYOUT, RADIUS, SPACING } from '../../theme';
+import { CARD_ART, CARD_TYPE_COLORS, COLORS, HAND_LAYOUT, RADIUS, SPACING } from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
+import { cardArt } from './cardArt';
 
 type CardViewProps = {
   card: CardDefinition;
@@ -21,6 +22,10 @@ type CardViewProps = {
 const LONG_PRESS_MS = 350;
 
 const BASE_WIDTH = 96;
+const WIDE_WIDTH = 108;
+const BORDER_WIDTH = 2;
+
+const artHeight = (width: number) => Math.round(width * CARD_ART.heightRatio);
 
 /** 幅に合わせた文字サイズ。小さくなりすぎないよう下限を設ける。 */
 function scaledStyles(width: number) {
@@ -29,9 +34,10 @@ function scaledStyles(width: number) {
     card: {
       width,
       minHeight: Math.round(width * HAND_LAYOUT.aspectRatio),
-      paddingHorizontal: Math.max(2, SPACING.xs * scale),
     },
-    name: { fontSize: Math.max(10, 13 * scale) },
+    art: { height: artHeight(width) },
+    body: { paddingHorizontal: Math.max(2, SPACING.xs * scale) },
+    name: { fontSize: Math.max(9, 12 * scale) },
     type: { fontSize: Math.max(8, 10 * scale) },
     description: { fontSize: Math.max(9, 11 * scale) },
   };
@@ -51,6 +57,7 @@ export function CardView({
   const typeColor = CARD_TYPE_COLORS[card.type];
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width) : null;
+  const art = cardArt(card);
   return (
     <>
       <Pressable
@@ -68,6 +75,31 @@ export function CardView({
           pressed && onPress && styles.pressed,
         ]}
       >
+        <View
+          style={[
+            styles.art,
+            wide && styles.wideArt,
+            scaled?.art,
+            !art && { backgroundColor: `${typeColor}${CARD_ART.fallbackAlpha}` },
+          ]}
+        >
+          {art && <Image source={art} style={styles.artImage} resizeMode="cover" />}
+          <View style={styles.nameBand}>
+            <Text
+              style={[styles.name, scaled?.name, card.upgraded && styles.upgradedName]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {card.name}
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.body, wide && styles.wideBody, scaled?.body]}>
+          <Text style={[styles.type, scaled?.type, { color: typeColor }]}>
+            {CARD_TYPE_LABEL[card.type]}
+          </Text>
+          <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
+        </View>
         <View style={styles.costGem}>
           <Text style={styles.costText}>{card.cost}</Text>
         </View>
@@ -76,17 +108,6 @@ export function CardView({
             <Text style={styles.countText}>×{count}</Text>
           </View>
         )}
-        <Text
-          style={[styles.name, scaled?.name, card.upgraded && styles.upgradedName]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {card.name}
-        </Text>
-        <Text style={[styles.type, scaled?.type, { color: typeColor }]}>
-          {CARD_TYPE_LABEL[card.type]}
-        </Text>
-        <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
       </Pressable>
       {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
     </>
@@ -100,18 +121,38 @@ const styles = StyleSheet.create({
     width: BASE_WIDTH,
     minHeight: 132,
     backgroundColor: COLORS.surface,
-    borderWidth: 2,
+    borderWidth: BORDER_WIDTH,
     borderRadius: RADIUS.md,
-    paddingTop: SPACING.lg,
-    paddingHorizontal: SPACING.xs,
     paddingBottom: SPACING.sm,
-    alignItems: 'center',
-    gap: SPACING.xs,
   },
-  wide: { width: 108, minHeight: 168, paddingHorizontal: SPACING.sm },
+  wide: { width: WIDE_WIDTH, minHeight: 168 },
   selected: { borderWidth: 3 },
   dimmed: { opacity: 0.4 },
   pressed: { transform: [{ translateY: -8 }] },
+  art: {
+    height: artHeight(BASE_WIDTH),
+    borderTopLeftRadius: RADIUS.md - BORDER_WIDTH,
+    borderTopRightRadius: RADIUS.md - BORDER_WIDTH,
+    overflow: 'hidden',
+    backgroundColor: COLORS.panel,
+    justifyContent: 'flex-end',
+  },
+  wideArt: { height: artHeight(WIDE_WIDTH) },
+  artImage: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+  nameBand: {
+    backgroundColor: COLORS.cardNameBand,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 1,
+    alignItems: 'center',
+  },
+  body: {
+    flex: 1,
+    alignItems: 'center',
+    gap: SPACING.xs / 2,
+    paddingTop: SPACING.xs / 2,
+    paddingHorizontal: SPACING.xs,
+  },
+  wideBody: { paddingHorizontal: SPACING.sm, gap: SPACING.xs },
   costGem: {
     position: 'absolute',
     top: -SPACING.sm,
@@ -136,7 +177,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   countText: { color: COLORS.onGold, fontSize: 11, fontWeight: '800' },
-  name: { color: COLORS.text, fontSize: 13, fontWeight: '700' },
+  name: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
   upgradedName: { color: COLORS.upgraded },
   type: { fontSize: 10, fontWeight: '600' },
   description: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },
