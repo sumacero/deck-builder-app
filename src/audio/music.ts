@@ -13,19 +13,11 @@ type TrialMusicId =
   | 'trial09'
   | 'trial10';
 
-type ThemeMusicId =
-  | 'theme01'
-  | 'theme02'
-  | 'theme03'
-  | 'theme04'
-  | 'theme05'
-  | 'theme06'
-  | 'theme07'
-  | 'theme08'
-  | 'theme09'
-  | 'theme10';
+type ThemeMusicId = 'theme02' | 'theme05' | 'theme06' | 'theme10';
 
-export type MusicId = 'battleNormal' | 'battleElite' | 'battleBoss' | TrialMusicId | ThemeMusicId;
+type MainMusicId = 'mainTitle' | 'mainNormal' | 'mainElite' | 'mainBoss';
+
+export type MusicId = 'battleNormal' | 'battleElite' | 'battleBoss' | TrialMusicId | ThemeMusicId | MainMusicId;
 
 type MusicDef = {
   source: AudioSource;
@@ -51,16 +43,14 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   trial08: { source: require('../../assets/music/trial/trial-08.wav'), volume: 0.32 },
   trial09: { source: require('../../assets/music/trial/trial-09.wav'), volume: 0.32 },
   trial10: { source: require('../../assets/music/trial/trial-10.wav'), volume: 0.32 },
-  theme01: { source: require('../../assets/music/theme/theme-01.wav'), volume: 0.32 },
   theme02: { source: require('../../assets/music/theme/theme-02.wav'), volume: 0.32 },
-  theme03: { source: require('../../assets/music/theme/theme-03.wav'), volume: 0.32 },
-  theme04: { source: require('../../assets/music/theme/theme-04.wav'), volume: 0.32 },
   theme05: { source: require('../../assets/music/theme/theme-05.wav'), volume: 0.32 },
   theme06: { source: require('../../assets/music/theme/theme-06.wav'), volume: 0.32 },
-  theme07: { source: require('../../assets/music/theme/theme-07.wav'), volume: 0.32 },
-  theme08: { source: require('../../assets/music/theme/theme-08.wav'), volume: 0.32 },
-  theme09: { source: require('../../assets/music/theme/theme-09.wav'), volume: 0.32 },
   theme10: { source: require('../../assets/music/theme/theme-10.wav'), volume: 0.32 },
+  mainTitle: { source: require('../../assets/music/theme/main-title.wav'), volume: 0.34 },
+  mainNormal: { source: require('../../assets/music/theme/main-normal.wav'), volume: 0.34 },
+  mainElite: { source: require('../../assets/music/theme/main-elite.wav'), volume: 0.32 },
+  mainBoss: { source: require('../../assets/music/theme/main-boss.wav'), volume: 0.3 },
 };
 
 const BATTLE_MUSIC: Record<EnemyRank, MusicId> = {
@@ -73,7 +63,7 @@ export function battleMusicFor(rank: EnemyRank): MusicId {
   return BATTLE_MUSIC[rank];
 }
 
-export type MusicGroup = 'theme' | 'current' | 'trial';
+export type MusicGroup = 'main' | 'theme' | 'current' | 'trial';
 
 export type MusicEntry = {
   id: MusicId;
@@ -84,15 +74,13 @@ export type MusicEntry = {
 
 /** 図鑑の「BGM」で聴ける曲の一覧。 */
 export const MUSIC_ENTRIES: MusicEntry[] = [
-  { id: 'theme01', group: 'theme', title: '三つの旗 −完全版−', description: '04 をもとに、最後にサビを全楽器でもう一度。160 BPM。' },
+  { id: 'mainTitle', group: 'main', title: 'メインタイトル', description: '笛の新しい旋律で始まり、中ほどで A メロの頭をゆったり。サビなし。72 BPM・約 40 秒。' },
+  { id: 'mainNormal', group: 'main', title: '通常戦闘', description: '「静」と「思索」の中間。ベルと笛、A メロの前半を使う。サビなし。100 BPM・約 38 秒。' },
+  { id: 'mainElite', group: 'main', title: 'エリート戦', description: '「激闘」のテンポを落とし、溜めを入れてサビが初登場。156 BPM・約 43 秒。' },
+  { id: 'mainBoss', group: 'main', title: 'ボス戦', description: '不穏な前奏と新しいリフ → ボス専用の旋律 → サビ → さらに上へ転調する新しいサビ。176 BPM・約 60 秒。' },
   { id: 'theme02', group: 'theme', title: '三つの旗 −静−', description: '通常戦闘向け。笛と分散和音で落ち着いて考えられる。108 BPM。' },
-  { id: 'theme03', group: 'theme', title: '三つの旗 −思索−', description: '通常戦闘向け。ベルと笛だけ、いちばん静か。92 BPM。' },
-  { id: 'theme04', group: 'theme', title: '三つの旗 −行軍−', description: 'エリート向け。金管と弦の刻み、行進のスネア。138 BPM。' },
   { id: 'theme05', group: 'theme', title: '三つの旗 −激闘−', description: 'ボス向け。ギターとオルガンのリフ、駆けるベース。176 BPM。' },
   { id: 'theme06', group: 'theme', title: '三つの旗 −決戦−', description: '最終ボス向け。オルガンの前奏、最後はサビを転調して鳴らし切る。160 BPM。' },
-  { id: 'theme07', group: 'theme', title: '三つの旗 −凱歌−', description: '同じ旋律を長調に。勝利後やマップの候補。132 BPM。' },
-  { id: 'theme08', group: 'theme', title: '三つの旗 −南風−', description: 'ポケモン風。シンセブラスとスラップベース。172 BPM。' },
-  { id: 'theme09', group: 'theme', title: '三つの旗 −剣閃−', description: 'テイルズ風。オルガンと歪みギターのロック。168 BPM。' },
   { id: 'theme10', group: 'theme', title: '三つの旗 −夜明け−', description: 'タイトル・マップ向け。サビをゆったり倍の長さで歌う。84 BPM。' },
   { id: 'battleNormal', group: 'current', title: '静寂の書庫', description: '通常戦闘。ゆっくり静かなベル。' },
   { id: 'battleElite', group: 'current', title: '試練の回廊', description: 'エリート戦闘。三角波の軽い刻み。' },

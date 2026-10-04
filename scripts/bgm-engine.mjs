@@ -51,6 +51,10 @@ function parseBar(text) {
 // ===== 波形の部品 =====
 
 let noiseSeed = 4242;
+/** 曲ごとに呼ぶと、ほかの曲の有無や順番に左右されず同じ音になる。 */
+export const seedNoise = (seed) => {
+  noiseSeed = seed;
+};
 const noise = () => {
   noiseSeed = (noiseSeed * 1103515245 + 12345) & 0x7fffffff;
   return noiseSeed / 0x3fffffff - 1;

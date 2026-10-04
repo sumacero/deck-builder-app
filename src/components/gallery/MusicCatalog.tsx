@@ -5,12 +5,13 @@ import { playMusic, stopMusic } from '../../audio/musicPlayer';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 
 const GROUP_LABEL: Record<MusicGroup, string> = {
-  theme: 'メインテーマ「三つの旗」の変奏（同じ旋律・コードで編曲違い）',
+  main: 'メインテーマ案（サビはエリート戦で初登場）',
+  theme: 'メインテーマ「三つの旗」の変奏',
   current: '今の戦闘 BGM',
   trial: '試作 BGM',
 };
 
-const GROUPS: MusicGroup[] = ['theme', 'current', 'trial'];
+const GROUPS: MusicGroup[] = ['main', 'theme', 'current', 'trial'];
 
 /** 図鑑の BGM 一覧。押すと流れ、もう一度押すと止まる。図鑑を閉じたら止める。 */
 export function MusicCatalog() {
