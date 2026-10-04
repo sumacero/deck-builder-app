@@ -1,48 +1,53 @@
 import type { CardType } from './domain/card';
 import type { MapNodeType } from './domain/map';
 
+/**
+ * ポップで明るい配色。子どもでも遊びやすい雰囲気にするため、黒ではなく深い藍紫を土台にし、
+ * 鮮やかな色を差す。白い文字が読めるよう、パネルの地は暗めの藍紫に保つ。
+ */
 export const COLORS = {
-  bg: '#121212',
-  panel: '#1E1E1E',
-  panelBorder: '#2E2E2E',
-  surface: '#262626',
-  text: '#E8E4DA',
-  textMuted: '#8A8790',
-  gold: '#C9A227',
-  goldDark: '#2A2410',
-  onGold: '#1A1408',
-  hp: '#C0483D',
-  hpTrack: '#3A1E1C',
-  block: '#4A8FD4',
-  energy: '#E0A030',
-  danger: '#B33A3A',
-  overlay: 'rgba(0, 0, 0, 0.8)',
-  damageText: '#FF5A4E',
-  heal: '#4CAF6E',
-  hpTrail: '#F2D7A0',
+  bg: '#241C4E',
+  panel: '#2F2766',
+  panelBorder: '#5A4BB0',
+  surface: '#3B3180',
+  text: '#FFFAF0',
+  textMuted: '#C2BBEB',
+  /** アクセント（ボタン・見出し・選択中の枠）。お日さまのような黄色。 */
+  gold: '#FFC83D',
+  goldDark: '#6B3FA0',
+  onGold: '#3A2200',
+  hp: '#FF5C7A',
+  hpTrack: '#4C2050',
+  block: '#4FB8FF',
+  energy: '#FFB020',
+  danger: '#FF4D5E',
+  overlay: 'rgba(28, 18, 70, 0.84)',
+  damageText: '#FF6B6B',
+  heal: '#4ADE80',
+  hpTrail: '#FFE3A3',
   /** 強化済みカードの名前。 */
-  upgraded: '#7FD36B',
-  /** 背景画像の上に重ねて暗くし、UI を読みやすくする。 */
-  sceneShade: 'rgba(0, 0, 0, 0.45)',
+  upgraded: '#7CF29A',
+  /** 背景画像の上に重ねて少し落ち着かせ、UI を読みやすくする。絵が明るいので薄めに。 */
+  sceneShade: 'rgba(36, 24, 90, 0.22)',
   /** 背景画像が透けて見えるパネル。 */
-  panelTranslucent: 'rgba(30, 30, 30, 0.72)',
-  textOutline: '#000000',
+  panelTranslucent: 'rgba(47, 39, 102, 0.84)',
+  textOutline: '#1A1240',
   /** 強化の瞬間の閃光。 */
   flash: '#FFF6D8',
   /** 画面切り替えの暗転。 */
-  fade: '#000000',
+  fade: '#1A1240',
   /** カードのイラストの隅に重ねる、種類の紋章の下地。 */
-  cardEmblemBg: 'rgba(0, 0, 0, 0.62)',
+  cardEmblemBg: 'rgba(255, 255, 255, 0.85)',
 } as const;
 
 export const MAP_NODE_COLORS: Record<MapNodeType, string> = {
-  enemy: '#C0483D',
-  elite: '#D1503A',
-  rest: '#E0A030',
-  shop: '#4CAF6E',
-  event: '#8A7AD1',
-  treasure: '#C9A227',
-  boss: '#B33A3A',
+  enemy: '#FF6B5B',
+  elite: '#FF8A3D',
+  rest: '#FFB020',
+  shop: '#3DDC84',
+  event: '#A78BFA',
+  treasure: '#FFD23F',
+  boss: '#FF4D8D',
 };
 
 export const MAP_LAYOUT = {
@@ -114,9 +119,9 @@ export const MOTION = {
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {
-  attack: '#C0483D',
-  skill: '#3D7CC0',
-  power: '#D1A23A',
+  attack: '#FF6B5B',
+  skill: '#3FA9FF',
+  power: '#FFB830',
 };
 
 export const SPACING = {
@@ -127,10 +132,11 @@ export const SPACING = {
   xl: 24,
 } as const;
 
+/** 丸みを強めにして、やわらかい印象にする。 */
 export const RADIUS = {
-  sm: 6,
-  md: 10,
-  lg: 14,
+  sm: 8,
+  md: 12,
+  lg: 18,
   round: 999,
 } as const;
 

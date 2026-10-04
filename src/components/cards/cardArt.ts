@@ -4,7 +4,7 @@ import { baseCardId } from '../../logic/cards';
 
 /**
  * カード id（強化前）ごとのイラスト。ドメインの CardDefinition は画像を知らないよう、UI 側で対応付ける。
- * 画像は AI 画像生成で作り、scripts/resize-card-art.mjs で 320×240 に縮小している。
+ * 画像は AI 画像生成（カラフルなカートゥーン調）で作り、scripts/resize-art.mjs で 320×240 に縮小している。
  */
 const CARD_ART: Record<string, ImageSourcePropType> = {
   strike: require('../../../assets/cards/strike.jpg'),
