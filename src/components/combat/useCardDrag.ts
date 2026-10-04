@@ -6,6 +6,7 @@ import type { PotionDefinition } from '../../domain/potion';
 import { isAlive } from '../../logic/combat';
 import { HAND_LAYOUT, ITEM_BAR } from '../../theme';
 import {
+  DRAG_LIFT_DISTANCE,
   type DragMoveHandlers,
   type DropTarget,
   type Point,
@@ -33,7 +34,8 @@ export type DragItem =
   | { kind: 'card'; instanceId: string; card: CardDefinition }
   | { kind: 'potion'; slot: number; potion: PotionDefinition };
 
-type Dragging = { item: DragItem; start: Point };
+/** lifted: 持ち始めた位置から DRAG_LIFT_DISTANCE より動かした。それまでは使い道を決めない（タップかもしれない）。 */
+type Dragging = { item: DragItem; start: Point; lifted: boolean };
 
 type Layout = {
   origin: Point;
@@ -65,6 +67,8 @@ export function useCardDrag({
 }: UseCardDragOptions) {
   const [drag, setDrag] = useState<DragItem | null>(null);
   const [hover, setHover] = useState<DropTarget | null>(null);
+  /** 持ち始めた位置から動かしたか。動かす前は案内を出さない（タップかもしれない）。 */
+  const [lifted, setLifted] = useState(false);
   const [ghost] = useState(() => new Animated.ValueXY());
 
   const containerView = useRef<View | null>(null);
@@ -145,7 +149,12 @@ export function useCardDrag({
     const updateHover = (point: Point) => {
       const dragging = draggingRef.current;
       if (!dragging) return;
-      const next = aim(dragging, point);
+      const { start } = dragging;
+      if (!dragging.lifted && Math.hypot(point.x - start.x, point.y - start.y) > DRAG_LIFT_DISTANCE) {
+        dragging.lifted = true;
+        setLifted(true);
+      }
+      const next = dragging.lifted ? aim(dragging, point) : null;
       if (sameDrop(next, hoverRef.current)) return;
       hoverRef.current = next;
       setHover(next);
@@ -155,9 +164,10 @@ export function useCardDrag({
       hoverRef.current = null;
       setDrag(null);
       setHover(null);
+      setLifted(false);
     };
     const begin = (item: DragItem, point: Point) => {
-      draggingRef.current = { item, start: point };
+      draggingRef.current = { item, start: point, lifted: false };
       setDrag(item);
       measureAll();
       moveGhost(item, point);
@@ -217,6 +227,7 @@ export function useCardDrag({
   return {
     drag,
     hover,
+    lifted,
     ghost,
     cardHandlers,
     potionHandlers,

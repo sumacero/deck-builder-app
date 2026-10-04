@@ -85,6 +85,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   const {
     drag,
     hover,
+    lifted,
     ghost,
     cardHandlers,
     potionHandlers,
@@ -147,7 +148,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     if (activePending.kind === 'card') playCard(activePending.instanceId, uid);
     else drinkPotion(activePending.slot, uid);
   };
-  const hint = drag ? dragHint(drag.kind, hover) : null;
+  const hint = drag && lifted ? dragHint(drag.kind, hover) : null;
 
   const itemBar = (
     <ItemBar

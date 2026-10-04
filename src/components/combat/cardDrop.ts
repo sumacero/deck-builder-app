@@ -3,6 +3,9 @@ import type { EnemyUid } from '../../domain/combat';
 
 export type Point = { x: number; y: number };
 
+/** つまんだ位置から指がこれだけ動いたら「動かした」。それまではタップ・長押しとして扱い、使い道も決めない。 */
+export const DRAG_LIFT_DISTANCE = 10;
+
 /** 持ち上げてから離すまでの共通の知らせ。velocity は離した瞬間の指の速さ（px/ms）。 */
 export type DragMoveHandlers = {
   /** 指が触れた瞬間。素早いフリックに間に合うよう、ここで敵や手札の位置を測っておく。 */

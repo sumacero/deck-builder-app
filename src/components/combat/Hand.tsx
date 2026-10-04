@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CardInstance } from '../../domain/card';
 import { COLORS, HAND_LAYOUT, SPACING } from '../../theme';
 import { type CardDragHandlers, DraggableCard } from './DraggableCard';
-import { handCardWidth } from './handLayout';
+import { handCardSpacing, handCardWidth } from './handLayout';
 
 type HandProps = CardDragHandlers & {
   cards: CardInstance[];
@@ -28,7 +21,10 @@ type HandProps = CardDragHandlers & {
   style?: StyleProp<ViewStyle>;
 };
 
-/** 5 枚でちょうど画面幅に収まるカード幅にし、それ以上は横にスクロールして見る。 */
+/**
+ * 5 枚でちょうど画面幅に収まるカード幅にし、それより多いときはカードを重ねて全部を幅に収める。
+ * 触れた瞬間にカードをつまむ操作と横スクロールはぶつかるので、スクロールはしない。
+ */
 export function Hand({
   cards,
   isPlayable,
@@ -42,10 +38,7 @@ export function Hand({
 }: HandProps) {
   const [width, setWidth] = useState(0);
   const cardWidth = handCardWidth(width, maxCardHeight);
-  const fitting = Math.floor(
-    (width - HAND_LAYOUT.edgePadding * 2 + HAND_LAYOUT.gap) / (cardWidth + HAND_LAYOUT.gap),
-  );
-  const overflowing = cards.length > fitting;
+  const spacing = handCardSpacing(width, cardWidth, cards.length);
   useEffect(() => {
     onCardWidth(cardWidth);
   }, [cardWidth, onCardWidth]);
@@ -60,25 +53,21 @@ export function Hand({
         <Text style={styles.emptyText}>手札がありません</Text>
       ) : (
         cardWidth > 0 && (
-          <ScrollView
-            horizontal
-            scrollEnabled={draggingId === null}
-            showsHorizontalScrollIndicator={overflowing}
-            contentContainerStyle={[styles.row, { minWidth: width }]}
-          >
-            {cards.map(({ instanceId, card }) => (
-              <DraggableCard
-                key={instanceId}
-                instanceId={instanceId}
-                card={card}
-                width={cardWidth}
-                playable={isPlayable(instanceId)}
-                dragging={draggingId === instanceId}
-                selected={selectedId === instanceId}
-                {...handlers}
-              />
+          <View style={styles.row}>
+            {cards.map(({ instanceId, card }, i) => (
+              <View key={instanceId} style={i > 0 && { marginLeft: spacing }}>
+                <DraggableCard
+                  instanceId={instanceId}
+                  card={card}
+                  width={cardWidth}
+                  playable={isPlayable(instanceId)}
+                  dragging={draggingId === instanceId}
+                  selected={selectedId === instanceId}
+                  {...handlers}
+                />
+              </View>
             ))}
-          </ScrollView>
+          </View>
         )
       )}
     </View>
@@ -90,7 +79,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: HAND_LAYOUT.gap,
     paddingHorizontal: HAND_LAYOUT.edgePadding,
     paddingTop: HAND_LAYOUT.topPadding,
     paddingBottom: SPACING.xs,
