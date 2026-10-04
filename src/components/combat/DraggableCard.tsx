@@ -22,13 +22,13 @@ type DraggableCardProps = CardDragHandlers & {
   selected: boolean;
 };
 
-/** 指を動かさずに押し続けてこの時間が経つと「長押し」。離したときに詳細を開く。 */
-const LONG_PRESS_MS = 450;
+/** 指を動かさずに押し続けてこの時間が経つと「長押し」。その場で詳細を開く。普通のタップ（0.1 秒前後）より少し長く。 */
+const LONG_PRESS_MS = 200;
 
 type Gesture = {
   dragging: boolean;
-  /** 長押しが成立していて、離せば詳細を開く。 */
-  armed: boolean;
+  /** 長押しで詳細を開いた。指を離すまで、タップにもドラッグにもしない。 */
+  shown: boolean;
   /** 指がつまんだ位置から DRAG_LIFT_DISTANCE より動いた（タップでも長押しでもない）。 */
   moved: boolean;
   timer: ReturnType<typeof setTimeout> | null;
@@ -38,7 +38,7 @@ type Gesture = {
  * 手札の 1 枚。触れた瞬間につまみ、そのまま指についてくる。
  * - 動かして離す: 離した場所で使う（使えない場所なら手札に戻る）。
  * - 動かさずに離す: タップ（タップで使えるかは親が決める）。
- * - 動かさずに押し続ける: カードを手札に戻して金枠で知らせ、離したときに詳細を開く（そこから動かせば再びつまむ）。
+ * - 動かさずに押し続ける: カードを手札に戻し、その場で詳細を開く。
  * 使えないカードはつままず、タップと長押しだけ。
  */
 export function DraggableCard({
@@ -51,21 +51,15 @@ export function DraggableCard({
   ...handlers
 }: DraggableCardProps) {
   const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
-  const [armed, setArmed] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
 
   // PanResponder は指の動きの途中経過を内部に持つ。ドラッグ中に作り直すと途切れるので、
   // 渡す関数は親で同じものを使い続けてもらう（作り直しは使えるかどうかが変わったときだけ）。
   const { responder, cancel } = useMemo(() => {
-    const gesture: Gesture = { dragging: false, armed: false, moved: false, timer: null };
+    const gesture: Gesture = { dragging: false, shown: false, moved: false, timer: null };
     const clearTimer = () => {
       if (gesture.timer !== null) clearTimeout(gesture.timer);
       gesture.timer = null;
-    };
-    const disarm = () => {
-      clearTimer();
-      if (gesture.armed) setArmed(false);
-      gesture.armed = false;
     };
     /** つまんでいたカードを手札に戻す。 */
     const drop = () => {
@@ -73,9 +67,10 @@ export function DraggableCard({
       gesture.dragging = false;
     };
     const reset = () => {
-      disarm();
+      clearTimer();
       drop();
       gesture.moved = false;
+      gesture.shown = false;
     };
     return {
       cancel: reset,
@@ -90,38 +85,34 @@ export function DraggableCard({
           gesture.timer = setTimeout(() => {
             gesture.timer = null;
             if (gesture.moved) return;
-            // 詳細を見ようとしている。つまんだカードは手札に戻し、金枠で知らせる。
+            // 詳細を見ようとしている。つまんだカードは手札に戻して詳細を開く。
             drop();
-            gesture.armed = true;
-            setArmed(true);
+            gesture.shown = true;
+            setDetailOpen(true);
           }, LONG_PRESS_MS);
         },
         onPanResponderMove: (_, g) => {
+          if (gesture.shown) return;
           if (!gesture.moved && Math.hypot(g.dx, g.dy) > DRAG_LIFT_DISTANCE) {
             gesture.moved = true;
-            disarm();
-            // 長押しのあとで動かしたら、改めてつまむ。
-            if (playable && !gesture.dragging) {
-              gesture.dragging = true;
-              onDragStart(instanceId, { x: g.x0, y: g.y0 });
-            }
+            clearTimer();
           }
           if (gesture.dragging) onDragMove({ x: g.moveX, y: g.moveY });
         },
         onPanResponderRelease: (_, g) => {
-          const { armed: wasArmed, dragging: wasDragging } = gesture;
+          const { shown, dragging: wasDragging } = gesture;
           const moved = gesture.moved || Math.hypot(g.dx, g.dy) > DRAG_LIFT_DISTANCE;
-          disarm();
+          clearTimer();
           gesture.moved = false;
+          gesture.shown = false;
+          if (shown) return;
           if (moved && wasDragging) {
             gesture.dragging = false;
             onDragEnd({ x: g.moveX, y: g.moveY }, { x: g.vx, y: g.vy });
             return;
           }
           drop();
-          if (moved) return;
-          if (wasArmed) setDetailOpen(true);
-          else onTap(instanceId);
+          if (!moved) onTap(instanceId);
         },
         // つまんでいる間は、ほかに指を奪わせない。
         onPanResponderTerminationRequest: () => !gesture.dragging,
@@ -142,7 +133,7 @@ export function DraggableCard({
           card={card}
           width={width}
           dimmed={!playable}
-          selected={armed || selected}
+          selected={selected}
           detailOnHold={false}
         />
       </View>
