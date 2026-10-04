@@ -1,4 +1,4 @@
-// BGM 合成の共通部品（音名・楽器・打楽器・トラック・ミックス）。generate-bgm.mjs と generate-bgm-trial.mjs で使う。
+// BGM 合成の共通部品（音名・楽器・打楽器・トラック・ミックス）。bgm-song.mjs と generate-bgm.mjs で使う。
 import { normalize } from './wav.mjs';
 
 export const SAMPLE_RATE = 22050;

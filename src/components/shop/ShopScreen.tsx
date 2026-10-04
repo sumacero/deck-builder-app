@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { RunState } from '../../domain/run';
 import type { ShopStock } from '../../domain/shop';
+import { useMusic } from '../../hooks/useMusic';
 import type { ShopActions } from '../../hooks/useRun';
 import { stackCards } from '../../logic/cards';
 import { describeCard, describePotion, describeRelic } from '../../logic/describe';
@@ -28,6 +29,7 @@ type Purchase = { name: string; detail: string; price: number; blocked: string |
 export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [removing, setRemoving] = useState(false);
+  useMusic('shop');
   const purchase = selection ? describePurchase(selection) : null;
 
   const buy = () => {

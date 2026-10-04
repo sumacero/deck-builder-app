@@ -1,49 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { MUSIC_ENTRIES, type MusicEntry, type MusicGroup, type MusicId } from '../../audio/music';
-import { playMusic, stopMusic } from '../../audio/musicPlayer';
+import { MUSIC_ENTRIES, type MusicEntry, type MusicId } from '../../audio/music';
+import { endPreview, previewMusic } from '../../audio/musicPlayer';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 
-const GROUP_LABEL: Record<MusicGroup, string> = {
-  main: 'メインテーマ案（サビはエリート戦で初登場）',
-  theme: 'メインテーマ「三つの旗」の変奏',
-  current: '今の戦闘 BGM',
-  trial: '試作 BGM',
-};
-
-const GROUPS: MusicGroup[] = ['main', 'theme', 'current', 'trial'];
-
-/** 図鑑の BGM 一覧。押すと流れ、もう一度押すと止まる。図鑑を閉じたら止める。 */
+/** 図鑑の BGM 一覧。押すと流れ、もう一度押すと止まる。図鑑を閉じたら元の曲（タイトルなど）に戻す。 */
 export function MusicCatalog() {
   const [playing, setPlaying] = useState<MusicId | null>(null);
 
-  useEffect(() => stopMusic, []);
+  useEffect(() => endPreview, []);
 
   const toggle = (id: MusicId) => {
-    if (playing === id) {
-      stopMusic();
-      setPlaying(null);
-      return;
-    }
-    playMusic(id);
-    setPlaying(id);
+    const next = playing === id ? null : id;
+    previewMusic(next);
+    setPlaying(next);
   };
 
   return (
     <ScrollView contentContainerStyle={styles.list}>
-      {GROUPS.map((group) => (
-        <View key={group} style={styles.group}>
-          <Text style={styles.groupLabel}>{GROUP_LABEL[group]}</Text>
-          {MUSIC_ENTRIES.filter((entry) => entry.group === group).map((entry, index) => (
-            <MusicRow
-              key={entry.id}
-              entry={entry}
-              number={index + 1}
-              playing={playing === entry.id}
-              onPress={() => toggle(entry.id)}
-            />
-          ))}
-        </View>
+      <Text style={styles.note}>全曲がメインテーマ「三つの旗」の旋律をどこかに持っている。</Text>
+      {MUSIC_ENTRIES.map((entry) => (
+        <MusicRow key={entry.id} entry={entry} playing={playing === entry.id} onPress={() => toggle(entry.id)} />
       ))}
     </ScrollView>
   );
@@ -51,19 +28,16 @@ export function MusicCatalog() {
 
 type MusicRowProps = {
   entry: MusicEntry;
-  number: number;
   playing: boolean;
   onPress: () => void;
 };
 
-function MusicRow({ entry, number, playing, onPress }: MusicRowProps) {
+function MusicRow({ entry, playing, onPress }: MusicRowProps) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.row, playing && styles.rowPlaying, pressed && styles.pressed]}>
       <Text style={styles.icon}>{playing ? '⏹' : '▶'}</Text>
       <View style={styles.body}>
-        <Text style={styles.title}>
-          {String(number).padStart(2, '0')}　{entry.title}
-        </Text>
+        <Text style={styles.title}>{entry.title}</Text>
         <Text style={styles.description}>{entry.description}</Text>
       </View>
     </Pressable>
@@ -71,9 +45,8 @@ function MusicRow({ entry, number, playing, onPress }: MusicRowProps) {
 }
 
 const styles = StyleSheet.create({
-  list: { gap: SPACING.lg, paddingVertical: SPACING.sm },
-  group: { gap: SPACING.sm },
-  groupLabel: { color: COLORS.textMuted, fontSize: 12, fontWeight: '700' },
+  list: { gap: SPACING.sm, paddingVertical: SPACING.sm },
+  note: { color: COLORS.textMuted, fontSize: 12, textAlign: 'center' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -70,6 +70,24 @@ export function stopMusic(): void {
   fadeTo(player, 0, FADE_OUT_MS, () => player.pause());
 }
 
+/** 図鑑で試聴を始める前に流れていた曲。undefined は試聴していない。 */
+let beforePreview: MusicId | null | undefined;
+
+/** 図鑑で試聴する（null は試聴を止めて無音にする）。終わったら endPreview で元の曲に戻す。 */
+export function previewMusic(id: MusicId | null): void {
+  if (beforePreview === undefined) beforePreview = current;
+  if (id) playMusic(id);
+  else stopMusic();
+}
+
+export function endPreview(): void {
+  if (beforePreview === undefined) return;
+  const back = beforePreview;
+  beforePreview = undefined;
+  if (back) playMusic(back);
+  else stopMusic();
+}
+
 /** アプリがバックグラウンドに回ったときに一時停止する。 */
 export function pauseMusic(): void {
   if (current) players.get(current)?.pause();

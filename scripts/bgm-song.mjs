@@ -1,4 +1,4 @@
-// 曲をデータ（コード記号・旋律・伴奏 / ベース / ドラムの型）で書いて合成する仕組み。generate-bgm-trial.mjs と generate-bgm-theme.mjs で使う。
+// 曲をデータ（コード記号・旋律・伴奏 / ベース / ドラムの型）で書いて合成する仕組み。generate-bgm.mjs で使う。
 import { createTrack, expandChords, mixdown, parsePhrase, shiftPhrase, transpose } from './bgm-engine.mjs';
 
 // ===== コード記号 → 小節の表記 =====

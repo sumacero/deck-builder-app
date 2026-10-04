@@ -3,6 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import { WANDERING_SWORDSMAN } from '../../data/agents';
 import { GAME_SUBTITLE, GAME_TITLE } from '../../data/gameInfo';
 import type { CombatEvent } from '../../domain/combat';
+import { useMusic } from '../../hooks/useMusic';
 import { COLORS, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { ActorFigure } from '../combat/model3d/ActorFigure';
@@ -22,6 +23,7 @@ const NO_EVENTS: CombatEvent[] = [];
 export function TitleScreen({ onStart }: TitleScreenProps) {
   const [appear] = useState(() => new Animated.Value(0));
   const [glow] = useState(() => new Animated.Value(0));
+  useMusic('title');
 
   useEffect(() => {
     const intro = Animated.timing(appear, {

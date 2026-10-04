@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import type { CombatSetup, DamagePreview, EnemyUid } from '../../domain/combat';
 import type { CombatResult } from '../../domain/run';
-import { useBattleMusic } from '../../hooks/useBattleMusic';
+import { battleMusicFor } from '../../audio/music';
+import { useMusic } from '../../hooks/useMusic';
 import { useCombat } from '../../hooks/useCombat';
 import { eventsDuration } from '../../hooks/useCombatEvents';
 import { useCombatSounds } from '../../hooks/useCombatSounds';
@@ -80,7 +81,8 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   const inProgress = state.status === 'playerTurn';
   const effectsTime = eventsDuration(state.events);
   useCombatSounds(state.events);
-  useBattleMusic(setup.rank, !inProgress);
+  // 決着したら、勝敗の効果音が聞こえるようにフェードアウトする。
+  useMusic(inProgress ? battleMusicFor(setup.rank) : null);
 
   const [cardWidth, setCardWidth] = useState(0);
   const {
