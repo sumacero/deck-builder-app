@@ -215,6 +215,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   const hand = (
     <Hand
       cards={state.hand}
+      events={state.events}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
       selectedId={pendingCardId}

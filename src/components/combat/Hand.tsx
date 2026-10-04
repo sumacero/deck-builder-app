@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CardInstance } from '../../domain/card';
+import type { CombatEvent } from '../../domain/combat';
 import { COLORS, HAND_LAYOUT, SPACING } from '../../theme';
 import { type CardDragHandlers, DraggableCard } from './DraggableCard';
+import { HandFullEffect } from './effects/HandFullEffect';
 import { handCardSpacing, handCardWidth } from './handLayout';
 
 type HandProps = CardDragHandlers & {
   cards: CardInstance[];
+  /** 手札がいっぱいで引けなかった演出に使う。 */
+  events: CombatEvent[];
   isPlayable: (instanceId: string) => boolean;
   /** 持ち上げている最中のカード。 */
   draggingId: string | null;
@@ -27,6 +31,7 @@ type HandProps = CardDragHandlers & {
  */
 export function Hand({
   cards,
+  events,
   isPlayable,
   draggingId,
   selectedId,
@@ -49,27 +54,29 @@ export function Hand({
       style={[styles.container, { minHeight: cardWidth * HAND_LAYOUT.aspectRatio }, style]}
       onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
     >
-      {cards.length === 0 ? (
-        <Text style={styles.emptyText}>手札がありません</Text>
-      ) : (
-        cardWidth > 0 && (
-          <View style={styles.row}>
-            {cards.map(({ instanceId, card }, i) => (
-              <View key={instanceId} style={i > 0 && { marginLeft: spacing }}>
-                <DraggableCard
-                  instanceId={instanceId}
-                  card={card}
-                  width={cardWidth}
-                  playable={isPlayable(instanceId)}
-                  dragging={draggingId === instanceId}
-                  selected={selectedId === instanceId}
-                  {...handlers}
-                />
-              </View>
-            ))}
-          </View>
-        )
-      )}
+      <HandFullEffect events={events} handSize={cards.length}>
+        {cards.length === 0 ? (
+          <Text style={styles.emptyText}>手札がありません</Text>
+        ) : (
+          cardWidth > 0 && (
+            <View style={styles.row}>
+              {cards.map(({ instanceId, card }, i) => (
+                <View key={instanceId} style={i > 0 && { marginLeft: spacing }}>
+                  <DraggableCard
+                    instanceId={instanceId}
+                    card={card}
+                    width={cardWidth}
+                    playable={isPlayable(instanceId)}
+                    dragging={draggingId === instanceId}
+                    selected={selectedId === instanceId}
+                    {...handlers}
+                  />
+                </View>
+              ))}
+            </View>
+          )
+        )}
+      </HandFullEffect>
     </View>
   );
 }

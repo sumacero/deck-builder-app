@@ -62,6 +62,8 @@ export type CombatEventBody =
   | { kind: 'blockGain'; target: ActorId; amount: number }
   | { kind: 'heal'; target: ActorId; amount: number }
   | { kind: 'defeated'; target: ActorId }
+  /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
+  | { kind: 'handFull'; target: 'player'; blocked: number }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 

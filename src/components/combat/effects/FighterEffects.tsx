@@ -93,6 +93,7 @@ export function FighterEffects({
       case 'enemyAct':
       case 'defeated':
       case 'won':
+      case 'handFull':
         return;
     }
   });

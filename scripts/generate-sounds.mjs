@@ -195,6 +195,21 @@ const SOUNDS = {
       return body + click + sparkle;
     });
   },
+
+  /** 手札がいっぱいで引けない: こもった低い「ブブッ」（できない操作の合図）。 */
+  'hand-full': () => {
+    const buzz = oscillator(square);
+    const lp = lowpass();
+    const pulse = 0.09;
+    const gap = 0.04;
+    return render(0.24, (t) => {
+      const index = Math.floor(t / (pulse + gap));
+      const local = t - index * (pulse + gap);
+      if (index > 1 || local > pulse) return lp(0, 0.2);
+      const env = Math.min(1, local / 0.008) * decay(local / pulse, 2.5);
+      return lp(buzz(index === 0 ? 196 : 165) * env, 0.2);
+    });
+  },
 };
 
 // ===== 書き出し =====

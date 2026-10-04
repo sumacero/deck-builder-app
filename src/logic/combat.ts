@@ -87,15 +87,28 @@ function formatHit(targetName: string, result: { blocked: number; hpLoss: number
   return `${targetName}に ${result.hpLoss} ダメージ${blockedText}`;
 }
 
-/** 山札から引く。山札が尽きたら捨て札をシャッフルして山札に戻してから引き続ける。 */
+/** 手札の上限。超えて引こうとした分は山札に残る。 */
+export const MAX_HAND_SIZE = 10;
+
+export const isHandFull = (state: CombatState) => state.hand.length >= MAX_HAND_SIZE;
+
+/**
+ * 山札から引く。山札が尽きたら捨て札をシャッフルして山札に戻してから引き続ける。
+ * 手札が上限に達したらそこで止め、引けなかった枚数を handFull イベントで知らせる。
+ */
 export function drawCards(state: CombatState, count: number): CombatState {
   let drawPile = state.drawPile;
   let discardPile = state.discardPile;
   let rngSeed = state.rngSeed;
   let reshuffled = false;
+  let blocked = 0;
   const drawn: CardInstance[] = [];
 
   for (let i = 0; i < count; i++) {
+    if (state.hand.length + drawn.length >= MAX_HAND_SIZE) {
+      blocked = count - i;
+      break;
+    }
     if (drawPile.length === 0) {
       if (discardPile.length === 0) break;
       const result = shuffle(discardPile, rngSeed);
@@ -116,7 +129,15 @@ export function drawCards(state: CombatState, count: number): CombatState {
     rngSeed,
     hand: [...state.hand, ...drawn],
   };
-  return reshuffled ? withLog(next, '捨て札をシャッフルして山札に戻した') : next;
+  const shuffledLog = reshuffled ? withLog(next, '捨て札をシャッフルして山札に戻した') : next;
+  const drawnLog =
+    drawn.length > 0 ? withLog(shuffledLog, `カードを ${drawn.length} 枚引いた`) : shuffledLog;
+  if (blocked === 0) return drawnLog;
+  return withEvent(withLog(drawnLog, `手札がいっぱいで ${blocked} 枚引けなかった`), {
+    kind: 'handFull',
+    target: 'player',
+    blocked,
+  });
 }
 
 export function startPlayerTurn(state: CombatState): CombatState {
@@ -243,7 +264,7 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
         `エナジー +${effect.amount}`,
       );
     case 'draw':
-      return withLog(drawCards(state, effect.amount), `カードを ${effect.amount} 枚引いた`);
+      return drawCards(state, effect.amount);
     case 'heal': {
       const healed = Math.min(effect.amount, state.player.maxHp - state.player.hp);
       if (healed === 0) return state;

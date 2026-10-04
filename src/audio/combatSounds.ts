@@ -27,5 +27,7 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
       return event.target === 'player' ? 'defeat' : null;
     case 'won':
       return 'victory';
+    case 'handFull':
+      return 'handFull';
   }
 }

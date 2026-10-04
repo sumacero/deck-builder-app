@@ -69,6 +69,8 @@ export const MOTION = {
   /** 1 回の操作で複数のイベントが起きたとき、1 件ずつずらして再生する間隔。 */
   eventStagger: 280,
   shakeStep: 45,
+  /** 手札がいっぱいで引けなかったときの帯を出しておく時間（出入りの動きを含まない）。 */
+  handFullHold: 1100,
   flashIn: 60,
   flashOut: 280,
   floatingText: 900,
