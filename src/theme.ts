@@ -158,6 +158,8 @@ export const COMBAT_LAYOUT = {
 export const ITEM_BAR = {
   /** 横向きは所持品欄を細い左の列に置くので、説明欄はこの幅まで右へはみ出して広げる。 */
   landscapePopoverWidth: 340,
+  /** 戦闘中にポーションを持ち上げたとき、指の上に描くアイコンの大きさ。 */
+  potionGhostSize: 44,
 } as const;
 
 /** 手札の並べ方。visibleCards 枚がちょうど画面幅に収まるようにカード幅を決める。 */

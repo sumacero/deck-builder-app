@@ -3,13 +3,10 @@ import { PanResponder, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { CardDetailSheet } from '../cards/CardDetailSheet';
 import { CardView } from '../cards/CardView';
-import type { Point } from './cardDrop';
+import type { DragMoveHandlers, Point } from './cardDrop';
 
-export type CardDragHandlers = {
+export type CardDragHandlers = DragMoveHandlers & {
   onDragStart: (instanceId: string, point: Point) => void;
-  onDragMove: (point: Point) => void;
-  onDragEnd: (point: Point) => void;
-  onDragCancel: () => void;
   /** スワイプせずにタップした。 */
   onTap: (instanceId: string) => void;
 };
@@ -21,14 +18,24 @@ type DraggableCardProps = CardDragHandlers & {
   playable: boolean;
   /** 持ち上げている最中。元の位置は薄く残す。 */
   dragging: boolean;
+  /** タップして、狙う敵を選んでいる最中のカード。 */
+  selected: boolean;
 };
 
 /** 上方向にこれだけ指が動いたら、カードを持ち上げる。 */
-const DRAG_START_DISTANCE = 8;
+const DRAG_START_DISTANCE = 6;
+/** 縦の動きが横の動きのこの倍率より大きければ「上へ」。斜め上へ素早く払っても持ち上がるよう少し甘くする。 */
+const LIFT_SLOPE = 0.8;
 /** これより指が動いたら、タップでも長押しでもない（横スクロールや指のぶれ）。 */
 const MOVE_TOLERANCE = 10;
 /** 押し続けてこの時間が経つと「長押し」。離したときに詳細を開く。 */
 const LONG_PRESS_MS = 450;
+
+/** 押している間、カードを少し浮かせて「つまんだ」ことを指が動く前から見せる。 */
+const PRESS_LIFT = -6;
+
+const isLiftingUp = (dx: number, dy: number) =>
+  dy < -DRAG_START_DISTANCE && -dy > Math.abs(dx) * LIFT_SLOPE;
 
 type Gesture = {
   dragging: boolean;
@@ -51,10 +58,12 @@ export function DraggableCard({
   width,
   playable,
   dragging,
+  selected,
   ...handlers
 }: DraggableCardProps) {
-  const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
+  const { onPressIn, onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
   const [armed, setArmed] = useState(false);
+  const [pressed, setPressed] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
 
   // PanResponder は指の動きの途中経過を内部に持つ。ドラッグ中に作り直すと途切れるので、
@@ -74,6 +83,7 @@ export function DraggableCard({
       disarm();
       gesture.dragging = false;
       gesture.moved = false;
+      setPressed(false);
     };
     return {
       cancel: reset,
@@ -83,6 +93,8 @@ export function DraggableCard({
         onShouldBlockNativeResponder: () => false,
         onPanResponderGrant: () => {
           reset();
+          onPressIn();
+          setPressed(true);
           gesture.timer = setTimeout(() => {
             gesture.timer = null;
             if (gesture.dragging || gesture.moved) return;
@@ -96,8 +108,7 @@ export function DraggableCard({
             onDragMove(point);
             return;
           }
-          const liftingUp = g.dy < -DRAG_START_DISTANCE && Math.abs(g.dy) > Math.abs(g.dx);
-          if (playable && liftingUp) {
+          if (playable && isLiftingUp(g.dx, g.dy)) {
             disarm();
             gesture.dragging = true;
             onDragStart(instanceId, point);
@@ -111,8 +122,15 @@ export function DraggableCard({
         onPanResponderRelease: (_, g) => {
           const { dragging: wasDragging, armed: wasArmed, moved } = gesture;
           reset();
-          if (wasDragging) onDragEnd({ x: g.moveX, y: g.moveY });
-          else if (wasArmed) setDetailOpen(true);
+          const point = { x: g.moveX, y: g.moveY };
+          const velocity = { x: g.vx, y: g.vy };
+          if (wasDragging) {
+            onDragEnd(point, velocity);
+          } else if (playable && isLiftingUp(g.dx, g.dy)) {
+            // 指の動きの知らせが来る前に離すほど素早いフリック。持ち上げてすぐ離したことにする。
+            onDragStart(instanceId, point);
+            onDragEnd(point, velocity);
+          } else if (wasArmed) setDetailOpen(true);
           else if (!moved) onTap(instanceId);
         },
         // 持ち上げている間は手札のスクロールに奪わせない。それ以外は横スクロールに譲る。
@@ -124,18 +142,24 @@ export function DraggableCard({
         },
       }),
     };
-  }, [playable, instanceId, onDragStart, onDragMove, onDragEnd, onDragCancel, onTap]);
+  }, [playable, instanceId, onPressIn, onDragStart, onDragMove, onDragEnd, onDragCancel, onTap]);
 
   useEffect(() => cancel, [cancel]);
 
   return (
     <>
-      <View {...responder.panHandlers} style={{ opacity: dragging ? 0.25 : 1 }}>
+      <View
+        {...responder.panHandlers}
+        style={{
+          opacity: dragging ? 0.25 : 1,
+          transform: [{ translateY: pressed || selected ? PRESS_LIFT : 0 }],
+        }}
+      >
         <CardView
           card={card}
           width={width}
           dimmed={!playable}
-          selected={armed}
+          selected={armed || selected}
           detailOnHold={false}
         />
       </View>

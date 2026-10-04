@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { CombatEvent, PotionSlot } from '../../domain/combat';
 import type { RelicDefinition } from '../../domain/relic';
@@ -6,6 +6,7 @@ import { describePotion, describeRelic } from '../../logic/describe';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { ITEM_BAR, SPACING } from '../../theme';
 import { ItemInfo } from './ItemInfo';
+import type { PotionDragHandlers } from '../combat/cardDrop';
 import { PotionSlotView } from './PotionSlotView';
 import { RelicIcon } from './RelicIcon';
 
@@ -24,6 +25,10 @@ type ItemBarProps = {
   potionUse?: {
     isDrinkable: (slot: number) => boolean;
     onDrink: (slot: number) => void;
+    /** ポーションを持ち上げて、狙う敵へ払って使う操作。 */
+    drag: PotionDragHandlers;
+    /** 持ち上げている最中のポーションの枠。 */
+    draggingSlot: number | null;
   };
 };
 
@@ -39,6 +44,12 @@ export function ItemBar({
 
   const toggle = (next: Selection) =>
     setSelection((prev) => (prev && isSameSelection(prev, next) ? null : next));
+  // ポーションのジェスチャーに渡すので、描き直しても同じ関数にしておく。
+  const togglePotion = useCallback(
+    (slot: number) =>
+      setSelection((prev) => (prev?.kind === 'potion' && prev.slot === slot ? null : { kind: 'potion', slot })),
+    [],
+  );
   const close = () => setSelection(null);
 
   return (
@@ -61,7 +72,16 @@ export function ItemBar({
               key={slot}
               potion={potion}
               selected={selection?.kind === 'potion' && selection.slot === slot}
-              onPress={() => toggle({ kind: 'potion', slot })}
+              onPress={() => togglePotion(slot)}
+              drag={
+                potionUse && {
+                  slot,
+                  enabled: potionUse.isDrinkable(slot),
+                  dragging: potionUse.draggingSlot === slot,
+                  handlers: potionUse.drag,
+                  onTap: togglePotion,
+                }
+              }
             />
           ))}
         </View>

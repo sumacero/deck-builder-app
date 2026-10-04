@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Animated,
   type LayoutChangeEvent,
@@ -17,7 +17,7 @@ import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
 import { livingEnemies } from '../../logic/combat';
-import { COLORS, COMBAT_LAYOUT, MOTION, RADIUS, SPACING } from '../../theme';
+import { COLORS, COMBAT_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
 import { CardView } from '../cards/CardView';
@@ -37,6 +37,9 @@ import { useCardDrag } from './useCardDrag';
 
 type OpenPile = 'draw' | 'discard' | null;
 
+/** タップしたあと、使う相手の敵をタップで選んでいる最中のもの。 */
+type Pending = { kind: 'card'; instanceId: string } | { kind: 'potion'; slot: number };
+
 type CombatScreenProps = {
   setup: CombatSetup;
   seed: number;
@@ -44,9 +47,6 @@ type CombatScreenProps = {
   actId: string;
   onFinish: (result: CombatResult) => void;
 };
-
-/** カードをタップしたときに出す、使い方の案内の表示時間（ミリ秒）。 */
-const TAP_HINT_MS = 1800;
 
 const NO_SIZE: Size = { width: 0, height: 0 };
 
@@ -73,8 +73,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   const landscape = useIsLandscape();
   const { height: windowHeight } = useWindowDimensions();
   const [openPile, setOpenPile] = useState<OpenPile>(null);
-  const [pendingPotion, setPendingPotion] = useState<number | null>(null);
-  const [tapHint, setTapHint] = useState(false);
+  const [pending, setPending] = useState<Pending | null>(null);
   const [stageSize, setStageSize] = useState(NO_SIZE);
   const [playerSlotSize, setPlayerSlotSize] = useState(NO_SIZE);
   const inProgress = state.status === 'playerTurn';
@@ -83,28 +82,46 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   useBattleMusic(setup.rank, !inProgress);
 
   const [cardWidth, setCardWidth] = useState(0);
-  const { drag, hover, ghost, handlers, bindContainer, measureContainer, bindHand, bindEnemy } =
-    useCardDrag({ hand: state.hand, enemies: state.enemies, cardWidth, onPlay: playCard });
-
-  useEffect(() => {
-    if (!tapHint) return;
-    const timer = setTimeout(() => setTapHint(false), TAP_HINT_MS);
-    return () => clearTimeout(timer);
-  }, [tapHint]);
+  const {
+    drag,
+    hover,
+    ghost,
+    cardHandlers,
+    potionHandlers,
+    bindContainer,
+    measureContainer,
+    bindHand,
+    bindEnemy,
+  } = useCardDrag({
+    hand: state.hand,
+    enemies: state.enemies,
+    potions: state.potions,
+    cardWidth,
+    onPlayCard: playCard,
+    onDrinkPotion: drinkPotion,
+  });
 
   const enemyCount = state.enemies.length;
   const figures = landscape
     ? landscapeFigures(stageSize, playerSlotSize, enemyCount)
     : portraitFigures(stageSize, enemyCount);
 
-  const previews: DamagePreview[] =
-    drag && hover && hover.kind !== 'self'
-      ? previewDamage(drag.instanceId, hover.kind === 'enemy' ? hover.uid : undefined)
-      : [];
   const living = livingEnemies(state).map((enemy) => enemy.uid);
+  // 選んでいる最中に、そのカードが使えなくなった（ターン終了など）・ポーションが無くなったら取り消し扱い。
+  const activePending = isPendingValid(pending, state.hand, isPlayable, isDrinkable) ? pending : null;
+  const pendingCardId = activePending?.kind === 'card' ? activePending.instanceId : null;
+
+  let previews: DamagePreview[] = [];
+  if (drag?.kind === 'card' && hover && hover.kind !== 'self') {
+    previews = previewDamage(drag.instanceId, hover.kind === 'enemy' ? hover.uid : undefined);
+  } else if (!drag && pendingCardId) {
+    previews = living.flatMap((uid) =>
+      previewDamage(pendingCardId, uid).filter((preview) => preview.uid === uid),
+    );
+  }
 
   const onDrink = (slot: number) => {
-    if (potionNeedsTarget(slot)) setPendingPotion(slot);
+    if (potionNeedsTarget(slot)) setPending({ kind: 'potion', slot });
     else drinkPotion(slot);
   };
   // 手札のジェスチャーはこの関数ごと作られるので、戦闘の状態が変わらない間は同じ関数を渡す。
@@ -112,19 +129,37 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     (instanceId: string) => {
       const instance = state.hand.find((c) => c.instanceId === instanceId);
       if (!instance || !isPlayable(instanceId)) return;
-      if (canPlayByTap(instance.card.target, livingEnemies(state).length)) playCard(instanceId);
-      else setTapHint(true);
+      if (canPlayByTap(instance.card.target, livingEnemies(state).length)) {
+        setPending(null);
+        playCard(instanceId);
+        return;
+      }
+      // もう一度タップしたら取りやめ。別のカードをタップしたら、そちらに持ち替える。
+      setPending((prev) =>
+        prev?.kind === 'card' && prev.instanceId === instanceId ? null : { kind: 'card', instanceId },
+      );
     },
     [state, isPlayable, playCard],
   );
-  const hint = hintText({ dragging: drag !== null, hover, tapHint });
+  const onSelectEnemy = (uid: EnemyUid) => {
+    if (!activePending) return;
+    setPending(null);
+    if (activePending.kind === 'card') playCard(activePending.instanceId, uid);
+    else drinkPotion(activePending.slot, uid);
+  };
+  const hint = drag ? dragHint(drag.kind, hover) : null;
 
   const itemBar = (
     <ItemBar
       relics={state.relics}
       potions={state.potions}
       events={state.events}
-      potionUse={{ isDrinkable, onDrink }}
+      potionUse={{
+        isDrinkable,
+        onDrink,
+        drag: potionHandlers,
+        draggingSlot: drag?.kind === 'potion' ? drag.slot : null,
+      }}
     />
   );
   const enemyRow = (
@@ -137,15 +172,8 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
       compact={figures.compact}
       soloWidthRatio={landscape ? 0.5 : COMBAT_LAYOUT.soloEnemyWidthRatio}
       previews={previews}
-      highlighted={highlightedEnemies(hover, living)}
-      onSelect={
-        pendingPotion === null
-          ? undefined
-          : (uid: EnemyUid) => {
-              drinkPotion(pendingPotion, uid);
-              setPendingPotion(null);
-            }
-      }
+      highlighted={drag ? highlightedEnemies(hover, living) : activePending ? living : []}
+      onSelect={activePending && !drag ? onSelectEnemy : undefined}
       registerView={bindEnemy}
     />
   );
@@ -160,11 +188,13 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     />
   );
   const hintRow =
-    pendingPotion !== null ? (
+    activePending && !drag ? (
       <View style={styles.hintRow}>
-        <Text style={styles.hint}>ポーションを使う敵をタップ</Text>
+        <Text style={styles.hint}>
+          {activePending.kind === 'card' ? 'カードを使う敵をタップ' : 'ポーションを使う敵をタップ'}
+        </Text>
         <Pressable
-          onPress={() => setPendingPotion(null)}
+          onPress={() => setPending(null)}
           style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
         >
           <Text style={styles.cancelText}>やめる</Text>
@@ -183,11 +213,12 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     <Hand
       cards={state.hand}
       isPlayable={isPlayable}
-      draggingId={drag?.instanceId ?? null}
+      draggingId={drag?.kind === 'card' ? drag.instanceId : null}
+      selectedId={pendingCardId}
       viewRef={bindHand}
       onCardWidth={setCardWidth}
       maxCardHeight={landscape ? windowHeight * COMBAT_LAYOUT.landscapeCardHeightRatio : undefined}
-      {...handlers}
+      {...cardHandlers}
       onTap={onTapCard}
       style={landscape ? styles.landscapeHand : styles.portraitHand}
     />
@@ -260,12 +291,18 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
         <DamageVignette events={state.events} />
         {drag && (
           <Animated.View style={[styles.ghost, { transform: ghost.getTranslateTransform() }]}>
-            <CardView
-              card={drag.card}
-              width={cardWidth}
-              selected={hover !== null}
-              detailOnHold={false}
-            />
+            {drag.kind === 'card' ? (
+              <CardView
+                card={drag.card}
+                width={cardWidth}
+                selected={hover !== null}
+                detailOnHold={false}
+              />
+            ) : (
+              <View style={[styles.potionGhost, hover !== null && styles.potionGhostAimed]}>
+                <Text style={styles.potionGhostIcon}>{drag.potion.icon}</Text>
+              </View>
+            )}
           </Animated.View>
         )}
         {openPile && (
@@ -308,13 +345,20 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
   }
 }
 
-function hintText(options: {
-  dragging: boolean;
-  hover: DropTarget | null;
-  tapHint: boolean;
-}): string | null {
-  if (options.dragging) return options.hover ? '離して使う' : 'もっと上まで持ち上げて離す';
-  return options.tapHint ? '敵が複数いるときは、狙う敵へスワイプ' : null;
+function dragHint(kind: 'card' | 'potion', hover: DropTarget | null): string {
+  if (hover) return '離して使う';
+  return kind === 'card' ? 'もっと上まで持ち上げて離す' : '使う相手のほうへ動かして離す';
+}
+
+function isPendingValid(
+  pending: Pending | null,
+  hand: readonly { instanceId: string }[],
+  isPlayable: (instanceId: string) => boolean,
+  isDrinkable: (slot: number) => boolean,
+): boolean {
+  if (!pending) return false;
+  if (pending.kind === 'potion') return isDrinkable(pending.slot);
+  return hand.some((c) => c.instanceId === pending.instanceId) && isPlayable(pending.instanceId);
 }
 
 const styles = StyleSheet.create({
@@ -375,4 +419,16 @@ const styles = StyleSheet.create({
   cancelText: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.7 },
   ghost: { position: 'absolute', left: 0, top: 0, pointerEvents: 'none' },
+  potionGhost: {
+    width: ITEM_BAR.potionGhostSize,
+    height: ITEM_BAR.potionGhostSize,
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.surface,
+    borderWidth: 2,
+    borderColor: COLORS.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  potionGhostAimed: { borderColor: COLORS.gold, backgroundColor: COLORS.goldDark },
+  potionGhostIcon: { fontSize: 24 },
 });

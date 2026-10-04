@@ -17,6 +17,8 @@ type HandProps = CardDragHandlers & {
   isPlayable: (instanceId: string) => boolean;
   /** 持ち上げている最中のカード。 */
   draggingId: string | null;
+  /** タップして、狙う敵を選んでいる最中のカード。 */
+  selectedId: string | null;
   /** カードを離した位置が手札より上かを判定するため、外枠の View を渡す。 */
   viewRef: (node: View | null) => void;
   /** カード幅が決まったら知らせる（持ち上げたカードを同じ大きさで描くため）。 */
@@ -31,6 +33,7 @@ export function Hand({
   cards,
   isPlayable,
   draggingId,
+  selectedId,
   viewRef,
   onCardWidth,
   maxCardHeight = Number.POSITIVE_INFINITY,
@@ -71,6 +74,7 @@ export function Hand({
                 width={cardWidth}
                 playable={isPlayable(instanceId)}
                 dragging={draggingId === instanceId}
+                selected={selectedId === instanceId}
                 {...handlers}
               />
             ))}
