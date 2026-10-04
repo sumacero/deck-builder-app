@@ -290,7 +290,7 @@
 - `npx expo-doctor` で「`expo-audio` の peer dependency `expo-asset` が未インストール」と指摘あり。Expo Go では動くが、ネイティブビルドではクラッシュの恐れ。追加は承認待ち（2026-10-03）。
 - Agent シェル（PowerShell → `wsl bash -lc`）では、`|` や入れ子のクォートを含むコマンドが崩れやすい。複雑な処理はファイル編集ツールかスクリプトファイルで行う。
 - 敵のバランスは仮の数値。1 章の通常敵は初期デッキで余裕を持って勝てる程度。エリート・ボスは自動プレイで粗く調整しただけ（2026-10-04）。
-- 3D 表示（`GLView`）は実機未確認（2026-10-04）。Android で背景が透けず黒い四角になる可能性がある。戦闘中は 2 体ぶん毎フレーム描画するので、古い端末での電池・発熱も要確認。
+- 3D 表示（`GLView`）は 2026-10-04 にオーナーのスマホ（Expo Go）で表示を確認済み。戦闘中は 2 体ぶん毎フレーム描画するので、長時間プレイ時の電池・発熱は引き続き様子見。
 - Agent シェルで `npx prettier` を使うと、プロジェクトに設定ファイルが無いためダブルクォートに整形される。使うなら `--single-quote --print-width 100` を付ける。
 - React Native 0.86 では `StyleSheet.absoluteFillObject` が無い（型エラーになる）。`position: 'absolute'` と上下左右 0 を明示する。
 - React Native DevTools が起動時にエラー（`libasound.so.2` / `libnspr4.so` 不足）。アプリ動作には影響なし。対処案: `sudo apt install -y libasound2t64 libnspr4 libnss3`（Ubuntu の新しい版では `libasound2` が `libasound2t64` に改名）。
