@@ -59,61 +59,30 @@ const SWAMP = {
   },
 };
 
-/** 洞窟（イ短調）。水晶に反響するベル。 */
-const CAVE = {
+/** 水の古都（嬰へ短調）。水の底に沈んだ都に、しずくのようなベルとハープが反響する。 */
+const SUNKEN_CITY = {
   opening: {
-    chords: ['Am', 'F', 'G', 'Em'],
-    notes: join4('E6:1 A5:1 C6:1 B5:1', 'A5:2 F5:1 C5:1', 'D5:1 G5:1 B5:1 D6:1', 'B5:3 -:1'),
+    chords: ['F#m', 'D', 'E', 'C#m'],
+    notes: join4('C#6:1.5 B5:0.5 A5:1 F#5:1', 'D6:1 F#6:1 E6:2', 'B5:0.5 C#6:0.5 B5:0.5 A5:0.5 G#5:1 E5:1', 'C#6:3 -:1'),
   },
   theme: {
-    chords: ['F', 'G', 'E', 'Am'],
-    notes: join4('A5:1.5 C6:0.5 F6:1 E6:1', 'D6:1.5 B5:0.5 G5:2', 'E5:1 G#5:1 B5:1 E6:1', 'C6:2 A5:2'),
+    chords: ['Bm', 'F#m', 'D', 'C#'],
+    notes: join4('D6:1 C#6:0.5 B5:0.5 F#5:2', 'A5:1 C#6:1 F#6:2', 'F#6:1 E6:0.5 D6:0.5 A5:1 F#5:1', 'F5:2 G#5:2'),
   },
-  cameo: { chords: ['Am', 'F G', 'Am', 'E'], notes: introQuote({ semitones: 7 }) },
-  riff: {
-    chords: ['Am', 'F', 'G', 'E'],
-    notes: join4(
-      'A5:0.5 E5:0.5 A5:0.5 C6:0.5 B5:0.5 A5:0.5 G#5:0.5 E5:0.5',
-      'F5:0.5 A5:0.5 C6:0.5 F6:0.5 E6:1 C6:1',
-      'D5:0.5 G5:0.5 B5:0.5 D6:0.5 C6:1 B5:1',
-      'E5:0.5 G#5:0.5 B5:0.5 E6:0.5 D6:1 B5:1',
-    ),
-  },
-};
-
-/** 城塞（ニ短調・メインテーマと同じ調）。夕暮れのオルガンと行進。 */
-const CASTLE = {
-  opening: {
-    chords: ['Dm', 'Gm', 'A', 'Dm'],
-    notes: join4('D5:2 F5:1 A5:1', 'Bb5:2 G5:1 D5:1', 'C#5:1 E5:1 A5:1 G5:1', 'F5:3 -:1'),
-  },
-  theme: {
-    chords: ['Bb', 'F', 'Gm', 'A'],
-    notes: join4('D6:1.5 C6:0.5 Bb5:2', 'A5:1 C6:1 F5:2', 'G5:1 Bb5:1 D6:1 C6:1', 'C#6:2 A5:2'),
-  },
-  /** 導入の動機を倍の長さで。 */
   cameo: {
-    chords: ['Dm', 'Dm', 'Bb', 'C'],
-    notes: join4(
-      'D5:1 -:1 D5:1 -:1',
-      'F5:1 E5:1 D5:1 A4:1',
-      'Bb4:2 D5:1 F5:1',
-      'C5:2 E5:1 G5:1',
-    ),
+    chords: ['F#m', 'D E', 'F#m', 'C#'],
+    notes: join4(introQuote({ bars: [0, 1], semitones: 4 }), 'A5:1 G#5:1 F#5:1 C#5:1', 'F5:2 C#5:2'),
   },
   riff: {
-    chords: ['Dm', 'Gm', 'A', 'Dm'],
+    chords: ['F#m', 'D', 'Bm', 'C#'],
     notes: join4(
-      'A4:0.5 D5:0.5 F5:0.5 A5:0.5 G5:0.5 F5:0.5 E5:0.5 D5:0.5',
-      'Bb4:0.5 D5:0.5 G5:0.5 F5:0.5 E5:0.5 D5:0.5 C5:0.5 Bb4:0.5',
-      'A4:0.5 C#5:0.5 E5:0.5 G5:0.5 F5:0.5 E5:0.5 D5:0.5 C#5:0.5',
-      'D5:1 F5:1 A5:2',
+      'F#5:0.5 C#6:0.5 F#6:0.5 C#6:0.5 E6:0.5 C#6:0.5 A5:0.5 C#6:0.5',
+      'D6:0.5 A5:0.5 F#5:0.5 A5:0.5 D6:1 F#6:1',
+      'B5:0.5 D6:0.5 F#6:0.5 D6:0.5 B5:1 F#5:1',
+      'F5:0.5 G#5:0.5 C#6:0.5 G#5:0.5 F6:1 C#6:1',
     ),
   },
-  battleCameo: {
-    chords: ['Dm', 'Bb C', 'Gm A', 'Dm'],
-    notes: join4(introQuote({ bars: [0, 1] }), 'G5:1 F5:1 E5:1 C#5:1', 'D5:3 -:1'),
-  },
+  battleCameo: { chords: ['F#m', 'D E', 'F#m', 'C#'], notes: introQuote({ semitones: 4 }) },
 };
 
 /** 砂漠（イ短調・和声的短音階）。陽炎の向こうの笛。 */
@@ -166,72 +135,6 @@ const SNOWFIELD = {
   },
 };
 
-/** 星の頂（ホ長調）。雲海の上、星がまたたくようなベル。 */
-const STARS = {
-  opening: {
-    chords: ['E', 'C#m', 'A', 'B'],
-    notes: join4('B5:1 E6:1 G#6:1 F#6:1', 'E6:2 C#6:1 G#5:1', 'A5:1 C#6:1 E6:1 A6:1', 'F#6:3 -:1'),
-  },
-  theme: {
-    chords: ['A', 'B', 'G#m', 'C#m'],
-    notes: join4('C#6:1.5 B5:0.5 A5:2', 'B5:1 D#6:1 F#6:2', 'G#6:1 F#6:0.5 D#6:0.5 B5:2', 'C#6:3 -:1'),
-  },
-  cameo: { chords: ['E', 'A B', 'E', 'B'], notes: introQuote({ major: true, semitones: 2 }) },
-  riff: {
-    chords: ['E', 'A', 'E', 'B'],
-    notes: join4(
-      'E5:0.5 B5:0.5 E6:0.5 B5:0.5 D#6:0.5 B5:0.5 C#6:0.5 B5:0.5',
-      'A5:0.5 C#6:0.5 E6:0.5 C#6:0.5 F#6:1 E6:1',
-      'G#5:0.5 B5:0.5 E6:0.5 B5:0.5 F#6:0.5 E6:0.5 D#6:0.5 B5:0.5',
-      'F#6:2 D#6:1 B5:1',
-    ),
-  },
-};
-
-/** 火山（ハ短調）。地響きのようなタムと低い金管。 */
-const VOLCANO = {
-  opening: {
-    chords: ['Cm', 'Ab', 'Bb', 'G'],
-    notes: join4('C5:1.5 Eb5:0.5 G5:2', 'Ab5:1.5 G5:0.5 Eb5:2', 'F5:1 Bb5:1 D6:1 C6:1', 'B5:3 -:1'),
-  },
-  theme: {
-    chords: ['Fm', 'Cm', 'Ab', 'G'],
-    notes: join4('F5:1 Ab5:1 C6:1.5 Bb5:0.5', 'G5:2 Eb5:1 C5:1', 'Eb5:1 Ab5:1 C6:1 Eb6:1', 'D6:2 B5:2'),
-  },
-  cameo: { chords: ['Cm', 'Ab Bb', 'Cm', 'G'], notes: introQuote({ semitones: -2 }) },
-  riff: {
-    chords: ['Cm', 'Eb', 'Ab', 'G'],
-    notes: join4(
-      'C5:0.5 C5:0.5 G5:0.5 C5:0.5 Ab5:0.5 C5:0.5 G5:0.5 F5:0.5',
-      'Eb5:0.5 F5:0.5 G5:0.5 Ab5:0.5 Bb5:1 G5:1',
-      'C5:0.5 C5:0.5 G5:0.5 C5:0.5 Ab5:0.5 C5:0.5 Bb5:0.5 Ab5:0.5',
-      'G5:1 B5:1 D6:1 G5:1',
-    ),
-  },
-};
-
-/** 闇・影の世界（ヘ短調）。ナポリの和音（G♭）で影が差すオルガン。 */
-const SHADOW = {
-  opening: {
-    chords: ['Fm', 'Db', 'Bbm', 'C'],
-    notes: join4('F5:2 Ab5:1 C6:1', 'Db6:2 C6:1 Ab5:1', 'Bb5:1.5 Db6:0.5 F5:2', 'E5:3 -:1'),
-  },
-  theme: {
-    chords: ['Fm', 'Gb', 'Fm', 'C'],
-    notes: join4('C6:1 Ab5:1 F5:2', 'Gb5:1 Bb5:1 Db6:2', 'C6:1 Ab5:0.5 G5:0.5 F5:1 C5:1', 'E5:2 G5:1 Bb5:1'),
-  },
-  cameo: { chords: ['Fm', 'Db Eb', 'Fm', 'C'], notes: introQuote({ semitones: 3 }) },
-  riff: {
-    chords: ['Fm', 'Db', 'Gb C', 'Fm'],
-    notes: join4(
-      'F4:0.5 C5:0.5 F5:0.5 Ab5:0.5 G5:0.5 F5:0.5 E5:0.5 C5:0.5',
-      'Db5:0.5 F5:0.5 Ab5:0.5 Db6:0.5 C6:1 Ab5:1',
-      'Gb5:0.5 F5:0.5 Eb5:0.5 Db5:0.5 C5:1 E5:1',
-      'F5:2 -:1 C5:1',
-    ),
-  },
-};
-
 /** 地域の前奏と旋律をつないだ 8 小節（戦闘アレンジの中心）。 */
 const themeOf = (region) => ({
   chords: [...region.opening.chords, ...region.theme.chords],
@@ -262,23 +165,13 @@ const fields = [
     ],
   },
   {
-    file: 'field-cave',
-    bpm: 76,
-    mix: { reverbLevel: 0.95, tone: 0.45, echoLevel: 0.45 },
+    file: 'field-sunken-city',
+    bpm: 74,
+    mix: { reverbLevel: 0.95, tone: 0.45, echoLevel: 0.5 },
     sections: [
-      sec('opening', CAVE.opening.chords, [lead('bell', 0.38, CAVE.opening.notes)], { comp: ['pad'], bass: 'sustain' }),
-      sec('theme', CAVE.theme.chords, [lead('flute', 0.34, CAVE.theme.notes)], { comp: ['arp8', 'pad'], bass: 'sustain', drums: 'timp' }),
-      sec('cameo', CAVE.cameo.chords, [lead('bell', 0.36, CAVE.cameo.notes)], { comp: ['arp8', 'pad'], bass: 'sustain', drums: 'timp' }),
-    ],
-  },
-  {
-    file: 'field-castle',
-    bpm: 84,
-    mix: { reverbLevel: 0.75, tone: 0.5 },
-    sections: [
-      sec('opening', CASTLE.opening.chords, [lead('organ', 0.3, CASTLE.opening.notes)], { comp: ['strings'], bass: 'sustain', drums: 'timp' }),
-      sec('theme', CASTLE.theme.chords, [lead('brassLead', 0.32, CASTLE.theme.notes)], { comp: ['strings'], bass: 'walk', drums: 'march', energy: 0.6 }),
-      sec('cameo', CASTLE.cameo.chords, [lead('organ', 0.3, CASTLE.cameo.notes)], { comp: ['strings'], bass: 'sustain', drums: 'march', energy: 0.6 }),
+      sec('opening', SUNKEN_CITY.opening.chords, [lead('bell', 0.36, SUNKEN_CITY.opening.notes)], { comp: ['arp16', 'pad'], bass: 'sustain' }),
+      sec('theme', SUNKEN_CITY.theme.chords, [lead('flute', 0.34, SUNKEN_CITY.theme.notes), lead('bell', 0.12, shiftPhrase(SUNKEN_CITY.theme.notes, 1))], { comp: ['arp16', 'pad'], bass: 'sustain', drums: 'timp', energy: 0.5 }),
+      sec('cameo', SUNKEN_CITY.cameo.chords, [lead('softKey', 0.36, SUNKEN_CITY.cameo.notes), lead('bell', 0.14, SUNKEN_CITY.cameo.notes)], { comp: ['arp16', 'pad'], bass: 'sustain' }),
     ],
   },
   {
@@ -301,41 +194,11 @@ const fields = [
       sec('cameo', SNOWFIELD.cameo.chords, [lead('bell', 0.36, SNOWFIELD.cameo.notes)], { comp: ['arp16', 'pad'], bass: 'sustain' }),
     ],
   },
-  {
-    file: 'field-stars',
-    bpm: 70,
-    mix: { reverbLevel: 0.95, tone: 0.5, echoLevel: 0.4 },
-    sections: [
-      sec('opening', STARS.opening.chords, [lead('bell', 0.36, STARS.opening.notes)], { comp: ['pad', 'arp8'], bass: 'sustain' }),
-      sec('theme', STARS.theme.chords, [lead('flute', 0.34, STARS.theme.notes)], { comp: ['pad', 'arp8'], bass: 'sustain', drums: 'light', energy: 0.4 }),
-      sec('cameo', STARS.cameo.chords, [lead('bell', 0.36, STARS.cameo.notes), lead('flute', 0.16, STARS.cameo.notes)], { comp: ['pad', 'arp8'], bass: 'sustain' }),
-    ],
-  },
-  {
-    file: 'field-volcano',
-    bpm: 86,
-    mix: { reverbLevel: 0.6, tone: 0.5, drive: 0.15 },
-    sections: [
-      sec('opening', VOLCANO.opening.chords, [lead('brassLead', 0.32, VOLCANO.opening.notes, { double: -1 })], { comp: ['strings'], bass: 'sustain', drums: 'tribal' }),
-      sec('theme', VOLCANO.theme.chords, [lead('strings', 0.36, VOLCANO.theme.notes)], { comp: ['strings', 'brassHits'], bass: 'sustain', drums: 'tribal' }),
-      sec('cameo', VOLCANO.cameo.chords, [lead('brassLead', 0.34, VOLCANO.cameo.notes), lead('organ', 0.16, shiftPhrase(VOLCANO.cameo.notes, 1))], { comp: ['strings', 'brassHits'], bass: 'sustain', drums: 'tribal', fill: 'toms' }),
-    ],
-  },
-  {
-    file: 'field-shadow',
-    bpm: 66,
-    mix: { reverbLevel: 0.95, tone: 0.4, echoLevel: 0.45 },
-    sections: [
-      sec('opening', SHADOW.opening.chords, [lead('organ', 0.28, SHADOW.opening.notes)], { comp: ['pad'], bass: 'sustain', drums: 'shadow' }),
-      sec('theme', SHADOW.theme.chords, [lead('softKey', 0.36, SHADOW.theme.notes)], { comp: ['pad', 'strings'], bass: 'sustain', drums: 'shadow' }),
-      sec('cameo', SHADOW.cameo.chords, [lead('organ', 0.26, SHADOW.cameo.notes), lead('bell', 0.12, SHADOW.cameo.notes)], { comp: ['pad'], bass: 'sustain', drums: 'shadow' }),
-    ],
-  },
 ];
 
 // ===== エリート戦 =====
 
-/** リフ → 地域の旋律 → 導入の動機の引用。考える余裕を残すため、テンポは 108〜132 にとどめる。 */
+/** リフ → 地域の旋律 → 導入の動機の引用。考える余裕を残すため、テンポは 108〜124 にとどめる。 */
 function battle({ file, bpm, mix, region, riff, theme, cameo }) {
   const main = themeOf(region);
   return {
@@ -361,15 +224,6 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.38, n), lead('flute', 0.18, n)], style: { comp: ['stabs', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
   }),
   battle({
-    file: 'elite-cave',
-    bpm: 116,
-    mix: { reverbLevel: 0.8, tone: 0.55, echoLevel: 0.35 },
-    region: CAVE,
-    riff: { parts: (n) => [lead('triLead', 0.32, n)], style: { comp: ['arp16', 'strings'], bass: 'octave', drums: 'drive', energy: 0.7, fill: 'snare' } },
-    theme: { parts: (n) => [lead('flute', 0.4, n), lead('bell', 0.14, n)], style: { comp: ['arp8', 'pad'], bass: 'walk', drums: 'rock', energy: 0.7 } },
-    cameo: { parts: (n) => [lead('brassLead', 0.36, n)], style: { comp: ['stabs', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
-  }),
-  battle({
     file: 'elite-swamp',
     bpm: 108,
     mix: { reverbLevel: 0.65, tone: 0.5, echoLevel: 0.35 },
@@ -379,13 +233,13 @@ const battles = [
     cameo: { parts: (n) => [lead('brassLead', 0.36, n)], style: { comp: ['stabs', 'pad'], bass: 'octave', drums: 'drive', energy: 0.8, fill: 'toms' } },
   }),
   battle({
-    file: 'elite-castle',
-    bpm: 112,
-    mix: { reverbLevel: 0.6, tone: 0.55 },
-    region: CASTLE,
-    riff: { parts: (n) => [lead('organ', 0.32, n)], style: { comp: ['strings'], bass: 'gallop', drums: 'march', fill: 'snare' } },
-    theme: { parts: (n) => [lead('brassLead', 0.38, n)], style: { comp: ['strings', 'stabs'], bass: 'walk', drums: 'drive', energy: 0.8 } },
-    cameo: { parts: (n) => [lead('brassLead', 0.36, n, { double: -1 }), lead('organ', 0.16, n)], style: { comp: ['strings', 'brassHits'], bass: 'gallop', drums: 'march', fill: 'toms' } },
+    file: 'elite-sunken-city',
+    bpm: 114,
+    mix: { reverbLevel: 0.8, tone: 0.55, echoLevel: 0.35 },
+    region: SUNKEN_CITY,
+    riff: { parts: (n) => [lead('triLead', 0.32, n)], style: { comp: ['arp16', 'strings'], bass: 'octave', drums: 'drive', energy: 0.7, fill: 'snare' } },
+    theme: { parts: (n) => [lead('flute', 0.4, n), lead('bell', 0.14, shiftPhrase(n, 1))], style: { comp: ['arp16', 'pad'], bass: 'walk', drums: 'rock', energy: 0.7 } },
+    cameo: { parts: (n) => [lead('brassLead', 0.36, n), lead('bell', 0.14, n)], style: { comp: ['stabs', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
   }),
   battle({
     file: 'elite-desert',
@@ -404,33 +258,6 @@ const battles = [
     riff: { parts: (n) => [lead('triLead', 0.32, n)], style: { comp: ['arp16', 'strings'], bass: 'octave', drums: 'drive', energy: 0.7, fill: 'snare' } },
     theme: { parts: (n) => [lead('triLead', 0.34, shiftPhrase(n, -1)), lead('bell', 0.14, n)], style: { comp: ['arp16', 'pad'], bass: 'walk', drums: 'rock', energy: 0.7 } },
     cameo: { parts: (n) => [lead('brassLead', 0.34, shiftPhrase(n, -1))], style: { comp: ['arp16', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
-  }),
-  battle({
-    file: 'elite-stars',
-    bpm: 118,
-    mix: { reverbLevel: 0.7, tone: 0.6 },
-    region: STARS,
-    riff: { parts: (n) => [lead('squareLead', 0.28, n)], style: { comp: ['stabs', 'arp8'], bass: 'octave', drums: 'drive', energy: 0.75, fill: 'snare' } },
-    theme: { parts: (n) => [lead('flute', 0.38, n)], style: { comp: ['pad', 'arp8'], bass: 'walk', drums: 'rock', energy: 0.7 } },
-    cameo: { parts: (n) => [lead('brassLead', 0.36, n)], style: { comp: ['stabs', 'strings'], bass: 'octave', drums: 'rock', fill: 'toms' } },
-  }),
-  battle({
-    file: 'elite-volcano',
-    bpm: 132,
-    mix: { drive: 0.45, tone: 0.65 },
-    region: VOLCANO,
-    riff: { parts: (n) => [lead('guitarLead', 0.36, n)], style: { comp: ['chug'], bass: 'gallop', drums: 'rock', fill: 'toms' } },
-    theme: { parts: (n) => [lead('brassLead', 0.38, n, { double: -1 })], style: { comp: ['chug', 'brassHits'], bass: 'drive8', drums: 'drive', energy: 0.85 } },
-    cameo: { parts: (n) => [lead('guitarLead', 0.36, n), lead('organ', 0.2, shiftPhrase(n, 1))], style: { comp: ['chug', 'strings'], bass: 'gallop', drums: 'drive', fill: 'toms' } },
-  }),
-  battle({
-    file: 'elite-shadow',
-    bpm: 126,
-    mix: { drive: 0.3, reverbLevel: 0.7, tone: 0.55 },
-    region: SHADOW,
-    riff: { parts: (n) => [lead('organ', 0.32, n)], style: { comp: ['chug', 'pad'], bass: 'drive8', drums: 'half', fill: 'roll' } },
-    theme: { parts: (n) => [lead('organ', 0.34, n)], style: { comp: ['pad', 'stabs'], bass: 'drive8', drums: 'drive', energy: 0.8 } },
-    cameo: { parts: (n) => [lead('brassLead', 0.36, n)], style: { comp: ['stabs', 'strings'], bass: 'drive8', drums: 'drive', fill: 'toms' } },
   }),
 ];
 

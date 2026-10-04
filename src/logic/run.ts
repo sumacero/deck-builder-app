@@ -36,14 +36,17 @@ function startAct(run: RunState, actIndex: number): RunState {
   return { ...entered, rngSeed: blessing.seed, phase: { kind: 'blessing', options: blessing.options } };
 }
 
-/** 章ごとに地域の候補から 1 つ選ぶ。 */
+/** 章ごとに地域の候補から 1 つ選ぶ。前の章で選ばれた地域は避ける（候補が尽きたら重複を許す）。 */
 export function pickActs(choices: ActConfig[][], seed: number): { acts: ActConfig[]; seed: number } {
   let current = seed;
-  const acts = choices.map((options) => {
-    const picked = pickOne(options, current);
+  const acts: ActConfig[] = [];
+  for (const options of choices) {
+    const fresh = options.filter((option) => !acts.some((act) => act.region === option.region));
+    const pool = fresh.length > 0 ? fresh : options;
+    const picked = pickOne(pool, current);
     current = picked.seed;
-    return picked.item ?? options[0];
-  });
+    acts.push(picked.item ?? pool[0]);
+  }
   return { acts, seed: current };
 }
 

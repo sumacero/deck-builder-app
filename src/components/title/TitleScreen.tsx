@@ -16,8 +16,8 @@ type TitleScreenProps = {
   onStart: () => void;
 };
 
-/** タイトルの背景は星の頂の景色。 */
-const BACKGROUND_REGION: Region = 'stars';
+/** タイトルの背景は水の古都の景色。 */
+const BACKGROUND_REGION: Region = 'sunkenCity';
 const NO_EVENTS: CombatEvent[] = [];
 
 /** 起動直後の画面。ゲーム名が浮かび上がり、「冒険を始める」が呼吸するように光る。 */

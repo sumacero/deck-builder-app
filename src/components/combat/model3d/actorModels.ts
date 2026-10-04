@@ -31,7 +31,7 @@ export const AGENT_MODELS: Record<string, ActorModel> = {
 };
 
 export const ENEMY_MODELS: Record<string, ActorModel> = {
-  // 第 1 章: 苔むす洞窟
+  // 第 1 章の敵
   'cave-slime': slime('#5FCB5A'),
   'fang-rat': quadruped('#8A8078', {
     belly: '#B8ADA2',
@@ -54,7 +54,7 @@ export const ENEMY_MODELS: Record<string, ActorModel> = {
   'stone-guardian': golem('#8C8A84', '#5AD0FF'),
   'slime-king': slime('#9A5FCB', { crowned: true, scale: 1.2 }),
 
-  // 第 2 章: 錆びた城塞
+  // 第 2 章の敵
   'rusted-knight': humanoid({
     skin: '#C9A88A',
     body: '#8A5A3A',
@@ -103,7 +103,7 @@ export const ENEMY_MODELS: Record<string, ActorModel> = {
   ),
   'castle-phantom': ghost('#A8C8E8', { crowned: true, scale: 1.15 }),
 
-  // 第 3 章: 星の頂
+  // 第 3 章の敵
   'stardust-soldier': humanoid({
     skin: '#D8D0E8',
     body: '#2A3A6B',
