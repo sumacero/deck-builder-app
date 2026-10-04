@@ -1,4 +1,4 @@
-import type { CardDefinition, CardGrowth, CardInstance, CardStack } from '../domain/card';
+import type { CardDefinition, CardGrowth, CardInstance, CardStack, CardUpgrade } from '../domain/card';
 import type { Effect } from '../domain/effect';
 
 /** 同じ id のカードを枚数付きでまとめる（成長量が違えば別扱い）。コスト順。 */
@@ -84,6 +84,15 @@ function growEffect(effect: Effect, growth: CardGrowth): Effect {
   return effect;
 }
 
+/**
+ * 強化後の効果を成長させる。強化で効果が変わらないカード（成長量だけ増えるなど）は effects を持たないので、
+ * そのまま返す（effects: undefined を書き込むと、強化したときに元の効果を消してしまう）。
+ */
+function growUpgrade(upgrade: CardUpgrade, growth: CardGrowth): CardUpgrade {
+  if (!upgrade.effects) return upgrade;
+  return { ...upgrade, effects: upgrade.effects.map((effect) => growEffect(effect, upgrade.growth ?? growth)) };
+}
+
 /** 成長したカード。強化後の効果も同じだけ増やしておき、あとで強化しても成長が消えないようにする。 */
 export function growCard(card: CardDefinition): CardDefinition {
   const { growth } = card;
@@ -91,10 +100,7 @@ export function growCard(card: CardDefinition): CardDefinition {
   return {
     ...card,
     effects: card.effects.map((effect) => growEffect(effect, growth)),
-    upgrade: card.upgrade && {
-      ...card.upgrade,
-      effects: card.upgrade.effects?.map((effect) => growEffect(effect, card.upgrade?.growth ?? growth)),
-    },
+    upgrade: card.upgrade && growUpgrade(card.upgrade, growth),
     timesGrown: (card.timesGrown ?? 0) + 1,
   };
 }
