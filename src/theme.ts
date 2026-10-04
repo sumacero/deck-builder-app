@@ -220,7 +220,8 @@ export const ACTOR_FIGURE = {
 export const COMBAT_LAYOUT = {
   enemyChrome: 130,
   compactEnemyChrome: 108,
-  playerChrome: 98,
+  /** 自分の 3D 以外（名前・状態・HP・秘奥義ゲージ・余白）の高さ。足りないと下のエナジー欄に重なる。 */
+  playerChrome: 128,
   /** パネルの枠線と内側の余白の合計（左右）。 */
   panelInset: 12,
   compactEnemyCount: 3,

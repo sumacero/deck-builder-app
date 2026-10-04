@@ -40,8 +40,28 @@ const ART_INSET = 3;
 
 const artHeight = (width: number) => Math.round(width * CARD_ART.heightRatio);
 
+/** 半角文字は全角のおよそ 6 割の幅。 */
+const HALF_WIDTH_EM = 0.6;
+const MIN_NAME_FONT = 7;
+
+/** 文字列の幅を、全角 1 文字 = 1em として見積もる。 */
+function textEm(text: string): number {
+  let em = 0;
+  for (const ch of text) em += (ch.codePointAt(0) ?? 0) < 0x2000 ? HALF_WIDTH_EM : 1;
+  return em;
+}
+
+/**
+ * 細いカードでも名前が「…」で切れないよう、1 行に収まる大きさまで縮める。
+ * adjustsFontSizeToFit は Web では効かないので、文字数から計算する。
+ */
+function nameFontSize(name: string, width: number, base: number): number {
+  const available = width - BORDER_WIDTH * 2 - NAME_LEFT_INSET - NAME_RIGHT_INSET;
+  return Math.max(MIN_NAME_FONT, Math.min(base, Math.floor(available / textEm(name))));
+}
+
 /** 幅に合わせた文字サイズ。小さくなりすぎないよう下限を設ける。 */
-function scaledStyles(width: number) {
+function scaledStyles(width: number, name: string) {
   const scale = Math.min(1, width / BASE_WIDTH);
   return {
     card: {
@@ -50,7 +70,11 @@ function scaledStyles(width: number) {
     },
     art: { height: artHeight(width) },
     body: { paddingHorizontal: Math.max(2, SPACING.xs * scale) },
-    name: { fontSize: Math.max(9, 12 * scale) },
+    name: {
+      fontSize: nameFontSize(name, width, Math.max(9, 12 * scale)),
+      paddingLeft: NAME_LEFT_INSET,
+      paddingRight: NAME_RIGHT_INSET,
+    },
     emblemText: { fontSize: Math.max(9, 12 * scale) },
     attributeBadge: { width: Math.max(14, 20 * scale), height: Math.max(14, 20 * scale) },
     attributeIcon: { fontSize: Math.max(8, 12 * scale) },
@@ -77,7 +101,7 @@ export function CardView({
   const frameColor = attributeColor ?? typeColor;
   const narrow = width !== undefined && width < NARROW_WIDTH;
   const wide = size === 'md' && width === undefined;
-  const scaled = width !== undefined ? scaledStyles(width) : null;
+  const scaled = width !== undefined ? scaledStyles(width, card.name) : null;
   const art = cardArt(card);
   return (
     <>
@@ -163,6 +187,9 @@ export function CardView({
 
 const GEM_SIZE = 24;
 const BADGE_SIZE = 20;
+/** 左上のコストの宝石がカードの内側に食い込む幅。名前はその右から始める。 */
+const NAME_LEFT_INSET = GEM_SIZE - SPACING.sm - BORDER_WIDTH;
+const NAME_RIGHT_INSET = 2;
 
 /** 属性の色を本文の背景にうっすら敷く。 */
 const blend = (color: string) => `${color}${ATTRIBUTE_TINT_ALPHA}`;

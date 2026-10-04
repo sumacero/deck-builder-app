@@ -24,7 +24,7 @@ export function RunEndOverlay({ kind, run, onNewRun, onExitToTitle }: RunEndOver
   const records: { label: string; value: string }[] = [
     {
       label: '到達',
-      value: `第 ${run.actIndex + 1} 章「${currentAct(run).name}」${reachedFloor(run)} 階`,
+      value: `${currentAct(run).name}　${reachedFloor(run)} 階`,
     },
     { label: '勝利した戦闘', value: `${stats.combatsWon} 回` },
     { label: '倒した敵', value: `${stats.enemiesDefeated} 体` },
@@ -92,7 +92,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: COLORS.overlay,
+    /** 下のマップの文字が透けて記録と重ならないよう、不透明にする。 */
+    backgroundColor: COLORS.bg,
+    zIndex: 20,
+    elevation: 20,
   },
   content: {
     flexGrow: 1,
