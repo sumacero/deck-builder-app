@@ -4,9 +4,10 @@ import { COLORS, RADIUS, SPACING } from '../../theme';
 type RunEndOverlayProps = {
   kind: 'gameOver' | 'cleared';
   onNewRun: () => void;
+  onExitToTitle: () => void;
 };
 
-export function RunEndOverlay({ kind, onNewRun }: RunEndOverlayProps) {
+export function RunEndOverlay({ kind, onNewRun, onExitToTitle }: RunEndOverlayProps) {
   const cleared = kind === 'cleared';
   return (
     <View style={styles.overlay}>
@@ -21,6 +22,12 @@ export function RunEndOverlay({ kind, onNewRun }: RunEndOverlayProps) {
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       >
         <Text style={styles.buttonText}>新しいラン</Text>
+      </Pressable>
+      <Pressable
+        onPress={onExitToTitle}
+        style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}
+      >
+        <Text style={styles.secondaryText}>タイトルへ</Text>
       </Pressable>
     </View>
   );
@@ -48,5 +55,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
   },
   buttonText: { color: COLORS.onGold, fontSize: 16, fontWeight: '800' },
+  secondary: {
+    borderWidth: 1,
+    borderColor: COLORS.panelBorder,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+  },
+  secondaryText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '700' },
   pressed: { opacity: 0.7 },
 });

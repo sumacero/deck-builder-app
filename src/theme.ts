@@ -69,6 +69,9 @@ export const MOTION = {
   resultExtraDelay: 600,
   /** 斬撃・盾などのエフェクト絵文字が出て消えるまで。 */
   burst: 600,
+  /** タイトルのゲーム名が浮かび上がる時間と、開始ボタンが一回ふくらむ（しぼむ）時間。 */
+  titleFadeIn: 1200,
+  titlePulse: 1100,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {

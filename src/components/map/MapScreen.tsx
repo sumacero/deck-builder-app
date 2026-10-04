@@ -6,6 +6,7 @@ import { COLORS, MAP_LAYOUT, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { DeckButton } from '../cards/DeckButton';
 import { HpBar } from '../combat/HpBar';
+import { GalleryButton } from '../gallery/GalleryButton';
 import { ItemBar } from '../items/ItemBar';
 import { GoldBadge } from '../run/GoldBadge';
 import { RunEndOverlay } from '../run/RunEndOverlay';
@@ -18,9 +19,10 @@ type MapScreenProps = {
   run: RunState;
   onMove: (nodeId: string) => void;
   onNewRun: () => void;
+  onExitToTitle: () => void;
 };
 
-export function MapScreen({ run, onMove, onNewRun }: MapScreenProps) {
+export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenProps) {
   const [width, setWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const viewportHeight = useRef(0);
@@ -57,6 +59,7 @@ export function MapScreen({ run, onMove, onNewRun }: MapScreenProps) {
           </View>
           <GoldBadge gold={run.gold} />
           <DeckButton deck={run.deck} />
+          <GalleryButton />
         </View>
         <Text style={styles.act}>
           {currentAct(run).name}　ボス {run.boss.icon} {run.boss.name}
@@ -115,7 +118,7 @@ export function MapScreen({ run, onMove, onNewRun }: MapScreenProps) {
 
       <MapLegend />
       {(run.phase.kind === 'gameOver' || run.phase.kind === 'cleared') && (
-        <RunEndOverlay kind={run.phase.kind} onNewRun={onNewRun} />
+        <RunEndOverlay kind={run.phase.kind} onNewRun={onNewRun} onExitToTitle={onExitToTitle} />
       )}
     </SceneBackground>
   );
@@ -123,7 +126,7 @@ export function MapScreen({ run, onMove, onNewRun }: MapScreenProps) {
 
 const styles = StyleSheet.create({
   hud: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, gap: SPACING.sm },
-  status: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  status: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   floor: {
     color: COLORS.gold,
     fontSize: 14,

@@ -12,8 +12,13 @@ import { TreasureScreen } from '../treasure/TreasureScreen';
 import { BossRelicScreen } from './BossRelicScreen';
 import { RewardScreen } from './RewardScreen';
 
+type RunRootProps = {
+  /** ランが終わった画面から、タイトルに戻る。 */
+  onExitToTitle: () => void;
+};
+
 /** ラン全体の画面切り替え。マップから各マスの画面へ。 */
-export function RunRoot() {
+export function RunRoot({ onExitToTitle }: RunRootProps) {
   const {
     run,
     moveTo,
@@ -83,6 +88,14 @@ export function RunRoot() {
     case 'map':
     case 'gameOver':
     case 'cleared':
-      return <MapScreen key={run.actIndex} run={run} onMove={moveTo} onNewRun={newRun} />;
+      return (
+        <MapScreen
+          key={run.actIndex}
+          run={run}
+          onMove={moveTo}
+          onNewRun={newRun}
+          onExitToTitle={onExitToTitle}
+        />
+      );
   }
 }

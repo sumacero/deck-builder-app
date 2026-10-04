@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { RunRoot } from './src/components/run/RunRoot';
+import { GameRoot } from './src/components/GameRoot';
 import { COLORS } from './src/theme';
 
 export default function App() {
@@ -9,7 +9,7 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="light" />
-        <RunRoot />
+        <GameRoot />
       </SafeAreaView>
     </SafeAreaProvider>
   );
