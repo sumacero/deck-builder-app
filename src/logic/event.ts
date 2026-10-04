@@ -17,11 +17,20 @@ export function startEvent(run: RunState): RunState {
   };
 }
 
-/** 払えない代償があったり、選んでも何も起きなかったりする選択肢は選べない。 */
+const isAffordable = (run: RunState, option: EventOption) =>
+  canMakeChoice(run, option.choice) && option.effects.every((effect) => canApplyRunEffect(run, effect));
+
+/**
+ * 払えない代償があったり、選んでも何も起きなかったりする選択肢は選べない。
+ * ただし「立ち去る」の無いイベントで 1 つも選べないと先に進めなくなるので、そのときは
+ * HP の代償だけが払えない選択肢も選べる（イベントの HP 消費では最低 1 残る）。
+ */
 export function canChooseEventOption(run: RunState, option: EventOption): boolean {
+  if (isAffordable(run, option)) return true;
+  if (run.phase.kind !== 'event' || run.phase.event.options.some((o) => isAffordable(run, o))) return false;
   return (
     canMakeChoice(run, option.choice) &&
-    option.effects.every((effect) => canApplyRunEffect(run, effect))
+    option.effects.every((effect) => effect.kind === 'loseHp' || canApplyRunEffect(run, effect))
   );
 }
 

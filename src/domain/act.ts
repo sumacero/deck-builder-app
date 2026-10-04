@@ -19,4 +19,9 @@ export type ActConfig = {
   bossPool: EnemyDefinition[];
   /** 章の最初に案内役がかける言葉。 */
   greeting: string;
+  /**
+   * 章の中での強さの伸び。敵の HP・攻撃などに start + perFloor × 階（0 始まり）をかける。
+   * 章の倍率（敵の候補に適用済み）はボスの階での強さにあたり、序盤はそれより弱い。
+   */
+  floorScaling: { start: number; perFloor: number };
 };

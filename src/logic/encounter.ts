@@ -1,6 +1,7 @@
 import type { EnemyDefinition, Encounter } from '../domain/enemy';
 import type { RunState } from '../domain/run';
 import { nextRandom, pickOne } from './random';
+import { scaleEncounter } from './scaling';
 
 /** 敵 1 体だけの戦闘（ボスなど）。 */
 export const soloEncounter = (enemy: EnemyDefinition): Encounter => ({
@@ -9,13 +10,22 @@ export const soloEncounter = (enemy: EnemyDefinition): Encounter => ({
   enemies: [enemy],
 });
 
-/** 戦闘を始める。戦闘ごとのシャッフル用シードもここで決める。 */
+/** 今いる階での、章の中の強さの倍率（1 階目が一番弱く、ボスの階で 1）。 */
+export function floorMultiplier(run: RunState): number {
+  const node = run.map.nodes.find((n) => n.id === run.currentNodeId);
+  const { start, perFloor } = run.acts[run.actIndex].floorScaling;
+  return start + perFloor * (node?.floor ?? 0);
+}
+
+/** 戦闘を始める。今いる階に応じて敵を強くし、戦闘ごとのシャッフル用シードもここで決める。 */
 export function startCombat(run: RunState, nodeId: string, encounter: Encounter): RunState {
   const seedRoll = nextRandom(run.rngSeed);
+  const multiplier = floorMultiplier(run);
+  const scaled = multiplier === 1 ? encounter : scaleEncounter(encounter, { hp: multiplier, power: multiplier });
   return {
     ...run,
     rngSeed: seedRoll.seed,
-    phase: { kind: 'combat', nodeId, encounter, seed: Math.floor(seedRoll.value * 2 ** 31) },
+    phase: { kind: 'combat', nodeId, encounter: scaled, seed: Math.floor(seedRoll.value * 2 ** 31) },
   };
 }
 

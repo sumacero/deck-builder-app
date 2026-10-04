@@ -22,6 +22,9 @@ type RegionDef = {
   greeting: string;
 };
 
+/** 1 階目は章の強さの 80%、1 階ごとに +2% で、ボスの階（11 階目）でちょうど 100%。 */
+const FLOOR_SCALING = { start: 0.8, perFloor: 0.02 };
+
 const CHAPTERS: ChapterDef[] = [
   {
     number: 1,
@@ -31,13 +34,13 @@ const CHAPTERS: ChapterDef[] = [
   },
   {
     number: 2,
-    scale: { hp: 1.35, power: 1.25 },
+    scale: { hp: 1.6, power: 1.4 },
     greetingBefore: '最初の地を抜けたのね。',
     greetingAfter: 'さあ、また選んで。',
   },
   {
     number: 3,
-    scale: { hp: 1.7, power: 1.5 },
+    scale: { hp: 2.4, power: 1.95 },
     greetingBefore: 'ここが最後の道。',
     greetingAfter: '奥で待つ主を倒せば、旅は終わる。私の灯りを持っていって。',
   },
@@ -77,6 +80,7 @@ function buildAct(chapter: ChapterDef, region: RegionDef): ActConfig {
     elitePool: enemies.elite.map((encounter) => scaleEncounter(encounter, chapter.scale)),
     bossPool: enemies.boss.map((boss) => scaleEnemy(boss, chapter.scale)),
     greeting: `${chapter.greetingBefore}${region.greeting}${chapter.greetingAfter}`,
+    floorScaling: FLOOR_SCALING,
   };
 }
 
