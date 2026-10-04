@@ -86,7 +86,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
       { rotate: -6, duration: 60 },
       { duration: 80 },
     ],
-    burst: { emoji: '🩸', on: 'self', delay: 40 },
+    burst: { emoji: '💢', on: 'self', delay: 40 },
   },
 };
 

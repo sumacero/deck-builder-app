@@ -91,7 +91,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'clothesline',
-    name: 'ラリアット',
+    name: '剛腕撃',
     type: 'attack',
     cost: 2,
     target: 'enemy',
@@ -100,7 +100,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'hemokinesis',
-    name: 'ハートの刃',
+    name: '紅蓮の刃',
     type: 'attack',
     cost: 1,
     target: 'enemy',
@@ -189,7 +189,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'bloodletting',
-    name: 'ハートチャージ',
+    name: '生命転換',
     type: 'skill',
     cost: 0,
     target: 'self',
@@ -215,7 +215,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'offering',
-    name: 'ハートのおまじない',
+    name: '捧げの儀',
     type: 'skill',
     cost: 0,
     target: 'self',

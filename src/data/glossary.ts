@@ -61,7 +61,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   loseHp: {
     id: 'loseHp',
     name: 'HP を失う',
-    icon: '🩸',
+    icon: '💔',
     description: 'ダメージとは違い、ブロックでは防げずに HP が直接減る。',
   },
   strength: {

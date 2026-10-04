@@ -17,17 +17,17 @@ export const ACT1: ActConfig = {
   enemyPool: ACT1_ENCOUNTERS,
   elitePool: ACT1_ELITES,
   bossPool: [SLIME_KING],
-  greeting: 'ようこそ、旅の人。この先はふしぎな洞窟。灯りの代わりに、ひとつ贈り物を選んで。',
+  greeting: 'ようこそ、旅の人。この先は暗い洞窟。灯りの代わりに、ひとつ贈り物を選んで。',
 };
 
 export const ACT2: ActConfig = {
   id: 'act-2',
-  name: '第 2 章　にじいろの城',
+  name: '第 2 章　黄昏の城塞',
   map: STANDARD_ACT_MAP,
   enemyPool: ACT2_ENCOUNTERS,
   elitePool: ACT2_ELITES,
   bossPool: [CASTLE_PHANTOM],
-  greeting: '洞窟を抜けたのね。お城のおばけたちは手強いわ。さあ、また選んで。',
+  greeting: '洞窟を抜けたのね。城塞の亡霊たちは手強いわ。さあ、また選んで。',
 };
 
 export const ACT3: ActConfig = {
