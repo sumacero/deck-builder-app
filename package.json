@@ -25,7 +25,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "sounds": "node scripts/generate-sounds.mjs"
+    "sounds": "node scripts/generate-sounds.mjs",
+    "bgm": "node scripts/generate-bgm.mjs"
   },
   "private": true
 }

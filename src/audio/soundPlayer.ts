@@ -14,13 +14,24 @@ function playerFor(id: SoundId): AudioPlayer {
   return player;
 }
 
-async function configureAndPreload(): Promise<void> {
+let configuring: Promise<void> | null = null;
+
+/** 音声モードは効果音と BGM で共通。最初に呼ばれたときに 1 回だけ設定する。失敗したら次回やり直す。 */
+export function configureAudioMode(): Promise<void> {
   // Android の false はバイブモードでも消音してしまう。一般的なゲームに合わせ、
   // Android はメディア音量に従い、iOS だけ消音スイッチに従う。
-  await setAudioModeAsync({
+  configuring ??= setAudioModeAsync({
     playsInSilentMode: Platform.OS === 'android',
     interruptionMode: 'mixWithOthers',
+  }).catch((error: unknown) => {
+    configuring = null;
+    throw error;
   });
+  return configuring;
+}
+
+async function configureAndPreload(): Promise<void> {
+  await configureAudioMode();
   (Object.keys(SOUNDS) as SoundId[]).forEach(playerFor);
 }
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { CombatSetup } from '../../domain/combat';
 import type { CombatResult } from '../../domain/run';
+import { useBattleMusic } from '../../hooks/useBattleMusic';
 import { useCombat } from '../../hooks/useCombat';
 import { eventsDuration } from '../../hooks/useCombatEvents';
 import { useCombatSounds } from '../../hooks/useCombatSounds';
@@ -36,6 +37,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   const inProgress = state.status === 'playerTurn';
   const effectsTime = eventsDuration(state.events);
   useCombatSounds(state.events);
+  useBattleMusic(setup.enemy.rank, !inProgress);
 
   return (
     <SceneBackground actId={actId} scene="combat">

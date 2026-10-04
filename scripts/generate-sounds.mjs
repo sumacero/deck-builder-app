@@ -1,9 +1,9 @@
 // 効果音を波形から合成して assets/sounds/*.wav に書き出す。
 // 実行: npm run sounds
-import { Buffer } from 'node:buffer';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { normalize, toWav } from './wav.mjs';
 
 const SAMPLE_RATE = 22050;
 const PEAK = 0.7;
@@ -133,41 +133,10 @@ const SOUNDS = {
 
 // ===== 書き出し =====
 
-function finalize(samples) {
-  const peak = samples.reduce((max, s) => Math.max(max, Math.abs(s)), 0) || 1;
-  const fadeLength = Math.floor(FADE_OUT_SECONDS * SAMPLE_RATE);
-  return samples.map((s, i) => {
-    const fromEnd = samples.length - 1 - i;
-    const fade = fromEnd < fadeLength ? fromEnd / fadeLength : 1;
-    return (s / peak) * PEAK * fade;
-  });
-}
-
-function toWav(samples) {
-  const dataSize = samples.length * 2;
-  const buffer = Buffer.alloc(44 + dataSize);
-  buffer.write('RIFF', 0);
-  buffer.writeUInt32LE(36 + dataSize, 4);
-  buffer.write('WAVE', 8);
-  buffer.write('fmt ', 12);
-  buffer.writeUInt32LE(16, 16);
-  buffer.writeUInt16LE(1, 20);
-  buffer.writeUInt16LE(1, 22);
-  buffer.writeUInt32LE(SAMPLE_RATE, 24);
-  buffer.writeUInt32LE(SAMPLE_RATE * 2, 28);
-  buffer.writeUInt16LE(2, 32);
-  buffer.writeUInt16LE(16, 34);
-  buffer.write('data', 36);
-  buffer.writeUInt32LE(dataSize, 40);
-  samples.forEach((s, i) => {
-    buffer.writeInt16LE(Math.round(Math.max(-1, Math.min(1, s)) * 32767), 44 + i * 2);
-  });
-  return buffer;
-}
-
 mkdirSync(OUT_DIR, { recursive: true });
+const fadeLength = Math.floor(FADE_OUT_SECONDS * SAMPLE_RATE);
 for (const [name, build] of Object.entries(SOUNDS)) {
   const file = join(OUT_DIR, `${name}.wav`);
-  writeFileSync(file, toWav(finalize(build())));
+  writeFileSync(file, toWav(normalize(build(), PEAK, fadeLength), SAMPLE_RATE));
   console.log(`wrote ${file}`);
 }
