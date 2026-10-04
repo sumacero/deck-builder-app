@@ -125,7 +125,6 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
       potions={state.potions}
       events={state.events}
       potionUse={{ isDrinkable, onDrink }}
-      popoverMinWidth={landscape ? COMBAT_LAYOUT.landscapePopoverWidth : undefined}
     />
   );
   const enemyRow = (

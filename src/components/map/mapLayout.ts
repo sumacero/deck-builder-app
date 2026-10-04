@@ -5,6 +5,7 @@ export type Point = { x: number; y: number };
 
 export type MapLayout = {
   positions: Record<string, Point>;
+  width: number;
   height: number;
 };
 
@@ -15,7 +16,7 @@ function jitter(id: string, salt: string, range: number): number {
   return (Math.abs(hash) % (range * 2 + 1)) - range;
 }
 
-/** マスの画面上の座標を決める。下の階ほど下に置く。 */
+/** 縦向き: 下の階ほど下に置き、列は画面の幅に等分する。上下にスクロールして見る。 */
 export function layoutMap(map: GameMap, width: number): MapLayout {
   const columnWidth = width / map.columns;
   const height = (map.floorCount - 1) * MAP_LAYOUT.rowHeight + MAP_LAYOUT.verticalPadding * 2;
@@ -32,5 +33,27 @@ export function layoutMap(map: GameMap, width: number): MapLayout {
         (isBoss ? 0 : jitter(node.id, 'y', MAP_LAYOUT.jitter)),
     };
   }
-  return { positions, height };
+  return { positions, width, height };
+}
+
+/**
+ * 横向き: 下の階ほど左に置き（右へ進む）、列は画面の高さに等分する。左右にスクロールして見る。
+ * 画面が広ければ階の間隔を広げて全体を収め、狭ければ最小の間隔で並べてスクロールさせる。
+ */
+export function layoutMapHorizontal(map: GameMap, height: number, viewportWidth: number): MapLayout {
+  const { horizontalPadding, minFloorSpacing, rowHeight, jitter: range } = MAP_LAYOUT;
+  const gaps = map.floorCount - 1;
+  const spacing = Math.min(rowHeight, Math.max(minFloorSpacing, (viewportWidth - horizontalPadding * 2) / gaps));
+  const width = gaps * spacing + horizontalPadding * 2;
+  const rowWidth = height / map.columns;
+  const positions: Record<string, Point> = {};
+
+  for (const node of map.nodes) {
+    const isBoss = node.id === map.bossId;
+    positions[node.id] = {
+      x: horizontalPadding + node.floor * spacing + (isBoss ? 0 : jitter(node.id, 'y', range)),
+      y: (node.column + 0.5) * rowWidth + (isBoss ? 0 : jitter(node.id, 'x', range)),
+    };
+  }
+  return { positions, width, height };
 }

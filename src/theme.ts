@@ -50,6 +50,12 @@ export const MAP_LAYOUT = {
   dotSize: 4,
   /** マップを開いたとき、今いるマスを表示領域の下端からこれだけ上に置く。 */
   currentNodeBottomOffset: 80,
+  /** 横向き: 左右の余白、階の間隔の下限（画面が狭いときはスクロール）、今いるマスを左端からどれだけ右に置くか。 */
+  horizontalPadding: 48,
+  minFloorSpacing: 60,
+  currentNodeLeftOffset: 96,
+  /** 横向きで左に置く情報の列の幅。 */
+  landscapeSideWidth: 250,
 } as const;
 
 /** 演出のタイミング（ミリ秒）。 */
@@ -128,7 +134,11 @@ export const COMBAT_LAYOUT = {
   landscapeCardHeightRatio: 0.3,
   /** 横向きでターン終了ボタンと山札・捨て札を縦に積む列の幅。 */
   landscapeFooterWidth: 136,
-  /** 横向きでレリック・ポーションの説明欄に確保する幅（左の列からはみ出して右に広げる）。 */
+} as const;
+
+/** 所持品欄（レリック・ポーション）。 */
+export const ITEM_BAR = {
+  /** 横向きは所持品欄を細い左の列に置くので、説明欄はこの幅まで右へはみ出して広げる。 */
   landscapePopoverWidth: 340,
 } as const;
 

@@ -3,7 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import type { CombatEvent, PotionSlot } from '../../domain/combat';
 import type { RelicDefinition } from '../../domain/relic';
 import { describePotion, describeRelic } from '../../logic/describe';
-import { SPACING } from '../../theme';
+import { useIsLandscape } from '../../hooks/useIsLandscape';
+import { ITEM_BAR, SPACING } from '../../theme';
 import { ItemInfo } from './ItemInfo';
 import { PotionSlotView } from './PotionSlotView';
 import { RelicIcon } from './RelicIcon';
@@ -24,8 +25,6 @@ type ItemBarProps = {
     isDrinkable: (slot: number) => boolean;
     onDrink: (slot: number) => void;
   };
-  /** 置き場所が細いとき（横向きの左の列）、説明欄をはみ出させてでもこの幅は確保する。 */
-  popoverMinWidth?: number;
 };
 
 /** 画面上部の所持品欄。左にレリック、右にポーション。タップで説明を開く。 */
@@ -34,9 +33,9 @@ export function ItemBar({
   potions,
   events = NO_EVENTS,
   potionUse,
-  popoverMinWidth,
 }: ItemBarProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
+  const landscape = useIsLandscape();
 
   const toggle = (next: Selection) =>
     setSelection((prev) => (prev && isSameSelection(prev, next) ? null : next));
@@ -67,7 +66,7 @@ export function ItemBar({
           ))}
         </View>
       </View>
-      <View style={[styles.popover, popoverMinWidth !== undefined && { minWidth: popoverMinWidth }]}>
+      <View style={[styles.popover, landscape && styles.landscapePopover]}>
         {renderInfo()}
       </View>
     </View>
@@ -130,4 +129,5 @@ const styles = StyleSheet.create({
     zIndex: 20,
     elevation: 20,
   },
+  landscapePopover: { minWidth: ITEM_BAR.landscapePopoverWidth },
 });

@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { RunState } from '../../domain/run';
-import { currentAct, findNode, mapHint, reachableNodeIds, reachedFloor } from '../../logic/run';
+import { useIsLandscape } from '../../hooks/useIsLandscape';
+import { currentAct, mapHint, reachedFloor } from '../../logic/run';
 import { COLORS, MAP_LAYOUT, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { DeckButton } from '../cards/DeckButton';
@@ -10,10 +11,9 @@ import { GalleryButton } from '../gallery/GalleryButton';
 import { ItemBar } from '../items/ItemBar';
 import { GoldBadge } from '../run/GoldBadge';
 import { RunEndOverlay } from '../run/RunEndOverlay';
-import { MapEdge } from './MapEdge';
+import { MapCanvas } from './MapCanvas';
+import { layoutMap, layoutMapHorizontal, type MapLayout } from './mapLayout';
 import { MapLegend } from './MapLegend';
-import { layoutMap } from './mapLayout';
-import { MapNodeView } from './MapNodeView';
 
 type MapScreenProps = {
   run: RunState;
@@ -22,110 +22,148 @@ type MapScreenProps = {
   onExitToTitle: () => void;
 };
 
-export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenProps) {
-  const [width, setWidth] = useState(0);
-  const scrollRef = useRef<ScrollView>(null);
-  const viewportHeight = useRef(0);
-  const aligned = useRef(false);
-  const layout = width > 0 ? layoutMap(run.map, width) : null;
-  const reachable = new Set(reachableNodeIds(run));
-  const visited = new Set(run.visitedNodeIds);
-  const ended = run.phase.kind === 'gameOver' || run.phase.kind === 'cleared';
+type Size = { width: number; height: number };
 
-  /** 今いるマスが画面の下の方に来るようにスクロールする（この先のマスが上に広く見える）。 */
+/**
+ * マップ画面。縦向きは上に情報、下に縦長のマップ（上へ進む）。
+ * 横向きは左の列に情報をまとめ、右に横長のマップ（右へ進む）を置いて、一度に多くの階を見せる。
+ */
+export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenProps) {
+  const landscape = useIsLandscape();
+  const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
+  const scrollRef = useRef<ScrollView>(null);
+  const aligned = useRef(false);
+  const ended = run.phase.kind === 'gameOver' || run.phase.kind === 'cleared';
+  const act = currentAct(run);
+
+  const layout = mapLayoutFor(run, viewport, landscape);
+
+  /** 今いるマスが、この先のマスが広く見える位置に来るようにスクロールする。 */
   const alignScroll = () => {
-    if (!layout || viewportHeight.current === 0 || aligned.current) return;
+    if (!layout || aligned.current) return;
     aligned.current = true;
     const current = run.currentNodeId ? layout.positions[run.currentNodeId] : undefined;
+    if (landscape) {
+      const target = current ? current.x - MAP_LAYOUT.currentNodeLeftOffset : 0;
+      const maxScroll = Math.max(0, layout.width - viewport.width);
+      scrollRef.current?.scrollTo({ x: clamp(target, 0, maxScroll), animated: false });
+      return;
+    }
     if (!current) {
       scrollRef.current?.scrollToEnd({ animated: false });
       return;
     }
-    const maxScroll = Math.max(0, layout.height - viewportHeight.current);
-    const target = current.y - (viewportHeight.current - MAP_LAYOUT.currentNodeBottomOffset);
-    scrollRef.current?.scrollTo({ y: Math.min(maxScroll, Math.max(0, target)), animated: false });
+    const maxScroll = Math.max(0, layout.height - viewport.height);
+    const target = current.y - (viewport.height - MAP_LAYOUT.currentNodeBottomOffset);
+    scrollRef.current?.scrollTo({ y: clamp(target, 0, maxScroll), animated: false });
   };
 
+  const onViewportLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    if (width === viewport.width && height === viewport.height) return;
+    // 向きが変わったら、今いるマスへ合わせ直す。
+    aligned.current = false;
+    setViewport({ width, height });
+  };
+
+  const itemBar = <ItemBar relics={run.relics} potions={run.potions} />;
+  const floor = (
+    <Text style={styles.floor}>
+      {reachedFloor(run)} / {run.map.floorCount}
+    </Text>
+  );
+  const hp = (
+    <View style={styles.hp}>
+      <HpBar hp={run.player.hp} maxHp={run.player.maxHp} block={0} />
+    </View>
+  );
+  const actLine = (
+    <Text style={styles.act}>
+      {act.name}　ボス {run.boss.icon} {run.boss.name}
+    </Text>
+  );
+  const hint = <Text style={styles.hint}>{mapHint(run)}</Text>;
+  const map = (
+    <ScrollView
+      key={landscape ? 'landscape' : 'portrait'}
+      ref={scrollRef}
+      horizontal={landscape}
+      style={styles.scroll}
+      contentContainerStyle={landscape ? styles.landscapeContent : styles.portraitContent}
+      showsHorizontalScrollIndicator={false}
+      onLayout={onViewportLayout}
+      onContentSizeChange={alignScroll}
+    >
+      {layout && <MapCanvas run={run} layout={layout} ended={ended} onMove={onMove} />}
+    </ScrollView>
+  );
+
   return (
-    <SceneBackground actId={currentAct(run).id} scene="map">
-      <View style={styles.hud}>
-        <ItemBar relics={run.relics} potions={run.potions} />
-        <View style={styles.status}>
-          <Text style={styles.floor}>
-            {reachedFloor(run)} / {run.map.floorCount}
-          </Text>
-          <View style={styles.hp}>
-            <HpBar hp={run.player.hp} maxHp={run.player.maxHp} block={0} />
-          </View>
-          <GoldBadge gold={run.gold} />
-          <DeckButton deck={run.deck} />
-          <GalleryButton />
+    <SceneBackground actId={act.id} scene="map">
+      {landscape ? (
+        <View style={styles.landscape}>
+          <ScrollView style={styles.side} contentContainerStyle={styles.sideContent}>
+            {itemBar}
+            <View style={styles.status}>
+              {floor}
+              {hp}
+            </View>
+            <View style={styles.status}>
+              <GoldBadge gold={run.gold} />
+              <DeckButton deck={run.deck} />
+              <GalleryButton />
+            </View>
+            {actLine}
+            {hint}
+            <MapLegend compact />
+          </ScrollView>
+          {map}
         </View>
-        <Text style={styles.act}>
-          {currentAct(run).name}　ボス {run.boss.icon} {run.boss.name}
-        </Text>
-        <Text style={styles.hint}>{mapHint(run)}</Text>
-      </View>
-
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        onLayout={(e) => {
-          viewportHeight.current = e.nativeEvent.layout.height;
-          alignScroll();
-        }}
-        onContentSizeChange={alignScroll}
-      >
-        <View style={styles.measure} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        {layout && (
-          <View style={[styles.canvas, { height: layout.height }]}>
-            {run.map.nodes.flatMap((node) =>
-              node.next.map((toId) => {
-                const to = findNode(run.map, toId);
-                const fromPos = layout.positions[node.id];
-                const toPos = layout.positions[toId];
-                if (!to || !fromPos || !toPos) return null;
-                return (
-                  <MapEdge
-                    key={`${node.id}->${toId}`}
-                    from={fromPos}
-                    to={toPos}
-                    traveled={visited.has(node.id) && visited.has(toId)}
-                  />
-                );
-              }),
-            )}
-            {run.map.nodes.map((node) => {
-              const position = layout.positions[node.id];
-              if (!position) return null;
-              return (
-                <MapNodeView
-                  key={node.id}
-                  node={node}
-                  position={position}
-                  current={run.currentNodeId === node.id}
-                  reachable={!ended && reachable.has(node.id)}
-                  visited={visited.has(node.id)}
-                  onPress={() => onMove(node.id)}
-                />
-              );
-            })}
+      ) : (
+        <>
+          <View style={styles.hud}>
+            {itemBar}
+            <View style={styles.status}>
+              {floor}
+              {hp}
+              <GoldBadge gold={run.gold} />
+              <DeckButton deck={run.deck} />
+              <GalleryButton />
+            </View>
+            {actLine}
+            {hint}
           </View>
-        )}
-        </View>
-      </ScrollView>
-
-      <MapLegend />
-      {(run.phase.kind === 'gameOver' || run.phase.kind === 'cleared') && (
-        <RunEndOverlay kind={run.phase.kind} onNewRun={onNewRun} onExitToTitle={onExitToTitle} />
+          {map}
+          <MapLegend />
+        </>
+      )}
+      {ended && (
+        <RunEndOverlay
+          kind={run.phase.kind === 'cleared' ? 'cleared' : 'gameOver'}
+          onNewRun={onNewRun}
+          onExitToTitle={onExitToTitle}
+        />
       )}
     </SceneBackground>
   );
 }
 
+function mapLayoutFor(run: RunState, viewport: Size, landscape: boolean): MapLayout | null {
+  if (viewport.width === 0 || viewport.height === 0) return null;
+  if (landscape) {
+    return layoutMapHorizontal(run.map, viewport.height - SPACING.sm * 2, viewport.width);
+  }
+  return layoutMap(run.map, viewport.width - SPACING.lg * 2);
+}
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 const styles = StyleSheet.create({
-  hud: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, gap: SPACING.sm },
+  hud: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, gap: SPACING.sm, zIndex: 10 },
+  landscape: { flex: 1, flexDirection: 'row' },
+  /** 所持品の説明欄がマップの上に重なって見えるよう、マップより手前に置く。 */
+  side: { width: MAP_LAYOUT.landscapeSideWidth, flexGrow: 0, zIndex: 10, elevation: 10 },
+  sideContent: { padding: SPACING.md, gap: SPACING.sm },
   status: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   floor: {
     color: COLORS.gold,
@@ -138,7 +176,6 @@ const styles = StyleSheet.create({
   act: { color: COLORS.gold, fontSize: 13, fontWeight: '800', textAlign: 'center' },
   hint: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center' },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: SPACING.lg },
-  measure: { width: '100%' },
-  canvas: { width: '100%' },
+  portraitContent: { paddingHorizontal: SPACING.lg },
+  landscapeContent: { paddingVertical: SPACING.sm },
 });

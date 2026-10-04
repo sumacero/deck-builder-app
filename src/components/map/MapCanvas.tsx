@@ -1,0 +1,55 @@
+import { View } from 'react-native';
+import type { RunState } from '../../domain/run';
+import { findNode, reachableNodeIds } from '../../logic/run';
+import { MapEdge } from './MapEdge';
+import type { MapLayout } from './mapLayout';
+import { MapNodeView } from './MapNodeView';
+
+type MapCanvasProps = {
+  run: RunState;
+  layout: MapLayout;
+  /** ランが終わったら、どのマスも押せない。 */
+  ended: boolean;
+  onMove: (nodeId: string) => void;
+};
+
+/** マスと道を、配置済みの座標（縦向き・横向きどちらでも）に描く。 */
+export function MapCanvas({ run, layout, ended, onMove }: MapCanvasProps) {
+  const reachable = new Set(reachableNodeIds(run));
+  const visited = new Set(run.visitedNodeIds);
+  return (
+    <View style={{ width: layout.width, height: layout.height }}>
+      {run.map.nodes.flatMap((node) =>
+        node.next.map((toId) => {
+          const to = findNode(run.map, toId);
+          const fromPos = layout.positions[node.id];
+          const toPos = layout.positions[toId];
+          if (!to || !fromPos || !toPos) return null;
+          return (
+            <MapEdge
+              key={`${node.id}->${toId}`}
+              from={fromPos}
+              to={toPos}
+              traveled={visited.has(node.id) && visited.has(toId)}
+            />
+          );
+        }),
+      )}
+      {run.map.nodes.map((node) => {
+        const position = layout.positions[node.id];
+        if (!position) return null;
+        return (
+          <MapNodeView
+            key={node.id}
+            node={node}
+            position={position}
+            current={run.currentNodeId === node.id}
+            reachable={!ended && reachable.has(node.id)}
+            visited={visited.has(node.id)}
+            onPress={() => onMove(node.id)}
+          />
+        );
+      })}
+    </View>
+  );
+}
