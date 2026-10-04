@@ -3,6 +3,9 @@ export type KeywordId =
   | 'attack'
   | 'skill'
   | 'power'
+  | 'status'
+  | 'unplayable'
+  | 'ethereal'
   | 'damage'
   | 'areaAttack'
   | 'block'
@@ -23,6 +26,15 @@ export type KeywordId =
   | 'paralysis'
   | 'chill'
   | 'seal'
+  | 'intangible'
+  | 'down'
+  | 'stagger'
+  | 'sleep'
+  | 'vengeance'
+  | 'resolute'
+  | 'ward'
+  | 'guardian'
+  | 'deathThroes'
   | 'intentAttack'
   | 'intentBlock'
   | 'intentBuff'
@@ -31,7 +43,12 @@ export type KeywordId =
   | 'intentParalyze'
   | 'intentChill'
   | 'intentSeal'
-  | 'intentCharge';
+  | 'intentCharge'
+  | 'intentDebuff'
+  | 'intentAddCard'
+  | 'intentIntangible'
+  | 'intentSleep'
+  | 'intentDown';
 
 export type KeywordDefinition = {
   id: KeywordId;

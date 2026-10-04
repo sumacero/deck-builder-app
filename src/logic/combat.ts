@@ -17,7 +17,9 @@ import type {
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
+import type { DebuffId } from '../domain/status';
 import { STATUS_LABEL } from './describe';
+import { DOWN_MOVE, SLEEP_MOVE, traitOf } from './enemyTraits';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
 import {
@@ -53,6 +55,8 @@ export function gainBlock<T extends Fighter>(target: T, amount: number): T {
 }
 
 export function currentIntent(enemy: EnemyState): EnemyMove {
+  if (enemy.asleep > 0) return SLEEP_MOVE;
+  if (enemy.stunned) return DOWN_MOVE;
   return enemy.moves[enemy.moveIndex % enemy.moves.length];
 }
 
@@ -235,6 +239,12 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       moves: enemy.moves,
       // 群れで同じ行動を一斉にしないよう、並び順で行動パターンの開始位置をずらす。
       moveIndex: index % enemy.moves.length,
+      traits: enemy.traits ?? [],
+      asleep: traitOf(enemy, 'sleep')?.turns ?? 0,
+      stunned: false,
+      stagger: traitOf(enemy, 'stagger')?.hits ?? 0,
+      ward: traitOf(enemy, 'ward')?.charges ?? 0,
+      debuffsTaken: [],
     })),
     drawPerTurn: setup.drawPerTurn,
     drawPile: shuffled.items,
@@ -265,12 +275,17 @@ function groupedNames(names: string[]): string {
 /** damage が当たる先。敵 1 体か、生きている敵全員。 */
 type Aim = EnemyUid | 'all';
 
-/** 選ばれた敵が倒れていたり未指定だったりしたら、生きている先頭の敵を狙う。 */
+/**
+ * 選ばれた敵が倒れていたり未指定だったりしたら、生きている先頭の敵を狙う。
+ * 狙った敵とは別に「かばう」敵が生きていれば、そちらに当たる。
+ */
 function resolveAim(state: CombatState, target: EffectTarget, chosen: EnemyUid | undefined): Aim {
   if (target === 'allEnemies') return 'all';
   const picked = chosen ? findEnemy(state, chosen) : undefined;
-  if (picked && isAlive(picked)) return picked.uid;
-  return livingEnemies(state)[0]?.uid ?? enemyUid(0);
+  const aimed = picked && isAlive(picked) ? picked : livingEnemies(state)[0];
+  if (!aimed) return enemyUid(0);
+  if (traitOf(aimed, 'guardian')) return aimed.uid;
+  return livingEnemies(state).find((enemy) => traitOf(enemy, 'guardian'))?.uid ?? aimed.uid;
 }
 
 const aimedUids = (state: CombatState, aim: Aim): EnemyUid[] =>
@@ -283,7 +298,7 @@ export const needsTargetChoice = (state: CombatState, target: EffectTarget) =>
 export function canPlayCard(state: CombatState, instanceId: string): boolean {
   if (state.status !== 'playerTurn') return false;
   const instance = state.hand.find((c) => c.instanceId === instanceId);
-  if (!instance || instance.card.cost > state.player.energy) return false;
+  if (!instance || instance.card.unplayable || instance.card.cost > state.player.energy) return false;
   return !(state.player.hindrance.seal && instance.card.type === 'skill');
 }
 
@@ -307,8 +322,97 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number): CombatState 
       after: vitalsOf(result.target),
     },
   );
-  if (isAlive(result.target)) return hit;
-  return withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
+  if (isAlive(result.target)) {
+    const woken = result.hpLoss > 0 && enemy.asleep > 0 ? wakeEnemy(hit, uid) : hit;
+    return staggerEnemy(woken, uid);
+  }
+  const defeated = withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
+  return onEnemyDefeated(defeated, uid);
+}
+
+function callout(state: CombatState, target: ActorId, text: string): CombatState {
+  return withEvent(state, { kind: 'callout', target, text });
+}
+
+/** 眠りから覚めて筋力が上がる（攻撃で起こされても、時間で起きても同じ）。 */
+function wakeEnemy(state: CombatState, uid: EnemyUid): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy) return state;
+  const gain = traitOf(enemy, 'sleep')?.wakeStrength ?? 0;
+  const woken = updateEnemy(state, uid, (e) => ({ ...e, asleep: 0, strength: e.strength + gain }));
+  const text = gain > 0 ? `${enemy.name}が目を覚ました！（筋力 +${gain}）` : `${enemy.name}が目を覚ました！`;
+  return callout(withLog(woken, text), uid, '目覚めた！');
+}
+
+/** ダウン中の被ダメージ倍率がかかるターン数（このターンの残りと、次の自分のターン）。 */
+const DOWN_TURNS = 2;
+
+/** よろめきゲージを 1 減らし、尽きたらダウンさせる。ダウン中は減らない。 */
+function staggerEnemy(state: CombatState, uid: EnemyUid): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || enemy.stagger <= 0 || hasStatus(enemy.statuses, 'down')) return state;
+  const stagger = enemy.stagger - 1;
+  if (stagger > 0) return updateEnemy(state, uid, (e) => ({ ...e, stagger }));
+  const downed = updateEnemy(state, uid, (e) => ({
+    ...e,
+    stagger,
+    stunned: true,
+    statuses: addStatus(e.statuses, 'down', DOWN_TURNS),
+  }));
+  return callout(withLog(downed, `${enemy.name}はダウンした！`), uid, 'ダウン！');
+}
+
+/** 仇討ち（残った仲間の筋力が上がる）と、倒れた敵の死に際の行動。 */
+function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
+  const avenged = livingEnemies(state).reduce((current, ally) => {
+    const vengeance = traitOf(ally, 'vengeance');
+    if (!vengeance) return current;
+    const angered = updateEnemy(current, ally.uid, (e) => ({ ...e, strength: e.strength + vengeance.strength }));
+    return callout(
+      withLog(angered, `${ally.name}は仲間の仇に燃えている（筋力 +${vengeance.strength}）`),
+      ally.uid,
+      '怒り！',
+    );
+  }, state);
+  const dead = findEnemy(avenged, uid);
+  const throes = dead ? traitOf(dead, 'deathThroes') : undefined;
+  if (!dead || !throes) return avenged;
+  return applyEnemyAction(withLog(avenged, `${dead.name}の死に際の一撃！`), uid, throes.action, false);
+}
+
+function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy) return state;
+  if (enemy.ward > 0) return consumeWard(state, enemy);
+  if (traitOf(enemy, 'resolute') && enemy.debuffsTaken.includes(status)) {
+    return callout(withLog(state, `${enemy.name}は不屈で${STATUS_LABEL[status]}を受け付けない`), uid, '無効！');
+  }
+  return withLog(
+    updateEnemy(state, uid, (e) => ({
+      ...e,
+      statuses: addStatus(e.statuses, status, turns),
+      debuffsTaken: e.debuffsTaken.includes(status) ? e.debuffsTaken : [...e.debuffsTaken, status],
+    })),
+    `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
+  );
+}
+
+function extendEnemyDebuffs(state: CombatState, uid: EnemyUid, turns: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || !DEBUFF_IDS.some((id) => hasStatus(enemy.statuses, id))) return state;
+  if (enemy.ward > 0) return consumeWard(state, enemy);
+  if (traitOf(enemy, 'resolute')) {
+    return callout(withLog(state, `${enemy.name}は不屈でデバフを延ばせない`), uid, '無効！');
+  }
+  return withLog(
+    updateEnemy(state, uid, (e) => ({ ...e, statuses: extendStatuses(e.statuses, DEBUFF_IDS, turns) })),
+    `${enemy.name}のデバフのターン数 +${turns}`,
+  );
+}
+
+function consumeWard(state: CombatState, enemy: EnemyState): CombatState {
+  const warded = updateEnemy(state, enemy.uid, (e) => ({ ...e, ward: e.ward - 1 }));
+  return callout(withLog(warded, `${enemy.name}の加護がデバフを防いだ`), enemy.uid, '無効！');
 }
 
 function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState {
@@ -376,11 +480,7 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
       return state.player.block > 0 ? gainPlayerBlock(state, state.player.block) : state;
     case 'applyDebuff':
       return aimedUids(state, aim).reduce(
-        (current, uid) =>
-          withLog(
-            updateEnemy(current, uid, (e) => ({ ...e, statuses: addStatus(e.statuses, effect.status, effect.turns) })),
-            `${findEnemy(current, uid)?.name ?? '敵'}に${STATUS_LABEL[effect.status]} ${effect.turns} ターン`,
-          ),
+        (current, uid) => debuffEnemy(current, uid, effect.status, effect.turns),
         state,
       );
     case 'gainBuff':
@@ -389,16 +489,9 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
         `${STATUS_LABEL[effect.status]} +${effect.turns} ターン`,
       );
     case 'extendDebuffs':
-      return withLog(
-        aimedUids(state, aim).reduce(
-          (current, uid) =>
-            updateEnemy(current, uid, (e) => ({
-              ...e,
-              statuses: extendStatuses(e.statuses, DEBUFF_IDS, effect.turns),
-            })),
-          state,
-        ),
-        `敵のデバフのターン数 +${effect.turns}`,
+      return aimedUids(state, aim).reduce(
+        (current, uid) => extendEnemyDebuffs(current, uid, effect.turns),
+        state,
       );
     case 'extendBuffs':
       return withLog(
@@ -522,7 +615,12 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     cardType: card.type,
     motion: cardMotion(card),
   });
-  return settle(applyEffects(played, card.effects, aim));
+  const chosen = target ? findEnemy(state, target) : undefined;
+  const guarded =
+    aim !== 'all' && chosen && isAlive(chosen) && chosen.uid !== aim
+      ? callout(withLog(played, `${findEnemy(state, aim)?.name ?? '敵'}がかばった！`), aim, 'かばう！')
+      : played;
+  return settle(applyEffects(guarded, card.effects, aim));
 }
 
 /**
@@ -551,15 +649,32 @@ export function enemyAttackDamage(enemy: EnemyState, base: number, player: Playe
   return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses);
 }
 
-function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction): CombatState {
+/**
+ * プレイヤーに付ける状態は自分のターンの始めに 1 減るので、敵のターンにかけるときは 1 多くかけ、
+ * 「N ターン」が自分のターン N 回分になるようにする。敵自身の状態も敵のターンの終わりに減るので同じ。
+ */
+const ACROSS_TICK = 1;
+
+/** 霊体化が続く、プレイヤーのターン数。 */
+const INTANGIBLE_TURNS = 1;
+
+/** announce が false なら動きの演出を出さない（倒れた敵の死に際の行動など）。 */
+function applyEnemyAction(
+  state: CombatState,
+  uid: EnemyUid,
+  action: EnemyAction,
+  announce = true,
+): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy) return state;
+  const act = (current: CombatState): CombatState =>
+    announce ? withEvent(current, { kind: 'enemyAct', target: uid, action: action.kind }) : current;
   switch (action.kind) {
     case 'attack': {
       const amount = enemyAttackDamage(enemy, action.damage, state.player);
       let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
-        next = withEvent(next, { kind: 'enemyAct', target: uid, action: 'attack' });
+        next = act(next);
         const result = applyDamage(next.player, amount);
         next = withEvent(
           withLog({ ...next, player: result.target }, formatHit('あなた', result)),
@@ -576,7 +691,7 @@ function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction
       return next;
     }
     case 'block': {
-      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'block' });
+      const acted = act(state);
       const guarded = gainBlock(enemy, action.amount);
       return withEvent(
         withLog(
@@ -587,31 +702,60 @@ function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction
       );
     }
     case 'buff': {
-      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'buff' });
+      const acted = act(state);
       return withLog(
         updateEnemy(acted, uid, (e) => ({ ...e, strength: e.strength + action.strength })),
         `${enemy.name}の筋力 +${action.strength}`,
       );
     }
     case 'heal': {
-      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'heal' });
+      const acted = act(state);
       const targets = action.allies ? livingEnemies(acted).map((e) => e.uid) : [uid];
       return targets.reduce((current, targetUid) => healEnemy(current, targetUid, action.amount), acted);
     }
     case 'paralyze':
     case 'chill':
     case 'seal': {
-      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: action.kind });
+      const acted = act(state);
       const pending = addHindrance(acted.player.pendingHindrance, action);
       return withLog(
         { ...acted, player: { ...acted.player, pendingHindrance: pending } },
         `${enemy.name}の妨害: ${HINDRANCE_LOG[action.kind]}`,
       );
     }
-    case 'charge': {
-      const acted = withEvent(state, { kind: 'enemyAct', target: uid, action: 'charge' });
-      return withLog(acted, `${enemy.name}は力を溜めている…`);
+    case 'charge':
+      return withLog(act(state), `${enemy.name}は力を溜めている…`);
+    case 'debuff': {
+      const acted = act(state);
+      const statuses = addStatus(acted.player.statuses, action.status, action.turns + ACROSS_TICK);
+      return withLog(
+        { ...acted, player: { ...acted.player, statuses } },
+        `${enemy.name}があなたに${STATUS_LABEL[action.status]} ${action.turns} ターン`,
+      );
     }
+    case 'addCard': {
+      const acted = act(state);
+      const added: CardInstance[] = Array.from({ length: action.count }, (_, i) => ({
+        instanceId: `junk-${acted.nextEventId}-${i}`,
+        card: action.card,
+      }));
+      return withLog(
+        { ...acted, discardPile: [...acted.discardPile, ...added] },
+        `${enemy.name}が捨て札に「${action.card.name}」を ${action.count} 枚混ぜた`,
+      );
+    }
+    case 'intangible': {
+      const acted = updateEnemy(act(state), uid, (e) => ({
+        ...e,
+        statuses: addStatus(e.statuses, 'intangible', INTANGIBLE_TURNS + ACROSS_TICK),
+      }));
+      return callout(withLog(acted, `${enemy.name}は霊体化した`), uid, '霊体化');
+    }
+    case 'idle':
+      return withLog(
+        act(state),
+        action.reason === 'sleep' ? `${enemy.name}は眠っている…` : `${enemy.name}はダウンしていて動けない`,
+      );
   }
 }
 
@@ -669,12 +813,44 @@ function runEnemyTurn(state: CombatState): CombatState {
         });
       }
     }
-    next = updateEnemy(next, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
+    next = advanceEnemy(next, uid);
   }
   // 敵のバフ・デバフは敵のターンの終わりに 1 ターン進む（かけたターンの敵の行動までは効く）。
+  // ダウンが明けたら、よろめきゲージが元に戻る。
   return {
     ...next,
-    enemies: next.enemies.map((enemy) => ({ ...enemy, statuses: tickStatuses(enemy.statuses) })),
+    enemies: next.enemies.map((enemy) => {
+      const statuses = tickStatuses(enemy.statuses);
+      const recovered = hasStatus(enemy.statuses, 'down') && !hasStatus(statuses, 'down');
+      const stagger = recovered ? (traitOf(enemy, 'stagger')?.hits ?? 0) : enemy.stagger;
+      return { ...enemy, statuses, stagger };
+    }),
+  };
+}
+
+/** 行動を終えた敵を次へ進める。眠り・ダウン中は行動パターンの順番を進めない。 */
+function advanceEnemy(state: CombatState, uid: EnemyUid): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy) return state;
+  if (enemy.asleep > 1) return updateEnemy(state, uid, (e) => ({ ...e, asleep: e.asleep - 1 }));
+  if (enemy.asleep === 1) return wakeEnemy(state, uid);
+  if (enemy.stunned) return updateEnemy(state, uid, (e) => ({ ...e, stunned: false }));
+  return updateEnemy(state, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
+}
+
+/** 手札に残ったお邪魔カードの効果をかけ、消えるカードは廃棄する。残りは捨て札へ。 */
+function discardHand(state: CombatState): CombatState {
+  const afterEffects = state.hand.reduce((current, { card }) => {
+    if (!card.turnEndInHand) return current;
+    return applyEffects(withLog(current, `手札の${card.name}`), card.turnEndInHand, 'all');
+  }, state);
+  const vanishing = afterEffects.hand.filter(({ card }) => card.ethereal);
+  const kept = afterEffects.hand.filter(({ card }) => !card.ethereal);
+  return {
+    ...afterEffects,
+    hand: [],
+    discardPile: [...afterEffects.discardPile, ...kept],
+    exhaustPile: [...afterEffects.exhaustPile, ...vanishing],
   };
 }
 
@@ -685,14 +861,8 @@ export function endTurn(state: CombatState): CombatState {
     afterRelics.player.endTurnBlock > 0
       ? applyEffect(afterRelics, { kind: 'block', amount: afterRelics.player.endTurnBlock }, 'all')
       : afterRelics;
-  const discarded = withLog(
-    {
-      ...afterMetal,
-      hand: [],
-      discardPile: [...afterMetal.discardPile, ...afterMetal.hand],
-    },
-    'ターン終了',
-  );
+  const discarded = finishIfLost(withLog(discardHand(afterMetal), 'ターン終了'));
+  if (discarded.status === 'lost') return discarded;
   const afterEnemy = runEnemyTurn(discarded);
   return afterEnemy.status === 'lost' ? afterEnemy : startPlayerTurn(afterEnemy);
 }

@@ -1,7 +1,8 @@
-import type { BuffId, DebuffId, StatusId, Statuses } from '../domain/status';
+import type { BuffId, DebuffId, EnemyStatusId, StatusId, Statuses } from '../domain/status';
 
 export const DEBUFF_IDS: readonly DebuffId[] = ['vulnerable', 'weak'];
 export const BUFF_IDS: readonly BuffId[] = ['retainBlock', 'blazing'];
+export const ENEMY_STATUS_IDS: readonly EnemyStatusId[] = ['intangible', 'down'];
 
 /** 弱体・熱血のダメージ倍率と、衰弱の倍率。 */
 export const VULNERABLE_MULTIPLIER = 1.5;
@@ -34,14 +35,20 @@ export function tickStatuses(statuses: Statuses): Statuses {
   return next;
 }
 
+/** ダウン中の被ダメージ倍率と、霊体化中に攻撃 1 回で受けるダメージの上限。 */
+export const DOWN_MULTIPLIER = 1.5;
+export const INTANGIBLE_CAP = 1;
+
 /**
  * 攻撃 1 回分の最終ダメージ。base は筋力込みの値。
- * 攻撃側の熱血・衰弱と、受ける側の弱体をかけ、最後に切り捨てる。
+ * 攻撃側の熱血・衰弱と、受ける側の弱体・ダウンをかけて切り捨て、受ける側が霊体化なら上限で抑える。
  */
 export function modifiedDamage(base: number, attacker: Statuses, defender: Statuses): number {
   let amount = base;
   if (hasStatus(attacker, 'blazing')) amount *= BLAZING_MULTIPLIER;
   if (hasStatus(attacker, 'weak')) amount *= WEAK_MULTIPLIER;
   if (hasStatus(defender, 'vulnerable')) amount *= VULNERABLE_MULTIPLIER;
-  return Math.max(0, Math.floor(amount));
+  if (hasStatus(defender, 'down')) amount *= DOWN_MULTIPLIER;
+  const floored = Math.max(0, Math.floor(amount));
+  return hasStatus(defender, 'intangible') ? Math.min(floored, INTANGIBLE_CAP) : floored;
 }

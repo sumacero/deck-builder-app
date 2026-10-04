@@ -3,6 +3,7 @@ import type { EnemyDefinition, Encounter } from '../domain/enemy';
 import { soloEncounter } from '../logic/encounter';
 import {
   ABYSS_SERPENT,
+  ANCIENT_PHANTOM,
   BASALT_COLOSSUS,
   BOLT_BUG,
   BUBBLE_SLIME,
@@ -48,9 +49,9 @@ export type RegionEnemies = {
 };
 
 /** 戦闘画面は 4 体まで並べても収まるように作っているので、それより多くは出さない。 */
-const group = (id: string, enemies: EnemyDefinition[]): Encounter => ({
+const group = (id: string, enemies: EnemyDefinition[], rank: Encounter['rank'] = 'normal'): Encounter => ({
   id,
-  rank: 'normal',
+  rank,
   enemies,
 });
 
@@ -80,7 +81,11 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('fairy-court', [HORN_RABBIT, LEAF_FAIRY, HORN_RABBIT]),
       group('meadow-pack', [SEED_SPROUT, GUST_SPRITE, HORN_RABBIT, SEED_SPROUT]),
     ],
-    elite: [soloEncounter(FOREST_RANGER), soloEncounter(GREAT_TREANT)],
+    // 大樹はかばう性質で、両脇の芽への攻撃を引き受ける。
+    elite: [
+      soloEncounter(FOREST_RANGER),
+      group('treant-grove', [SEED_SPROUT, GREAT_TREANT, SEED_SPROUT], 'elite'),
+    ],
     boss: [STORM_GRIFFIN],
   },
   sunkenCity: {
@@ -93,6 +98,9 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('crab-and-bubble', [RUIN_CRAB, BUBBLE_SLIME, RUIN_CRAB]),
       group('jelly-escort', [BUBBLE_SLIME, FROST_JELLY]),
       group('ruin-patrol', [RUIN_CRAB, ICE_WISP, BUBBLE_SLIME, RUIN_CRAB]),
+      soloEncounter(ANCIENT_PHANTOM),
+      // 亡霊は先頭に置き、最初のターンに霊体化させる。
+      group('phantom-procession', [ANCIENT_PHANTOM, ICE_WISP]),
     ],
     elite: [soloEncounter(ICE_WITCH), soloEncounter(ABYSS_SERPENT)],
     boss: [FROZEN_EMPRESS],

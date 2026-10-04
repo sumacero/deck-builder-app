@@ -1,13 +1,13 @@
 import type { BlessingDefinition } from '../domain/blessing';
 import type { CardDefinition, CardType } from '../domain/card';
 import type { Effect, EffectTarget } from '../domain/effect';
-import type { EnemyAction, EnemyMove, EnemyRank } from '../domain/enemy';
+import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
 import type { MapNodeType } from '../domain/map';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
-import type { StatusId } from '../domain/status';
+import type { DebuffId, StatusId } from '../domain/status';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -23,6 +23,7 @@ export const CARD_TYPE_LABEL: Record<CardType, string> = {
   attack: 'アタック',
   skill: 'スキル',
   power: 'パワー',
+  status: 'お邪魔',
 };
 
 function describeEffect(effect: Effect, target: EffectTarget): string {
@@ -70,6 +71,14 @@ export const STATUS_LABEL: Record<StatusId, string> = {
   weak: '衰弱',
   retainBlock: 'ブロック保持',
   blazing: '熱血',
+  intangible: '霊体化',
+  down: 'ダウン',
+};
+
+/** インテントに出す、デバフのアイコン。 */
+export const DEBUFF_ICON: Record<DebuffId, string> = {
+  vulnerable: '🎯',
+  weak: '🥀',
 };
 
 const describeEffects = (effects: Effect[], target: EffectTarget) =>
@@ -77,6 +86,11 @@ const describeEffects = (effects: Effect[], target: EffectTarget) =>
 
 export function describeCard(card: CardDefinition): string {
   const extras = [
+    card.unplayable ? '使用できない。' : '',
+    card.turnEndInHand
+      ? `ターン終了時に手札にあると、${describeEffects(card.turnEndInHand, 'self')}`
+      : '',
+    card.ethereal ? 'ターン終了時に手札にあると消える。' : '',
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
     card.exhaust ? '廃棄。' : '',
   ].join('');
@@ -144,8 +158,66 @@ export function describeIntent(move: EnemyMove, damageOf: (base: number) => numb
         return { key, tone: action.kind, icon: '🔒', label: '' };
       case 'charge':
         return { key, tone: action.kind, icon: '🔋', label: '' };
+      case 'debuff':
+        return { key, tone: action.kind, icon: DEBUFF_ICON[action.status], label: `${action.turns}` };
+      case 'addCard':
+        return { key, tone: action.kind, icon: '🃏', label: `${action.count}` };
+      case 'intangible':
+        return { key, tone: action.kind, icon: '👻', label: '' };
+      case 'idle':
+        return { key, tone: action.kind, icon: action.reason === 'sleep' ? '💤' : '😵', label: '' };
     }
   });
+}
+
+/** 敵の行動を文章で（死に際の行動の説明に使う）。 */
+function describeEnemyAction(action: EnemyAction): string {
+  switch (action.kind) {
+    case 'attack':
+      return action.hits > 1 ? `${action.damage} ダメージを ${action.hits} 回` : `${action.damage} ダメージ`;
+    case 'block':
+      return `ブロック ${action.amount} を得る`;
+    case 'buff':
+      return `筋力 +${action.strength}`;
+    case 'heal':
+      return action.allies ? `仲間全員の HP を ${action.amount} 回復` : `HP を ${action.amount} 回復`;
+    case 'paralyze':
+      return `次のターン、麻痺 ${action.amount}`;
+    case 'chill':
+      return `次のターン、凍え ${action.amount}`;
+    case 'seal':
+      return '次のターン、スキルを封印';
+    case 'charge':
+      return '力を溜める';
+    case 'debuff':
+      return `あなたに${STATUS_LABEL[action.status]} ${action.turns} ターン`;
+    case 'addCard':
+      return `捨て札に「${action.card.name}」を ${action.count} 枚混ぜる`;
+    case 'intangible':
+      return '霊体化する';
+    case 'idle':
+      return '何もしない';
+  }
+}
+
+/** 敵の詳細に出す、性質ごとの具体的な説明。 */
+export function describeTrait(trait: EnemyTrait): string {
+  switch (trait.kind) {
+    case 'vengeance':
+      return `仇討ち: 仲間が倒れるたびに筋力 +${trait.strength}`;
+    case 'sleep':
+      return `眠り: 最初の ${trait.turns} ターンは眠っている。目覚めると筋力 +${trait.wakeStrength}`;
+    case 'resolute':
+      return '不屈: 同じ種類のデバフは 1 回しか効かない（延長も無効）';
+    case 'ward':
+      return `加護: デバフを ${trait.charges} 回まで無効にする`;
+    case 'stagger':
+      return `よろめき: 攻撃を ${trait.hits} 回当てるとダウン（次の行動を休み、被ダメージ 1.5 倍）`;
+    case 'guardian':
+      return 'かばう: 仲間を狙った攻撃・デバフを代わりに受ける';
+    case 'deathThroes':
+      return `死に際: 倒れると${describeEnemyAction(trait.action)}`;
+  }
 }
 
 export const ENEMY_RANK_LABEL: Record<EnemyRank, string | null> = {

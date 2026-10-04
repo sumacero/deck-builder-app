@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import { COLORS, MOTION } from '../../../theme';
 
-export type FloatingTextTone = 'damage' | 'guard' | 'heal';
+export type FloatingTextTone = 'damage' | 'guard' | 'heal' | 'callout';
 
 type FloatingTextProps = {
   text: string;
@@ -16,6 +16,7 @@ const TONE_COLOR: Record<FloatingTextTone, string> = {
   damage: COLORS.damageText,
   guard: COLORS.block,
   heal: COLORS.heal,
+  callout: COLORS.gold,
 };
 
 /** ポップして浮き上がりながら消える文字（ダメージ数値など）。 */

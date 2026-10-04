@@ -89,6 +89,10 @@ export function FighterEffects({
         Animated.parallel([bump(scale), flash(healFlash, 0.45)]).start();
         addPopup({ id: event.id, text: `+${event.amount}`, tone: 'heal', large: false });
         return;
+      case 'callout':
+        Animated.parallel([bump(scale), flash(guardFlash, 0.25)]).start();
+        addPopup({ id: event.id, text: event.text, tone: 'callout', large: false });
+        return;
       case 'cardPlayed':
       case 'potionUsed':
       case 'relicTriggered':

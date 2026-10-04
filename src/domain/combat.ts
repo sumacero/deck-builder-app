@@ -1,9 +1,9 @@
 import type { AgentDefinition } from './agent';
 import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
-import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank } from './enemy';
+import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
-import type { Statuses } from './status';
+import type { DebuffId, Statuses } from './status';
 
 export type Fighter = {
   hp: number;
@@ -52,6 +52,17 @@ export type EnemyState = Fighter & {
   strength: number;
   moves: EnemyMove[];
   moveIndex: number;
+  traits: EnemyTrait[];
+  /** 眠りの残りターン。0 なら起きている。 */
+  asleep: number;
+  /** ダウンして、次の行動を休む。 */
+  stunned: boolean;
+  /** よろめきゲージの残り（あと何回当てるとダウンするか）。よろめきの性質が無ければ 0。 */
+  stagger: number;
+  /** 加護の残り回数。 */
+  ward: number;
+  /** 不屈: これまでに受けたデバフ。 */
+  debuffsTaken: DebuffId[];
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -85,6 +96,8 @@ export type CombatEventBody =
   | { kind: 'blockGain'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'heal'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'defeated'; target: ActorId }
+  /** 性質が発動した（目覚めた、ダウンした、デバフを防いだ など）。キャラの上に短い文字を出す。 */
+  | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
   /** 敵が全滅した。 */

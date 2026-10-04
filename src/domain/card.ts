@@ -1,6 +1,7 @@
 import type { Effect, EffectTarget } from './effect';
 
-export type CardType = 'attack' | 'skill' | 'power';
+/** status は敵に混ぜられるお邪魔カード。報酬やショップには出ない。 */
+export type CardType = 'attack' | 'skill' | 'power' | 'status';
 
 /** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
 export type CardTarget = EffectTarget;
@@ -42,6 +43,12 @@ export type CardDefinition = {
   upgraded?: boolean;
   /** 省略すると効果から自動で決まる。 */
   motion?: CardMotion;
+  /** 使用できない。 */
+  unplayable?: boolean;
+  /** ターン終了時に手札にあると廃棄される。 */
+  ethereal?: boolean;
+  /** ターン終了時に手札にあるとかかる効果。 */
+  turnEndInHand?: Effect[];
 };
 
 /** 山札・手札・捨て札の中の 1 枚。同じ定義のカードでも 1 枚ずつ区別する。 */

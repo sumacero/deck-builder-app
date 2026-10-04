@@ -6,6 +6,7 @@ import type { RelicDefinition } from '../domain/relic';
 import { STANDARD_BLESSINGS } from './blessings';
 import { BASH, DEFEND, REWARD_CARDS, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
 import { STANDARD_EVENTS } from './events';
+import { STATUS_CARDS } from './statusCards';
 import { ALL_POTIONS } from './potions';
 import {
   BOSS_RELIC_POOL,
@@ -27,7 +28,15 @@ function uniqueById<T extends { id: string }>(items: readonly T[]): T[] {
 }
 
 /** 図鑑に並べるもの。新しいカード・レリックなどを足したら、それぞれの一覧に入れれば図鑑にも出る。 */
-export const ALL_CARDS: CardDefinition[] = uniqueById([STRIKE, DEFEND, BASH, ...REWARD_CARDS, ULTIMATE_STRIKE, ULTIMATE_DEFEND]);
+export const ALL_CARDS: CardDefinition[] = uniqueById([
+  STRIKE,
+  DEFEND,
+  BASH,
+  ...REWARD_CARDS,
+  ULTIMATE_STRIKE,
+  ULTIMATE_DEFEND,
+  ...STATUS_CARDS,
+]);
 
 export const ALL_RELICS: RelicDefinition[] = uniqueById([
   RUSTY_ANCHOR,

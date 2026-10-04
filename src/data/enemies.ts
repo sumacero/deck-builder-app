@@ -1,11 +1,14 @@
+import type { CardDefinition } from '../domain/card';
 import type { EnemyAction, EnemyDefinition } from '../domain/enemy';
+import type { DebuffId } from '../domain/status';
+import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
 /**
  * 敵は地域（属性）ごとに作る。数値は第 1 章の強さで書き、後の章では logic/scaling.ts の倍率で強くなる。
- * - 火・岩: 攻撃と防御だけのシンプルな性質
- * - 草・風: 手数が多い連続攻撃と回復
- * - 水・氷: 凍え（引く枚数 -）や封印（スキル使用不可）で行動を制限する
- * - 電・機械: 麻痺（エナジー -）とチャージからの大技
+ * - 火・岩: 攻撃と防御が中心。火傷を混ぜる、かばう、眠れる巨像、よろめきでダウンする大物
+ * - 草・風: 手数が多い連続攻撃と回復。仇討ちの群れ、蔦を混ぜる、風の衣（霊体化）
+ * - 水・氷: 凍え・封印・衰弱で行動を制限し、加護でデバフを無効にする。霊体化する亡霊
+ * - 電・機械: 麻痺とチャージからの大技。ガラクタを混ぜる、不屈の機械、休眠中のゴーレム
  */
 
 const atk = (damage: number, hits = 1): EnemyAction => ({ kind: 'attack', damage, hits });
@@ -17,6 +20,9 @@ const paralyze = (amount = 1): EnemyAction => ({ kind: 'paralyze', amount });
 const chill = (amount = 1): EnemyAction => ({ kind: 'chill', amount });
 const SEAL: EnemyAction = { kind: 'seal' };
 const CHARGE: EnemyAction = { kind: 'charge' };
+const debuff = (status: DebuffId, turns = 1): EnemyAction => ({ kind: 'debuff', status, turns });
+const addCard = (card: CardDefinition, count = 1): EnemyAction => ({ kind: 'addCard', card, count });
+const INTANGIBLE: EnemyAction = { kind: 'intangible' };
 
 // ==================== 火・岩（紅蓮の火山） ====================
 
@@ -28,7 +34,7 @@ export const EMBER_LIZARD: EnemyDefinition = {
   maxHp: 34,
   moves: [
     { id: 'bite', name: '噛みつき', actions: [atk(8)] },
-    { id: 'sparks', name: '火の粉', actions: [atk(4, 2)] },
+    { id: 'sparks', name: '火の粉', actions: [atk(4, 2), addCard(BURN)] },
     { id: 'crouch', name: '身構え', actions: [blk(6), atk(4)] },
   ],
 };
@@ -44,6 +50,7 @@ export const ROCK_SOLDIER: EnemyDefinition = {
     { id: 'cleave', name: '叩き斬り', actions: [atk(13)] },
     { id: 'stomp', name: '踏み込み', actions: [atk(5, 2)] },
   ],
+  traits: [{ kind: 'resolute' }],
 };
 
 export const MAGMA_SLIME: EnemyDefinition = {
@@ -57,6 +64,7 @@ export const MAGMA_SLIME: EnemyDefinition = {
     { id: 'harden', name: '冷え固まる', actions: [blk(8), atk(4)] },
     { id: 'erupt', name: '噴き出し', actions: [atk(4, 3)] },
   ],
+  traits: [{ kind: 'deathThroes', action: addCard(BURN, 2) }],
 };
 
 export const LAVA_KNIGHT: EnemyDefinition = {
@@ -70,6 +78,7 @@ export const LAVA_KNIGHT: EnemyDefinition = {
     { id: 'flame-blade', name: '炎の大剣', actions: [atk(17)] },
     { id: 'lava-slash', name: '溶岩斬り', actions: [atk(7, 2)] },
   ],
+  traits: [{ kind: 'stagger', hits: 5 }],
 };
 
 export const BASALT_COLOSSUS: EnemyDefinition = {
@@ -83,6 +92,7 @@ export const BASALT_COLOSSUS: EnemyDefinition = {
     { id: 'giant-fist', name: '巨拳', actions: [atk(17)] },
     { id: 'tremor', name: '地鳴り', actions: [atk(5, 3)] },
   ],
+  traits: [{ kind: 'sleep', turns: 2, wakeStrength: 3 }, { kind: 'resolute' }],
 };
 
 export const FLAME_DRAGON: EnemyDefinition = {
@@ -93,10 +103,11 @@ export const FLAME_DRAGON: EnemyDefinition = {
   maxHp: 120,
   moves: [
     { id: 'roar', name: '咆哮', actions: [buff(2), blk(12)] },
-    { id: 'breath', name: '炎の息', actions: [atk(5, 3)] },
+    { id: 'breath', name: '炎の息', actions: [atk(4, 3), addCard(BURN)] },
     { id: 'crunch', name: '噛み砕き', actions: [atk(16)] },
     { id: 'volcanic-bomb', name: '火山弾', actions: [atk(20)] },
   ],
+  traits: [{ kind: 'stagger', hits: 6 }],
 };
 
 // ==================== 草・風（風わたる草原） ====================
@@ -110,7 +121,7 @@ export const WIND_HAWK: EnemyDefinition = {
   moves: [
     { id: 'talons', name: '爪の連撃', actions: [atk(3, 3)] },
     { id: 'dive', name: '急降下', actions: [atk(9)] },
-    { id: 'circle', name: '旋回', actions: [blk(5), atk(2, 2)] },
+    { id: 'blinding-wings', name: '目くらましの羽ばたき', actions: [blk(5), debuff('weak')] },
   ],
 };
 
@@ -134,7 +145,7 @@ export const GRASS_WOLF: EnemyDefinition = {
   rank: 'normal',
   maxHp: 36,
   moves: [
-    { id: 'double-bite', name: '連続噛み', actions: [atk(4, 2)] },
+    { id: 'growl', name: '威嚇の唸り', actions: [atk(4), debuff('vulnerable')] },
     { id: 'pounce', name: '飛びかかり', actions: [atk(10)] },
     { id: 'rest', name: '草陰で休む', actions: [heal(6), blk(5)] },
   ],
@@ -147,9 +158,10 @@ export const FOREST_RANGER: EnemyDefinition = {
   rank: 'elite',
   maxHp: 74,
   moves: [
-    { id: 'arrow-rain', name: '矢の雨', actions: [atk(4, 4)] },
+    { id: 'mark', name: '狙いを定める', actions: [atk(6), debuff('vulnerable', 2)] },
     { id: 'snipe', name: '狙い撃ち', actions: [atk(15)] },
-    { id: 'herbs', name: '薬草', actions: [heal(12), blk(6)] },
+    { id: 'arrow-rain', name: '矢の雨', actions: [atk(4, 4)] },
+    { id: 'snare', name: '蔦の罠と薬草', actions: [heal(10), addCard(TANGLING_VINE, 2)] },
   ],
 };
 
@@ -164,6 +176,7 @@ export const GREAT_TREANT: EnemyDefinition = {
     { id: 'blessing', name: '大地の恵み', actions: [heal(14), blk(8)] },
     { id: 'branch-sweep', name: '枝の薙ぎ払い', actions: [atk(15)] },
   ],
+  traits: [{ kind: 'guardian' }],
 };
 
 export const STORM_GRIFFIN: EnemyDefinition = {
@@ -175,8 +188,9 @@ export const STORM_GRIFFIN: EnemyDefinition = {
   moves: [
     { id: 'wind-grace', name: '風の加護', actions: [heal(10), buff(1)] },
     { id: 'storm-claws', name: '嵐の爪', actions: [atk(4, 4)] },
-    { id: 'tornado', name: '竜巻', actions: [atk(6, 3)] },
+    { id: 'wind-veil', name: '風の衣', actions: [INTANGIBLE, debuff('weak')] },
     { id: 'dive', name: '急降下', actions: [atk(18)] },
+    { id: 'tornado', name: '竜巻', actions: [atk(6, 3)] },
   ],
 };
 
@@ -193,6 +207,7 @@ export const FROST_JELLY: EnemyDefinition = {
     { id: 'sting', name: '刺す', actions: [atk(4, 2)] },
     { id: 'drift', name: '漂う', actions: [blk(6), atk(4)] },
   ],
+  traits: [{ kind: 'deathThroes', action: chill() }],
 };
 
 export const DROWNED_GUARD: EnemyDefinition = {
@@ -206,6 +221,7 @@ export const DROWNED_GUARD: EnemyDefinition = {
     { id: 'water-shield', name: '水の盾', actions: [blk(8), atk(5)] },
     { id: 'sealing-spear', name: '封水の槍', actions: [atk(6), SEAL] },
   ],
+  traits: [{ kind: 'resolute' }],
 };
 
 export const MIST_SIREN: EnemyDefinition = {
@@ -216,7 +232,7 @@ export const MIST_SIREN: EnemyDefinition = {
   maxHp: 36,
   moves: [
     { id: 'binding-song', name: '封じの歌', actions: [SEAL, blk(6)] },
-    { id: 'water-arrow', name: '水の矢', actions: [atk(9)] },
+    { id: 'bewildering-arrow', name: '惑わしの水矢', actions: [atk(7), debuff('weak')] },
     { id: 'freezing-song', name: '凍える歌', actions: [atk(5), chill()] },
   ],
 };
@@ -230,8 +246,9 @@ export const ICE_WITCH: EnemyDefinition = {
   moves: [
     { id: 'sealing-ice', name: '封印の氷', actions: [SEAL, blk(10)] },
     { id: 'ice-lance', name: '氷の槍', actions: [atk(16)] },
-    { id: 'blizzard', name: '吹雪', actions: [atk(4, 3), chill()] },
+    { id: 'blizzard', name: '吹雪', actions: [atk(4, 3), addCard(ICE_SHARD, 2)] },
   ],
+  traits: [{ kind: 'ward', charges: 2 }],
 };
 
 export const ABYSS_SERPENT: EnemyDefinition = {
@@ -245,6 +262,7 @@ export const ABYSS_SERPENT: EnemyDefinition = {
     { id: 'crunch', name: '噛み砕き', actions: [atk(17)] },
     { id: 'water-armor', name: '水の鎧', actions: [blk(14), buff(1)] },
   ],
+  traits: [{ kind: 'stagger', hits: 5 }],
 };
 
 export const FROZEN_EMPRESS: EnemyDefinition = {
@@ -256,8 +274,23 @@ export const FROZEN_EMPRESS: EnemyDefinition = {
   moves: [
     { id: 'permafrost', name: '永久凍土', actions: [SEAL, chill(), blk(10)] },
     { id: 'absolute-zero', name: '絶対零度', actions: [atk(20)] },
-    { id: 'icicle-rain', name: '氷柱の雨', actions: [atk(4, 4)] },
+    { id: 'icicle-rain', name: '氷柱の雨', actions: [atk(4, 4), addCard(ICE_SHARD, 2)] },
     { id: 'frost-wave', name: '凍てつく波', actions: [atk(9), chill()] },
+  ],
+  traits: [{ kind: 'ward', charges: 3 }],
+};
+
+/** 霊体化 → 攻撃 → 攻撃の順なので、1 体目に置くと最初のターンに霊体化する。 */
+export const ANCIENT_PHANTOM: EnemyDefinition = {
+  id: 'ancient-phantom',
+  name: '古都の亡霊',
+  icon: '👻',
+  rank: 'normal',
+  maxHp: 30,
+  moves: [
+    { id: 'fade', name: '霧に溶ける', actions: [INTANGIBLE] },
+    { id: 'chilling-touch', name: '凍える手', actions: [atk(7), debuff('weak')] },
+    { id: 'wail', name: '嘆きの声', actions: [atk(4, 2)] },
   ],
 };
 
@@ -274,6 +307,7 @@ export const GEAR_SOLDIER: EnemyDefinition = {
     { id: 'armor', name: '装甲展開', actions: [blk(8), atk(5)] },
     { id: 'shock-spear', name: '放電の槍', actions: [atk(5), paralyze()] },
   ],
+  traits: [{ kind: 'resolute' }],
 };
 
 /** チャージ → 大技の順なので、群れでは行動の開始位置がずれないよう先頭に置く。 */
@@ -301,6 +335,7 @@ export const IRON_HOUND: EnemyDefinition = {
     { id: 'shock-fang', name: '電撃の牙', actions: [atk(5), paralyze()] },
     { id: 'drive', name: '駆動', actions: [blk(6), atk(3, 2)] },
   ],
+  traits: [{ kind: 'vengeance', strength: 3 }],
 };
 
 export const CLOCKWORK_KNIGHT: EnemyDefinition = {
@@ -314,6 +349,7 @@ export const CLOCKWORK_KNIGHT: EnemyDefinition = {
     { id: 'lightning-slash', name: '雷光斬り', actions: [atk(21)] },
     { id: 'twin-slash', name: '連続斬り', actions: [atk(6, 2), paralyze()] },
   ],
+  traits: [{ kind: 'stagger', hits: 4 }],
 };
 
 export const THUNDER_GOLEM: EnemyDefinition = {
@@ -327,6 +363,7 @@ export const THUNDER_GOLEM: EnemyDefinition = {
     { id: 'store', name: '蓄電', actions: [CHARGE, blk(10)] },
     { id: 'thunder-hammer', name: '雷鎚', actions: [atk(22)] },
   ],
+  traits: [{ kind: 'sleep', turns: 2, wakeStrength: 3 }],
 };
 
 export const GEAR_EMPEROR: EnemyDefinition = {
@@ -340,8 +377,9 @@ export const GEAR_EMPEROR: EnemyDefinition = {
     { id: 'thunderclap', name: '雷鳴', actions: [atk(7), paralyze()] },
     { id: 'full-charge', name: 'フルチャージ', actions: [CHARGE, blk(14)] },
     { id: 'thunder-cannon', name: '雷神砲', actions: [atk(25)] },
-    { id: 'gear-storm', name: '歯車の嵐', actions: [atk(4, 4)] },
+    { id: 'gear-storm', name: '歯車の嵐', actions: [atk(4, 4), addCard(SCRAP, 2)] },
   ],
+  traits: [{ kind: 'stagger', hits: 7 }, { kind: 'resolute' }],
 };
 
 // ==================== 群れで出てくる小型の敵（1 体ずつは弱い） ====================
@@ -358,6 +396,7 @@ export const CINDER_IMP: EnemyDefinition = {
     { id: 'claw', name: '火の爪', actions: [atk(5)] },
     { id: 'guard', name: '構え', actions: [blk(4), atk(3)] },
   ],
+  traits: [{ kind: 'vengeance', strength: 2 }],
 };
 
 export const PEBBLE_GOLEM: EnemyDefinition = {
@@ -370,6 +409,7 @@ export const PEBBLE_GOLEM: EnemyDefinition = {
     { id: 'stone-wall', name: '石の壁', actions: [blk(6), atk(2)] },
     { id: 'tackle', name: '体当たり', actions: [atk(6)] },
   ],
+  traits: [{ kind: 'guardian' }],
 };
 
 export const FIRE_BAT: EnemyDefinition = {
@@ -396,6 +436,7 @@ export const SEED_SPROUT: EnemyDefinition = {
     { id: 'photosynthesis', name: '光合成', actions: [heal(4), blk(3)] },
     { id: 'seed-shot', name: '種飛ばし', actions: [atk(2, 2)] },
   ],
+  traits: [{ kind: 'deathThroes', action: addCard(TANGLING_VINE) }],
 };
 
 export const GUST_SPRITE: EnemyDefinition = {
@@ -420,6 +461,7 @@ export const HORN_RABBIT: EnemyDefinition = {
     { id: 'horn', name: '角突き', actions: [atk(5)] },
     { id: 'hop', name: '跳ね回る', actions: [atk(2, 3)] },
   ],
+  traits: [{ kind: 'vengeance', strength: 2 }],
 };
 
 // ---- 水・氷 ----
@@ -446,6 +488,7 @@ export const BUBBLE_SLIME: EnemyDefinition = {
     { id: 'bump', name: 'ぶつかる', actions: [atk(5)] },
     { id: 'bubble', name: '泡の膜', actions: [blk(5), atk(2)] },
   ],
+  traits: [{ kind: 'deathThroes', action: debuff('weak') }],
 };
 
 export const RUIN_CRAB: EnemyDefinition = {
@@ -458,6 +501,7 @@ export const RUIN_CRAB: EnemyDefinition = {
     { id: 'pinch', name: 'はさみ', actions: [atk(3, 2)] },
     { id: 'shell', name: '甲羅', actions: [blk(6), atk(2)] },
   ],
+  traits: [{ kind: 'guardian' }],
 };
 
 // ---- 電・機械 ----
@@ -472,6 +516,7 @@ export const BOLT_BUG: EnemyDefinition = {
     { id: 'tackle', name: '体当たり', actions: [atk(3, 2)] },
     { id: 'spark', name: '火花', actions: [atk(5)] },
   ],
+  traits: [{ kind: 'deathThroes', action: paralyze() }],
 };
 
 export const COG_RAT: EnemyDefinition = {
@@ -482,7 +527,7 @@ export const COG_RAT: EnemyDefinition = {
   maxHp: 14,
   moves: [
     { id: 'gnaw', name: 'かじる', actions: [atk(5)] },
-    { id: 'cog-shield', name: '歯車の盾', actions: [blk(5), atk(2)] },
+    { id: 'junk-toss', name: 'ガラクタ投げ', actions: [blk(5), addCard(SCRAP)] },
   ],
 };
 

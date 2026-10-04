@@ -9,7 +9,7 @@ export const STANDARD_ECONOMY: EconomyConfig = {
     boss: { min: 95, max: 105 },
   },
   relicFallbackGold: 50,
-  cardPrice: { attack: 50, skill: 50, power: 75 },
+  cardPrice: { attack: 50, skill: 50, power: 75, status: 0 },
   relicPrice: 150,
   potionPrice: 50,
   priceVariance: 0.1,

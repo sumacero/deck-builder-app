@@ -4,7 +4,7 @@ import type { Effect } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { KeywordId, StatusView } from '../domain/glossary';
 import type { StatusId, Statuses } from '../domain/status';
-import { BUFF_IDS, DEBUFF_IDS, statusTurns } from './status';
+import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, hasStatus, statusTurns } from './status';
 
 function keywordsForEffect(effect: Effect): KeywordId[] {
   switch (effect.kind) {
@@ -50,9 +50,32 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     card.type,
     ...(card.target === 'allEnemies' ? (['areaAttack'] as const) : []),
     ...card.effects.flatMap(keywordsForEffect),
+    ...(card.unplayable ? (['unplayable'] as const) : []),
+    ...(card.turnEndInHand ?? []).flatMap(keywordsForEffect),
+    ...(card.ethereal ? (['ethereal'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
   ]);
+}
+
+/** 敵の性質。量のある性質（眠りのターン数、加護の回数など）は数値も出す。 */
+function traitViews(enemy: EnemyState): StatusView[] {
+  return enemy.traits.flatMap((trait): StatusView[] => {
+    switch (trait.kind) {
+      case 'sleep':
+        return [{ keyword: 'sleep', value: enemy.asleep }];
+      case 'stagger':
+        return hasStatus(enemy.statuses, 'down') ? [] : [{ keyword: 'stagger', value: enemy.stagger }];
+      case 'ward':
+        return [{ keyword: 'ward', value: enemy.ward }];
+      case 'vengeance':
+        return [{ keyword: 'vengeance', value: trait.strength }];
+      case 'resolute':
+      case 'guardian':
+      case 'deathThroes':
+        return [{ keyword: trait.kind, value: 1, flag: true }];
+    }
+  });
 }
 
 const nonZero = (statuses: StatusView[]) => statuses.filter((status) => status.value !== 0);
@@ -74,7 +97,8 @@ export function enemyStatuses(enemy: EnemyState): StatusView[] {
   return nonZero([
     { keyword: 'block', value: enemy.block },
     { keyword: 'strength', value: enemy.strength },
-    ...statusViews(enemy.statuses, [...DEBUFF_IDS, ...BUFF_IDS]),
+    ...statusViews(enemy.statuses, [...DEBUFF_IDS, ...ENEMY_STATUS_IDS]),
+    ...traitViews(enemy),
   ]);
 }
 
@@ -96,6 +120,14 @@ function keywordForIntent(action: EnemyAction): KeywordId {
       return 'intentSeal';
     case 'charge':
       return 'intentCharge';
+    case 'debuff':
+      return 'intentDebuff';
+    case 'addCard':
+      return 'intentAddCard';
+    case 'intangible':
+      return 'intentIntangible';
+    case 'idle':
+      return action.reason === 'sleep' ? 'intentSleep' : 'intentDown';
   }
 }
 

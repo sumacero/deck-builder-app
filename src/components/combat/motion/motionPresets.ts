@@ -156,10 +156,46 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
     ],
     burst: { emoji: '🔋', on: 'self', delay: 160 },
   },
+  debuff: {
+    keyframes: [
+      { x: 16, scale: 1.05, duration: 120 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '🌀', on: 'opponent', delay: 120 },
+  },
+  addCard: {
+    keyframes: [
+      { y: -8, rotate: -8, duration: 120 },
+      { x: 20, rotate: 8, duration: 120 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '🃏', on: 'opponent', delay: 160 },
+  },
+  intangible: {
+    keyframes: [
+      { y: -12, scale: 0.9, duration: 260 },
+      { y: -6, scale: 1.05, duration: 200 },
+      { duration: 240 },
+    ],
+    burst: { emoji: '👻', on: 'self', delay: 120 },
+  },
+  idle: {
+    keyframes: [
+      { y: 4, scale: 0.97, duration: 260 },
+      { duration: 260 },
+    ],
+  },
 };
 
 /** 相手（プレイヤー）に向けて行う敵の行動。 */
-const TARGETS_PLAYER: ReadonlySet<EnemyAction['kind']> = new Set(['attack', 'paralyze', 'chill', 'seal']);
+const TARGETS_PLAYER: ReadonlySet<EnemyAction['kind']> = new Set([
+  'attack',
+  'paralyze',
+  'chill',
+  'seal',
+  'debuff',
+  'addCard',
+]);
 
 export type ActorMotionPlan = {
   actor: ActorId;

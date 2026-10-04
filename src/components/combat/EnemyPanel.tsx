@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
 import { currentIntent, enemyAttackDamage, isAlive } from '../../logic/combat';
-import { describeIntent, ENEMY_RANK_LABEL } from '../../logic/describe';
+import { describeIntent, describeTrait, ENEMY_RANK_LABEL } from '../../logic/describe';
 import { enemyStatuses, keywordsForIntent } from '../../logic/glossary';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { DamagePreviewBadge } from './DamagePreviewBadge';
@@ -116,6 +116,7 @@ export function EnemyPanel({
           name={enemy.name}
           statuses={statuses}
           intent={{ moveName: move.name, keywords: keywordsForIntent(move) }}
+          traits={enemy.traits.map(describeTrait)}
           onClose={() => setInfoOpen(false)}
         />
       )}

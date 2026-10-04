@@ -107,7 +107,7 @@ export function CardView({
           <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
         </View>
         <View style={styles.costGem}>
-          <Text style={styles.costText}>{card.cost}</Text>
+          <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
         </View>
         {count !== undefined && count > 1 && (
           <View style={styles.countBadge}>

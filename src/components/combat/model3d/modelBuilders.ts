@@ -339,6 +339,23 @@ export function ghost(color: string, options?: { crowned?: boolean; scale?: numb
   return { parts, idle: 'float', yaw: 0.35, scale: options?.scale };
 }
 
+// ---------- フードの亡霊（ランタンを提げて漂う） ----------
+
+export function phantom(robe: string, glow: string): ActorModel {
+  const parts: ModelPart[] = [
+    cone(0.5, 1.2, robe, [0, -0.35, 0], { opacity: 0.7 }),
+    sphere(0.3, robe, [0, 0.32, 0], { opacity: 0.75 }),
+    cone(0.26, 0.36, robe, [0, 0.62, -0.06], { rotation: [-0.35, 0, 0], opacity: 0.75 }),
+    sphere(0.2, '#0E1426', [0, 0.3, 0.14], { scale: [1, 1.1, 0.6] }),
+    sphere(0.045, glow, [0.07, 0.32, 0.26], { glow: true }),
+    sphere(0.045, glow, [-0.07, 0.32, 0.26], { glow: true }),
+    box([0.12, 0.45, 0.12], robe, [0.36, -0.05, 0.05], { rotation: [0, 0, 0.5], opacity: 0.7 }),
+    cylinder(0.015, 0.25, '#B8B0A0', [0.5, -0.32, 0.1]),
+    sphere(0.1, glow, [0.5, -0.5, 0.1], { glow: true }),
+  ];
+  return { parts, idle: 'float', yaw: 0.35, scale: 0.95 };
+}
+
 // ---------- 石像・ゴーレム ----------
 
 export function golem(color: string, eyeColor: string): ActorModel {

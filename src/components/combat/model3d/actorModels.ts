@@ -4,6 +4,7 @@ import {
   ghost,
   golem,
   humanoid,
+  phantom,
   quadruped,
   slime,
   voidLord,
@@ -136,6 +137,7 @@ export const ENEMY_MODELS: Record<string, ActorModel> = {
   'ice-wisp': ghost('#EAF8FF', { scale: 0.7 }),
   'bubble-slime': slime('#6AC8F0', { scale: 0.65 }),
   'ruin-crab': quadruped('#3A8A8A', { belly: '#7AC0B8', eyeColor: '#FFE04A', size: 0.6 }),
+  'ancient-phantom': phantom('#7FA8C8', '#9FF0FF'),
 
   // 電・機械（雷鳴の歯車塔）
   'gear-soldier': humanoid({

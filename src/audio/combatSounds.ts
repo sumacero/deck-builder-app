@@ -29,5 +29,7 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
       return 'victory';
     case 'handFull':
       return 'handFull';
+    case 'callout':
+      return null;
   }
 }

@@ -28,6 +28,10 @@ export const COLORS = {
   hindrance: '#A98BEB',
   /** 敵がチャージ中（次に大技が来る）。 */
   charge: '#F5D547',
+  /** 霊体化した敵。 */
+  spirit: '#8FD3E8',
+  /** 眠り・ダウンなど、敵が何もしないターン。 */
+  idle: '#7C849E',
   hpTrail: '#F5DFA0',
   /** 強化済みカードの名前。 */
   upgraded: '#6EE09A',
@@ -126,6 +130,7 @@ export const CARD_TYPE_COLORS: Record<CardType, string> = {
   attack: '#D9534F',
   skill: '#3E86D6',
   power: '#D9A23A',
+  status: '#6E6A80',
 };
 
 export const SPACING = {

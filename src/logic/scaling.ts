@@ -1,4 +1,4 @@
-import type { EnemyAction, EnemyDefinition, Encounter } from '../domain/enemy';
+import type { EnemyAction, EnemyDefinition, EnemyTrait, Encounter } from '../domain/enemy';
 
 /** 章ごとの敵の強さ。敵のデータは第 1 章の強さで書き、後の章ではこの倍率で強くする。 */
 export type ChapterScale = {
@@ -24,13 +24,36 @@ function scaleAction(action: EnemyAction, scale: ChapterScale): EnemyAction {
     case 'chill':
     case 'seal':
     case 'charge':
+    case 'debuff':
+    case 'addCard':
+    case 'intangible':
+    case 'idle':
       return action;
+  }
+}
+
+/** 筋力が上がる性質は攻撃と同じ倍率。回数・ターン数は変えない。 */
+function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
+  const power = (value: number) => Math.round(value * scale.power);
+  switch (trait.kind) {
+    case 'vengeance':
+      return { ...trait, strength: power(trait.strength) };
+    case 'sleep':
+      return { ...trait, wakeStrength: power(trait.wakeStrength) };
+    case 'deathThroes':
+      return { ...trait, action: scaleAction(trait.action, scale) };
+    case 'resolute':
+    case 'ward':
+    case 'stagger':
+    case 'guardian':
+      return trait;
   }
 }
 
 export function scaleEnemy(enemy: EnemyDefinition, scale: ChapterScale): EnemyDefinition {
   return {
     ...enemy,
+    traits: enemy.traits?.map((trait) => scaleTrait(trait, scale)),
     maxHp: Math.round(enemy.maxHp * scale.hp),
     moves: enemy.moves.map((move) => ({
       ...move,

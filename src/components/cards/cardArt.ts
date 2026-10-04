@@ -47,6 +47,7 @@ export const CARD_TYPE_EMBLEM: Record<CardType, string> = {
   attack: '⚔️',
   skill: '🛡️',
   power: '✨',
+  status: '💢',
 };
 
 /** 強化後のカードも強化前と同じ絵。絵が無いカードは undefined（種類の色だけの枠になる）。 */
