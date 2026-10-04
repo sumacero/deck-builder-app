@@ -303,6 +303,7 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number): CombatState 
       target: uid,
       hpLoss: result.hpLoss,
       blocked: result.blocked,
+      before: vitalsOf(enemy),
       after: vitalsOf(result.target),
     },
   );
@@ -337,6 +338,7 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
         target: 'player',
         hpLoss: effect.amount,
         blocked: 0,
+        before: vitalsOf(state.player),
         after: vitalsOf(player),
       });
     }
@@ -566,6 +568,7 @@ function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction
             target: 'player',
             hpLoss: result.hpLoss,
             blocked: result.blocked,
+            before: vitalsOf(next.player),
             after: vitalsOf(result.target),
           },
         );

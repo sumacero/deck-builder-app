@@ -12,7 +12,7 @@ const isVitalsEventFor = (target: ActorId) => (event: CombatEvent): event is Vit
 function vitalsBefore(event: VitalsEvent): Vitals {
   switch (event.kind) {
     case 'hit':
-      return { hp: event.after.hp + event.hpLoss, block: event.after.block + event.blocked };
+      return event.before;
     case 'blockGain':
       return { hp: event.after.hp, block: event.after.block - event.amount };
     case 'heal':

@@ -13,7 +13,6 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   'pommel-strike': require('../../../assets/cards/pommel-strike.jpg'),
   'iron-wave': require('../../../assets/cards/iron-wave.jpg'),
   'heavy-blade': require('../../../assets/cards/heavy-blade.jpg'),
-  'sword-boomerang': require('../../../assets/cards/sword-boomerang.jpg'),
   clothesline: require('../../../assets/cards/clothesline.jpg'),
   hemokinesis: require('../../../assets/cards/hemokinesis.jpg'),
   anger: require('../../../assets/cards/anger.jpg'),
@@ -39,6 +38,8 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   'searing-decree': require('../../../assets/cards/searing-decree.jpg'),
   'heat-up': require('../../../assets/cards/heat-up.jpg'),
   'soul-flame': require('../../../assets/cards/soul-flame.jpg'),
+  'ultimate-strike': require('../../../assets/cards/ultimate-strike.jpg'),
+  'ultimate-defend': require('../../../assets/cards/ultimate-defend.jpg'),
 };
 
 /** イラストの隅に重ねる種類の紋章。小さな手札でも種類がひと目で分かるように。 */

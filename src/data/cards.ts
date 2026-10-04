@@ -38,6 +38,28 @@ export const BASH: CardDefinition = {
   },
 };
 
+/** イベント「融合の祭壇」でストライク 2 枚から作る。報酬には出ない。 */
+export const ULTIMATE_STRIKE: CardDefinition = {
+  id: 'ultimate-strike',
+  name: '究極のストライク',
+  type: 'attack',
+  cost: 1,
+  target: 'enemy',
+  effects: [{ kind: 'damage', amount: 13 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 18 }] },
+};
+
+/** イベント「融合の祭壇」で防御 2 枚から作る。報酬には出ない。 */
+export const ULTIMATE_DEFEND: CardDefinition = {
+  id: 'ultimate-defend',
+  name: '究極の防御',
+  type: 'skill',
+  cost: 1,
+  target: 'self',
+  effects: [{ kind: 'block', amount: 11 }],
+  upgrade: { effects: [{ kind: 'block', amount: 15 }] },
+};
+
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
@@ -99,17 +121,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'attack',
     cost: 2,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 14 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 19 }] },
-  },
-  {
-    id: 'sword-boomerang',
-    name: '剣ブーメラン',
-    type: 'attack',
-    cost: 1,
-    target: 'enemy',
-    effects: [{ kind: 'damage', amount: 3, hits: 3 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 3, hits: 4 }] },
+    effects: [{ kind: 'damage', amount: 18 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 24 }] },
   },
   {
     id: 'clothesline',
@@ -135,13 +148,13 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'loseHp', amount: 2 },
-      { kind: 'damage', amount: 15 },
+      { kind: 'loseHp', amount: 3 },
+      { kind: 'damage', amount: 14 },
     ],
     upgrade: {
       effects: [
-        { kind: 'loseHp', amount: 2 },
-        { kind: 'damage', amount: 20 },
+        { kind: 'loseHp', amount: 3 },
+        { kind: 'damage', amount: 19 },
       ],
     },
   },
@@ -189,8 +202,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'attack',
     cost: 2,
     target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 5, hits: 2 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 7, hits: 2 }] },
+    effects: [{ kind: 'damage', amount: 4, hits: 3 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 5, hits: 3 }] },
   },
   {
     id: 'shrug-it-off',
@@ -242,8 +255,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'skill',
     cost: 0,
     target: 'self',
-    effects: [{ kind: 'draw', amount: 3 }],
-    upgrade: { effects: [{ kind: 'draw', amount: 4 }] },
+    effects: [{ kind: 'draw', amount: 2 }],
+    upgrade: { effects: [{ kind: 'draw', amount: 3 }] },
   },
   {
     id: 'offering',
@@ -311,13 +324,13 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 2,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 13 },
+      { kind: 'damage', amount: 10 },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
       { kind: 'applyDebuff', status: 'weak', turns: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 13 },
+        { kind: 'damage', amount: 10 },
         { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
         { kind: 'applyDebuff', status: 'weak', turns: 2 },
       ],
@@ -373,7 +386,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'power',
     cost: 2,
     target: 'self',
-    effects: [{ kind: 'gainBuff', status: 'retainBlock', turns: 3 }],
+    effects: [{ kind: 'gainBuff', status: 'retainBlock', turns: 4 }],
     exhaust: true,
     upgrade: { cost: 1 },
   },
@@ -401,8 +414,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'skill',
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainBuff', status: 'blazing', turns: 1 }],
-    upgrade: { effects: [{ kind: 'gainBuff', status: 'blazing', turns: 2 }] },
+    effects: [{ kind: 'gainBuff', status: 'blazing', turns: 2 }],
+    upgrade: { effects: [{ kind: 'gainBuff', status: 'blazing', turns: 3 }] },
   },
   {
     id: 'soul-flame',

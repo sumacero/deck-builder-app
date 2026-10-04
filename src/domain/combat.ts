@@ -77,8 +77,11 @@ export type CombatEventBody =
   | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
   | { kind: 'potionUsed'; target: 'player'; potionId: string }
   | { kind: 'relicTriggered'; target: 'player'; relicId: string }
-  /** after は起きた直後の HP とブロック。演出に合わせて 1 発ずつ表示を進めるのに使う。 */
-  | { kind: 'hit'; target: ActorId; hpLoss: number; blocked: number; after: Vitals }
+  /**
+   * after は起きた直後の HP とブロック。演出に合わせて 1 発ずつ表示を進めるのに使う。
+   * hpLoss は倒しきった分も含むので、直前の値は before で持つ。
+   */
+  | { kind: 'hit'; target: ActorId; hpLoss: number; blocked: number; before: Vitals; after: Vitals }
   | { kind: 'blockGain'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'heal'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'defeated'; target: ActorId }

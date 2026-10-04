@@ -47,6 +47,31 @@ export function upgradeInDeck(deck: readonly CardDefinition[], cardId: string): 
   return deck.map((card, i) => (i === index ? upgradeCard(card) : card));
 }
 
+/** 強化前の id が baseId のカードの枚数（強化済みも数える）。 */
+export const countBase = (deck: readonly CardDefinition[], baseId: string) =>
+  deck.filter((card) => baseCardId(card.id) === baseId).length;
+
+/**
+ * 強化前の id が fromId のカードを count 枚取り除き、into を加えたデッキ。強化していない方から使う。
+ * 素材に強化済みが含まれていたら into も強化する。足りなければ null。
+ */
+export function fuseInDeck(
+  deck: readonly CardDefinition[],
+  fromId: string,
+  count: number,
+  into: CardDefinition,
+): CardDefinition[] | null {
+  const consumed = deck
+    .map((card, index) => ({ card, index }))
+    .filter(({ card }) => baseCardId(card.id) === fromId)
+    .sort((a, b) => Number(a.card.upgraded ?? false) - Number(b.card.upgraded ?? false))
+    .slice(0, count);
+  if (consumed.length < count) return null;
+  const removed = new Set(consumed.map(({ index }) => index));
+  const fused = consumed.some(({ card }) => card.upgraded) ? upgradeCard(into) : into;
+  return [...deck.filter((_, index) => !removed.has(index)), fused];
+}
+
 /** 指定 id の最初の 1 枚を取り除いたデッキ。 */
 export function removeFromDeck(deck: readonly CardDefinition[], cardId: string): CardDefinition[] {
   const index = deck.findIndex((card) => card.id === cardId);

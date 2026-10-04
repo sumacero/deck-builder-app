@@ -24,7 +24,7 @@ type SoundDef = {
 };
 
 /** 効果音全体の音量。BGM とのバランスはここで調整し、各音の volume は効果音どうしの比率を表す。 */
-export const SOUND_MASTER_VOLUME = 0.6;
+export const SOUND_MASTER_VOLUME = 0.51;
 
 /** 音源は scripts/generate-sounds.mjs で合成している（npm run sounds）。 */
 export const SOUNDS: Record<SoundId, SoundDef> = {

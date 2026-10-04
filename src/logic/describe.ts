@@ -180,6 +180,8 @@ export function describeRunEffect(effect: RunEffect): string {
       return `毎ターンのエナジー ${signed(effect.amount)}`;
     case 'changeDrawPerTurn':
       return `毎ターン引く枚数 ${signed(effect.amount)}`;
+    case 'fuseCards':
+      return `${effect.from.name} ${effect.count} 枚を融合し「${effect.into.name}」にする（コスト ${effect.into.cost}：${describeCard(effect.into)}）`;
   }
 }
 

@@ -1,4 +1,5 @@
 import type { EventDefinition } from '../domain/event';
+import { DEFEND, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
 
 const LEAVE = { id: 'leave', label: '立ち去る', effects: [], outcome: 'あなたは先を急いだ。' };
 
@@ -161,6 +162,27 @@ export const STANDARD_EVENTS: EventDefinition[] = [
         effects: [],
         choice: 'removeCard',
         outcome: '炎の中で、何かが一つ消えていった。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'fusion-altar',
+    title: '融合の祭壇',
+    icon: '🔮',
+    text: '二つの窪みが刻まれた古い祭壇。手をかざすと、身につけた技が共鳴して熱を帯びる。「二つの技を一つに束ねよ」と声が響いた。',
+    options: [
+      {
+        id: 'fuse-strike',
+        label: 'ストライクを束ねる',
+        effects: [{ kind: 'fuseCards', from: STRIKE, count: 2, into: ULTIMATE_STRIKE }],
+        outcome: '二つの剣筋が重なり、一撃必殺の技へと生まれ変わった。',
+      },
+      {
+        id: 'fuse-defend',
+        label: '防御を束ねる',
+        effects: [{ kind: 'fuseCards', from: DEFEND, count: 2, into: ULTIMATE_DEFEND }],
+        outcome: '二つの構えが溶け合い、揺るがぬ守りの型となった。',
       },
       LEAVE,
     ],

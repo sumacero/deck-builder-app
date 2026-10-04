@@ -1,7 +1,7 @@
 import type { RelicDefinition } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
-import { canUpgrade, upgradeCard } from './cards';
+import { canUpgrade, countBase, fuseInDeck, upgradeCard } from './cards';
 import { pickOne, pickUnique, shuffle } from './random';
 
 /** pool のうち、まだ持っていないレリック。 */
@@ -87,6 +87,10 @@ export function applyRunEffect(run: RunState, effect: RunEffect): RunState {
       return { ...run, energyPerTurn: Math.max(MIN_PER_TURN, run.energyPerTurn + effect.amount) };
     case 'changeDrawPerTurn':
       return { ...run, drawPerTurn: Math.max(MIN_PER_TURN, run.drawPerTurn + effect.amount) };
+    case 'fuseCards': {
+      const deck = fuseInDeck(run.deck, effect.from.id, effect.count, effect.into);
+      return deck ? { ...run, deck } : run;
+    }
   }
 }
 
@@ -106,6 +110,8 @@ export function canApplyRunEffect(run: RunState, effect: RunEffect): boolean {
       return run.deck.some(canUpgrade);
     case 'fillPotions':
       return run.potions.includes(null);
+    case 'fuseCards':
+      return countBase(run.deck, effect.from.id) >= effect.count;
     default:
       return true;
   }
