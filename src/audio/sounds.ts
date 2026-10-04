@@ -14,7 +14,8 @@ export type SoundId =
   | 'upgrade'
   | 'heal'
   | 'mapSelect'
-  | 'coin';
+  | 'coin'
+  | 'slotIn';
 
 type SoundDef = {
   source: AudioSource;
@@ -37,4 +38,5 @@ export const SOUNDS: Record<SoundId, SoundDef> = {
   heal: { source: require('../../assets/sounds/heal.wav'), volume: 0.6 },
   mapSelect: { source: require('../../assets/sounds/map-select.wav'), volume: 0.6 },
   coin: { source: require('../../assets/sounds/coin.wav'), volume: 0.5 },
+  slotIn: { source: require('../../assets/sounds/slot-in.wav'), volume: 0.7 },
 };

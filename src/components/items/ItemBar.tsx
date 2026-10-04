@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { CombatEvent, PotionSlot } from '../../domain/combat';
 import type { RelicDefinition } from '../../domain/relic';
@@ -7,6 +7,7 @@ import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { ITEM_BAR, SPACING } from '../../theme';
 import { ItemInfo } from './ItemInfo';
 import type { PotionDragHandlers } from '../combat/cardDrop';
+import { AcquireContext } from '../run/acquire/AcquireContext';
 import { PotionSlotView } from './PotionSlotView';
 import { RelicIcon } from './RelicIcon';
 
@@ -30,6 +31,8 @@ type ItemBarProps = {
     /** 持ち上げている最中のポーションの枠。 */
     draggingSlot: number | null;
   };
+  /** ポーションを捨てる。渡さなければ戦闘の外の処理（ランのポーションを捨てる）。 */
+  onDiscardPotion?: (slot: number) => void;
 };
 
 /** 画面上部の所持品欄。左にレリック、右にポーション。タップで説明を開く。 */
@@ -38,8 +41,11 @@ export function ItemBar({
   potions,
   events = NO_EVENTS,
   potionUse,
+  onDiscardPotion,
 }: ItemBarProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
+  const runDiscard = useContext(AcquireContext).discardPotion;
+  const discard = onDiscardPotion ?? runDiscard;
   const landscape = useIsLandscape();
 
   const toggle = (next: Selection) =>
@@ -70,6 +76,7 @@ export function ItemBar({
           {potions.map((potion, slot) => (
             <PotionSlotView
               key={slot}
+              slot={slot}
               potion={potion}
               selected={selection?.kind === 'potion' && selection.slot === slot}
               onPress={() => togglePotion(slot)}
@@ -122,6 +129,13 @@ export function ItemBar({
               close();
             },
           }
+        }
+        onDiscard={
+          discard &&
+          (() => {
+            discard(selection.slot);
+            close();
+          })
         }
         onClose={close}
       />

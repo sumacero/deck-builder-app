@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { prepareSounds } from '../../audio/soundPlayer';
 import { STANDARD_RUN } from '../../data/runSetups';
@@ -15,6 +15,7 @@ import { TreasureScreen } from '../treasure/TreasureScreen';
 import { BossRelicScreen } from './BossRelicScreen';
 import { MOTION } from '../../theme';
 import { FadeOverlay } from '../effects/FadeOverlay';
+import { AcquireProvider } from './acquire/AcquireContext';
 import { RunEventLayer } from './effects/RunEventLayer';
 import { RewardScreen } from './RewardScreen';
 
@@ -30,8 +31,9 @@ type RunRootProps = {
 export function RunRoot({ onExitToTitle }: RunRootProps) {
   const {
     run,
-    currentEvent,
+    events,
     dismissEvent,
+    discardPotion,
     moveTo,
     finishCombat,
     resolveReward,
@@ -43,6 +45,13 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
     eventActions,
     treasureActions,
   } = useRun(STANDARD_RUN);
+
+  // 新しいランでは、所持金の数え上げなどの記憶を捨てる。
+  const [runCount, setRunCount] = useState(0);
+  const startNewRun = () => {
+    setRunCount((count) => count + 1);
+    newRun();
+  };
 
   useEffect(() => {
     void prepareSounds();
@@ -118,7 +127,7 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
           key={run.actIndex}
           run={run}
           onMove={moveTo}
-          onNewRun={newRun}
+          onNewRun={startNewRun}
           onExitToTitle={onExitToTitle}
         />
       );
@@ -126,16 +135,18 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
   }
 
   return (
-    <View style={styles.root}>
-      {screen}
-      <FadeOverlay
-        key={`${run.actIndex}-${run.phase.kind}`}
-        from={1}
-        to={0}
-        duration={MOTION.phaseFadeIn}
-      />
-      <RunEventLayer queued={currentEvent} onDone={dismissEvent} />
-    </View>
+    <AcquireProvider key={runCount} queued={events} discardPotion={discardPotion}>
+      <View style={styles.root}>
+        {screen}
+        <FadeOverlay
+          key={`${run.actIndex}-${run.phase.kind}`}
+          from={1}
+          to={0}
+          duration={MOTION.phaseFadeIn}
+        />
+        <RunEventLayer queued={events[0]} onDone={dismissEvent} />
+      </View>
+    </AcquireProvider>
   );
 }
 

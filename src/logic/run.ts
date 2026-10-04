@@ -227,3 +227,9 @@ export function buildCombatSetup(run: RunState, encounter: Encounter): CombatSet
     potions: run.potions,
   };
 }
+
+/** ポーションを使わずに捨てる（戦闘の外。いつでもできる）。 */
+export function discardPotion(run: RunState, slot: number): RunState {
+  if (!run.potions[slot]) return run;
+  return { ...run, potions: run.potions.map((p, i) => (i === slot ? null : p)) };
+}

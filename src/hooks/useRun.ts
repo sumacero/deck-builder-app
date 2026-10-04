@@ -29,6 +29,10 @@ export function useRun(setup: RunSetup) {
     (relicId: string | null) => dispatch({ type: 'chooseBossRelic', relicId }),
     [],
   );
+  const discardPotion = useCallback(
+    (slot: number) => dispatch({ type: 'discardPotion', slot }),
+    [],
+  );
   const newRun = useCallback(
     () => dispatch({ type: 'newRun', setup, seed: createSeed() }),
     [setup],
@@ -79,14 +83,15 @@ export function useRun(setup: RunSetup) {
 
   return {
     run,
-    /** 次に見せる出来事（無ければ undefined）。 */
-    currentEvent: events[0],
+    /** まだ見せていない出来事。先頭から順に見せる。 */
+    events,
     dismissEvent,
     moveTo,
     finishCombat,
     resolveReward,
     chooseBossRelic,
     newRun,
+    discardPotion,
     blessingActions,
     restActions,
     shopActions,

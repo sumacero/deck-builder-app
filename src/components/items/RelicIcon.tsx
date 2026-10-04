@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent } from '../../domain/combat';
 import type { RelicDefinition } from '../../domain/relic';
 import { useCombatEvents } from '../../hooks/useCombatEvents';
 import { COLORS, MOTION, RADIUS } from '../../theme';
+import { slotKey } from '../run/acquire/AcquireContext';
+import { useAcquireSlot } from '../run/acquire/useAcquireSlot';
 
 type RelicIconProps = {
   relic: RelicDefinition;
@@ -12,9 +14,10 @@ type RelicIconProps = {
   onPress: () => void;
 };
 
-/** 発動したら金色に光って跳ねる。 */
+/** 発動したら金色に光って跳ねる。手に入れたときは飛んでくるまで隠れていて、収まると弾む。 */
 export function RelicIcon({ relic, events, selected, onPress }: RelicIconProps) {
   const [glow] = useState(() => new Animated.Value(0));
+  const { bindView, hidden, scale: landScale } = useAcquireSlot(slotKey.relic(relic.id));
 
   useCombatEvents(events, (event) => {
     if (event.kind !== 'relicTriggered' || event.relicId !== relic.id) return;
@@ -28,10 +31,18 @@ export function RelicIcon({ relic, events, selected, onPress }: RelicIconProps) 
 
   return (
     <Pressable onPress={onPress} onLongPress={onPress} hitSlop={4}>
-      <Animated.View style={[styles.icon, selected && styles.selected, { transform: [{ scale }] }]}>
-        <Animated.View style={[styles.glow, { opacity: glow }]} />
-        <Text style={styles.emoji}>{relic.icon}</Text>
-      </Animated.View>
+      <View ref={bindView} collapsable={false} style={hidden && styles.hidden}>
+        <Animated.View
+          style={[
+            styles.icon,
+            selected && styles.selected,
+            { transform: [{ scale: Animated.multiply(scale, landScale) }] },
+          ]}
+        >
+          <Animated.View style={[styles.glow, { opacity: glow }]} />
+          <Text style={styles.emoji}>{relic.icon}</Text>
+        </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -62,4 +73,5 @@ const styles = StyleSheet.create({
     backgroundColor: `${COLORS.gold}55`,
   },
   emoji: { fontSize: 18 },
+  hidden: { opacity: 0 },
 });

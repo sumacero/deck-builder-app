@@ -183,6 +183,18 @@ const SOUNDS = {
 
   /** ゴールドの出し入れ: コインの「チャリン」（高い 2 音）。 */
   coin: () => arpeggio([1976, 2637], 0.07, 0.32, square, 0.25),
+
+  /** 入手したものがスロットに収まる: 軽い「コトッ」と小さなきらめき。 */
+  'slot-in': () => {
+    const knock = oscillator(sine);
+    const chime = oscillator(triangle);
+    return render(0.22, (t) => {
+      const body = knock(lerp(520, 260, Math.min(1, t / 0.05))) * decay(t, 40);
+      const click = noise() * decay(t, 200) * 0.5;
+      const sparkle = t > 0.03 ? chime(2093) * decay(t - 0.03, 18) * 0.35 : 0;
+      return body + click + sparkle;
+    });
+  },
 };
 
 // ===== 書き出し =====

@@ -64,6 +64,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     state,
     playCard,
     drinkPotion,
+    discardPotion,
     endTurn,
     isPlayable,
     isDrinkable,
@@ -155,6 +156,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
       relics={state.relics}
       potions={state.potions}
       events={state.events}
+      onDiscardPotion={discardPotion}
       potionUse={{
         isDrinkable,
         onDrink,

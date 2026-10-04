@@ -1,7 +1,6 @@
-import { useEffect, useEffectEvent } from 'react';
-import type { SoundId } from '../../../audio/sounds';
-import { playSound } from '../../../audio/soundPlayer';
 import type { QueuedRunEvent } from '../../../domain/runEvent';
+import { slotKey } from '../acquire/AcquireContext';
+import { AcquireFlyer } from '../acquire/AcquireFlyer';
 import { HealBurst } from './HealBurst';
 import { UpgradeReveal } from './UpgradeReveal';
 
@@ -10,7 +9,7 @@ type RunEventLayerProps = {
   onDone: (id: number) => void;
 };
 
-/** ラン中の出来事（回復・強化・ゴールド・カード入手）を 1 件ずつ、どの画面の上にも重ねて見せる。 */
+/** ラン中の出来事（回復・強化・レリック / ポーション / カードの入手）を 1 件ずつ、どの画面の上にも重ねて見せる。 */
 export function RunEventLayer({ queued, onDone }: RunEventLayerProps) {
   if (!queued) return null;
   const done = () => onDone(queued.id);
@@ -29,21 +28,35 @@ export function RunEventLayer({ queued, onDone }: RunEventLayerProps) {
       );
     case 'upgrade':
       return <UpgradeReveal key={queued.id} cards={event.cards} onDone={done} />;
-    case 'goldChange':
-      return <SoundCue key={queued.id} sound="coin" onDone={done} />;
+    case 'relicGain':
+      return (
+        <AcquireFlyer
+          key={queued.id}
+          item={{ kind: 'icon', icon: event.relic.icon, label: event.relic.name }}
+          targetKey={slotKey.relic(event.relic.id)}
+          sound="relic"
+          onDone={done}
+        />
+      );
+    case 'potionGain':
+      return (
+        <AcquireFlyer
+          key={queued.id}
+          item={{ kind: 'icon', icon: event.potion.icon, label: event.potion.name }}
+          targetKey={slotKey.potion(event.slot)}
+          sound="potion"
+          onDone={done}
+        />
+      );
     case 'cardGain':
-      return <SoundCue key={queued.id} sound="cardPlay" onDone={done} />;
+      return (
+        <AcquireFlyer
+          key={queued.id}
+          item={{ kind: 'card', card: event.card }}
+          targetKey={slotKey.deck}
+          sound="cardPlay"
+          onDone={done}
+        />
+      );
   }
-}
-
-type SoundCueProps = { sound: SoundId; onDone: () => void };
-
-/** 画面は覆わず、効果音だけ鳴らしてすぐ次へ。 */
-function SoundCue({ sound, onDone }: SoundCueProps) {
-  const finish = useEffectEvent(onDone);
-  useEffect(() => {
-    playSound(sound);
-    finish();
-  }, [sound]);
-  return null;
 }

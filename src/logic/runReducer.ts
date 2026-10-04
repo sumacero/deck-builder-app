@@ -3,7 +3,7 @@ import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { chooseBlessing, finishDeckEdit } from './blessing';
 import { chooseEventOption, leaveEvent } from './event';
 import { rest, smith } from './rest';
-import { chooseBossRelic, createRun, finishCombat, moveTo, resolveReward } from './run';
+import { chooseBossRelic, createRun, discardPotion, finishCombat, moveTo, resolveReward } from './run';
 import { buyCard, buyPotion, buyRelic, leaveShop, removeCard } from './shop';
 import { leaveTreasure, openTreasure } from './treasure';
 
@@ -25,6 +25,7 @@ export type RunAction =
   | { type: 'leaveEvent' }
   | { type: 'openTreasure' }
   | { type: 'leaveTreasure' }
+  | { type: 'discardPotion'; slot: number }
   | { type: 'newRun'; setup: RunSetup; seed: number };
 
 export function runReducer(run: RunState, action: RunAction): RunState {
@@ -63,6 +64,8 @@ export function runReducer(run: RunState, action: RunAction): RunState {
       return openTreasure(run);
     case 'leaveTreasure':
       return leaveTreasure(run);
+    case 'discardPotion':
+      return discardPotion(run, action.slot);
     case 'newRun':
       return createRun(action.setup, action.seed);
   }

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { PotionSlot } from '../../domain/combat';
 import type { PotionDefinition } from '../../domain/potion';
 import type { PotionDragHandlers } from '../combat/cardDrop';
 import { COLORS, RADIUS } from '../../theme';
+import { slotKey } from '../run/acquire/AcquireContext';
+import { useAcquireSlot } from '../run/acquire/useAcquireSlot';
 
 /** 戦闘中だけ渡す。ポーションを持ち上げて、狙う敵へ払って使える。 */
 export type PotionDrag = {
@@ -18,15 +20,36 @@ export type PotionDrag = {
 };
 
 type PotionSlotViewProps = {
+  /** 何番目の枠か（手に入れたポーションが飛んでくる先を見分ける）。 */
+  slot: number;
   potion: PotionSlot;
   selected: boolean;
   onPress: () => void;
   drag?: PotionDrag;
 };
 
-export function PotionSlotView({ potion, selected, onPress, drag }: PotionSlotViewProps) {
-  if (!potion) return <View style={[styles.slot, styles.empty]} />;
-  if (drag) return <DraggablePotion potion={potion} selected={selected} drag={drag} />;
+/** ポーション 1 枠。手に入れたポーションは飛んでくるまで空き枠に見え、収まると弾む。 */
+export function PotionSlotView({ slot, potion, selected, onPress, drag }: PotionSlotViewProps) {
+  const { bindView, hidden, scale } = useAcquireSlot(slotKey.potion(slot));
+  return (
+    <View ref={bindView} collapsable={false}>
+      <Animated.View style={{ transform: [{ scale }] }}>
+        {!potion || hidden ? (
+          <View style={[styles.slot, styles.empty]} />
+        ) : drag ? (
+          <DraggablePotion potion={potion} selected={selected} drag={drag} />
+        ) : (
+          <StaticPotion potion={potion} selected={selected} onPress={onPress} />
+        )}
+      </Animated.View>
+    </View>
+  );
+}
+
+type StaticPotionProps = { potion: PotionDefinition; selected: boolean; onPress: () => void };
+
+/** 戦闘の外。タップで説明を開くだけ。 */
+function StaticPotion({ potion, selected, onPress }: StaticPotionProps) {
   return (
     <Pressable
       onPress={onPress}

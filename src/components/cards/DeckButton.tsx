@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { stackCards } from '../../logic/cards';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { MODAL_ORIENTATIONS } from '../layout/modalOrientations';
+import { slotKey } from '../run/acquire/AcquireContext';
+import { useAcquireSlot } from '../run/acquire/useAcquireSlot';
 import { CardPileModal } from './CardPileModal';
 
 type DeckButtonProps = {
@@ -13,19 +15,25 @@ type DeckButtonProps = {
 /**
  * 「デッキ N」ボタン。押すとラン全体のデッキを一覧で見られる。
  * RN の Modal で開くので、どの画面のどこに置いても画面全体に重なる。
+ * 手に入れたカードはここへ飛んできて、収まると弾む。
  */
 export function DeckButton({ deck }: DeckButtonProps) {
   const [open, setOpen] = useState(false);
+  const { bindView, scale } = useAcquireSlot(slotKey.deck);
   const close = () => setOpen(false);
   return (
     <>
-      <Pressable
-        onPress={() => setOpen(true)}
-        hitSlop={6}
-        style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-      >
-        <Text style={styles.text}>🃏 デッキ {deck.length}</Text>
-      </Pressable>
+      <View ref={bindView} collapsable={false}>
+        <Animated.View style={{ transform: [{ scale }] }}>
+          <Pressable
+            onPress={() => setOpen(true)}
+            hitSlop={6}
+            style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+          >
+            <Text style={styles.text}>🃏 デッキ {deck.length}</Text>
+          </Pressable>
+        </Animated.View>
+      </View>
       <Modal
         visible={open}
         transparent

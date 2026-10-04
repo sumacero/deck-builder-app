@@ -21,6 +21,10 @@ export function useCombat(setup: CombatSetup, seed: number) {
     (slot: number, target?: EnemyUid) => dispatch({ type: 'drinkPotion', slot, target }),
     [],
   );
+  const discardPotion = useCallback(
+    (slot: number) => dispatch({ type: 'discardPotion', slot }),
+    [],
+  );
   const endTurn = useCallback(() => dispatch({ type: 'endTurn' }), []);
   const isPlayable = useCallback((instanceId: string) => canPlayCard(state, instanceId), [state]);
   const isDrinkable = useCallback((slot: number) => canDrinkPotion(state, slot), [state]);
@@ -41,6 +45,7 @@ export function useCombat(setup: CombatSetup, seed: number) {
     state,
     playCard,
     drinkPotion,
+    discardPotion,
     endTurn,
     isPlayable,
     isDrinkable,

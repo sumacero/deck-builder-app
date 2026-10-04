@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 
@@ -7,11 +8,14 @@ type ItemInfoProps = {
   description: string;
   /** ポーションのときだけ渡す。 */
   action?: { label: string; enabled: boolean; onPress: () => void };
+  /** ポーションを捨てる。取り消せないので、1 回目は確認だけ。 */
+  onDiscard?: () => void;
   onClose: () => void;
 };
 
 /** レリック・ポーションをタップしたときに出す説明。 */
-export function ItemInfo({ icon, name, description, action, onClose }: ItemInfoProps) {
+export function ItemInfo({ icon, name, description, action, onDiscard, onClose }: ItemInfoProps) {
+  const [confirming, setConfirming] = useState(false);
   return (
     <View style={styles.box}>
       <View style={styles.titleRow}>
@@ -20,6 +24,19 @@ export function ItemInfo({ icon, name, description, action, onClose }: ItemInfoP
       </View>
       <Text style={styles.description}>{description}</Text>
       <View style={styles.buttons}>
+        {onDiscard && (
+          <Pressable
+            onPress={confirming ? onDiscard : () => setConfirming(true)}
+            style={({ pressed }) => [
+              styles.button,
+              styles.danger,
+              confirming && styles.dangerConfirm,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.dangerText}>{confirming ? '本当に捨てる' : '捨てる'}</Text>
+          </Pressable>
+        )}
         {action && (
           <Pressable
             onPress={action.onPress}
@@ -64,6 +81,9 @@ const styles = StyleSheet.create({
   primaryText: { color: COLORS.onGold, fontSize: 14, fontWeight: '800' },
   secondary: { borderWidth: 1, borderColor: COLORS.panelBorder },
   secondaryText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
+  danger: { borderWidth: 1, borderColor: COLORS.danger, marginRight: 'auto' },
+  dangerConfirm: { backgroundColor: COLORS.danger },
+  dangerText: { color: COLORS.text, fontSize: 14, fontWeight: '700' },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },
 });

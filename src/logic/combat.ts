@@ -357,6 +357,16 @@ export function drinkPotion(state: CombatState, slot: number, target?: EnemyUid)
   return settle(applyEffects(used, potion.effects, resolveAim(state, potion.target, target)));
 }
 
+/** ポーションを使わずに捨てる。枠を空けて新しいポーションを受け取れるようにするため、いつでもできる。 */
+export function discardPotion(state: CombatState, slot: number): CombatState {
+  const potion = state.potions[slot];
+  if (!potion) return state;
+  return withLog(
+    { ...state, potions: state.potions.map((p, i) => (i === slot ? null : p)) },
+    `${potion.name}を捨てた`,
+  );
+}
+
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
 export function playCard(state: CombatState, instanceId: string, target?: EnemyUid): CombatState {
   const instance = state.hand.find((c) => c.instanceId === instanceId);

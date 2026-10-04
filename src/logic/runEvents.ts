@@ -30,10 +30,27 @@ export function findUpgrades(
   return upgrades;
 }
 
+/** after にあって before に無いカード（同じカードは枚数で比べる）。強化で増えたカードは除く。 */
+export function findGainedCards(
+  before: readonly CardDefinition[],
+  after: readonly CardDefinition[],
+  upgraded: readonly UpgradedCard[],
+): CardDefinition[] {
+  const remaining = countById(before);
+  for (const { after: card } of upgraded) remaining.set(card.id, (remaining.get(card.id) ?? 0) + 1);
+  const gained: CardDefinition[] = [];
+  for (const card of after) {
+    const left = remaining.get(card.id) ?? 0;
+    if (left > 0) remaining.set(card.id, left - 1);
+    else gained.push(card);
+  }
+  return gained;
+}
+
 /**
- * 操作の前後を比べて、知らせたい出来事を並べる。効果音だけのもの（ゴールド・カード入手）を先に置き、
- * 画面を覆う演出（回復・強化）はそのあとに続ける。
- * 戦闘の決着で変わった HP・ゴールドは戦闘画面と報酬画面が見せるので、ここでは出さない。
+ * 操作の前後を比べて、知らせたい出来事を並べる。入手（レリック・ポーション・カード）を先に、
+ * そのあと回復・強化。
+ * 戦闘の決着で変わった HP・レリックは戦闘画面と報酬画面が見せるので、ここでは出さない。
  * 新しいランを始めたときも出さない。
  */
 export function diffRunEvents(prev: RunState, next: RunState): RunEvent[] {
@@ -42,11 +59,19 @@ export function diffRunEvents(prev: RunState, next: RunState): RunEvent[] {
   const fromCombat = prev.phase.kind === 'combat';
   const events: RunEvent[] = [];
 
-  if (!fromCombat && next.gold !== prev.gold) {
-    events.push({ kind: 'goldChange', amount: next.gold - prev.gold });
+  if (!fromCombat) {
+    const owned = new Set(prev.relics.map((relic) => relic.id));
+    for (const relic of next.relics) {
+      if (!owned.has(relic.id)) events.push({ kind: 'relicGain', relic });
+    }
+    next.potions.forEach((potion, slot) => {
+      if (potion && prev.potions[slot] !== potion) events.push({ kind: 'potionGain', slot, potion });
+    });
   }
-  const gained = next.deck.length - prev.deck.length;
-  if (gained > 0) events.push({ kind: 'cardGain', count: gained });
+  const upgraded = findUpgrades(prev.deck, next.deck);
+  for (const card of findGainedCards(prev.deck, next.deck, upgraded)) {
+    events.push({ kind: 'cardGain', card });
+  }
   if (!fromCombat && next.player.hp > prev.player.hp) {
     events.push({
       kind: 'heal',
@@ -56,7 +81,6 @@ export function diffRunEvents(prev: RunState, next: RunState): RunEvent[] {
       maxHpAfter: next.player.maxHp,
     });
   }
-  const upgraded = findUpgrades(prev.deck, next.deck);
   if (upgraded.length > 0) events.push({ kind: 'upgrade', cards: upgraded });
   return events;
 }

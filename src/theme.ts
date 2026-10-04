@@ -96,6 +96,17 @@ export const MOTION = {
   upgradeReveal: 500,
   /** 強化後のカードのまわりできらめく周期。 */
   sparkle: 900,
+  /** 入手の演出: 真ん中に現れる → 少し見せる → スロットへ飛ぶ。飛び先を測る前に画面の並びを待つ時間。 */
+  acquireAppear: 320,
+  acquireHold: 280,
+  acquireFly: 480,
+  acquireMeasureDelay: 120,
+  /** スロットに収まったときの弾み（小さいほどよく揺れる）。 */
+  slotLandFriction: 4,
+  /** 所持金が数え上がる時間（差が大きいほど長く、この範囲に収める）と、増減の数字が浮いて消えるまで。 */
+  goldCountMin: 400,
+  goldCountMax: 1000,
+  goldDelta: 1100,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {
