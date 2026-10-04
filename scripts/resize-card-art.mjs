@@ -13,6 +13,9 @@ const Jimp = require('jimp-compact');
 const WIDTH = 320;
 const HEIGHT = 240;
 const QUALITY = 78;
+/** 生成画像は暗めなので、手札の小さな枠でも絵柄が分かるよう少し明るく・くっきりさせる（-1〜1）。 */
+const BRIGHTNESS = 0.14;
+const CONTRAST = 0.2;
 
 const sourceDir = process.argv[2];
 if (!sourceDir) {
@@ -28,7 +31,12 @@ for (const file of readdirSync(sourceDir)) {
   const id = match[1];
   const image = await Jimp.read(join(sourceDir, file));
   const out = join(outDir, `${id}.jpg`);
-  await image.cover(WIDTH, HEIGHT).quality(QUALITY).writeAsync(out);
+  await image
+    .cover(WIDTH, HEIGHT)
+    .brightness(BRIGHTNESS)
+    .contrast(CONTRAST)
+    .quality(QUALITY)
+    .writeAsync(out);
   console.log(`wrote ${out}`);
 }
 

@@ -1,5 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
-import type { CardDefinition } from '../../domain/card';
+import type { CardDefinition, CardType } from '../../domain/card';
 import { baseCardId } from '../../logic/cards';
 
 /**
@@ -28,6 +28,13 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   flex: require('../../../assets/cards/flex.jpg'),
   inflame: require('../../../assets/cards/inflame.jpg'),
   metallicize: require('../../../assets/cards/metallicize.jpg'),
+};
+
+/** イラストの隅に重ねる種類の紋章。小さな手札でも種類がひと目で分かるように。 */
+export const CARD_TYPE_EMBLEM: Record<CardType, string> = {
+  attack: '⚔️',
+  skill: '🛡️',
+  power: '✨',
 };
 
 /** 強化後のカードも強化前と同じ絵。絵が無いカードは undefined（種類の色だけの枠になる）。 */

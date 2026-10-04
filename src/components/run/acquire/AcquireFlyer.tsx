@@ -21,6 +21,7 @@ type AcquireFlyerProps = {
 
 const ICON_SIZE = 64;
 const CARD_WIDTH = 84;
+const ARC_STEPS = [0, 0.25, 0.5, 0.75, 1];
 
 type Path = { dx: number; dy: number; endScale: number };
 
@@ -106,11 +107,11 @@ export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerPro
   const appearScale = appear.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] });
   const flyScale = fly.interpolate({ inputRange: [0, 1], outputRange: [1, path.endScale] });
   const translateX = fly.interpolate({ inputRange: [0, 1], outputRange: [0, path.dx] });
-  // 縦だけ加速させて、放物線のような軌道にする。
+  // 縦だけ加速させて、放物線のような軌道にする。native driver は interpolate の easing を
+  // 扱えないので、y = dy × p² を折れ線で近似する。
   const translateY = fly.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, path.dy],
-    easing: Easing.in(Easing.quad),
+    inputRange: ARC_STEPS,
+    outputRange: ARC_STEPS.map((p) => path.dy * p * p),
   });
   const rise = fade.interpolate({ inputRange: [0, 1], outputRange: [-40, 0] });
   const glow = Animated.multiply(appear, fly.interpolate({ inputRange: [0, 0.4], outputRange: [1, 0], extrapolate: 'clamp' }));

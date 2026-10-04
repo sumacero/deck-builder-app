@@ -31,8 +31,8 @@ export const COLORS = {
   flash: '#FFF6D8',
   /** 画面切り替えの暗転。 */
   fade: '#000000',
-  /** カードのイラスト下端に重ねる、名前の帯。 */
-  cardNameBand: 'rgba(0, 0, 0, 0.62)',
+  /** カードのイラストの隅に重ねる、種類の紋章の下地。 */
+  cardEmblemBg: 'rgba(0, 0, 0, 0.62)',
 } as const;
 
 export const MAP_NODE_COLORS: Record<MapNodeType, string> = {
@@ -191,8 +191,8 @@ export const HAND_LAYOUT = {
 
 /** カードの上半分に置くイラスト枠。 */
 export const CARD_ART = {
-  /** 枠の高さ / カードの幅。残りに種類と説明文が収まるよう、手札（幅 64px 程度）でも 4 割強に抑える。 */
-  heightRatio: 0.6,
+  /** 枠の高さ / カードの幅。名前・種類・説明文も収まるよう、手札（幅 64px 程度）でも 4 割弱に抑える。 */
+  heightRatio: 0.52,
   /** 絵が無いカードの枠を、種類の色でうっすら塗る不透明度（16 進 2 桁）。 */
   fallbackAlpha: '33',
 } as const;

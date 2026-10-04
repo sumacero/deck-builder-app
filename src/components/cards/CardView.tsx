@@ -4,7 +4,7 @@ import type { CardDefinition } from '../../domain/card';
 import { CARD_TYPE_LABEL, describeCard } from '../../logic/describe';
 import { CARD_ART, CARD_TYPE_COLORS, COLORS, HAND_LAYOUT, RADIUS, SPACING } from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
-import { cardArt } from './cardArt';
+import { CARD_TYPE_EMBLEM, cardArt } from './cardArt';
 
 type CardViewProps = {
   card: CardDefinition;
@@ -24,6 +24,7 @@ const LONG_PRESS_MS = 350;
 const BASE_WIDTH = 96;
 const WIDE_WIDTH = 108;
 const BORDER_WIDTH = 2;
+const ART_INSET = 3;
 
 const artHeight = (width: number) => Math.round(width * CARD_ART.heightRatio);
 
@@ -38,6 +39,7 @@ function scaledStyles(width: number) {
     art: { height: artHeight(width) },
     body: { paddingHorizontal: Math.max(2, SPACING.xs * scale) },
     name: { fontSize: Math.max(9, 12 * scale) },
+    emblemText: { fontSize: Math.max(9, 12 * scale) },
     type: { fontSize: Math.max(8, 10 * scale) },
     description: { fontSize: Math.max(9, 11 * scale) },
   };
@@ -75,22 +77,26 @@ export function CardView({
           pressed && onPress && styles.pressed,
         ]}
       >
+        <Text
+          style={[styles.name, scaled?.name, card.upgraded && styles.upgradedName]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {card.name}
+        </Text>
         <View
           style={[
             styles.art,
             wide && styles.wideArt,
             scaled?.art,
+            { borderColor: typeColor },
             !art && { backgroundColor: `${typeColor}${CARD_ART.fallbackAlpha}` },
           ]}
         >
           {art && <Image source={art} style={styles.artImage} resizeMode="cover" />}
-          <View style={styles.nameBand}>
-            <Text
-              style={[styles.name, scaled?.name, card.upgraded && styles.upgradedName]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {card.name}
+          <View style={styles.emblem}>
+            <Text style={[styles.emblemText, scaled?.emblemText]}>
+              {CARD_TYPE_EMBLEM[card.type]}
             </Text>
           </View>
         </View>
@@ -131,20 +137,23 @@ const styles = StyleSheet.create({
   pressed: { transform: [{ translateY: -8 }] },
   art: {
     height: artHeight(BASE_WIDTH),
-    borderTopLeftRadius: RADIUS.md - BORDER_WIDTH,
-    borderTopRightRadius: RADIUS.md - BORDER_WIDTH,
+    marginHorizontal: ART_INSET,
+    borderWidth: 1,
+    borderRadius: RADIUS.sm,
     overflow: 'hidden',
     backgroundColor: COLORS.panel,
-    justifyContent: 'flex-end',
   },
   wideArt: { height: artHeight(WIDE_WIDTH) },
-  artImage: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  nameBand: {
-    backgroundColor: COLORS.cardNameBand,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 1,
-    alignItems: 'center',
+  artImage: { width: '100%', height: '100%' },
+  emblem: {
+    position: 'absolute',
+    right: 1,
+    bottom: 1,
+    backgroundColor: COLORS.cardEmblemBg,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 2,
   },
+  emblemText: { fontSize: 12 },
   body: {
     flex: 1,
     alignItems: 'center',
@@ -177,7 +186,15 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   countText: { color: COLORS.onGold, fontSize: 11, fontWeight: '800' },
-  name: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
+  name: {
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingTop: 2,
+    paddingBottom: 1,
+    paddingHorizontal: GEM_SIZE / 2,
+  },
   upgradedName: { color: COLORS.upgraded },
   type: { fontSize: 10, fontWeight: '600' },
   description: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },

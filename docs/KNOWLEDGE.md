@@ -409,10 +409,14 @@
 
 ### カードのイラスト（2026-10-04）
 
-- 全 21 枚にイラスト。カードの上部 6 割（`CARD_ART.heightRatio` × 幅）が絵で、その下端に名前の帯を重ね、下に種類と説明文。手札（幅 64px 前後）でも収まるよう、名前は絵の上に載せた。全画面のカード（手札・報酬・ショップ・デッキ一覧・強化演出・入手演出）が `CardView` 1 つなので一括で反映。
-- 画像は AI 画像生成（暗めの油彩調、4:3）→ `scripts/resize-card-art.mjs <元画像フォルダ>` で 320×240・JPEG 品質 78 に縮小して `assets/cards/<カード id>.jpg`（21 枚で約 420KB）。縮小には expo の依存に含まれる `jimp-compact` を使う（パッケージ追加なし。PIL / ImageMagick はこの環境に無い）。元画像（1024×768）はリポジトリに入れていない。
+- 全 21 枚にイラスト。上から名前 → 絵（`CARD_ART.heightRatio` × 幅、種類の色の細枠）→ 種類 → 説明文。絵の右下に種類の紋章（アタック ⚔️ / スキル 🛡️ / パワー ✨、`CARD_TYPE_EMBLEM`）。全画面のカード（手札・報酬・ショップ・デッキ一覧・強化演出・入手演出）が `CardView` 1 つなので一括で反映。
+  - 2026-10-04 修正: 最初は名前の帯を絵の下端に重ねていたが、「イラストが入っていないように見える」との指摘で、名前を絵の上に出して絵を隠さないようにし、画像も明るく補正、紋章を追加。`Image` は上下左右 0 の絶対配置ではなく `width/height: '100%'` で大きさを明示。
+- 画像は AI 画像生成（暗めの油彩調、4:3）→ `scripts/resize-card-art.mjs <元画像フォルダ>` で 320×240・明るさ +0.14・コントラスト +0.2・JPEG 品質 78 に縮小して `assets/cards/<カード id>.jpg`（21 枚で約 420KB）。縮小には expo の依存に含まれる `jimp-compact` を使う（パッケージ追加なし。PIL / ImageMagick はこの環境に無い）。元画像（1024×768）はリポジトリに入れていない。
 - 対応付けは UI 側の `src/components/cards/cardArt.ts`（ドメインの `CardDefinition` は画像を知らない）。強化後（id `xxx+`）は `baseCardId` で強化前と同じ絵。絵の無いカードは種類の色をうっすら塗った枠になる。
 - カードを足すとき: 画像を `card-<id>.jpg` で用意 → スクリプトで縮小 → `cardArt.ts` に 1 行追加。
+
+- デッキ・山札・捨て札の一覧（`CardPileModal`）は、カードをタップするとすぐ詳細（`CardDetailSheet`）が開く（長押し不要）。
+- native driver（`useNativeDriver: true`）の `interpolate` に `easing` を渡すと実機でエラー（「Interpolation property 'easing' is not supported」）。入手演出の放物線は inputRange を刻んだ折れ線で近似している。
 
 ### 手札の上限 10 枚（2026-10-04）
 
