@@ -201,6 +201,14 @@ export const ACTOR_FIGURE = {
   outline: COLORS.textOutline,
   /** 足元の魔法陣と漂う光の粒の色。 */
   aura: { player: COLORS.gold, enemy: '#B85CFF' },
+  /** 属性・地域ごとの魔法陣と粒の色（敵のモデルの aura）。 */
+  elementAura: {
+    fire: '#FF7A2B',
+    grass: '#6EE07A',
+    water: '#5CCBFF',
+    thunder: '#FFE04A',
+    arcane: '#B85CFF',
+  },
   /** 背後から当てて輪郭を光らせるリムライト。 */
   rimLight: '#8FB8FF',
 } as const;

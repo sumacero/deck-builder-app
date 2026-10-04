@@ -4,11 +4,13 @@ import {
   BackSide,
   type BufferGeometry,
   BoxGeometry,
+  CapsuleGeometry,
   CircleGeometry,
   Color,
   ConeGeometry,
   CylinderGeometry,
   DirectionalLight,
+  ExtrudeGeometry,
   Group,
   HemisphereLight,
   IcosahedronGeometry,
@@ -16,15 +18,17 @@ import {
   MeshBasicMaterial,
   MeshToonMaterial,
   OctahedronGeometry,
+  Path,
   PerspectiveCamera,
   RingGeometry,
   Scene,
+  Shape,
   TorusGeometry,
   Vector3,
   WebGLRenderer,
 } from 'three';
 import { ACTOR_FIGURE } from '../../../theme';
-import type { ActorModel, ModelPart, PartAnimation, PartShape } from './modelTypes';
+import type { ActorModel, AuraStyle, ModelPart, PartAnimation, PartShape } from './modelTypes';
 
 /** 1 フレームごとに外から渡す姿勢。lean は相手への踏み込み、recoil は被弾ののけぞり（0〜1）。 */
 export type ActorPose = { time: number; lean: number; recoil: number };
@@ -40,6 +44,13 @@ const RECOIL_ANGLE = 0.3;
 const FLAP_SPEED = 9;
 const FLAP_ANGLE = 0.45;
 const SPIN_SPEED = 0.9;
+const SWAY_SPEED = 2.4;
+const SWAY_ANGLE = 0.22;
+const FLICKER_SPEED = 13;
+const FLICKER_AMOUNT = 0.16;
+const ORBIT_SPEED = 0.7;
+const HOVER_SPEED = 2;
+const HOVER_HEIGHT = 0.05;
 /** 輪郭線の太さ（モデル座標）。 */
 const OUTLINE_WIDTH = 0.022;
 /** これより小さい部品（目など）には輪郭線を付けない。 */
@@ -48,7 +59,7 @@ const OUTLINE_MIN_EXTENT = 0.12;
 const HALO_WIDTH = 0.022;
 /** これより小さい光る部品（目のハイライトなど）はにじませない。 */
 const HALO_MIN_EXTENT = 0.05;
-const MOTE_COUNT = 10;
+const MOTE_COUNT = 12;
 const FLASH_STRENGTH = 0.75;
 const WHITE = new Color(0xffffff);
 
@@ -71,7 +82,35 @@ function createGeometry(shape: PartShape): BufferGeometry {
       return new TorusGeometry(shape.radius, shape.tube, 8, 28);
     case 'octahedron':
       return new OctahedronGeometry(shape.radius);
+    case 'capsule':
+      return new CapsuleGeometry(shape.radius, shape.length, 4, 10);
+    case 'rock':
+      return new IcosahedronGeometry(shape.radius, 0);
+    case 'gear':
+      return createGearGeometry(shape.radius, shape.teeth, shape.thickness);
   }
+}
+
+/** 歯車の形を押し出して作る。中心に軸の穴をあける。 */
+function createGearGeometry(radius: number, teeth: number, thickness: number): BufferGeometry {
+  const outline = new Shape();
+  const inner = radius * 0.8;
+  const steps = teeth * 4;
+  for (let index = 0; index <= steps; index += 1) {
+    const angle = (index / steps) * Math.PI * 2;
+    // 1 枚の歯 = 山・山・谷・谷の 4 点。
+    const r = index % 4 < 2 ? radius : inner;
+    const x = Math.cos(angle) * r;
+    const y = Math.sin(angle) * r;
+    if (index === 0) outline.moveTo(x, y);
+    else outline.lineTo(x, y);
+  }
+  const hole = new Path();
+  hole.absarc(0, 0, radius * 0.25, 0, Math.PI * 2, true);
+  outline.holes.push(hole);
+  const geometry = new ExtrudeGeometry(outline, { depth: thickness, bevelEnabled: false });
+  geometry.translate(0, 0, -thickness / 2);
+  return geometry;
 }
 
 const additive = (color: Color | string, opacity: number) =>
@@ -155,13 +194,138 @@ function createMagicCircle(color: string): Group {
 
 type Mote = { mesh: Mesh; material: MeshBasicMaterial; phase: number };
 
-/** キャラクターの周りを螺旋状に立ちのぼる光の粒。 */
-function createMotes(color: string): Mote[] {
-  const geometry = new OctahedronGeometry(0.035);
+const MOTE_GEOMETRY: Record<AuraStyle, () => BufferGeometry> = {
+  fire: () => new OctahedronGeometry(0.03),
+  grass: () => new BoxGeometry(0.08, 0.012, 0.045),
+  water: () => new IcosahedronGeometry(0.03, 1),
+  thunder: () => new OctahedronGeometry(0.03).scale(0.6, 2.2, 0.6),
+  arcane: () => new OctahedronGeometry(0.035),
+};
+
+/** キャラクターの周りを漂う粒。形と動きは aura の種類で変わる。 */
+function createMotes(color: string, style: AuraStyle): Mote[] {
+  const geometry = MOTE_GEOMETRY[style]();
   return Array.from({ length: MOTE_COUNT }, (_, index) => {
     const material = additive(color, 0);
     return { mesh: new Mesh(geometry, material), material, phase: index / MOTE_COUNT };
   });
+}
+
+/** 0〜1 の擬似乱数（粒ごとに決まった値）。 */
+const hash = (seed: number) => {
+  const value = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+  return value - Math.floor(value);
+};
+
+/** 粒 1 つぶんの位置・回転・濃さを、aura の種類ごとの動きで決める。 */
+function placeMote({ mesh, material, phase }: Mote, style: AuraStyle, time: number): void {
+  switch (style) {
+    case 'fire': {
+      // 足元から細かく揺れながら速く舞い上がり、上で消える火の粉。
+      const progress = (time * 0.55 + phase) % 1;
+      const x = (hash(phase * 7) - 0.5) * 1.3 + Math.sin(time * 6 + phase * 20) * 0.04;
+      mesh.position.set(x, -0.95 + progress * 2.1, (hash(phase * 13) - 0.5) * 0.8);
+      mesh.rotation.set(time * 3, time * 4 + phase * 6, 0);
+      material.opacity = (1 - progress) * (0.7 + Math.sin(time * 20 + phase * 40) * 0.3);
+      return;
+    }
+    case 'grass': {
+      // 上からひらひらと舞い落ちる木の葉。
+      const progress = (time * 0.18 + phase) % 1;
+      const x = (hash(phase * 7) - 0.5) * 1.6 + Math.sin(time * 1.5 + phase * 9) * 0.18;
+      mesh.position.set(x, 1.05 - progress * 2.05, (hash(phase * 13) - 0.5) * 0.9);
+      mesh.rotation.set(Math.sin(time * 2 + phase * 5) * 1.2, time + phase * 6, Math.cos(time * 1.7) * 0.8);
+      material.opacity = Math.sin(progress * Math.PI) * 0.9;
+      return;
+    }
+    case 'water': {
+      // ゆらゆらと立ちのぼって弾ける泡。
+      const progress = (time * 0.22 + phase) % 1;
+      const x = (hash(phase * 7) - 0.5) * 1.4 + Math.sin(time * 2.5 + phase * 11) * 0.06;
+      mesh.position.set(x, -0.95 + progress * 2, (hash(phase * 13) - 0.5) * 0.8);
+      mesh.scale.setScalar(0.6 + progress * 0.9);
+      material.opacity = Math.sin(progress * Math.PI) * 0.75;
+      return;
+    }
+    case 'thunder': {
+      // 体のまわりのあちこちで一瞬だけ瞬く火花。
+      const tick = Math.floor(time * 5 + phase * 3);
+      const life = (time * 5 + phase * 3) % 1;
+      const seed = tick * 1.37 + phase * 17;
+      mesh.position.set((hash(seed) - 0.5) * 1.6, -0.8 + hash(seed + 1) * 1.8, (hash(seed + 2) - 0.5) * 0.8);
+      mesh.rotation.set(0, 0, (hash(seed + 3) - 0.5) * 2);
+      material.opacity = life < 0.35 ? 0.95 : 0;
+      return;
+    }
+    case 'arcane': {
+      // キャラクターの周りを螺旋状に立ちのぼる光の粒。
+      const progress = (time * 0.3 + phase) % 1;
+      const angle = phase * Math.PI * 2 + time * 0.6;
+      mesh.position.set(Math.cos(angle) * 0.78, -0.95 + progress * 2, Math.sin(angle) * 0.5);
+      mesh.rotation.y = time * 2 + phase * 6;
+      material.opacity = Math.sin(progress * Math.PI) * 0.85;
+      return;
+    }
+  }
+}
+
+type AnimatedPart = {
+  mesh: Mesh;
+  /** 支点のある部品の蝶番。はばたきはこれを回す。 */
+  hinge: Group | null;
+  flapAxis: 'x' | 'z';
+  animation: PartAnimation;
+  /** 位相のずれ（ラジアン）。 */
+  offset: number;
+  baseRotation: Vector3;
+  basePosition: Vector3;
+  baseScale: Vector3;
+};
+
+/** 部品ごとの小さな動き。置いたときの姿勢を基準に、そこからの揺れとして動かす。 */
+function animatePart(part: AnimatedPart, time: number): void {
+  const { mesh, hinge, flapAxis, animation, offset, baseRotation, basePosition, baseScale } = part;
+  switch (animation) {
+    case 'flapLeft':
+    case 'flapRight': {
+      const flap = Math.sin(time * FLAP_SPEED + offset) * FLAP_ANGLE * (animation === 'flapRight' ? 1 : -1);
+      if (hinge) hinge.rotation[flapAxis] = flap;
+      else mesh.rotation.z = baseRotation.z + flap;
+      return;
+    }
+    case 'spin':
+      mesh.rotation.y = baseRotation.y + time * SPIN_SPEED;
+      return;
+    case 'roll':
+      mesh.rotation.z = baseRotation.z + time * SPIN_SPEED * (offset >= Math.PI ? -1 : 1);
+      return;
+    case 'sway':
+      mesh.rotation.z = baseRotation.z + Math.sin(time * SWAY_SPEED + offset) * SWAY_ANGLE;
+      return;
+    case 'flicker': {
+      const flicker = Math.sin(time * FLICKER_SPEED + offset) * 0.6 + Math.sin(time * 23 + offset) * 0.4;
+      mesh.scale.set(
+        baseScale.x * (1 - flicker * FLICKER_AMOUNT * 0.5),
+        baseScale.y * (1 + flicker * FLICKER_AMOUNT),
+        baseScale.z * (1 - flicker * FLICKER_AMOUNT * 0.5),
+      );
+      return;
+    }
+    case 'orbit': {
+      const radius = Math.hypot(basePosition.x, basePosition.z);
+      const angle = Math.atan2(basePosition.z, basePosition.x) + time * ORBIT_SPEED;
+      mesh.position.set(
+        Math.cos(angle) * radius,
+        basePosition.y + Math.sin(time * HOVER_SPEED + offset) * HOVER_HEIGHT,
+        Math.sin(angle) * radius,
+      );
+      mesh.rotation.y = baseRotation.y + time;
+      return;
+    }
+    case 'hover':
+      mesh.position.y = basePosition.y + Math.sin(time * HOVER_SPEED + offset) * HOVER_HEIGHT;
+      return;
+  }
 }
 
 /**
@@ -224,7 +388,12 @@ export function createActorStage(
   camera.position.set(0, 0.7, 4.4);
   camera.lookAt(0, -0.05, 0);
 
-  const auraColor = facing === 1 ? ACTOR_FIGURE.aura.player : ACTOR_FIGURE.aura.enemy;
+  const auraStyle: AuraStyle = model.aura ?? 'arcane';
+  const auraColor = model.aura
+    ? ACTOR_FIGURE.elementAura[model.aura]
+    : facing === 1
+      ? ACTOR_FIGURE.aura.player
+      : ACTOR_FIGURE.aura.enemy;
   scene.add(new HemisphereLight(0xfff2d9, 0x2a2238, 1.2));
   const sun = new DirectionalLight(0xfff1d6, 2.2);
   sun.position.set(2 * facing, 3, 4);
@@ -242,7 +411,7 @@ export function createActorStage(
   scene.add(shadow);
   const magicCircle = createMagicCircle(auraColor);
   scene.add(magicCircle);
-  const motes = createMotes(auraColor);
+  const motes = createMotes(auraColor, auraStyle);
   motes.forEach(({ mesh }) => scene.add(mesh));
 
   // pivot: 浮遊・踏み込みの傾き（左右反転しない）。body: 向きと左右反転。
@@ -256,15 +425,20 @@ export function createActorStage(
 
   const materials: { material: MeshToonMaterial; emissive: Color; intensity: number }[] = [];
   const halos: Mesh[] = [];
-  const animated: {
-    mesh: Mesh;
-    animation: PartAnimation;
-    baseZ: number;
-    baseY: number;
-  }[] = [];
+  const animated: AnimatedPart[] = [];
   for (const part of model.parts) {
     const { mesh, material, halo } = createPart(part, baseScale);
-    body.add(mesh);
+    // 支点がある部品は、支点に置いた蝶番（Group）にぶら下げて、蝶番ごと回す。
+    let hinge: Group | null = null;
+    if (part.pivot) {
+      hinge = new Group();
+      hinge.position.set(...part.pivot);
+      mesh.position.sub(hinge.position);
+      hinge.add(mesh);
+      body.add(hinge);
+    } else {
+      body.add(mesh);
+    }
     materials.push({
       material,
       emissive: material.emissive.clone(),
@@ -274,9 +448,13 @@ export function createActorStage(
     if (part.animation) {
       animated.push({
         mesh,
+        hinge,
+        flapAxis: part.flapAxis ?? 'z',
         animation: part.animation,
-        baseZ: mesh.rotation.z,
-        baseY: mesh.rotation.y,
+        offset: (part.phase ?? 0) * Math.PI * 2,
+        baseRotation: new Vector3(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z),
+        basePosition: mesh.position.clone(),
+        baseScale: mesh.scale.clone(),
       });
     }
   }
@@ -306,17 +484,7 @@ export function createActorStage(
     magicCircle.rotation.z = time * 0.35 * facing;
     const glow = 0.85 + Math.sin(time * 2) * 0.15;
     magicCircle.scale.setScalar(glow * 0.1 + 0.92);
-    for (const { mesh, material, phase } of motes) {
-      const progress = (time * 0.3 + phase) % 1;
-      const angle = phase * Math.PI * 2 + time * 0.6;
-      mesh.position.set(
-        Math.cos(angle) * 0.78,
-        -0.95 + progress * 2,
-        Math.sin(angle) * 0.5,
-      );
-      mesh.rotation.y = time * 2 + phase * 6;
-      material.opacity = Math.sin(progress * Math.PI) * 0.85;
-    }
+    for (const mote of motes) placeMote(mote, auraStyle, time);
     const haloPulse = 0.28 + Math.sin(time * 3.2) * 0.1;
     for (const halo of halos) {
       if (halo.material instanceof MeshBasicMaterial) halo.material.opacity = haloPulse;
@@ -339,14 +507,7 @@ export function createActorStage(
     // 上体を相手の方へ倒しつつ半歩踏み込む（プレイヤーは右、敵は左）。のけぞりは逆向き。
     pivot.rotation.z = (-lean * LEAN_ANGLE + recoil * RECOIL_ANGLE) * facing;
     pivot.position.x = (lean - recoil * 0.5) * LEAN_STEP * facing;
-    for (const { mesh, animation, baseZ, baseY } of animated) {
-      if (animation === 'spin') {
-        mesh.rotation.y = baseY + time * SPIN_SPEED;
-        continue;
-      }
-      const flap = Math.sin(time * FLAP_SPEED) * FLAP_ANGLE;
-      mesh.rotation.z = baseZ + (animation === 'flapRight' ? flap : -flap);
-    }
+    for (const part of animated) animatePart(part, time);
     renderer.render(scene, camera);
     gl.endFrameEXP();
   };

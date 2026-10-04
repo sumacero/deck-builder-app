@@ -29,7 +29,7 @@ const INTANGIBLE: EnemyAction = { kind: 'intangible' };
 
 export const EMBER_LIZARD: EnemyDefinition = {
   id: 'ember-lizard',
-  name: '火トカゲ',
+  name: 'サラマンダー',
   icon: '🦎',
   rank: 'normal',
   maxHp: 34,
@@ -73,7 +73,7 @@ export const MAGMA_SLIME: EnemyDefinition = {
 
 export const LAVA_KNIGHT: EnemyDefinition = {
   id: 'lava-knight',
-  name: '溶岩の騎士',
+  name: '獄炎の騎士',
   icon: '⚔️',
   rank: 'elite',
   maxHp: 82,
@@ -224,7 +224,7 @@ export const FROST_JELLY: EnemyDefinition = {
 
 export const DROWNED_GUARD: EnemyDefinition = {
   id: 'drowned-guard',
-  name: '水没した衛兵',
+  name: '沈都の衛兵',
   icon: '🔱',
   rank: 'normal',
   maxHp: 44,
@@ -330,8 +330,8 @@ export const GEAR_SOLDIER: EnemyDefinition = {
 /** チャージ → 大技の順なので、群れでは行動の開始位置がずれないよう先頭に置く。 */
 export const SPARK_DRONE: EnemyDefinition = {
   id: 'spark-drone',
-  name: '雷のドローン',
-  icon: '🛸',
+  name: 'からくり雷眼',
+  icon: '👁️',
   rank: 'normal',
   maxHp: 32,
   moves: [
@@ -533,7 +533,7 @@ export const RUIN_CRAB: EnemyDefinition = {
 
 export const BOLT_BUG: EnemyDefinition = {
   id: 'bolt-bug',
-  name: '雷虫',
+  name: '雷甲虫',
   icon: '🐞',
   rank: 'normal',
   maxHp: 12,

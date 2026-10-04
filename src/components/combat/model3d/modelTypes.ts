@@ -9,7 +9,7 @@ export type Vec3 = readonly [number, number, number];
 
 export type PartShape =
   | { kind: 'box'; size: Vec3 }
-  /** 低ポリの球（正二十面体を 1 回分割したもの）。 */
+  /** 低ポリの球（正二十面体を 2 回分割したもの）。 */
   | { kind: 'sphere'; radius: number }
   | { kind: 'cone'; radius: number; height: number; segments?: number }
   | {
@@ -20,10 +20,33 @@ export type PartShape =
       segments?: number;
     }
   | { kind: 'torus'; radius: number; tube: number }
-  | { kind: 'octahedron'; radius: number };
+  | { kind: 'octahedron'; radius: number }
+  /** 両端の丸い円柱（手足・尾など）。length は丸みを除いた胴の長さ。 */
+  | { kind: 'capsule'; radius: number; length: number }
+  /** 角ばった岩・結晶（分割しない正二十面体）。 */
+  | { kind: 'rock'; radius: number }
+  /** 歯車。xy 平面に置かれ、正面（+z）を向く。 */
+  | { kind: 'gear'; radius: number; teeth: number; thickness: number };
 
-/** 部品ごとの小さな動き。flap は翼のはばたき、spin は y 軸まわりの回転。 */
-export type PartAnimation = 'flapLeft' | 'flapRight' | 'spin';
+/**
+ * 部品ごとの小さな動き。
+ * - flapLeft / flapRight: 翼のはばたき
+ * - spin: y 軸まわりの回転（浮かぶ結晶・コマのように回るもの）
+ * - roll: 部品自身の z 軸まわりの回転（歯車・光の輪）
+ * - sway: z 軸まわりにゆっくり揺れる（尾・ひれ・触手・葉）
+ * - flicker: 炎のように伸び縮みする
+ * - orbit: モデルの中心（y 軸）のまわりを回る（浮かぶ岩・氷片）
+ * - hover: その場で上下にふわふわ浮く
+ */
+export type PartAnimation =
+  | 'flapLeft'
+  | 'flapRight'
+  | 'spin'
+  | 'roll'
+  | 'sway'
+  | 'flicker'
+  | 'orbit'
+  | 'hover';
 
 export type ModelPart = {
   shape: PartShape;
@@ -37,10 +60,28 @@ export type ModelPart = {
   /** 1 未満で半透明。 */
   opacity?: number;
   animation?: PartAnimation;
+  /**
+   * 動きの支点（モデル座標）。翼の付け根など。省略すると部品の中心で回る。
+   */
+  pivot?: Vec3;
+  /** はばたきの回転軸。正面向きの翼は z（既定）、横向きの獣の翼は x。 */
+  flapAxis?: 'x' | 'z';
+  /**
+   * 動きの位相（0〜1）。同じ動きの部品をずらして、揃いすぎないようにする。
+   * roll では 0.5 以上で逆回転になる（噛み合う歯車を逆に回すため）。
+   */
+  phase?: number;
 };
 
 /** 待機中の動き。bob は呼吸、float は浮遊、squish は伸び縮み。 */
 export type IdleStyle = 'bob' | 'float' | 'squish';
+
+/**
+ * 足元の魔法陣と、まわりを漂う粒の種類。属性・地域に合わせる。
+ * fire = 舞い上がる火の粉 / grass = 舞い落ちる木の葉 / water = 立ちのぼる泡 /
+ * thunder = 瞬く火花 / arcane = 紫の光の粒（属性なし）。
+ */
+export type AuraStyle = 'fire' | 'grass' | 'water' | 'thunder' | 'arcane';
 
 export type ActorModel = {
   parts: ModelPart[];
@@ -49,4 +90,6 @@ export type ActorModel = {
   scale?: number;
   /** 相手の方へ向ける y 軸の回転（ラジアン）。正面向きの人型は正、横向きの獣は負。 */
   yaw?: number;
+  /** 省略時はプレイヤー = 金、敵 = arcane。 */
+  aura?: AuraStyle;
 };

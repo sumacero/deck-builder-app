@@ -1,68 +1,53 @@
-import type { ActorModel, ModelPart, Vec3 } from './modelTypes';
+import type { ActorModel, AuraStyle, ModelPart, Vec3 } from './modelTypes';
+import {
+  EYE_COLOR,
+  box,
+  capsule,
+  cone,
+  crown,
+  crystals,
+  cylinder,
+  eyeShine,
+  eyes,
+  flame,
+  rock,
+  sphere,
+  taper,
+  torus,
+} from './parts';
 
 /**
  * キャラクターの「型」ごとの組み立て関数。色や装備を変えるだけで別のキャラクターを作れる。
+ * 地域ごとの固有のモンスターは regions/ 以下で、これらと parts の部品を組み合わせて作る。
  */
-
-const EYE_COLOR = '#111111';
-
-const box = (size: Vec3, color: string, position: Vec3, extra?: Partial<ModelPart>): ModelPart => ({
-  shape: { kind: 'box', size },
-  color,
-  position,
-  ...extra,
-});
-
-const sphere = (
-  radius: number,
-  color: string,
-  position: Vec3,
-  extra?: Partial<ModelPart>,
-): ModelPart => ({
-  shape: { kind: 'sphere', radius },
-  color,
-  position,
-  ...extra,
-});
-
-const cone = (
-  radius: number,
-  height: number,
-  color: string,
-  position: Vec3,
-  extra?: Partial<ModelPart>,
-): ModelPart => ({
-  shape: { kind: 'cone', radius, height },
-  color,
-  position,
-  ...extra,
-});
-
-const cylinder = (
-  radius: number,
-  height: number,
-  color: string,
-  position: Vec3,
-  extra?: Partial<ModelPart>,
-): ModelPart => ({
-  shape: { kind: 'cylinder', radiusTop: radius, radiusBottom: radius, height },
-  color,
-  position,
-  ...extra,
-});
-
-/** 頭の上に乗せる王冠。y は王冠の底の高さ。 */
-function crown(y: number, color = '#E2B53E', width = 0.26): ModelPart[] {
-  const spikes = [-1, 0, 1].map((step) =>
-    cone(0.06, 0.16, color, [step * width * 0.6, y + 0.17, 0]),
-  );
-  return [cylinder(width, 0.12, color, [0, y + 0.06, 0]), ...spikes];
-}
 
 // ---------- 人型 ----------
 
-export type Headgear = 'hood' | 'helmet' | 'wizardHat' | 'horns' | 'crown' | 'spikyHair' | 'none';
-export type Weapon = 'sword' | 'axe' | 'staff' | 'spear' | 'club' | 'none';
+export type Headgear =
+  | 'hood'
+  | 'helmet'
+  | 'hornedHelm'
+  | 'plumeHelm'
+  | 'visor'
+  | 'wizardHat'
+  | 'horns'
+  | 'crown'
+  | 'iceCrown'
+  | 'spikyHair'
+  | 'longHair'
+  | 'none';
+
+export type Weapon =
+  | 'sword'
+  | 'flameSword'
+  | 'axe'
+  | 'staff'
+  | 'spear'
+  | 'trident'
+  | 'lance'
+  | 'bow'
+  | 'club'
+  | 'none';
 
 export type HumanoidOptions = {
   skin: string;
@@ -71,14 +56,29 @@ export type HumanoidOptions = {
   accent?: string;
   headgear?: Headgear;
   weapon?: Weapon;
+  /** 杖の宝玉・刃のきらめき・穂先の光など、武器に宿る魔力の色。 */
+  magic?: string;
   shield?: boolean;
-  /** 光る目（アンデッドなど）。 */
+  /** 盾の紋章の色。 */
+  emblem?: string;
+  /** 光る目（アンデッド・機械など）。 */
   eyeColor?: string;
   /** マント。 */
   cape?: string;
-  /** 前髪。 */
+  /** 髪（前髪・長髪・逆立った髪の色）。 */
   hair?: string;
+  /** 肩当て。 */
+  pauldrons?: boolean;
+  /** 足を隠す長いローブ・ドレス。色を指定する。 */
+  robe?: string;
+  boots?: string;
+  /** 脚の代わりに付ける下半身（人魚の尾など）。robe より優先する。 */
+  lowerBody?: ModelPart[];
+  /** 最後に足す固有の飾り。 */
+  extras?: ModelPart[];
 };
+
+const HAND: Vec3 = [0.42, -0.4, 0.14];
 
 /** 額にかかる前髪。 */
 function bangs(color: string): ModelPart[] {
@@ -89,46 +89,80 @@ function bangs(color: string): ModelPart[] {
   );
 }
 
-/** 目に入れるアニメ調のハイライト。 */
-const eyeShine = (x: number, y: number, z: number): ModelPart =>
-  sphere(0.018, '#FFFFFF', [x + 0.012, y + 0.018, z], { glow: true });
-
-/** 逆立った髪（hair の色を使う）。 */
+/** 逆立った髪。 */
 function spikyHair(color: string): ModelPart[] {
-  const spikes: [number, number, number, number][] = [
-    [0, 0.68, -0.02, 0],
-    [0.14, 0.64, -0.04, -0.5],
-    [-0.14, 0.64, -0.04, 0.5],
-    [0.07, 0.62, -0.16, -0.25],
-    [-0.07, 0.62, -0.16, 0.25],
+  const spikes: [number, number, number, number, number][] = [
+    [0, 0.7, -0.02, 0, -0.35],
+    [0.15, 0.65, -0.04, -0.55, -0.3],
+    [-0.15, 0.65, -0.04, 0.55, -0.3],
+    [0.08, 0.62, -0.17, -0.25, -0.9],
+    [-0.08, 0.62, -0.17, 0.25, -0.9],
+    [0.2, 0.5, -0.1, -1.1, -0.4],
+    [-0.2, 0.5, -0.1, 1.1, -0.4],
   ];
   return [
     sphere(0.26, color, [0, 0.45, -0.04], { scale: [1, 0.85, 1] }),
-    ...spikes.map(([x, y, z, tilt]) =>
-      cone(0.08, 0.24, color, [x, y, z], { rotation: [-0.35, 0, tilt] }),
+    ...spikes.map(([x, y, z, tilt, pitch]) =>
+      cone(0.08, 0.26, color, [x, y, z], { rotation: [pitch, 0, tilt] }),
     ),
   ];
 }
 
-function headgearParts(headgear: Headgear, color: string, hair: string): ModelPart[] {
+/** 背中に流れる長い髪。 */
+function longHair(color: string): ModelPart[] {
+  return [
+    sphere(0.265, color, [0, 0.44, -0.04], { scale: [1, 0.9, 1] }),
+    taper(0.2, 0.28, 0.75, color, [0, 0.05, -0.16], { rotation: [0.12, 0, 0], scale: [1, 1, 0.5] }),
+    capsule(0.07, 0.4, color, [0.22, 0.2, 0.02], { rotation: [0, 0, 0.1] }),
+    capsule(0.07, 0.4, color, [-0.22, 0.2, 0.02], { rotation: [0, 0, -0.1] }),
+  ];
+}
+
+function headgearParts(headgear: Headgear, color: string, hair: string, magic: string): ModelPart[] {
   switch (headgear) {
     case 'spikyHair':
       return spikyHair(hair);
+    case 'longHair':
+      return longHair(hair);
     case 'hood':
       return [
-        sphere(0.28, color, [0, 0.42, -0.04], { scale: [1, 1.05, 1] }),
-        cone(0.2, 0.3, color, [0, 0.72, -0.08], { rotation: [-0.4, 0, 0] }),
+        sphere(0.29, color, [0, 0.42, -0.05], { scale: [1, 1.05, 1] }),
+        cone(0.2, 0.34, color, [0, 0.72, -0.12], { rotation: [-0.5, 0, 0] }),
+        torus(0.2, 0.04, color, [0, 0.4, 0.14], { scale: [1, 1.2, 1] }),
       ];
     case 'helmet':
       return [
-        cylinder(0.27, 0.22, color, [0, 0.5, 0]),
-        box([0.3, 0.05, 0.05], '#222222', [0, 0.42, 0.25]),
-        cone(0.05, 0.2, color, [0, 0.7, 0]),
+        sphere(0.28, color, [0, 0.47, 0], { scale: [1, 0.9, 1] }),
+        box([0.34, 0.05, 0.06], '#222222', [0, 0.42, 0.25]),
+        box([0.04, 0.2, 0.06], color, [0, 0.36, 0.27]),
+        cone(0.05, 0.2, color, [0, 0.78, 0]),
+      ];
+    case 'hornedHelm':
+      return [
+        sphere(0.28, color, [0, 0.47, 0], { scale: [1, 0.9, 1] }),
+        box([0.34, 0.05, 0.06], '#1A1010', [0, 0.42, 0.25]),
+        cone(0.07, 0.36, '#EDE3C8', [0.25, 0.7, 0], { rotation: [0, 0, -0.7] }),
+        cone(0.07, 0.36, '#EDE3C8', [-0.25, 0.7, 0], { rotation: [0, 0, 0.7] }),
+      ];
+    case 'plumeHelm':
+      return [
+        sphere(0.28, color, [0, 0.47, 0], { scale: [1, 0.9, 1] }),
+        box([0.34, 0.05, 0.06], '#222222', [0, 0.42, 0.25]),
+        box([0.05, 0.12, 0.42], magic, [0, 0.78, -0.08], { rotation: [-0.3, 0, 0] }),
+        cone(0.06, 0.3, magic, [0, 0.72, -0.34], { rotation: [-2.2, 0, 0], animation: 'sway' }),
+      ];
+    case 'visor':
+      return [
+        box([0.48, 0.42, 0.46], color, [0, 0.42, 0]),
+        box([0.4, 0.07, 0.04], magic, [0, 0.42, 0.24], { glow: true }),
+        cylinder(0.015, 0.22, color, [0.14, 0.72, 0]),
+        sphere(0.035, magic, [0.14, 0.84, 0], { glow: true }),
       ];
     case 'wizardHat':
       return [
-        cylinder(0.4, 0.04, color, [0, 0.55, 0]),
-        cone(0.26, 0.6, color, [0, 0.86, 0], { rotation: [0, 0, 0.25] }),
+        cylinder(0.42, 0.04, color, [0, 0.56, 0]),
+        cone(0.26, 0.62, color, [0.02, 0.88, -0.02], { rotation: [-0.15, 0, 0.3] }),
+        torus(0.26, 0.03, magic, [0, 0.6, 0], { rotation: [Math.PI / 2, 0, 0] }),
       ];
     case 'horns':
       return [
@@ -136,45 +170,90 @@ function headgearParts(headgear: Headgear, color: string, hair: string): ModelPa
         cone(0.07, 0.3, '#EDE3C8', [-0.17, 0.66, 0], { rotation: [0, 0, 0.5] }),
       ];
     case 'crown':
-      return crown(0.54);
+      return crown(0.56);
+    case 'iceCrown':
+      return [
+        cylinder(0.24, 0.06, magic, [0, 0.6, 0], { glow: true, opacity: 0.85 }),
+        ...[-0.16, -0.08, 0, 0.08, 0.16].map((x, index) =>
+          cone(0.04, index === 2 ? 0.34 : 0.22 - Math.abs(index - 2) * 0.03, magic, [x, 0.74 - Math.abs(index - 2) * 0.03, 0.06], {
+            rotation: [0, 0, -x * 1.5],
+            glow: true,
+            opacity: 0.85,
+            segments: 4,
+          }),
+        ),
+      ];
     case 'none':
       return [];
   }
 }
 
 /** 右手（+x 側）に持つ武器。 */
-function weaponParts(weapon: Weapon): ModelPart[] {
-  const hand: Vec3 = [0.42, -0.38, 0.14];
+function weaponParts(weapon: Weapon, magic: string): ModelPart[] {
+  const [hx, hy, hz] = HAND;
   switch (weapon) {
     case 'sword':
       return [
-        box([0.07, 0.75, 0.03], '#D8DDE3', [hand[0], hand[1] + 0.45, hand[2]]),
-        box([0.24, 0.05, 0.07], '#C9A227', [hand[0], hand[1] + 0.06, hand[2]]),
-        box([0.06, 0.14, 0.06], '#5A3A22', [hand[0], hand[1] - 0.04, hand[2]]),
+        box([0.08, 0.75, 0.03], '#D8DDE3', [hx, hy + 0.46, hz]),
+        box([0.02, 0.7, 0.035], magic, [hx, hy + 0.46, hz], { glow: true, opacity: 0.6 }),
+        cone(0.04, 0.1, '#D8DDE3', [hx, hy + 0.88, hz], { segments: 4 }),
+        box([0.26, 0.05, 0.08], '#C9A227', [hx, hy + 0.06, hz]),
+        box([0.06, 0.14, 0.06], '#5A3A22', [hx, hy - 0.04, hz]),
+        sphere(0.04, '#C9A227', [hx, hy - 0.13, hz]),
+      ];
+    case 'flameSword':
+      return [
+        box([0.09, 0.75, 0.035], '#2A1A1A', [hx, hy + 0.46, hz]),
+        box([0.035, 0.72, 0.04], magic, [hx, hy + 0.46, hz], { glow: true }),
+        ...flame([hx, hy + 0.55, hz], 0.8, 0.1),
+        ...flame([hx, hy + 0.25, hz], 0.6, 0.6),
+        box([0.3, 0.06, 0.09], '#5A1E1E', [hx, hy + 0.06, hz]),
+        box([0.06, 0.14, 0.06], '#2A1A1A', [hx, hy - 0.04, hz]),
       ];
     case 'axe':
       return [
-        cylinder(0.035, 1.0, '#4A3322', [hand[0], hand[1] + 0.25, hand[2]]),
-        box([0.32, 0.26, 0.05], '#7A7F87', [hand[0] + 0.14, hand[1] + 0.62, hand[2]]),
+        cylinder(0.035, 1.0, '#4A3322', [hx, hy + 0.25, hz]),
+        box([0.32, 0.26, 0.05], '#7A7F87', [hx + 0.14, hy + 0.62, hz]),
       ];
     case 'staff':
       return [
-        cylinder(0.03, 1.15, '#5A3A22', [hand[0], hand[1] + 0.3, hand[2]]),
-        sphere(0.1, '#B37CFF', [hand[0], hand[1] + 0.92, hand[2]], {
-          glow: true,
-        }),
+        cylinder(0.03, 1.15, '#5A3A22', [hx, hy + 0.3, hz]),
+        torus(0.1, 0.02, '#C9A227', [hx, hy + 0.92, hz]),
+        sphere(0.085, magic, [hx, hy + 0.92, hz], { glow: true }),
       ];
     case 'spear':
       return [
-        cylinder(0.03, 1.3, '#6B5A40', [hand[0], hand[1] + 0.35, hand[2]]),
-        cone(0.07, 0.22, '#E8E8F0', [hand[0], hand[1] + 1.1, hand[2]]),
+        cylinder(0.03, 1.3, '#6B5A40', [hx, hy + 0.35, hz]),
+        cone(0.07, 0.24, '#E8E8F0', [hx, hy + 1.1, hz], { segments: 4 }),
+        box([0.14, 0.03, 0.03], '#C9A227', [hx, hy + 0.97, hz]),
+        sphere(0.03, magic, [hx, hy + 1.24, hz], { glow: true }),
+      ];
+    case 'trident':
+      return [
+        cylinder(0.03, 1.3, '#4A6A6A', [hx, hy + 0.35, hz]),
+        box([0.26, 0.04, 0.04], '#8AC8C0', [hx, hy + 0.98, hz]),
+        cone(0.04, 0.24, '#CFEFF0', [hx, hy + 1.12, hz], { segments: 4 }),
+        cone(0.035, 0.18, '#CFEFF0', [hx + 0.12, hy + 1.08, hz], { segments: 4 }),
+        cone(0.035, 0.18, '#CFEFF0', [hx - 0.12, hy + 1.08, hz], { segments: 4 }),
+        sphere(0.04, magic, [hx, hy + 0.98, hz + 0.03], { glow: true }),
+      ];
+    case 'lance':
+      return [
+        cone(0.1, 1.2, '#C8CCD4', [hx, hy + 0.65, hz], { segments: 8 }),
+        box([0.02, 1.0, 0.02], magic, [hx, hy + 0.6, hz + 0.06], { glow: true, opacity: 0.8 }),
+        cone(0.16, 0.18, '#E2B84A', [hx, hy + 0.04, hz], { rotation: [Math.PI, 0, 0] }),
+      ];
+    case 'bow':
+      return [
+        capsule(0.025, 0.5, '#6A4A2A', [hx + 0.02, hy + 0.48, hz], { rotation: [0, 0, 0.35] }),
+        capsule(0.025, 0.5, '#6A4A2A', [hx + 0.02, hy - 0.02, hz], { rotation: [0, 0, -0.35] }),
+        box([0.01, 0.9, 0.01], '#EDE3C8', [hx - 0.08, hy + 0.23, hz]),
+        sphere(0.04, magic, [hx + 0.11, hy + 0.23, hz], { glow: true }),
       ];
     case 'club':
       return [
-        cylinder(0.05, 0.4, '#5A3A22', [hand[0], hand[1] + 0.1, hand[2]]),
-        sphere(0.14, '#6B4A2E', [hand[0], hand[1] + 0.38, hand[2]], {
-          scale: [1, 1.4, 1],
-        }),
+        cylinder(0.05, 0.4, '#5A3A22', [hx, hy + 0.1, hz]),
+        rock(0.16, '#6B4A2E', [hx, hy + 0.4, hz], { scale: [1, 1.3, 1] }),
       ];
     case 'none':
       return [];
@@ -189,309 +268,352 @@ export function humanoid(options: HumanoidOptions, extra?: Partial<ActorModel>):
     accent = body,
     headgear = 'none',
     weapon = 'none',
+    magic = '#B37CFF',
     shield = false,
+    emblem = '#C9A227',
     eyeColor,
     cape,
     hair,
+    pauldrons = false,
+    robe,
+    boots = '#3A2A22',
+    lowerBody: customLowerBody,
+    extras = [],
   } = options;
-  const eye = eyeColor ?? EYE_COLOR;
   const glowEyes = eyeColor !== undefined;
+  const eyeParts = glowEyes
+    ? [
+        box([0.07, 0.05, 0.04], eyeColor, [0.08, 0.4, 0.22], { glow: true }),
+        box([0.07, 0.05, 0.04], eyeColor, [-0.08, 0.4, 0.22], { glow: true }),
+      ]
+    : [
+        box([0.06, 0.09, 0.04], EYE_COLOR, [0.08, 0.4, 0.22]),
+        box([0.06, 0.09, 0.04], EYE_COLOR, [-0.08, 0.4, 0.22]),
+        eyeShine(0.08, 0.4, 0.245),
+        eyeShine(-0.08, 0.4, 0.245),
+      ];
+  const lowerBody: ModelPart[] = customLowerBody
+    ? customLowerBody
+    : robe
+    ? [
+        taper(0.26, 0.46, 0.66, robe, [0, -0.66, 0], { segments: 14 }),
+        torus(0.45, 0.025, accent, [0, -0.98, 0], { rotation: [Math.PI / 2, 0, 0] }),
+      ]
+    : [
+        capsule(0.085, 0.3, legs, [0.12, -0.64, 0]),
+        capsule(0.085, 0.3, legs, [-0.12, -0.64, 0]),
+        box([0.17, 0.16, 0.24], boots, [0.12, -0.92, 0.03]),
+        box([0.17, 0.16, 0.24], boots, [-0.12, -0.92, 0.03]),
+      ];
   const parts: ModelPart[] = [
-    box([0.18, 0.5, 0.2], legs, [0.13, -0.72, 0]),
-    box([0.18, 0.5, 0.2], legs, [-0.13, -0.72, 0]),
-    box([0.56, 0.62, 0.32], body, [0, -0.16, 0]),
-    box([0.58, 0.08, 0.34], accent, [0, -0.42, 0]),
-    box([0.15, 0.5, 0.16], body, [0.37, -0.15, 0]),
-    box([0.15, 0.5, 0.16], body, [-0.37, -0.15, 0]),
-    sphere(0.07, skin, [0.37, -0.42, 0.02]),
-    sphere(0.07, skin, [-0.37, -0.42, 0.02]),
+    ...lowerBody,
+    taper(0.27, 0.22, 0.6, body, [0, -0.16, 0], { segments: 8, scale: [1, 1, 0.66] }),
+    box([0.5, 0.07, 0.32], accent, [0, -0.42, 0]),
+    box([0.08, 0.08, 0.04], emblem, [0, -0.42, 0.17]),
+    box([0.2, 0.2, 0.04], accent, [0, -0.04, 0.17], { rotation: [0, 0, Math.PI / 4] }),
+    cylinder(0.08, 0.1, skin, [0, 0.16, 0]),
+    capsule(0.07, 0.34, body, [0.35, -0.16, 0], { rotation: [0, 0, 0.12] }),
+    capsule(0.07, 0.34, body, [-0.35, -0.16, 0], { rotation: [0, 0, -0.12] }),
+    sphere(0.075, skin, [0.38, -0.42, 0.02]),
+    sphere(0.075, skin, [-0.38, -0.42, 0.02]),
     sphere(0.24, skin, [0, 0.38, 0]),
-    box([0.06, glowEyes ? 0.06 : 0.09, 0.04], eye, [0.08, 0.4, 0.22], { glow: glowEyes }),
-    box([0.06, glowEyes ? 0.06 : 0.09, 0.04], eye, [-0.08, 0.4, 0.22], { glow: glowEyes }),
-    ...(glowEyes ? [] : [eyeShine(0.08, 0.4, 0.245), eyeShine(-0.08, 0.4, 0.245)]),
+    ...eyeParts,
     ...(hair ? bangs(hair) : []),
-    ...headgearParts(headgear, accent, hair ?? accent),
-    ...weaponParts(weapon),
+    ...headgearParts(headgear, accent, hair ?? accent, magic),
+    ...weaponParts(weapon, magic),
   ];
-  if (shield) {
+  if (pauldrons) {
     parts.push(
-      cylinder(0.26, 0.06, accent, [-0.48, -0.2, 0.12], {
-        rotation: [Math.PI / 2, 0, 0],
-      }),
-      sphere(0.06, '#C9A227', [-0.48, -0.2, 0.17]),
+      sphere(0.14, accent, [0.3, 0.06, 0], { scale: [1.1, 0.7, 1] }),
+      sphere(0.14, accent, [-0.3, 0.06, 0], { scale: [1.1, 0.7, 1] }),
     );
   }
-  if (cape) parts.push(box([0.6, 0.85, 0.04], cape, [0, -0.3, -0.2], { rotation: [0.12, 0, 0] }));
+  if (shield) {
+    parts.push(
+      cylinder(0.27, 0.06, accent, [-0.5, -0.2, 0.12], { rotation: [Math.PI / 2, 0, 0] }),
+      torus(0.26, 0.025, emblem, [-0.5, -0.2, 0.16]),
+      sphere(0.07, emblem, [-0.5, -0.2, 0.17], { scale: [1, 1, 0.5] }),
+    );
+  }
+  if (cape) {
+    parts.push(
+      box([0.62, 0.9, 0.04], cape, [0, -0.32, -0.21], { rotation: [0.14, 0, 0] }),
+      box([0.5, 0.06, 0.1], cape, [0, 0.1, -0.15]),
+    );
+  }
+  parts.push(...extras);
   return { parts, idle: 'bob', yaw: 0.5, ...extra };
 }
 
 // ---------- スライム ----------
 
-export function slime(color: string, options?: { crowned?: boolean; scale?: number }): ActorModel {
+export type SlimeOptions = {
+  crowned?: boolean;
+  scale?: number;
+  /** 体の中に浮かぶ芯（光る）。 */
+  core?: string;
+  extras?: ModelPart[];
+};
+
+export function slime(color: string, options?: SlimeOptions): ActorModel {
   const parts: ModelPart[] = [
-    sphere(0.7, color, [0, -0.45, 0], { scale: [1, 0.78, 1], opacity: 0.92 }),
-    sphere(0.14, '#FFFFFF', [-0.28, -0.12, 0.42], { opacity: 0.6 }),
-    sphere(0.08, EYE_COLOR, [0.18, -0.3, 0.6]),
-    sphere(0.08, EYE_COLOR, [-0.12, -0.3, 0.62]),
+    sphere(0.7, color, [0, -0.45, 0], { scale: [1, 0.78, 1], opacity: 0.88 }),
+    sphere(0.14, '#FFFFFF', [-0.28, -0.1, 0.42], { opacity: 0.6, scale: [1, 0.7, 0.6] }),
+    sphere(0.06, '#FFFFFF', [-0.12, 0, 0.45], { opacity: 0.5 }),
+    ...eyes(0.16, -0.3, 0.6, 0.075),
+    box([0.12, 0.03, 0.03], EYE_COLOR, [0.02, -0.44, 0.64], { rotation: [0, 0, 0] }),
   ];
+  if (options?.core) parts.push(sphere(0.2, options.core, [0, -0.5, 0], { glow: true, opacity: 0.7 }));
   if (options?.crowned) parts.push(...crown(0.05));
+  if (options?.extras) parts.push(...options.extras);
   return { parts, idle: 'squish', yaw: 0.4, scale: options?.scale };
 }
 
 // ---------- 四つ足の獣（横向き、頭が +x） ----------
 
-export function quadruped(
-  color: string,
-  options: {
-    eyeColor?: string;
-    belly?: string;
-    size?: number;
-    ears?: 'pointy' | 'round';
-  },
-): ActorModel {
-  const { eyeColor = EYE_COLOR, belly = color, size = 1, ears = 'pointy' } = options;
-  const legY = -0.78;
-  const earParts =
-    ears === 'pointy'
-      ? [cone(0.07, 0.18, color, [0.5, 0.12, 0.1]), cone(0.07, 0.18, color, [0.5, 0.12, -0.1])]
-      : [sphere(0.09, color, [0.48, 0.08, 0.13]), sphere(0.09, color, [0.48, 0.08, -0.13])];
+export type QuadrupedOptions = {
+  eyeColor?: string;
+  belly?: string;
+  size?: number;
+  ears?: 'pointy' | 'round' | 'long' | 'none';
+  tail?: 'thin' | 'bushy' | 'puff' | 'none';
+  /** 鼻先の長さ（0 で丸顔）。 */
+  snout?: number;
+  extras?: ModelPart[];
+};
+
+export function quadruped(color: string, options: QuadrupedOptions): ActorModel {
+  const {
+    eyeColor,
+    belly = color,
+    size = 1,
+    ears = 'pointy',
+    tail = 'thin',
+    snout = 0.22,
+    extras = [],
+  } = options;
+  const legY = -0.74;
+  const earParts: ModelPart[] = {
+    pointy: [
+      cone(0.07, 0.2, color, [0.48, 0.14, 0.1], { rotation: [0.2, 0, -0.2] }),
+      cone(0.07, 0.2, color, [0.48, 0.14, -0.1], { rotation: [-0.2, 0, -0.2] }),
+    ],
+    round: [sphere(0.09, color, [0.46, 0.08, 0.13]), sphere(0.09, color, [0.46, 0.08, -0.13])],
+    long: [
+      capsule(0.05, 0.36, color, [0.42, 0.3, 0.08], { rotation: [0.15, 0, 0.35], scale: [1, 1, 0.6] }),
+      capsule(0.05, 0.36, color, [0.38, 0.28, -0.08], { rotation: [-0.15, 0, 0.5], scale: [1, 1, 0.6] }),
+    ],
+    none: [],
+  }[ears];
+  const tailParts: ModelPart[] = {
+    thin: [capsule(0.05, 0.45, color, [-0.66, -0.2, 0], { rotation: [0, 0, 1.0], animation: 'sway' })],
+    bushy: [
+      capsule(0.11, 0.4, color, [-0.66, -0.18, 0], { rotation: [0, 0, 0.9], animation: 'sway' }),
+      sphere(0.1, belly, [-0.82, -0.02, 0], { animation: 'sway' }),
+    ],
+    puff: [sphere(0.1, belly, [-0.5, -0.3, 0])],
+    none: [],
+  }[tail];
+  const leg = (x: number, z: number): ModelPart[] => [
+    capsule(0.07, 0.24, color, [x, legY, z]),
+    sphere(0.075, belly, [x + 0.02, -0.94, z], { scale: [1.2, 0.6, 1] }),
+  ];
   const parts: ModelPart[] = [
-    box([0.95, 0.42, 0.42], color, [-0.05, -0.38, 0]),
-    box([0.8, 0.12, 0.36], belly, [-0.05, -0.6, 0]),
-    box([0.36, 0.32, 0.32], color, [0.52, -0.14, 0]),
-    box([0.22, 0.16, 0.22], belly, [0.76, -0.2, 0]),
-    sphere(0.04, eyeColor, [0.66, -0.06, 0.15], {
-      glow: eyeColor !== EYE_COLOR,
-    }),
-    sphere(0.04, eyeColor, [0.66, -0.06, -0.15], {
-      glow: eyeColor !== EYE_COLOR,
-    }),
+    capsule(0.23, 0.55, color, [-0.08, -0.36, 0], { rotation: [0, 0, Math.PI / 2] }),
+    capsule(0.16, 0.5, belly, [-0.06, -0.48, 0], { rotation: [0, 0, Math.PI / 2], scale: [1, 1, 0.9] }),
+    sphere(0.25, color, [0.26, -0.3, 0]),
+    sphere(0.2, color, [0.5, -0.06, 0]),
+    ...(snout > 0
+      ? [
+          capsule(0.09, snout, belly, [0.66 + snout * 0.3, -0.12, 0], { rotation: [0, 0, Math.PI / 2] }),
+          sphere(0.04, EYE_COLOR, [0.76 + snout * 0.6, -0.08, 0]),
+        ]
+      : []),
+    sphere(0.035, eyeColor ?? EYE_COLOR, [0.62, -0.01, 0.13], { glow: eyeColor !== undefined }),
+    sphere(0.035, eyeColor ?? EYE_COLOR, [0.62, -0.01, -0.13], { glow: eyeColor !== undefined }),
     ...earParts,
-    box([0.12, 0.36, 0.12], color, [0.3, legY, 0.13]),
-    box([0.12, 0.36, 0.12], color, [0.3, legY, -0.13]),
-    box([0.12, 0.36, 0.12], color, [-0.38, legY, 0.13]),
-    box([0.12, 0.36, 0.12], color, [-0.38, legY, -0.13]),
-    cone(0.06, 0.5, color, [-0.68, -0.22, 0], { rotation: [0, 0, 1.1] }),
+    ...leg(0.28, 0.13),
+    ...leg(0.28, -0.13),
+    ...leg(-0.4, 0.13),
+    ...leg(-0.4, -0.13),
+    ...tailParts,
+    ...extras,
   ];
   return { parts, idle: 'bob', yaw: -0.45, scale: size };
 }
 
 // ---------- 翼を持つもの（正面向き） ----------
 
-export function winged(
-  body: string,
-  wing: string,
-  options: { head?: string; beak?: boolean; ears?: boolean; eyeColor?: string },
-): ActorModel {
-  const { head = body, beak = false, ears = false, eyeColor = EYE_COLOR } = options;
-  const glow = eyeColor !== EYE_COLOR;
+export type WingedOptions = {
+  head?: string;
+  beak?: boolean;
+  ears?: boolean;
+  eyeColor?: string;
+  /** 翼の先の色（羽根の先端・皮膜の縁）。 */
+  wingTip?: string;
+  /** 翼の大きさ。 */
+  span?: number;
+  extras?: ModelPart[];
+};
+
+/**
+ * 翼は中心を共有する数枚の板を重ねて作る（はばたきは部品ごとの回転なので、中心が同じなら一緒に動く）。
+ */
+export function wingPair(color: string, tip: string, center: Vec3, span = 1): ModelPart[] {
+  const [x, y, z] = center;
+  return ([1, -1] as const).flatMap((side) => {
+    const animation = side === 1 ? ('flapRight' as const) : ('flapLeft' as const);
+    const at: Vec3 = [x * side, y, z];
+    const pivot: Vec3 = [x * side * 0.25, y, z];
+    const tilt = 0.35 * side;
+    return [
+      sphere(0.5 * span, color, at, { scale: [1, 0.08, 0.42], rotation: [0, 0, tilt], animation, pivot }),
+      sphere(0.5 * span, tip, at, {
+        scale: [1.12, 0.05, 0.3],
+        rotation: [0, 0, tilt + 0.06 * side],
+        animation,
+        pivot,
+      }),
+    ];
+  });
+}
+
+export type SideWingOptions = {
+  membrane: string;
+  bone: string;
+  /** 指先の爪・羽根の先の色。 */
+  tip: string;
+  /** 翼の付け根（体の中心線上の点。左右へは z 方向に開く）。 */
+  root: Vec3;
+  span?: number;
+  /** 指先を光らせる。 */
+  glowTip?: boolean;
+};
+
+/**
+ * 横向きの獣（竜・グリフォン）の左右の翼。付け根から指のように骨を広げ、骨ごとに皮膜（羽）を張る。
+ * 付け根を支点に x 軸まわりではばたく。
+ */
+export function sideWings(options: SideWingOptions): ModelPart[] {
+  const { membrane, bone, tip, root, span = 1, glowTip = false } = options;
+  const fingers: [number, number][] = [
+    [1.25, 0.95],
+    [0.85, 0.85],
+    [0.45, 0.65],
+  ];
+  return ([1, -1] as const).flatMap((side) => {
+    const animation = side === 1 ? ('flapRight' as const) : ('flapLeft' as const);
+    const pivot: Vec3 = [root[0], root[1], root[2] + 0.12 * side];
+    return fingers.flatMap(([angle, length], index) => {
+      const reach = length * span;
+      // 骨（y 軸向きのカプセル）を x 軸まわりに倒し、上（y）と外（±z）の間の向きにする。
+      const tilt = side * (Math.PI / 2 - angle);
+      const direction: Vec3 = [0, Math.sin(angle), side * Math.cos(angle)];
+      const along = (ratio: number, back = 0): Vec3 => [
+        pivot[0] - back,
+        pivot[1] + direction[1] * reach * ratio,
+        pivot[2] + direction[2] * reach * ratio,
+      ];
+      const shared = { animation, pivot, flapAxis: 'x' as const };
+      return [
+        sphere(0.5, membrane, along(0.5, 0.16 + index * 0.04), {
+          ...shared,
+          rotation: [tilt, 0, 0],
+          scale: [0.34 * span, reach, 0.05],
+          opacity: 0.92,
+        }),
+        capsule(0.03, reach * 0.9, bone, along(0.5), { ...shared, rotation: [tilt, 0, 0] }),
+        cone(0.035, 0.12, tip, along(1.02), { ...shared, rotation: [tilt, 0, 0], glow: glowTip }),
+      ];
+    });
+  });
+}
+
+export function winged(body: string, wing: string, options: WingedOptions): ActorModel {
+  const {
+    head = body,
+    beak = false,
+    ears = false,
+    eyeColor,
+    wingTip = wing,
+    span = 1,
+    extras = [],
+  } = options;
   const parts: ModelPart[] = [
     sphere(0.34, body, [0, -0.15, 0], { scale: [1, 1.15, 0.9] }),
     sphere(0.22, head, [0, 0.3, 0.05]),
-    sphere(0.04, eyeColor, [0.08, 0.34, 0.24], { glow }),
-    sphere(0.04, eyeColor, [-0.08, 0.34, 0.24], { glow }),
-    box([0.75, 0.04, 0.38], wing, [0.5, 0.0, 0], {
-      rotation: [0, 0, 0.35],
-      animation: 'flapRight',
-    }),
-    box([0.75, 0.04, 0.38], wing, [-0.5, 0.0, 0], {
-      rotation: [0, 0, -0.35],
-      animation: 'flapLeft',
-    }),
-    cone(0.05, 0.2, '#D9A630', [0.08, -0.6, 0.05], {
-      rotation: [Math.PI, 0, 0],
-    }),
-    cone(0.05, 0.2, '#D9A630', [-0.08, -0.6, 0.05], {
-      rotation: [Math.PI, 0, 0],
-    }),
+    ...eyes(0.08, 0.34, 0.24, 0.04, eyeColor),
+    ...wingPair(wing, wingTip, [0.5 * span, 0, -0.02], span),
+    cone(0.05, 0.2, '#D9A630', [0.08, -0.6, 0.05], { rotation: [Math.PI, 0, 0] }),
+    cone(0.05, 0.2, '#D9A630', [-0.08, -0.6, 0.05], { rotation: [Math.PI, 0, 0] }),
+    ...extras,
   ];
   if (beak) {
-    parts.push(
-      cone(0.07, 0.2, '#E8B530', [0, 0.26, 0.3], {
-        rotation: [Math.PI / 2, 0, 0],
-      }),
-    );
+    parts.push(cone(0.07, 0.2, '#E8B530', [0, 0.26, 0.3], { rotation: [Math.PI / 2, 0, 0] }));
   }
   if (ears) {
     parts.push(
-      cone(0.07, 0.2, body, [0.12, 0.52, 0.02], { rotation: [0, 0, -0.3] }),
-      cone(0.07, 0.2, body, [-0.12, 0.52, 0.02], { rotation: [0, 0, 0.3] }),
+      cone(0.08, 0.24, body, [0.13, 0.52, 0.02], { rotation: [0, 0, -0.35] }),
+      cone(0.08, 0.24, body, [-0.13, 0.52, 0.02], { rotation: [0, 0, 0.35] }),
     );
   }
   return { parts, idle: 'float', yaw: 0.4 };
 }
 
-// ---------- 亡霊 ----------
+// ---------- 岩・金属の巨人 ----------
 
-export function ghost(color: string, options?: { crowned?: boolean; scale?: number }): ActorModel {
+export type GolemOptions = {
+  /** 継ぎ目からのぞく光（溶岩・雷・苔の光など）。 */
+  glow: string;
+  /** 角ばった岩で組むか、箱で組むか（金属）。 */
+  rocky?: boolean;
+  extras?: ModelPart[];
+};
+
+export function golem(color: string, options: GolemOptions): ActorModel {
+  const { glow, rocky = true, extras = [] } = options;
+  const chunk = (radius: number, position: Vec3, size: Vec3, scale: Vec3 = [1, 1, 1]): ModelPart =>
+    rocky ? rock(radius, color, position, { scale }) : box(size, color, position);
   const parts: ModelPart[] = [
-    sphere(0.5, color, [0, 0.05, 0], { scale: [1, 1.15, 1], opacity: 0.82 }),
-    cone(0.48, 0.8, color, [0, -0.62, 0], {
-      rotation: [Math.PI, 0, 0],
-      opacity: 0.82,
-    }),
-    sphere(0.09, '#2A0A3A', [0.16, 0.12, 0.42], { scale: [1, 1.4, 0.6] }),
-    sphere(0.09, '#2A0A3A', [-0.16, 0.12, 0.42], { scale: [1, 1.4, 0.6] }),
-    sphere(0.12, color, [0.5, -0.12, 0.1], { opacity: 0.82 }),
-    sphere(0.12, color, [-0.5, -0.12, 0.1], { opacity: 0.82 }),
-  ];
-  if (options?.crowned) parts.push(...crown(0.58));
-  return { parts, idle: 'float', yaw: 0.35, scale: options?.scale };
-}
-
-// ---------- フードの亡霊（ランタンを提げて漂う） ----------
-
-export function phantom(robe: string, glow: string): ActorModel {
-  const parts: ModelPart[] = [
-    cone(0.5, 1.2, robe, [0, -0.35, 0], { opacity: 0.7 }),
-    sphere(0.3, robe, [0, 0.32, 0], { opacity: 0.75 }),
-    cone(0.26, 0.36, robe, [0, 0.62, -0.06], { rotation: [-0.35, 0, 0], opacity: 0.75 }),
-    sphere(0.2, '#0E1426', [0, 0.3, 0.14], { scale: [1, 1.1, 0.6] }),
-    sphere(0.045, glow, [0.07, 0.32, 0.26], { glow: true }),
-    sphere(0.045, glow, [-0.07, 0.32, 0.26], { glow: true }),
-    box([0.12, 0.45, 0.12], robe, [0.36, -0.05, 0.05], { rotation: [0, 0, 0.5], opacity: 0.7 }),
-    cylinder(0.015, 0.25, '#B8B0A0', [0.5, -0.32, 0.1]),
-    sphere(0.1, glow, [0.5, -0.5, 0.1], { glow: true }),
-  ];
-  return { parts, idle: 'float', yaw: 0.35, scale: 0.95 };
-}
-
-// ---------- 石像・ゴーレム ----------
-
-export function golem(color: string, eyeColor: string): ActorModel {
-  const parts: ModelPart[] = [
-    box([0.24, 0.4, 0.28], color, [0.2, -0.78, 0]),
-    box([0.24, 0.4, 0.28], color, [-0.2, -0.78, 0]),
-    box([0.85, 0.75, 0.5], color, [0, -0.2, 0]),
-    box([0.25, 0.7, 0.28], color, [0.58, -0.25, 0], { rotation: [0, 0, 0.1] }),
-    box([0.25, 0.7, 0.28], color, [-0.58, -0.25, 0], {
-      rotation: [0, 0, -0.1],
-    }),
-    box([0.42, 0.36, 0.4], color, [0, 0.38, 0]),
-    box([0.08, 0.05, 0.04], eyeColor, [0.1, 0.4, 0.21], { glow: true }),
-    box([0.08, 0.05, 0.04], eyeColor, [-0.1, 0.4, 0.21], { glow: true }),
-    box([0.3, 0.06, 0.04], eyeColor, [0, -0.1, 0.26], { glow: true }),
+    chunk(0.2, [0.22, -0.8, 0], [0.26, 0.4, 0.3], [1, 1.1, 1]),
+    chunk(0.2, [-0.22, -0.8, 0], [0.26, 0.4, 0.3], [1, 1.1, 1]),
+    chunk(0.5, [0, -0.18, 0], [0.9, 0.78, 0.52], [1, 0.85, 0.65]),
+    chunk(0.24, [0.58, -0.02, 0], [0.32, 0.3, 0.34]),
+    chunk(0.24, [-0.58, -0.02, 0], [0.32, 0.3, 0.34]),
+    chunk(0.2, [0.66, -0.4, 0.04], [0.26, 0.5, 0.28], [1, 1.3, 1]),
+    chunk(0.2, [-0.66, -0.4, 0.04], [0.26, 0.5, 0.28], [1, 1.3, 1]),
+    chunk(0.2, [0, 0.38, 0.02], [0.42, 0.34, 0.4], [1.1, 0.9, 1]),
+    box([0.09, 0.05, 0.04], glow, [0.09, 0.4, 0.2], { glow: true }),
+    box([0.09, 0.05, 0.04], glow, [-0.09, 0.4, 0.2], { glow: true }),
+    sphere(0.12, glow, [0, -0.12, 0.28], { glow: true, scale: [1, 1, 0.5] }),
+    box([0.03, 0.3, 0.02], glow, [0.18, -0.3, 0.3], { glow: true, rotation: [0, 0, 0.5] }),
+    box([0.03, 0.26, 0.02], glow, [-0.2, -0.05, 0.3], { glow: true, rotation: [0, 0, -0.6] }),
+    ...extras,
   ];
   return { parts, idle: 'bob', yaw: 0.4 };
 }
 
-// ---------- 浮遊する目 ----------
-
-export function floatingEye(color: string, iris: string): ActorModel {
-  const tentacles = [-0.3, 0, 0.3].map((x) =>
-    cone(0.08, 0.5, color, [x, -0.72, 0], { rotation: [Math.PI, 0, x * 0.6] }),
-  );
-  const parts: ModelPart[] = [
-    sphere(0.55, color, [0, -0.05, 0]),
-    sphere(0.28, iris, [0, -0.05, 0.45], { glow: true, scale: [1, 1, 0.5] }),
-    sphere(0.13, '#000000', [0, -0.05, 0.58], { scale: [1, 1, 0.6] }),
-    ...tentacles,
-  ];
-  return { parts, idle: 'float', yaw: 0.45 };
+/** 体のまわりをゆっくり回る、浮かぶ岩や氷片。 */
+export function orbitingShards(color: string, count: number, radius: number, y: number, glow = false): ModelPart[] {
+  return Array.from({ length: count }, (_, index) => {
+    const angle = (index / count) * Math.PI * 2;
+    return rock(0.08 + (index % 2) * 0.03, color, [Math.cos(angle) * radius, y + (index % 3) * 0.18, Math.sin(angle) * radius], {
+      animation: 'orbit',
+      phase: index / count,
+      glow,
+    });
+  });
 }
 
-// ---------- 竜（横向き、頭が +x） ----------
+/** 組み立てたモデルに、地域の aura や大きさを付け足す。 */
+export const withAura = (model: ActorModel, aura: AuraStyle, extra?: Partial<ActorModel>): ActorModel => ({
+  ...model,
+  aura,
+  ...extra,
+});
 
-export function dragon(color: string, belly: string, wing: string): ActorModel {
-  const parts: ModelPart[] = [
-    sphere(0.48, color, [-0.15, -0.35, 0], { scale: [1.3, 0.85, 0.85] }),
-    sphere(0.36, belly, [-0.05, -0.5, 0.1], { scale: [1.2, 0.7, 0.8] }),
-    cylinder(0.14, 0.5, color, [0.4, 0.0, 0], { rotation: [0, 0, -0.6] }),
-    box([0.38, 0.26, 0.28], color, [0.62, 0.25, 0]),
-    box([0.24, 0.14, 0.2], color, [0.86, 0.2, 0]),
-    sphere(0.04, '#FFD23E', [0.72, 0.32, 0.14], { glow: true }),
-    sphere(0.04, '#FFD23E', [0.72, 0.32, -0.14], { glow: true }),
-    cone(0.05, 0.22, '#EDE3C8', [0.52, 0.48, 0.08], { rotation: [0, 0, 0.6] }),
-    cone(0.05, 0.22, '#EDE3C8', [0.52, 0.48, -0.08], { rotation: [0, 0, 0.6] }),
-    box([0.7, 0.04, 0.45], wing, [-0.25, 0.2, 0.35], {
-      rotation: [0.5, 0, 0.3],
-      animation: 'flapRight',
-    }),
-    box([0.7, 0.04, 0.45], wing, [-0.25, 0.2, -0.35], {
-      rotation: [-0.5, 0, 0.3],
-      animation: 'flapLeft',
-    }),
-    cone(0.14, 0.7, color, [-0.85, -0.45, 0], { rotation: [0, 0, 1.3] }),
-    box([0.14, 0.32, 0.14], color, [0.15, -0.82, 0.18]),
-    box([0.14, 0.32, 0.14], color, [0.15, -0.82, -0.18]),
-    box([0.14, 0.32, 0.14], color, [-0.45, -0.82, 0.18]),
-    box([0.14, 0.32, 0.14], color, [-0.45, -0.82, -0.18]),
-  ];
-  return { parts, idle: 'bob', yaw: -0.45, scale: 1.05 };
-}
-
-// ---------- 砂時計の番人 ----------
-
-export function hourglass(frame: string, glass: string, sand: string): ActorModel {
-  const parts: ModelPart[] = [
-    cylinder(0.5, 0.1, frame, [0, 0.72, 0]),
-    cylinder(0.5, 0.1, frame, [0, -0.82, 0]),
-    {
-      shape: {
-        kind: 'cylinder',
-        radiusTop: 0.42,
-        radiusBottom: 0.05,
-        height: 0.7,
-      },
-      color: glass,
-      position: [0, 0.32, 0],
-      opacity: 0.45,
-    },
-    {
-      shape: {
-        kind: 'cylinder',
-        radiusTop: 0.05,
-        radiusBottom: 0.42,
-        height: 0.7,
-      },
-      color: glass,
-      position: [0, -0.42, 0],
-      opacity: 0.45,
-    },
-    cone(0.3, 0.3, sand, [0, -0.62, 0], { glow: true }),
-    cone(0.16, 0.18, sand, [0, 0.12, 0], {
-      rotation: [Math.PI, 0, 0],
-      glow: true,
-    }),
-    cylinder(0.04, 1.5, frame, [0.44, -0.05, 0]),
-    cylinder(0.04, 1.5, frame, [-0.44, -0.05, 0]),
-    {
-      shape: { kind: 'torus', radius: 0.62, tube: 0.03 },
-      color: sand,
-      glow: true,
-      position: [0, -0.05, 0],
-      rotation: [Math.PI / 2, 0, 0],
-      animation: 'spin',
-    },
-  ];
-  return { parts, idle: 'float', yaw: 0.3 };
-}
-
-// ---------- 虚無の王 ----------
-
-export function voidLord(core: string, ring: string): ActorModel {
-  const parts: ModelPart[] = [
-    {
-      shape: { kind: 'octahedron', radius: 0.6 },
-      color: core,
-      position: [0, -0.1, 0],
-      scale: [1, 1.3, 1],
-      animation: 'spin',
-    },
-    sphere(0.22, '#E6D2FF', [0, -0.1, 0.42], {
-      glow: true,
-      scale: [1, 0.5, 0.4],
-    }),
-    {
-      shape: { kind: 'torus', radius: 0.85, tube: 0.04 },
-      color: ring,
-      glow: true,
-      position: [0, -0.1, 0],
-      rotation: [1.25, 0, 0.3],
-    },
-    sphere(0.1, ring, [0.82, 0.35, 0], { glow: true }),
-    sphere(0.1, ring, [-0.82, -0.5, 0], { glow: true }),
-    ...crown(0.45, '#8C6CFF', 0.3),
-  ];
-  return { parts, idle: 'float', yaw: 0.3, scale: 1.1 };
-}
+/** 地面から生える結晶（足元の飾り）。 */
+export const groundCrystals = (color: string): ModelPart[] => [
+  ...crystals([0.55, -1, 0.15], color, 0.8),
+  ...crystals([-0.6, -1, -0.1], color, 0.6),
+];
