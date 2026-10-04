@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { CARD_TYPE_LABEL, describeCard } from '../../logic/describe';
 import { CARD_TYPE_COLORS, COLORS, HAND_LAYOUT, RADIUS, SPACING } from '../../theme';
+import { CardDetailSheet } from './CardDetailSheet';
 
 type CardViewProps = {
   card: CardDefinition;
@@ -12,7 +14,11 @@ type CardViewProps = {
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
   onPress?: () => void;
+  /** 長押しで用語の解説を出す。解説の中の拡大表示では false。 */
+  detailOnHold?: boolean;
 };
+
+const LONG_PRESS_MS = 350;
 
 const BASE_WIDTH = 96;
 
@@ -39,44 +45,51 @@ export function CardView({
   size = 'sm',
   width,
   onPress,
+  detailOnHold = true,
 }: CardViewProps) {
+  const [detailOpen, setDetailOpen] = useState(false);
   const typeColor = CARD_TYPE_COLORS[card.type];
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width) : null;
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      style={({ pressed }) => [
-        styles.card,
-        wide && styles.wide,
-        scaled?.card,
-        { borderColor: selected ? COLORS.gold : typeColor },
-        selected && styles.selected,
-        dimmed && styles.dimmed,
-        pressed && onPress && styles.pressed,
-      ]}
-    >
-      <View style={styles.costGem}>
-        <Text style={styles.costText}>{card.cost}</Text>
-      </View>
-      {count !== undefined && count > 1 && (
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>×{count}</Text>
-        </View>
-      )}
-      <Text
-        style={[styles.name, scaled?.name, card.upgraded && styles.upgradedName]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
+    <>
+      <Pressable
+        onPress={onPress}
+        onLongPress={detailOnHold ? () => setDetailOpen(true) : undefined}
+        delayLongPress={LONG_PRESS_MS}
+        disabled={!onPress && !detailOnHold}
+        style={({ pressed }) => [
+          styles.card,
+          wide && styles.wide,
+          scaled?.card,
+          { borderColor: selected ? COLORS.gold : typeColor },
+          selected && styles.selected,
+          dimmed && styles.dimmed,
+          pressed && onPress && styles.pressed,
+        ]}
       >
-        {card.name}
-      </Text>
-      <Text style={[styles.type, scaled?.type, { color: typeColor }]}>
-        {CARD_TYPE_LABEL[card.type]}
-      </Text>
-      <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
-    </Pressable>
+        <View style={styles.costGem}>
+          <Text style={styles.costText}>{card.cost}</Text>
+        </View>
+        {count !== undefined && count > 1 && (
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>×{count}</Text>
+          </View>
+        )}
+        <Text
+          style={[styles.name, scaled?.name, card.upgraded && styles.upgradedName]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {card.name}
+        </Text>
+        <Text style={[styles.type, scaled?.type, { color: typeColor }]}>
+          {CARD_TYPE_LABEL[card.type]}
+        </Text>
+        <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
+      </Pressable>
+      {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
+    </>
   );
 }
 
