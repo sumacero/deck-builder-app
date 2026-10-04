@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { MUSIC_ENTRIES } from '../../audio/music';
 import { ALL_ENEMIES } from '../../data/bestiary';
 import { ALL_CARDS } from '../../data/catalog';
 import { COLORS, RADIUS, SPACING } from '../../theme';
@@ -7,8 +8,9 @@ import { CardCatalog } from './CardCatalog';
 import { BLESSING_ITEMS, EVENT_ITEMS, POTION_ITEMS, RELIC_ITEMS } from './catalogEntries';
 import { EntryCatalog } from './EntryCatalog';
 import { ModelGallery } from './ModelGallery';
+import { MusicCatalog } from './MusicCatalog';
 
-type EncyclopediaTab = 'characters' | 'cards' | 'relics' | 'potions' | 'events' | 'blessings';
+type EncyclopediaTab = 'characters' | 'cards' | 'relics' | 'potions' | 'events' | 'blessings' | 'music';
 
 type TabDef = { id: EncyclopediaTab; label: string; count: number };
 
@@ -20,6 +22,7 @@ const TABS: TabDef[] = [
   { id: 'potions', label: '🧪 ポーション', count: POTION_ITEMS.length },
   { id: 'events', label: '❓ イベント', count: EVENT_ITEMS.length },
   { id: 'blessings', label: '✨ 恩恵', count: BLESSING_ITEMS.length },
+  { id: 'music', label: '🎵 BGM', count: MUSIC_ENTRIES.length },
 ];
 
 type EncyclopediaProps = {
@@ -80,6 +83,8 @@ function TabContent({ tab }: { tab: EncyclopediaTab }) {
       return <EntryCatalog items={EVENT_ITEMS} note="マップの「？」マスで出会う。" />;
     case 'blessings':
       return <EntryCatalog items={BLESSING_ITEMS} note="各章のはじめに、案内役が 3 つの中から 1 つ授けてくれる。" />;
+    case 'music':
+      return <MusicCatalog />;
   }
 }
 
