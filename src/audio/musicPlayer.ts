@@ -61,9 +61,12 @@ export function playMusic(id: MusicId): void {
   }
 }
 
-/** フェードアウトして止める。 */
-export function stopMusic(): void {
-  if (!current) return;
+/**
+ * フェードアウトして止める。id を渡すと、その曲が流れているときだけ止める
+ * （画面の切り替えで、次の画面が先に流し始めた曲を前の画面が止めてしまわないように）。
+ */
+export function stopMusic(id?: MusicId): void {
+  if (!current || (id && current !== id)) return;
   const player = players.get(current);
   current = null;
   if (!player) return;

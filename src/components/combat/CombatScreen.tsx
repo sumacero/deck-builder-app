@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import type { Region } from '../../domain/act';
 import type { CombatSetup, DamagePreview, EnemyUid } from '../../domain/combat';
 import type { CombatResult } from '../../domain/run';
 import { battleMusicFor } from '../../audio/music';
@@ -44,8 +45,8 @@ type Pending = { kind: 'card'; instanceId: string } | { kind: 'potion'; slot: nu
 type CombatScreenProps = {
   setup: CombatSetup;
   seed: number;
-  /** 背景画像を選ぶための章 id。 */
-  actId: string;
+  /** 背景画像と BGM を選ぶための地域。 */
+  region: Region;
   onFinish: (result: CombatResult) => void;
 };
 
@@ -60,7 +61,7 @@ const sizeOf = (e: LayoutChangeEvent): Size => ({
  * 戦闘画面。縦向きは上に敵・左下に自分・下に手札。
  * 横向きは左の列に所持品・自分・エナジー、右に敵と手札を置く。
  */
-export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps) {
+export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProps) {
   const {
     state,
     playCard,
@@ -82,7 +83,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   const effectsTime = eventsDuration(state.events);
   useCombatSounds(state.events);
   // 決着したら、勝敗の効果音が聞こえるようにフェードアウトする。
-  useMusic(inProgress ? battleMusicFor(setup.rank) : null);
+  useMusic(inProgress ? battleMusicFor(setup.rank, region) : null);
 
   const [cardWidth, setCardWidth] = useState(0);
   const {
@@ -242,7 +243,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   );
 
   return (
-    <SceneBackground actId={actId} scene="combat">
+    <SceneBackground region={region} scene="combat">
       <View
         ref={bindContainer}
         onLayout={measureContainer}

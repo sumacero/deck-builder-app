@@ -123,7 +123,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
   );
 
   return (
-    <SceneBackground actId={act.id} scene="map">
+    <SceneBackground region={act.region} scene="map">
       {landscape ? (
         <View style={styles.landscape}>
           <ScrollView style={styles.side} contentContainerStyle={styles.sideContent}>

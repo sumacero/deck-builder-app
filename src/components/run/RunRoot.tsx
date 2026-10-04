@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { fieldMusicFor } from '../../audio/music';
 import { prepareSounds } from '../../audio/soundPlayer';
+import { useMusic } from '../../hooks/useMusic';
 import { STANDARD_RUN } from '../../data/runSetups';
 import { useRun } from '../../hooks/useRun';
 import { buildCombatSetup, currentAct } from '../../logic/run';
@@ -57,6 +59,11 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
     void prepareSounds();
   }, []);
 
+  // 戦闘とショップは自分の画面で曲を流す。それ以外（マップ・休憩所・イベントなど）は地域のフィールド曲。
+  const kind = run.phase.kind;
+  const ownMusic = kind === 'combat' || kind === 'shop' || kind === 'gameOver' || kind === 'cleared';
+  useMusic(ownMusic ? null : fieldMusicFor(currentAct(run).region));
+
   let screen: ReactNode;
   switch (run.phase.kind) {
     case 'blessing':
@@ -86,7 +93,7 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
           key={`${run.actIndex}-${run.phase.nodeId}-${run.phase.seed}`}
           setup={buildCombatSetup(run, run.phase.encounter)}
           seed={run.phase.seed}
-          actId={currentAct(run).id}
+          region={currentAct(run).region}
           onFinish={finishCombat}
         />
       );

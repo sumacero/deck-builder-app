@@ -36,11 +36,23 @@ function startAct(run: RunState, actIndex: number): RunState {
   return { ...entered, rngSeed: blessing.seed, phase: { kind: 'blessing', options: blessing.options } };
 }
 
+/** 章ごとに地域の候補から 1 つ選ぶ。 */
+export function pickActs(choices: ActConfig[][], seed: number): { acts: ActConfig[]; seed: number } {
+  let current = seed;
+  const acts = choices.map((options) => {
+    const picked = pickOne(options, current);
+    current = picked.seed;
+    return picked.item ?? options[0];
+  });
+  return { acts, seed: current };
+}
+
 export function createRun(setup: RunSetup, seed: number): RunState {
-  const firstAct = setup.acts[0];
+  const { acts, seed: afterActs } = pickActs(setup.actChoices, seed);
+  const firstAct = acts[0];
   const base: RunState = {
     phase: { kind: 'map' },
-    acts: setup.acts,
+    acts,
     actIndex: 0,
     map: { floorCount: 0, columns: 0, nodes: [], bossId: '' },
     boss: firstAct.bossPool[0],
@@ -65,7 +77,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     economy: setup.economy,
     restHealRatio: setup.restHealRatio,
     removalCount: 0,
-    rngSeed: seed,
+    rngSeed: afterActs,
   };
   return startAct(base, 0);
 }

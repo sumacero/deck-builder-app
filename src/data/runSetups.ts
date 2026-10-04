@@ -1,5 +1,5 @@
 import type { RunSetup } from '../domain/run';
-import { STANDARD_ACTS } from './acts';
+import { STANDARD_ACT_CHOICES } from './acts';
 import { WANDERING_SWORDSMAN } from './agents';
 import { LANTERN_SPIRIT, STANDARD_BLESSINGS } from './blessings';
 import { PLAIN_STARTER_DECK, REWARD_CARDS } from './cards';
@@ -24,7 +24,7 @@ export const STANDARD_RUN: RunSetup = {
   drawPerTurn: 5,
   relics: [RUSTY_ANCHOR, EMBER_LANTERN, STEADFAST_STONE, FIGHTING_SPIRIT],
   potions: [FIRE_POTION, IRON_POTION, SWIFT_POTION],
-  acts: STANDARD_ACTS,
+  actChoices: STANDARD_ACT_CHOICES,
   rewardPool: REWARD_CARDS,
   potionPool: ALL_POTIONS,
   relicPool: RELIC_POOL,

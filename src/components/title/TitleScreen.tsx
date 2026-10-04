@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WANDERING_SWORDSMAN } from '../../data/agents';
 import { GAME_SUBTITLE, GAME_TITLE } from '../../data/gameInfo';
+import type { Region } from '../../domain/act';
 import type { CombatEvent } from '../../domain/combat';
 import { useMusic } from '../../hooks/useMusic';
 import { COLORS, MOTION, RADIUS, SPACING } from '../../theme';
@@ -15,8 +16,8 @@ type TitleScreenProps = {
   onStart: () => void;
 };
 
-/** タイトルの背景は最後の章（星の頂）の景色。 */
-const BACKGROUND_ACT_ID = 'act-3';
+/** タイトルの背景は星の頂の景色。 */
+const BACKGROUND_REGION: Region = 'stars';
 const NO_EVENTS: CombatEvent[] = [];
 
 /** 起動直後の画面。ゲーム名が浮かび上がり、「冒険を始める」が呼吸するように光る。 */
@@ -50,7 +51,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
   const buttonScale = glow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] });
 
   return (
-    <SceneBackground actId={BACKGROUND_ACT_ID} scene="map">
+    <SceneBackground region={BACKGROUND_REGION} scene="map">
       <ScreenScroll contentStyle={styles.root}>
         <Animated.View
           style={[styles.heading, { opacity: appear, transform: [{ translateY: rise }] }]}

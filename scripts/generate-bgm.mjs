@@ -1,5 +1,6 @@
-// BGM（タイトル・通常戦闘・エリート戦・ボス戦・ショップ）を合成して assets/music/*.wav に書き出す。
-// 実行: npm run bgm
+// BGM（タイトル・通常戦闘・エリート戦・ボス戦・ショップ + 地域ごとのフィールド曲・戦闘アレンジ）を合成して
+// assets/music/*.wav に書き出す。地域の曲は bgm-regions.mjs、主題の素材は bgm-theme.mjs。
+// 実行: npm run bgm（`npm run bgm -- field-` でファイル名がその文字列で始まる曲だけ）
 //
 // 全曲がメインテーマ「三つの旗」の素材（導入の動機・A メロ・サビ・オルガンの駆け上がり、ニ短調）を共有する。
 // オーナーの方針:
@@ -11,64 +12,23 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SAMPLE_RATE, seedNoise, shiftPhrase } from './bgm-engine.mjs';
+import { REGION_SONGS } from './bgm-regions.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
+import {
+  CHORUS,
+  CHORUS_CHORDS,
+  D_MAJOR,
+  INTRO,
+  INTRO_CHORDS,
+  RUN,
+  RUN_CHORDS,
+  VERSE,
+  VERSE_BARS,
+  VERSE_CHORDS,
+} from './bgm-theme.mjs';
 import { toWav } from './wav.mjs';
 
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'music');
-
-// ===== 主題の素材（ニ短調） =====
-
-/** 導入の動機。休符をはさんだ「レ・レ・ファミレラ」。 */
-const INTRO_BARS = [
-  'D5:0.5 -:0.5 D5:0.5 -:0.5 F5:0.5 E5:0.5 D5:0.5 A4:0.5',
-  'Bb4:1 D5:0.5 F5:0.5 C5:1 E5:0.5 G5:0.5',
-  'A5:0.5 -:0.5 A5:0.5 -:0.5 C6:0.5 Bb5:0.5 A5:0.5 F5:0.5',
-  'E5:0.5 F5:0.5 G5:0.5 A5:0.5 C#6:2',
-];
-const INTRO_CHORDS = ['Dm', 'Bb C', 'Dm', 'A'];
-
-/** A メロ。 */
-const VERSE_BARS = [
-  'A4:1 D5:1 E5:0.5 F5:1 G5:0.5',
-  'E5:1.5 C5:0.5 G4:1 C5:1',
-  'D5:1 F5:1 Bb5:1.5 A5:0.5',
-  'A5:2 E5:1 C#5:1',
-  'D5:0.5 E5:0.5 F5:0.5 G5:0.5 Bb5:1 D6:1',
-  'C#6:1.5 A5:0.5 E5:1 G5:1',
-  'F5:1 A5:1 D6:1 Bb5:1',
-  'A5:1 G5:0.5 F5:0.5 E5:1 C#5:1',
-];
-const VERSE_CHORDS = ['Dm', 'C', 'Bb', 'A', 'Gm', 'A', 'Dm Bb', 'A'];
-
-/** サビ。付点の「レー・ドー・シ♭」で始まる、主題の核。 */
-const CHORUS_BARS = [
-  'D6:0.75 C6:0.75 Bb5:0.5 F5:1 D6:1',
-  'E6:0.75 D6:0.75 C6:0.5 G5:1 E6:1',
-  'C6:0.5 B5:0.5 A5:0.5 E5:0.5 C6:1 E6:1',
-  'D6:2 A5:1 F5:1',
-  'Bb5:0.75 A5:0.75 G5:0.5 D5:1 Bb5:1',
-  'C6:0.75 Bb5:0.75 A5:0.5 G5:0.5 E5:0.5 C6:1',
-  'F5:0.5 A5:0.5 C6:0.5 F6:0.5 E6:0.5 C#6:0.5 A5:1',
-  'A5:0.5 C#6:0.5 E6:0.5 G6:0.5 A6:2',
-];
-const CHORUS_CHORDS = ['Bb', 'C', 'Am', 'Dm', 'Gm', 'C', 'F A', 'A'];
-
-/** オルガンの駆け上がり。 */
-const RUN_BARS = [
-  'D6:0.25 C6:0.25 A5:0.25 F5:0.25 D5:0.5 F5:0.5 A5:0.5 D6:0.5 F6:1',
-  'E6:0.25 D6:0.25 C6:0.25 G5:0.25 E5:0.5 G5:0.5 C6:0.5 E6:0.5 G6:1',
-  'F6:0.25 D6:0.25 Bb5:0.25 F5:0.25 D5:0.5 F5:0.5 Bb5:0.5 D6:0.5 F6:1',
-  'E6:0.5 C#6:0.5 A5:0.5 E5:0.5 C#5:0.5 E5:0.5 A4:1',
-];
-const RUN_CHORDS = ['Dm', 'C', 'Bb', 'A'];
-
-const INTRO = join4(...INTRO_BARS);
-const VERSE = join4(...VERSE_BARS);
-const CHORUS = join4(...CHORUS_BARS);
-const RUN = join4(...RUN_BARS);
-
-/** ニ短調の旋律をニ長調にする。 */
-const D_MAJOR = { F: 'F#', C: 'C#', Bb: 'B', 'A#': 'B' };
 
 // ===== 曲 =====
 
@@ -412,10 +372,13 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, mainElite, mainBoss, shop];
+const SONGS = [mainTitle, mainNormal, mainElite, mainBoss, shop, ...REGION_SONGS];
+
+/** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
+const only = process.argv[2];
 
 mkdirSync(OUT_DIR, { recursive: true });
-for (const song of SONGS) {
+for (const song of SONGS.filter((s) => !only || s.file.startsWith(only))) {
   seedNoise(4242);
   const samples = renderSong(song);
   const file = join(OUT_DIR, `${song.file}.wav`);

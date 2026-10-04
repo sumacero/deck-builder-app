@@ -107,6 +107,18 @@ const BASS = {
 const hats8 = (v = 0.1) => [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((b) => ['hat', b, b % 1 === 0 ? v : v * 0.6]);
 const hats16 = (v = 0.07) => Array.from({ length: 16 }, (_, i) => ['hat', i / 4, i % 2 === 0 ? v : v * 0.5]);
 
+const DESERT_HITS = [
+  ['bongoLo', 0, 0.3],
+  ['bongoHi', 0.75, 0.18],
+  ['bongoHi', 1, 0.15],
+  ['bongoLo', 1.5, 0.28],
+  ['bongoHi', 2, 0.2],
+  ['bongoHi', 2.5, 0.12],
+  ['bongoLo', 3, 0.26],
+  ['bongoHi', 3.5, 0.15],
+  ...Array.from({ length: 8 }, (_, i) => ['shaker', i / 2, 0.05]),
+];
+
 /** 1 小節ぶんの打音 [種類, 拍, 音量]。i は部分の中で何小節目か。 */
 const DRUMS = {
   none: () => [],
@@ -130,6 +142,29 @@ const DRUMS = {
     ...[0.75, 2, 2.75].map((b) => ['bongoLo', b, 0.22]),
     ...Array.from({ length: 16 }, (_, i) => ['shaker', i / 4, i % 4 === 2 ? 0.1 : 0.05]),
   ],
+  /** 沼: 低いボンゴとぽつぽつ鳴る拍。 */
+  swamp: () => [
+    ['kick', 0, 0.3],
+    ['bongoLo', 1.5, 0.18],
+    ['kick', 2.5, 0.22],
+    ['bongoHi', 3.25, 0.12],
+    ...[0.5, 1, 2, 3, 3.5].map((b) => ['tick', b, 0.05]),
+  ],
+  /** 砂漠: ダラブッカ風の「ドン・タッタ・ドン」。 */
+  desert: () => DESERT_HITS,
+  desertDrive: () => [...DESERT_HITS, ['kick', 0, 0.5], ['kick', 2, 0.45], ['snare', 1, 0.32], ['snare', 3, 0.36]],
+  /** 火山: 低いタムの連打とティンパニ。 */
+  tribal: (i) => [
+    ['tomLo', 0, 0.4],
+    ['tomLo', 0.75, 0.22],
+    ['tomMid', 1.5, 0.3],
+    ['tomLo', 2, 0.36],
+    ['tomMid', 3, 0.28],
+    ['tomHi', 3.5, 0.2],
+    ...(i % 2 === 0 ? [['timpani', 0, 0.35]] : []),
+  ],
+  /** 闇: 遠いティンパニと、時計のような小さな拍。 */
+  shadow: (i) => [...(i % 2 === 0 ? [['timpani', 0, 0.25]] : []), ['tick', 1, 0.06], ['tick', 2.5, 0.06], ['tick', 3, 0.04]],
 };
 
 /** 部分の最後の小節に入れるおかず。from 拍目から先は通常のドラムを鳴らさない。 */
@@ -142,7 +177,7 @@ const FILLS = {
   roll: { from: 0, hits: () => Array.from({ length: 16 }, (_, i) => ['snare', i / 4, 0.03 + (0.37 * i) / 15]) },
 };
 
-const QUIET_DRUMS = new Set(['none', 'light', 'timp']);
+const QUIET_DRUMS = new Set(['none', 'light', 'timp', 'swamp', 'desert', 'tribal', 'shadow']);
 
 // ===== 曲を組み立てる =====
 

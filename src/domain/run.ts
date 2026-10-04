@@ -19,8 +19,8 @@ export type RunSetup = {
   drawPerTurn: number;
   relics: RelicDefinition[];
   potions: PotionSlot[];
-  /** この順に進み、最後の章のボスを倒したらクリア。 */
-  acts: ActConfig[];
+  /** 章ごとの地域の候補。この順に進み、ランの開始時に各章から 1 つ選ばれる。最後の章のボスを倒したらクリア。 */
+  actChoices: ActConfig[][];
   rewardPool: CardDefinition[];
   /** ショップ・恩恵で手に入るポーションの候補。 */
   potionPool: PotionDefinition[];

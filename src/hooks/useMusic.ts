@@ -11,7 +11,7 @@ export function useMusic(id: MusicId | null) {
   useEffect(() => {
     if (!id) return;
     playMusic(id);
-    return stopMusic;
+    return () => stopMusic(id);
   }, [id]);
 
   useEffect(() => {
