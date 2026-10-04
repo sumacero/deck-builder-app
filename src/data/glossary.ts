@@ -161,6 +161,55 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     description:
       'バフ・デバフの数値は残りターン数。敵にかけたものは敵のターンの終わりに、自分にかけたものは次の自分のターンの始めに 1 減る。カードで増やして長く効かせられる。',
   },
+  barricade: {
+    id: 'barricade',
+    name: '不動',
+    icon: '🏯',
+    description: 'この戦闘の間ずっと、自分のターンが始まってもブロックが消えない。盾撃ち・盾砕きと組み合わせよう。',
+  },
+  demonForm: {
+    id: 'demonForm',
+    name: '紅蓮の化身',
+    icon: '🌋',
+    description: '自分のターンの始めに、その数値の分だけ筋力を得る。戦闘が長引くほど強くなる。',
+  },
+  juggernaut: {
+    id: 'juggernaut',
+    name: '鉄壁の闘気',
+    icon: '🗡️',
+    description: 'ブロックを得るたびに、HP が一番低い敵にその数値のダメージ（筋力や弱体の影響を受けない）。',
+  },
+  sadistic: {
+    id: 'sadistic',
+    name: '弱点看破',
+    icon: '👁️',
+    description: '敵に弱体・衰弱を与えるたびに、その敵にその数値のダメージ（筋力や弱体の影響を受けない）。敵全体にかけると全員に当たる。',
+  },
+  rupture: {
+    id: 'rupture',
+    name: '燃える血潮',
+    icon: '❤️‍🔥',
+    description: 'HP を失うたびに（ダメージは除く）、その数値の分だけ筋力を得る。紅蓮の刃や生命転換と相性がよい。',
+  },
+  feelNoPain: {
+    id: 'feelNoPain',
+    name: '灰より立つ',
+    icon: '🔆',
+    description: 'カードが廃棄されるたびに、その数値の分だけブロックを得る。',
+  },
+  growth: {
+    id: 'growth',
+    name: '成長',
+    icon: '🌱',
+    description:
+      '使ったり敵を倒したりするたびに数値が増えるカード。「この戦闘中」はその戦闘の間だけ、「ランの間ずっと」はデッキのカード自体が強くなる。',
+  },
+  maxHp: {
+    id: 'maxHp',
+    name: '最大 HP',
+    icon: '💗',
+    description: 'HP の上限。増えた分だけ HP も回復し、ランの間ずっと続く。',
+  },
   paralysis: {
     id: 'paralysis',
     name: '麻痺',

@@ -69,7 +69,11 @@ export type RunPhase =
 export type CombatResult = {
   status: 'won' | 'lost';
   playerHp: number;
+  /** 戦闘中に増えた分を含む最大 HP。 */
+  playerMaxHp: number;
   potions: PotionSlot[];
+  /** 永続的に成長したカードを反映したデッキ。 */
+  deck: CardDefinition[];
 };
 
 export type RunState = {

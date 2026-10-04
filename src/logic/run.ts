@@ -155,8 +155,9 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const { rank } = run.phase.encounter;
   const survived: RunState = {
     ...run,
-    player: { ...run.player, hp: result.playerHp },
+    player: { hp: result.playerHp, maxHp: result.playerMaxHp },
     potions: result.potions,
+    deck: result.deck,
   };
   if (rank === 'boss' && isFinalAct(run)) return { ...survived, phase: { kind: 'cleared' } };
 

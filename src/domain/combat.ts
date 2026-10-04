@@ -3,7 +3,7 @@ import type { CardDefinition, CardInstance, CardMotion, CardType } from './card'
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
-import type { DebuffId, Statuses } from './status';
+import type { DebuffId, Powers, Statuses } from './status';
 
 export type Fighter = {
   hp: number;
@@ -29,6 +29,8 @@ export type PlayerState = Fighter & {
   strength: number;
   tempStrength: number;
   endTurnBlock: number;
+  /** パワーカードで得た、戦闘の終わりまで続く能力。 */
+  powers: Powers;
   /** 今のターンに効いている妨害。 */
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */

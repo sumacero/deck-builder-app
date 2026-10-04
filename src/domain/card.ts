@@ -19,11 +19,23 @@ export type CardMotion =
   | 'focus'
   | 'sacrifice';
 
+/**
+ * 使うたび（または敵を倒すたび）に強くなるカード。stat の種類の効果の数値が amount ずつ増える。
+ * scope が combat ならその戦闘の間だけ、run ならデッキのカード自体が成長してランの間ずっと続く。
+ */
+export type CardGrowth = {
+  stat: 'damage' | 'block';
+  amount: number;
+  when: 'play' | 'kill';
+  scope: 'combat' | 'run';
+};
+
 /** 強化で置き換わる値。指定しなかった項目は強化前のまま。 */
 export type CardUpgrade = {
   cost?: number;
   effects?: Effect[];
   exhaust?: boolean;
+  growth?: CardGrowth;
 };
 
 export type CardDefinition = {
@@ -49,6 +61,9 @@ export type CardDefinition = {
   ethereal?: boolean;
   /** ターン終了時に手札にあるとかかる効果。 */
   turnEndInHand?: Effect[];
+  growth?: CardGrowth;
+  /** これまでに成長した回数（効果の数値には反映済み）。 */
+  timesGrown?: number;
 };
 
 /** 山札・手札・捨て札の中の 1 枚。同じ定義のカードでも 1 枚ずつ区別する。 */

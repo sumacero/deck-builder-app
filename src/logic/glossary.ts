@@ -3,7 +3,7 @@ import type { EnemyState, PlayerState } from '../domain/combat';
 import type { Effect } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { KeywordId, StatusView } from '../domain/glossary';
-import type { StatusId, Statuses } from '../domain/status';
+import type { PowerId, StatusId, Statuses } from '../domain/status';
 import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, hasStatus, statusTurns } from './status';
 
 function keywordsForEffect(effect: Effect): KeywordId[] {
@@ -34,8 +34,21 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['vulnerable', 'weak', 'statusTurns'];
     case 'extendBuffs':
       return ['retainBlock', 'blazing', 'statusTurns'];
+    case 'gainPower':
+      return [effect.power];
+    case 'damagePerDebuff':
+    case 'detonateDebuffs':
+      return ['damage', 'vulnerable', 'weak', 'statusTurns'];
+    case 'ifTargetHas':
+      return [effect.status, ...effect.effects.flatMap(keywordsForEffect)];
+    case 'consumeBlock':
+      return ['block', 'damage'];
+    case 'feed':
+      return ['damage', 'maxHp'];
   }
 }
+
+const POWER_IDS: readonly PowerId[] = ['barricade', 'demonForm', 'juggernaut', 'sadistic', 'rupture', 'feelNoPain'];
 
 /** 状態のターン数（0 は表示しない）。 */
 function statusViews(statuses: Statuses, ids: readonly StatusId[]): StatusView[] {
@@ -52,6 +65,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...card.effects.flatMap(keywordsForEffect),
     ...(card.unplayable ? (['unplayable'] as const) : []),
     ...(card.turnEndInHand ?? []).flatMap(keywordsForEffect),
+    ...(card.growth ? (['growth'] as const) : []),
     ...(card.ethereal ? (['ethereal'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
@@ -90,6 +104,7 @@ export function playerStatuses(player: PlayerState): StatusView[] {
     { keyword: 'chill', value: player.hindrance.chill },
     { keyword: 'seal', value: player.hindrance.seal ? 1 : 0, flag: true },
     ...statusViews(player.statuses, [...BUFF_IDS, ...DEBUFF_IDS]),
+    ...POWER_IDS.map((id) => ({ keyword: id, value: player.powers[id] ?? 0, flag: id === 'barricade' })),
   ]);
 }
 

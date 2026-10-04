@@ -18,7 +18,7 @@ import { eventsDuration } from '../../hooks/useCombatEvents';
 import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
-import { livingEnemies } from '../../logic/combat';
+import { deckAfterCombat, livingEnemies } from '../../logic/combat';
 import { COLORS, COMBAT_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
@@ -332,7 +332,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
               onFinish({
                 status: state.status === 'won' ? 'won' : 'lost',
                 playerHp: state.player.hp,
+                playerMaxHp: state.player.maxHp,
                 potions: state.potions,
+                deck: deckAfterCombat(state, setup.deck),
               })
             }
           />

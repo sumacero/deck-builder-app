@@ -1,4 +1,4 @@
-import type { BuffId, DebuffId } from './status';
+import type { BuffId, DebuffId, PowerId } from './status';
 
 /**
  * カード・レリック・ポーションに共通する効果。damage は敵に、loseHp / heal などはプレイヤー。
@@ -24,7 +24,19 @@ export type Effect =
   /** 狙った敵にかかっているデバフすべてのターン数を加算する。 */
   | { kind: 'extendDebuffs'; turns: number }
   /** 自分にかかっているバフすべてのターン数を加算する。 */
-  | { kind: 'extendBuffs'; turns: number };
+  | { kind: 'extendBuffs'; turns: number }
+  /** 戦闘の終わりまで続く能力を得る（重ねると量が増える）。 */
+  | { kind: 'gainPower'; power: PowerId; amount: number }
+  /** base + 狙った敵のデバフの合計ターン数 × perTurn のダメージ。 */
+  | { kind: 'damagePerDebuff'; base: number; perTurn: number }
+  /** 狙った敵のデバフをすべて消し、消した合計ターン数 × perTurn のダメージ（弱体は消す前に効く）。 */
+  | { kind: 'detonateDebuffs'; perTurn: number }
+  /** 狙った敵が status にかかっていれば effects を使う。 */
+  | { kind: 'ifTargetHas'; status: DebuffId; effects: Effect[] }
+  /** ブロックをすべて失い、その multiplier 倍のダメージを与える。 */
+  | { kind: 'consumeBlock'; multiplier: number }
+  /** damage を与え、それで敵を倒したら最大 HP +maxHp（ランの間ずっと）。 */
+  | { kind: 'feed'; damage: number; maxHp: number };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

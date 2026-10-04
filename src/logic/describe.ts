@@ -1,5 +1,5 @@
 import type { BlessingDefinition } from '../domain/blessing';
-import type { CardDefinition, CardType } from '../domain/card';
+import type { CardDefinition, CardGrowth, CardType } from '../domain/card';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
@@ -7,7 +7,7 @@ import type { MapNodeType } from '../domain/map';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
-import type { DebuffId, StatusId } from '../domain/status';
+import type { DebuffId, PowerId, StatusId } from '../domain/status';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -62,7 +62,53 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}デバフのターン数を ${effect.turns} 増やす。`;
     case 'extendBuffs':
       return `自分のバフのターン数を ${effect.turns} 増やす。`;
+    case 'gainPower':
+      return describePower(effect.power, effect.amount);
+    case 'damagePerDebuff':
+      return `${effect.base} ダメージ。敵のデバフ 1 ターンにつき +${effect.perTurn}。`;
+    case 'detonateDebuffs':
+      return `敵のデバフをすべて消し、消したターン数 × ${effect.perTurn} のダメージを与える。`;
+    case 'ifTargetHas':
+      return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
+    case 'consumeBlock':
+      return `ブロックをすべて失い、その ${effect.multiplier} 倍のダメージを与える。`;
+    case 'feed':
+      return `${effect.damage} ダメージを与える。これで敵を倒すと最大 HP +${effect.maxHp}（ランの間ずっと）。`;
   }
+}
+
+export const POWER_LABEL: Record<PowerId, string> = {
+  barricade: '不動',
+  demonForm: '紅蓮の化身',
+  juggernaut: '鉄壁の闘気',
+  sadistic: '弱点看破',
+  rupture: '燃える血潮',
+  feelNoPain: '灰より立つ',
+};
+
+/** パワーの効果（amount は 1 枚分の量）。 */
+export function describePower(power: PowerId, amount: number): string {
+  switch (power) {
+    case 'barricade':
+      return 'この戦闘中、ブロックがターンの始めに消えなくなる。';
+    case 'demonForm':
+      return `この戦闘中、ターンの始めに筋力 ${amount} を得る。`;
+    case 'juggernaut':
+      return `この戦闘中、ブロックを得るたびに HP が一番低い敵に ${amount} ダメージ。`;
+    case 'sadistic':
+      return `この戦闘中、敵にデバフを与えるたびにその敵に ${amount} ダメージ。`;
+    case 'rupture':
+      return `この戦闘中、HP を失うたびに筋力 ${amount} を得る。`;
+    case 'feelNoPain':
+      return `この戦闘中、カードが廃棄されるたびにブロック ${amount} を得る。`;
+  }
+}
+
+function describeGrowth(growth: CardGrowth): string {
+  const when = growth.when === 'play' ? '使うたびに' : 'これで敵を倒すたびに';
+  const stat = growth.stat === 'damage' ? 'ダメージ' : 'ブロック';
+  const scope = growth.scope === 'run' ? '（ランの間ずっと）' : '（この戦闘中）';
+  return `${when}${stat} +${growth.amount}${scope}。`;
 }
 
 /** 説明文での状態の名前（数値はターン数）。 */
@@ -91,6 +137,8 @@ export function describeCard(card: CardDefinition): string {
       ? `ターン終了時に手札にあると、${describeEffects(card.turnEndInHand, 'self')}`
       : '',
     card.ethereal ? 'ターン終了時に手札にあると消える。' : '',
+    card.growth ? describeGrowth(card.growth) : '',
+    card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
     card.exhaust ? '廃棄。' : '',
   ].join('');

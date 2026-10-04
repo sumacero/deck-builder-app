@@ -1,12 +1,14 @@
-import type { CardDefinition, CardInstance, CardStack } from '../domain/card';
+import type { CardDefinition, CardGrowth, CardInstance, CardStack } from '../domain/card';
+import type { Effect } from '../domain/effect';
 
-/** 同じ id のカードを枚数付きでまとめる。コスト順。 */
+/** 同じ id のカードを枚数付きでまとめる（成長量が違えば別扱い）。コスト順。 */
 export function stackCards(cards: readonly CardDefinition[]): CardStack[] {
   const stacks = new Map<string, CardStack>();
   for (const card of cards) {
-    const existing = stacks.get(card.id);
+    const key = `${card.id}#${card.timesGrown ?? 0}`;
+    const existing = stacks.get(key);
     if (existing) existing.count += 1;
-    else stacks.set(card.id, { card, count: 1 });
+    else stacks.set(key, { card, count: 1 });
   }
   return [...stacks.values()].sort(
     (a, b) => a.card.cost - b.card.cost || a.card.name.localeCompare(b.card.name, 'ja'),
@@ -70,6 +72,31 @@ export function fuseInDeck(
   const removed = new Set(consumed.map(({ index }) => index));
   const fused = consumed.some(({ card }) => card.upgraded) ? upgradeCard(into) : into;
   return [...deck.filter((_, index) => !removed.has(index)), fused];
+}
+
+function growEffect(effect: Effect, growth: CardGrowth): Effect {
+  if (growth.stat === 'damage' && effect.kind === 'damage') {
+    return { ...effect, amount: effect.amount + growth.amount };
+  }
+  if (growth.stat === 'block' && effect.kind === 'block') {
+    return { ...effect, amount: effect.amount + growth.amount };
+  }
+  return effect;
+}
+
+/** 成長したカード。強化後の効果も同じだけ増やしておき、あとで強化しても成長が消えないようにする。 */
+export function growCard(card: CardDefinition): CardDefinition {
+  const { growth } = card;
+  if (!growth) return card;
+  return {
+    ...card,
+    effects: card.effects.map((effect) => growEffect(effect, growth)),
+    upgrade: card.upgrade && {
+      ...card.upgrade,
+      effects: card.upgrade.effects?.map((effect) => growEffect(effect, card.upgrade?.growth ?? growth)),
+    },
+    timesGrown: (card.timesGrown ?? 0) + 1,
+  };
 }
 
 /** 指定 id の最初の 1 枚を取り除いたデッキ。 */

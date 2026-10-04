@@ -13,3 +13,16 @@ export type EnemyStatusId = 'intangible' | 'down';
 export type StatusId = DebuffId | BuffId | EnemyStatusId;
 
 export type Statuses = Partial<Record<StatusId, number>>;
+
+/**
+ * パワーカードで得る、戦闘の終わりまで続く能力。値は重ねた量（ターン数ではない）。
+ * - barricade（不動）: ターンの始めにブロックが消えない
+ * - demonForm（紅蓮の化身）: ターンの始めに筋力 +N
+ * - juggernaut（鉄壁の闘気）: ブロックを得るたびに、HP が一番低い敵に N ダメージ
+ * - sadistic（弱点看破）: 敵にデバフを与えるたびに、その敵に N ダメージ
+ * - rupture（燃える血潮）: HP を失うたびに筋力 +N
+ * - feelNoPain（灰より立つ）: カードが廃棄されるたびにブロック +N
+ */
+export type PowerId = 'barricade' | 'demonForm' | 'juggernaut' | 'sadistic' | 'rupture' | 'feelNoPain';
+
+export type Powers = Partial<Record<PowerId, number>>;
