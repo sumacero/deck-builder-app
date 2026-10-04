@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text } from 'react-native';
 import type { MapNode } from '../../domain/map';
 import { COLORS, MAP_LAYOUT, MAP_NODE_COLORS, MOTION, RADIUS } from '../../theme';
 import type { Point } from './mapLayout';
@@ -11,8 +11,13 @@ type MapNodeViewProps = {
   current: boolean;
   reachable: boolean;
   visited: boolean;
+  /** 押されて移動を待っているマス。大きく弾み、光の輪が広がる。 */
+  selected: boolean;
   onPress: () => void;
 };
+
+/** 光の輪がどこまで広がるか（マスの大きさに対する倍率）。 */
+const RIPPLE_SCALE = 2.8;
 
 /** 進めるマスは脈打つ。今いるマスは金枠。 */
 export function MapNodeView({
@@ -21,9 +26,11 @@ export function MapNodeView({
   current,
   reachable,
   visited,
+  selected,
   onPress,
 }: MapNodeViewProps) {
   const [pulse] = useState(() => new Animated.Value(0));
+  const [burst] = useState(() => new Animated.Value(0));
   const size = node.type === 'boss' ? MAP_LAYOUT.bossSize : MAP_LAYOUT.nodeSize;
   const color = MAP_NODE_COLORS[node.type];
 
@@ -50,6 +57,29 @@ export function MapNodeView({
     return () => loop.stop();
   }, [pulse, reachable]);
 
+  useEffect(() => {
+    if (!selected) return;
+    const animation = Animated.timing(burst, {
+      toValue: 1,
+      duration: MOTION.mapSelect,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [burst, selected]);
+
+  const nodeScale = burst.interpolate({ inputRange: [0, 0.25, 1], outputRange: [1, 1.4, 1.2] });
+  const rippleScale = burst.interpolate({ inputRange: [0, 1], outputRange: [1, RIPPLE_SCALE] });
+  const rippleOpacity = burst.interpolate({ inputRange: [0, 0.1, 1], outputRange: [0, 0.9, 0] });
+  const lateRippleScale = burst.interpolate({
+    inputRange: [0, 0.3, 1],
+    outputRange: [1, 1, RIPPLE_SCALE * 0.7],
+  });
+  const lateRippleOpacity = burst.interpolate({
+    inputRange: [0, 0.3, 0.4, 1],
+    outputRange: [0, 0, 0.8, 0],
+  });
   const glowScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.55] });
   const glowOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.7] });
 
@@ -68,6 +98,24 @@ export function MapNodeView({
         },
       ]}
     >
+      {selected && (
+        <>
+          <Animated.View
+            style={[
+              styles.glow,
+              styles.ripple,
+              { opacity: rippleOpacity, transform: [{ scale: rippleScale }] },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.glow,
+              styles.ripple,
+              { opacity: lateRippleOpacity, transform: [{ scale: lateRippleScale }] },
+            ]}
+          />
+        </>
+      )}
       {reachable && (
         <Animated.View
           style={[
@@ -80,21 +128,22 @@ export function MapNodeView({
           ]}
         />
       )}
-      <View
+      <Animated.View
         style={[
           styles.node,
           {
-            backgroundColor: COLORS.panel,
-            borderColor: current ? COLORS.gold : reachable ? COLORS.gold : color,
-            borderWidth: current || reachable ? 3 : 2,
-            opacity: visited && !current && !reachable ? 0.55 : 1,
+            backgroundColor: selected ? COLORS.goldDark : COLORS.panel,
+            borderColor: current || reachable || selected ? COLORS.gold : color,
+            borderWidth: current || reachable || selected ? 3 : 2,
+            opacity: visited && !current && !reachable && !selected ? 0.55 : 1,
+            transform: [{ scale: nodeScale }],
           },
         ]}
       >
         <Text style={[styles.icon, node.type === 'boss' && styles.bossIcon]}>
           {MAP_NODE_ICON[node.type]}
         </Text>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -110,6 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.round,
     borderWidth: 2,
   },
+  ripple: { borderColor: COLORS.gold, borderWidth: 3 },
   node: {
     width: '100%',
     height: '100%',

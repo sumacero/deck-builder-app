@@ -10,11 +10,13 @@ type MapCanvasProps = {
   layout: MapLayout;
   /** ランが終わったら、どのマスも押せない。 */
   ended: boolean;
+  /** 押されて移動を待っているマス。これがある間は、ほかのマスを押せない。 */
+  selectedId: string | null;
   onMove: (nodeId: string) => void;
 };
 
 /** マスと道を、配置済みの座標（縦向き・横向きどちらでも）に描く。 */
-export function MapCanvas({ run, layout, ended, onMove }: MapCanvasProps) {
+export function MapCanvas({ run, layout, ended, selectedId, onMove }: MapCanvasProps) {
   const reachable = new Set(reachableNodeIds(run));
   const visited = new Set(run.visitedNodeIds);
   return (
@@ -44,8 +46,9 @@ export function MapCanvas({ run, layout, ended, onMove }: MapCanvasProps) {
             node={node}
             position={position}
             current={run.currentNodeId === node.id}
-            reachable={!ended && reachable.has(node.id)}
+            reachable={!ended && selectedId === null && reachable.has(node.id)}
             visited={visited.has(node.id)}
+            selected={selectedId === node.id}
             onPress={() => onMove(node.id)}
           />
         );

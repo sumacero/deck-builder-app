@@ -27,6 +27,10 @@ export const COLORS = {
   /** 背景画像が透けて見えるパネル。 */
   panelTranslucent: 'rgba(30, 30, 30, 0.72)',
   textOutline: '#000000',
+  /** 強化の瞬間の閃光。 */
+  flash: '#FFF6D8',
+  /** 画面切り替えの暗転。 */
+  fade: '#000000',
 } as const;
 
 export const MAP_NODE_COLORS: Record<MapNodeType, string> = {
@@ -78,6 +82,20 @@ export const MOTION = {
   /** タイトルのゲーム名が浮かび上がる時間と、開始ボタンが一回ふくらむ（しぼむ）時間。 */
   titleFadeIn: 1200,
   titlePulse: 1100,
+  /** マップでマスを押してから画面が切り替わるまで。最後の mapLeaveFade の間に暗転する。 */
+  mapSelect: 650,
+  mapLeaveFade: 300,
+  /** 画面が切り替わったとき、暗転から明けるまで。 */
+  phaseFadeIn: 350,
+  /** 回復の演出が出て消えるまで。 */
+  healBurst: 1800,
+  /** 回復の演出で、HP バーが増え始めるまで。 */
+  healBarDelay: 350,
+  /** 強化の演出: 槌を振り下ろすまで → 光って強化後のカードが現れるまで。 */
+  upgradeStrike: 550,
+  upgradeReveal: 500,
+  /** 強化後のカードのまわりできらめく周期。 */
+  sparkle: 900,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {

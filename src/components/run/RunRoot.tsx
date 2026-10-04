@@ -1,3 +1,6 @@
+import { useEffect, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { prepareSounds } from '../../audio/soundPlayer';
 import { STANDARD_RUN } from '../../data/runSetups';
 import { useRun } from '../../hooks/useRun';
 import { buildCombatSetup, currentAct } from '../../logic/run';
@@ -10,6 +13,9 @@ import { RestScreen } from '../rest/RestScreen';
 import { ShopScreen } from '../shop/ShopScreen';
 import { TreasureScreen } from '../treasure/TreasureScreen';
 import { BossRelicScreen } from './BossRelicScreen';
+import { MOTION } from '../../theme';
+import { FadeOverlay } from '../effects/FadeOverlay';
+import { RunEventLayer } from './effects/RunEventLayer';
 import { RewardScreen } from './RewardScreen';
 
 type RunRootProps = {
@@ -17,10 +23,15 @@ type RunRootProps = {
   onExitToTitle: () => void;
 };
 
-/** ラン全体の画面切り替え。マップから各マスの画面へ。 */
+/**
+ * ラン全体の画面切り替え。マップから各マスの画面へ。
+ * 画面が変わるたびに暗転から明け、回復・強化などの演出はどの画面の上にも重ねて出す。
+ */
 export function RunRoot({ onExitToTitle }: RunRootProps) {
   const {
     run,
+    currentEvent,
+    dismissEvent,
     moveTo,
     finishCombat,
     resolveReward,
@@ -33,13 +44,20 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
     treasureActions,
   } = useRun(STANDARD_RUN);
 
+  useEffect(() => {
+    void prepareSounds();
+  }, []);
+
+  let screen: ReactNode;
   switch (run.phase.kind) {
     case 'blessing':
-      return <BlessingScreen run={run} options={run.phase.options} actions={blessingActions} />;
+      screen = <BlessingScreen run={run} options={run.phase.options} actions={blessingActions} />;
+      break;
     case 'deckEdit':
-      return <DeckEditScreen run={run} mode={run.phase.mode} actions={blessingActions} />;
+      screen = <DeckEditScreen run={run} mode={run.phase.mode} actions={blessingActions} />;
+      break;
     case 'reward':
-      return (
+      screen = (
         <RewardScreen
           choices={run.phase.choices}
           gold={run.phase.gold}
@@ -49,10 +67,12 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
           onPick={resolveReward}
         />
       );
+      break;
     case 'bossRelic':
-      return <BossRelicScreen run={run} choices={run.phase.choices} onChoose={chooseBossRelic} />;
+      screen = <BossRelicScreen run={run} choices={run.phase.choices} onChoose={chooseBossRelic} />;
+      break;
     case 'combat':
-      return (
+      screen = (
         <CombatScreen
           key={`${run.actIndex}-${run.phase.nodeId}-${run.phase.seed}`}
           setup={buildCombatSetup(run, run.phase.encounter)}
@@ -61,12 +81,15 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
           onFinish={finishCombat}
         />
       );
+      break;
     case 'rest':
-      return <RestScreen run={run} actions={restActions} />;
+      screen = <RestScreen run={run} actions={restActions} />;
+      break;
     case 'shop':
-      return <ShopScreen run={run} stock={run.phase.stock} actions={shopActions} />;
+      screen = <ShopScreen run={run} stock={run.phase.stock} actions={shopActions} />;
+      break;
     case 'event':
-      return (
+      screen = (
         <EventScreen
           key={run.phase.event.id}
           run={run}
@@ -75,8 +98,9 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
           actions={eventActions}
         />
       );
+      break;
     case 'treasure':
-      return (
+      screen = (
         <TreasureScreen
           run={run}
           opened={run.phase.opened}
@@ -85,10 +109,11 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
           actions={treasureActions}
         />
       );
+      break;
     case 'map':
     case 'gameOver':
     case 'cleared':
-      return (
+      screen = (
         <MapScreen
           key={run.actIndex}
           run={run}
@@ -97,5 +122,23 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
           onExitToTitle={onExitToTitle}
         />
       );
+      break;
   }
+
+  return (
+    <View style={styles.root}>
+      {screen}
+      <FadeOverlay
+        key={`${run.actIndex}-${run.phase.kind}`}
+        from={1}
+        to={0}
+        duration={MOTION.phaseFadeIn}
+      />
+      <RunEventLayer queued={currentEvent} onDone={dismissEvent} />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

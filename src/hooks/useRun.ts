@@ -2,14 +2,20 @@ import { useCallback, useMemo, useReducer } from 'react';
 import type { CardDefinition } from '../domain/card';
 import type { CombatResult, RunSetup } from '../domain/run';
 import { createRun } from '../logic/run';
-import { runReducer } from '../logic/runReducer';
+import { createRunStore, runStoreReducer } from '../logic/runEvents';
 
 const createSeed = () => Math.floor(Math.random() * 2 ** 31);
 
-/** ラン全体（マップ・現在地・HP・所持品・今の画面）を管理する。 */
+/**
+ * ラン全体（マップ・現在地・HP・所持品・今の画面）を管理する。
+ * 回復・強化などの出来事は events に順番に積まれ、演出が終わったら dismissEvent で消す。
+ */
 export function useRun(setup: RunSetup) {
-  const [run, dispatch] = useReducer(runReducer, setup, (s) => createRun(s, createSeed()));
+  const [{ run, events }, dispatch] = useReducer(runStoreReducer, setup, (s) =>
+    createRunStore(createRun(s, createSeed())),
+  );
 
+  const dismissEvent = useCallback((id: number) => dispatch({ type: 'dismissEvent', id }), []);
   const moveTo = useCallback((nodeId: string) => dispatch({ type: 'moveTo', nodeId }), []);
   const finishCombat = useCallback(
     (result: CombatResult) => dispatch({ type: 'finishCombat', result }),
@@ -73,6 +79,9 @@ export function useRun(setup: RunSetup) {
 
   return {
     run,
+    /** 次に見せる出来事（無ければ undefined）。 */
+    currentEvent: events[0],
+    dismissEvent,
     moveTo,
     finishCombat,
     resolveReward,

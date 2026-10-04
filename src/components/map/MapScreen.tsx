@@ -1,11 +1,13 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { playSound } from '../../audio/soundPlayer';
 import type { RunState } from '../../domain/run';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { currentAct, mapHint, reachedFloor } from '../../logic/run';
-import { COLORS, MAP_LAYOUT, SPACING } from '../../theme';
+import { COLORS, MAP_LAYOUT, MOTION, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { DeckButton } from '../cards/DeckButton';
+import { FadeOverlay } from '../effects/FadeOverlay';
 import { HpBar } from '../combat/HpBar';
 import { GalleryButton } from '../gallery/GalleryButton';
 import { ItemBar } from '../items/ItemBar';
@@ -31,12 +33,26 @@ type Size = { width: number; height: number };
 export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenProps) {
   const landscape = useIsLandscape();
   const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const aligned = useRef(false);
   const ended = run.phase.kind === 'gameOver' || run.phase.kind === 'cleared';
   const act = currentAct(run);
 
   const layout = mapLayoutFor(run, viewport, landscape);
+
+  /** 押したマスを光らせ、効果音と暗転のあとで移動する。演出中はほかのマスを押せない。 */
+  const selectNode = (nodeId: string) => {
+    if (selectedId !== null) return;
+    playSound('mapSelect');
+    setSelectedId(nodeId);
+  };
+
+  useEffect(() => {
+    if (selectedId === null) return;
+    const timer = setTimeout(() => onMove(selectedId), MOTION.mapSelect);
+    return () => clearTimeout(timer);
+  }, [selectedId, onMove]);
 
   /** 今いるマスが、この先のマスが広く見える位置に来るようにスクロールする。 */
   const alignScroll = () => {
@@ -94,7 +110,15 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
       onLayout={onViewportLayout}
       onContentSizeChange={alignScroll}
     >
-      {layout && <MapCanvas run={run} layout={layout} ended={ended} onMove={onMove} />}
+      {layout && (
+        <MapCanvas
+          run={run}
+          layout={layout}
+          ended={ended}
+          selectedId={selectedId}
+          onMove={selectNode}
+        />
+      )}
     </ScrollView>
   );
 
@@ -136,6 +160,14 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
           {map}
           <MapLegend />
         </>
+      )}
+      {selectedId !== null && (
+        <FadeOverlay
+          from={0}
+          to={1}
+          delay={MOTION.mapSelect - MOTION.mapLeaveFade}
+          duration={MOTION.mapLeaveFade}
+        />
       )}
       {ended && (
         <RunEndOverlay

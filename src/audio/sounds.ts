@@ -10,7 +10,11 @@ export type SoundId =
   | 'potion'
   | 'relic'
   | 'victory'
-  | 'defeat';
+  | 'defeat'
+  | 'upgrade'
+  | 'heal'
+  | 'mapSelect'
+  | 'coin';
 
 type SoundDef = {
   source: AudioSource;
@@ -29,4 +33,8 @@ export const SOUNDS: Record<SoundId, SoundDef> = {
   relic: { source: require('../../assets/sounds/relic.wav'), volume: 0.5 },
   victory: { source: require('../../assets/sounds/victory.wav'), volume: 0.7 },
   defeat: { source: require('../../assets/sounds/defeat.wav'), volume: 0.8 },
+  upgrade: { source: require('../../assets/sounds/upgrade.wav'), volume: 0.8 },
+  heal: { source: require('../../assets/sounds/heal.wav'), volume: 0.6 },
+  mapSelect: { source: require('../../assets/sounds/map-select.wav'), volume: 0.6 },
+  coin: { source: require('../../assets/sounds/coin.wav'), volume: 0.5 },
 };

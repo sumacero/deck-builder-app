@@ -13,6 +13,7 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
     case 'relicTriggered':
       return 'relic';
     case 'heal':
+      return 'heal';
     case 'enemyAct':
       return null;
     case 'hit':

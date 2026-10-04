@@ -129,6 +129,60 @@ const SOUNDS = {
 
   /** 敗北: ゆっくり下がっていく暗い音。 */
   defeat: () => arpeggio([392, 330, 262, 196], 0.22, 1.1, triangle, 0.7),
+
+  // ここから下はマップ・休憩所など戦闘の外の音。上の音の波形が変わらないよう、新しい音は末尾に足す。
+
+  /** カード強化: 金床を叩く「カーン」のあと、きらめきが上っていく。 */
+  upgrade: () => {
+    const partials = [880, 1320, 2210, 3170].map(() => oscillator(sine));
+    const sparkle = arpeggio([1568, 2093, 2637, 3136], 0.06, 0.55, triangle, 0.35);
+    const sparkleStart = Math.floor(0.16 * SAMPLE_RATE);
+    return render(0.75, (t, p) => {
+      const ring =
+        partials[0](880) * decay(t, 6) +
+        partials[1](1320) * 0.7 * decay(t, 8) +
+        partials[2](2210) * 0.45 * decay(t, 11) +
+        partials[3](3170) * 0.3 * decay(t, 14);
+      const strike = noise() * decay(t, 70);
+      const index = Math.floor(t * SAMPLE_RATE) - sparkleStart;
+      const shimmer = index >= 0 && index < sparkle.length ? sparkle[index] : 0;
+      return (ring * 0.55 + strike * 0.7) * decay(p, 1) + shimmer;
+    });
+  },
+
+  /** HP 回復: やわらかく上がっていく和音に、ゆれを少し。 */
+  heal: () => {
+    const notes = [523, 659, 784, 1047];
+    const oscs = notes.map(() => oscillator(sine));
+    const step = 0.08;
+    return render(0.9, (t, p) => {
+      const vibrato = 1 + 0.004 * Math.sin(2 * Math.PI * 6 * t);
+      let sum = 0;
+      notes.forEach((note, i) => {
+        const start = i * step;
+        if (t < start) return;
+        const local = t - start;
+        const attack = Math.min(1, local / 0.04);
+        sum += oscs[i](note * vibrato) * attack * decay(local, 3.2);
+      });
+      return sum * 0.35 * (1 - p * 0.3);
+    });
+  },
+
+  /** マップのマスを選ぶ: 「シュッ」と開いて、決定の「ポーン」。 */
+  'map-select': () => {
+    const lp = lowpass();
+    const ping = oscillator(sine);
+    const pingStart = 0.07;
+    return render(0.42, (t, p) => {
+      const sweep = t < 0.12 ? lp(noise(), 0.05 + 0.5 * (t / 0.12)) * Math.sin((Math.PI * t) / 0.12) * 0.6 : 0;
+      const tone = t >= pingStart ? ping(t < pingStart + 0.03 ? 660 : 990) * decay(t - pingStart, 7) * 0.7 : 0;
+      return (sweep + tone) * (1 - p * 0.2);
+    });
+  },
+
+  /** ゴールドの出し入れ: コインの「チャリン」（高い 2 音）。 */
+  coin: () => arpeggio([1976, 2637], 0.07, 0.32, square, 0.25),
 };
 
 // ===== 書き出し =====
