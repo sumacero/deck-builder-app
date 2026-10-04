@@ -1,9 +1,11 @@
 import type { CardDefinition } from '../domain/card';
 import type { PotionDefinition } from '../domain/potion';
+import type { RelicDefinition } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { EconomyConfig, ShopOffer, ShopStock } from '../domain/shop';
 import { removeFromDeck } from './cards';
 import { nextRandom, pickUnique } from './random';
+import { obtainRelic } from './runEffects';
 
 /** 基準価格を ±variance の範囲でばらつかせる。 */
 function jitterPrice(base: number, variance: number, seed: number): { price: number; seed: number } {
@@ -32,8 +34,10 @@ export function removalPrice(economy: EconomyConfig, removalCount: number): numb
   return economy.removalBasePrice + economy.removalPriceStep * removalCount;
 }
 
+/** relicPool にはまだ持っていないレリックだけを渡す。 */
 export function generateShopStock(
   cardPool: readonly CardDefinition[],
+  relicPool: readonly RelicDefinition[],
   potionPool: readonly PotionDefinition[],
   economy: EconomyConfig,
   removalCount: number,
@@ -47,7 +51,15 @@ export function generateShopStock(
     economy.priceVariance,
     pickedCards.seed,
   );
-  const pickedPotions = pickUnique(potionPool, economy.shopPotionCount, cards.seed);
+  const pickedRelics = pickUnique(relicPool, economy.shopRelicCount, cards.seed);
+  const relics = toOffers(
+    pickedRelics.items,
+    'relic',
+    () => economy.relicPrice,
+    economy.priceVariance,
+    pickedRelics.seed,
+  );
+  const pickedPotions = pickUnique(potionPool, economy.shopPotionCount, relics.seed);
   const potions = toOffers(
     pickedPotions.items,
     'potion',
@@ -58,6 +70,7 @@ export function generateShopStock(
   return {
     stock: {
       cards: cards.offers,
+      relics: relics.offers,
       potions: potions.offers,
       removal: { price: removalPrice(economy, removalCount), used: false },
     },
@@ -84,6 +97,19 @@ export function buyCard(run: RunState, offerId: string): RunState {
     gold: run.gold - offer.price,
     deck: [...run.deck, offer.item],
     phase: { kind: 'shop', stock: { ...stock, cards: markSold(stock.cards, offerId) } },
+  };
+}
+
+/** 買ったレリックは入手時の効果（毎ターンのエナジーなど）もすぐにかかる。 */
+export function buyRelic(run: RunState, offerId: string): RunState {
+  if (run.phase.kind !== 'shop') return run;
+  const stock = run.phase.stock;
+  const offer = stock.relics.find((o) => o.offerId === offerId);
+  if (!offer || offer.sold || !canAfford(run, offer.price)) return run;
+  if (run.relics.some((relic) => relic.id === offer.item.id)) return run;
+  return {
+    ...obtainRelic({ ...run, gold: run.gold - offer.price }, offer.item),
+    phase: { kind: 'shop', stock: { ...stock, relics: markSold(stock.relics, offerId) } },
   };
 }
 

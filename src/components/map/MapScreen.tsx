@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { RunState } from '../../domain/run';
 import { currentAct, findNode, mapHint, reachableNodeIds, reachedFloor } from '../../logic/run';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, MAP_LAYOUT, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { DeckButton } from '../cards/DeckButton';
 import { HpBar } from '../combat/HpBar';
@@ -23,21 +23,25 @@ type MapScreenProps = {
 export function MapScreen({ run, onMove, onNewRun }: MapScreenProps) {
   const [width, setWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const viewportHeight = useRef(0);
   const aligned = useRef(false);
   const layout = width > 0 ? layoutMap(run.map, width) : null;
   const reachable = new Set(reachableNodeIds(run));
   const visited = new Set(run.visitedNodeIds);
   const ended = run.phase.kind === 'gameOver' || run.phase.kind === 'cleared';
 
+  /** 今いるマスが画面の下の方に来るようにスクロールする（この先のマスが上に広く見える）。 */
   const alignScroll = () => {
-    if (!layout || aligned.current) return;
+    if (!layout || viewportHeight.current === 0 || aligned.current) return;
     aligned.current = true;
     const current = run.currentNodeId ? layout.positions[run.currentNodeId] : undefined;
-    if (current) {
-      scrollRef.current?.scrollTo({ y: Math.max(0, current.y - 220), animated: false });
-    } else {
+    if (!current) {
       scrollRef.current?.scrollToEnd({ animated: false });
+      return;
     }
+    const maxScroll = Math.max(0, layout.height - viewportHeight.current);
+    const target = current.y - (viewportHeight.current - MAP_LAYOUT.currentNodeBottomOffset);
+    scrollRef.current?.scrollTo({ y: Math.min(maxScroll, Math.max(0, target)), animated: false });
   };
 
   return (
@@ -64,6 +68,10 @@ export function MapScreen({ run, onMove, onNewRun }: MapScreenProps) {
         ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
+        onLayout={(e) => {
+          viewportHeight.current = e.nativeEvent.layout.height;
+          alignScroll();
+        }}
         onContentSizeChange={alignScroll}
       >
         <View style={styles.measure} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>

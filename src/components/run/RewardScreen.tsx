@@ -12,14 +12,21 @@ type RewardScreenProps = {
   gold: number;
   /** 手に入れたレリック（もう所持品に入っている）。 */
   relic: RelicDefinition | null;
-  /** ボス撃破後は、選んだあと次の章へ進む。 */
-  toNextAct: boolean;
+  /** ボス撃破後は、選んだあとボスレリックの 3 択へ進む。 */
+  toBossRelic: boolean;
   /** 今のデッキ。選ぶ前に見比べられるように。 */
   deck: CardDefinition[];
   onPick: (card: CardDefinition | null) => void;
 };
 
-export function RewardScreen({ choices, gold, relic, toNextAct, deck, onPick }: RewardScreenProps) {
+export function RewardScreen({
+  choices,
+  gold,
+  relic,
+  toBossRelic,
+  deck,
+  onPick,
+}: RewardScreenProps) {
   return (
     <View style={styles.root}>
       <View style={styles.corner}>
@@ -48,7 +55,7 @@ export function RewardScreen({ choices, gold, relic, toNextAct, deck, onPick }: 
       >
         <Text style={styles.skipText}>スキップ</Text>
       </Pressable>
-      {toNextAct && <Text style={styles.note}>選ぶと HP が全回復し、次の章へ進む</Text>}
+      {toBossRelic && <Text style={styles.note}>このあとボスの宝箱からレリックを選べる</Text>}
     </View>
   );
 }

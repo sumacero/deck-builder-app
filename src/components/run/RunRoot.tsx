@@ -4,9 +4,12 @@ import { buildCombatSetup, currentAct } from '../../logic/run';
 import { BlessingScreen } from '../blessing/BlessingScreen';
 import { DeckEditScreen } from '../blessing/DeckEditScreen';
 import { CombatScreen } from '../combat/CombatScreen';
+import { EventScreen } from '../event/EventScreen';
 import { MapScreen } from '../map/MapScreen';
 import { RestScreen } from '../rest/RestScreen';
 import { ShopScreen } from '../shop/ShopScreen';
+import { TreasureScreen } from '../treasure/TreasureScreen';
+import { BossRelicScreen } from './BossRelicScreen';
 import { RewardScreen } from './RewardScreen';
 
 /** ラン全体の画面切り替え。マップから各マスの画面へ。 */
@@ -16,10 +19,13 @@ export function RunRoot() {
     moveTo,
     finishCombat,
     resolveReward,
+    chooseBossRelic,
     newRun,
     blessingActions,
     restActions,
     shopActions,
+    eventActions,
+    treasureActions,
   } = useRun(STANDARD_RUN);
 
   switch (run.phase.kind) {
@@ -33,11 +39,13 @@ export function RunRoot() {
           choices={run.phase.choices}
           gold={run.phase.gold}
           relic={run.phase.relic}
-          toNextAct={run.phase.next === 'nextAct'}
+          toBossRelic={run.phase.next === 'bossRelic'}
           deck={run.deck}
           onPick={resolveReward}
         />
       );
+    case 'bossRelic':
+      return <BossRelicScreen run={run} choices={run.phase.choices} onChoose={chooseBossRelic} />;
     case 'combat':
       return (
         <CombatScreen
@@ -52,6 +60,26 @@ export function RunRoot() {
       return <RestScreen run={run} actions={restActions} />;
     case 'shop':
       return <ShopScreen run={run} stock={run.phase.stock} actions={shopActions} />;
+    case 'event':
+      return (
+        <EventScreen
+          key={run.phase.event.id}
+          run={run}
+          event={run.phase.event}
+          outcome={run.phase.outcome}
+          actions={eventActions}
+        />
+      );
+    case 'treasure':
+      return (
+        <TreasureScreen
+          run={run}
+          opened={run.phase.opened}
+          relic={run.phase.relic}
+          gold={run.phase.gold}
+          actions={treasureActions}
+        />
+      );
     case 'map':
     case 'gameOver':
     case 'cleared':

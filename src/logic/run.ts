@@ -5,10 +5,11 @@ import type { EnemyDefinition } from '../domain/enemy';
 import type { GameMap, MapNode } from '../domain/map';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { generateBlessingOptions } from './blessing';
-import { MAP_NODE_LABEL } from './describe';
-import { grantRandomRelic } from './loot';
+import { startCombat, startRandomCombat } from './encounter';
+import { startEvent } from './event';
 import { generateMap } from './map';
-import { nextRandom, pickOne, pickUnique, randomInt } from './random';
+import { pickOne, pickUnique, randomInt } from './random';
+import { grantRandomRelic, obtainRelic, unownedRelics } from './runEffects';
 import { generateShopStock } from './shop';
 
 export function currentAct(run: RunState): ActConfig {
@@ -56,6 +57,9 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     rewardPool: setup.rewardPool,
     potionPool: setup.potionPool,
     relicPool: setup.relicPool,
+    bossRelicPool: setup.bossRelicPool,
+    eventPool: setup.eventPool,
+    seenEventIds: [],
     blessingPool: setup.blessingPool,
     guide: setup.guide,
     economy: setup.economy,
@@ -84,24 +88,10 @@ export function reachedFloor(run: RunState): number {
   return current ? current.floor + 1 : 0;
 }
 
-function startCombat(run: RunState, nodeId: string, enemy: EnemyDefinition): RunState {
-  const seedRoll = nextRandom(run.rngSeed);
-  return {
-    ...run,
-    rngSeed: seedRoll.seed,
-    phase: { kind: 'combat', nodeId, enemy, seed: Math.floor(seedRoll.value * 2 ** 31) },
-  };
-}
-
-function startRandomCombat(run: RunState, nodeId: string, pool: EnemyDefinition[]): RunState {
-  const picked = pickOne(pool, run.rngSeed);
-  if (!picked.item) return run;
-  return startCombat({ ...run, rngSeed: picked.seed }, nodeId, picked.item);
-}
-
 function openShop(run: RunState): RunState {
   const generated = generateShopStock(
     run.rewardPool,
+    unownedRelics(run, run.relicPool),
     run.potionPool,
     run.economy,
     run.removalCount,
@@ -132,12 +122,16 @@ export function moveTo(run: RunState, nodeId: string): RunState {
     case 'shop':
       return openShop(moved);
     case 'event':
+      return startEvent(moved);
     case 'treasure':
-      return moved;
+      return { ...moved, phase: { kind: 'treasure', opened: false, relic: null, gold: 0 } };
   }
 }
 
-/** 勝てばゴールドとカード 3 択。エリート・ボスはレリックも。最後の章のボスならクリア。 */
+/**
+ * 勝てばゴールドとカード 3 択。エリートはレリックも、ボスはそのあとボスレリックの 3 択。
+ * 最後の章のボスならクリア。
+ */
 export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (run.phase.kind !== 'combat') return run;
   if (result.status === 'lost') {
@@ -154,7 +148,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const { min, max } = run.economy.encounterGold[rank];
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
-  const looted = rank === 'normal' ? { run: withGold, relic: null } : grantRandomRelic(withGold);
+  const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
   const offered = pickUnique(looted.run.rewardPool, 3, looted.run.rngSeed);
   return {
     ...looted.run,
@@ -164,23 +158,40 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
       choices: offered.items,
       gold: gold.value,
       relic: looted.relic,
-      next: rank === 'boss' ? 'nextAct' : 'map',
+      next: rank === 'boss' ? 'bossRelic' : 'map',
     },
   };
 }
 
-/** card が null ならスキップ。ボスの報酬なら HP を全回復して次の章へ。 */
+/** HP を全回復して次の章へ。 */
+function advanceAct(run: RunState): RunState {
+  return startAct({ ...run, player: { ...run.player, hp: run.player.maxHp } }, run.actIndex + 1);
+}
+
+const BOSS_RELIC_CHOICES = 3;
+
+/** card が null ならスキップ。ボスの報酬ならボスレリックの 3 択へ（候補が無ければ次の章へ）。 */
 export function resolveReward(run: RunState, card: CardDefinition | null): RunState {
   if (run.phase.kind !== 'reward') return run;
   const picked: RunState = { ...run, deck: card ? [...run.deck, card] : run.deck };
   if (run.phase.next === 'map') return { ...picked, phase: { kind: 'map' } };
-  return startAct(
-    { ...picked, player: { ...picked.player, hp: picked.player.maxHp } },
-    run.actIndex + 1,
+  const offered = pickUnique(
+    unownedRelics(picked, picked.bossRelicPool),
+    BOSS_RELIC_CHOICES,
+    picked.rngSeed,
   );
+  if (offered.items.length === 0) return advanceAct({ ...picked, rngSeed: offered.seed });
+  return { ...picked, rngSeed: offered.seed, phase: { kind: 'bossRelic', choices: offered.items } };
 }
 
-/** マップ画面の案内文。未実装マスでは「何も起きない」ことを明示する。 */
+/** ボスレリックを 1 つ選んで（null なら取らずに）次の章へ。 */
+export function chooseBossRelic(run: RunState, relicId: string | null): RunState {
+  if (run.phase.kind !== 'bossRelic') return run;
+  const relic = run.phase.choices.find((r) => r.id === relicId);
+  return advanceAct(relic ? obtainRelic(run, relic) : run);
+}
+
+/** マップ画面の案内文。 */
 export function mapHint(run: RunState): string {
   const node = findNode(run.map, run.currentNodeId);
   if (!node) return '光っているマスを選んで出発しよう。';
@@ -196,8 +207,9 @@ export function mapHint(run: RunState): string {
     case 'shop':
       return 'ショップを後にした。次のマスを選ぼう。';
     case 'event':
+      return '不思議な出来事を後にした。次のマスを選ぼう。';
     case 'treasure':
-      return `${MAP_NODE_LABEL[node.type]}（未実装）。次のマスを選ぼう。`;
+      return '宝箱を開けた。次のマスを選ぼう。';
   }
 }
 

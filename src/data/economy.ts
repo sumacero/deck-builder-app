@@ -10,10 +10,13 @@ export const STANDARD_ECONOMY: EconomyConfig = {
   },
   relicFallbackGold: 50,
   cardPrice: { attack: 50, skill: 50, power: 75 },
+  relicPrice: 150,
   potionPrice: 50,
   priceVariance: 0.1,
   removalBasePrice: 75,
   removalPriceStep: 25,
   shopCardCount: 5,
+  shopRelicCount: 2,
   shopPotionCount: 2,
+  treasureGold: { min: 25, max: 45 },
 };

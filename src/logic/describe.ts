@@ -1,10 +1,12 @@
-import type { BlessingChoice, BlessingDefinition, BlessingEffect } from '../domain/blessing';
+import type { BlessingDefinition } from '../domain/blessing';
 import type { CardDefinition, CardType } from '../domain/card';
 import type { Effect } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank } from '../domain/enemy';
+import type { EventOption } from '../domain/event';
 import type { MapNodeType } from '../domain/map';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
+import type { RunChoice, RunEffect } from '../domain/runEffect';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -69,11 +71,15 @@ function relicTiming(relic: RelicDefinition): string {
       return relic.condition === 'noBlock' ? 'ターン終了時にブロックが 0 なら、' : 'ターン終了時、';
     case 'combatWon':
       return '戦闘に勝利したとき、';
+    case undefined:
+      return '';
   }
 }
 
 export function describeRelic(relic: RelicDefinition): string {
-  return relicTiming(relic) + relic.effects.map(describeEffect).join('');
+  const triggered = relic.trigger ? relicTiming(relic) + describeEffects(relic.effects) : '';
+  const passive = (relic.onObtain ?? []).map((effect) => `${describeRunEffect(effect)}。`).join('');
+  return triggered + passive;
 }
 
 export type IntentView = {
@@ -111,45 +117,83 @@ export const ENEMY_RANK_LABEL: Record<EnemyRank, string | null> = {
   boss: 'ボス',
 };
 
-function describeBlessingEffect(effect: BlessingEffect): string {
+const signed = (amount: number) => (amount >= 0 ? `+${amount}` : `${amount}`);
+
+export function describeRunEffect(effect: RunEffect): string {
   switch (effect.kind) {
     case 'gainMaxHp':
       return `最大 HP +${effect.amount}`;
     case 'loseMaxHp':
       return `最大 HP -${effect.amount}`;
+    case 'heal':
+      return `HP を ${effect.amount} 回復`;
+    case 'loseHp':
+      return `HP を ${effect.amount} 失う`;
     case 'gainGold':
       return `${effect.amount} ゴールドを得る`;
+    case 'loseGold':
+      return `${effect.amount} ゴールドを払う`;
     case 'gainRelic':
       return 'ランダムなレリックを得る';
     case 'upgradeRandom':
       return `ランダムなカード ${effect.count} 枚を強化`;
     case 'fillPotions':
       return '空いているポーション枠をすべて埋める';
+    case 'changeEnergyPerTurn':
+      return `毎ターンのエナジー ${signed(effect.amount)}`;
+    case 'changeDrawPerTurn':
+      return `毎ターン引く枚数 ${signed(effect.amount)}`;
   }
 }
 
-const BLESSING_CHOICE_TEXT: Record<BlessingChoice, string> = {
+function isNegative(effect: RunEffect): boolean {
+  switch (effect.kind) {
+    case 'loseMaxHp':
+    case 'loseHp':
+    case 'loseGold':
+      return true;
+    case 'changeEnergyPerTurn':
+    case 'changeDrawPerTurn':
+      return effect.amount < 0;
+    default:
+      return false;
+  }
+}
+
+const RUN_CHOICE_TEXT: Record<RunChoice, string> = {
   upgradeCard: 'カードを 1 枚選んで強化',
   removeCard: 'カードを 1 枚選んで削除',
   pickCard: '3 枚から 1 枚を選んでデッキに加える',
 };
 
-export type BlessingLine = { text: string; negative: boolean };
+export type EffectLine = { text: string; negative: boolean };
 
-/** 恩恵の内容を 1 行ずつ。同じ効果が重なる場合は「×2」にまとめる。代償（マイナス効果）は negative。 */
-export function describeBlessing(blessing: BlessingDefinition): BlessingLine[] {
+/** 効果を 1 行ずつ。同じ効果が重なる場合は「×2」にまとめる。代償（マイナス効果）は negative。 */
+export function describeRunEffects(
+  effects: readonly RunEffect[],
+  choice: RunChoice | undefined,
+): EffectLine[] {
   const counted = new Map<string, { negative: boolean; count: number }>();
-  for (const effect of blessing.effects) {
-    const text = describeBlessingEffect(effect);
+  for (const effect of effects) {
+    const text = describeRunEffect(effect);
     const existing = counted.get(text);
     if (existing) existing.count += 1;
-    else counted.set(text, { negative: effect.kind === 'loseMaxHp', count: 1 });
+    else counted.set(text, { negative: isNegative(effect), count: 1 });
   }
   const lines = [...counted].map(([text, { negative, count }]) => ({
     text: count > 1 ? `${text} ×${count}` : text,
     negative,
   }));
-  return blessing.choice
-    ? [...lines, { text: BLESSING_CHOICE_TEXT[blessing.choice], negative: false }]
+  return choice ? [...lines, { text: RUN_CHOICE_TEXT[choice], negative: false }] : lines;
+}
+
+export const describeBlessing = (blessing: BlessingDefinition): EffectLine[] =>
+  describeRunEffects(blessing.effects, blessing.choice);
+
+/** イベントの選択肢の中身。戦闘になる選択肢は、その旨を 1 行で示す。 */
+export function describeEventOption(option: EventOption): EffectLine[] {
+  const lines = describeRunEffects(option.effects, option.choice);
+  return option.fight
+    ? [{ text: 'エリートと戦闘（勝てばレリック）', negative: true }, ...lines]
     : lines;
 }

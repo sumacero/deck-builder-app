@@ -1,6 +1,7 @@
 import type { CardDefinition, CardType } from './card';
 import type { EnemyRank } from './enemy';
 import type { PotionDefinition } from './potion';
+import type { RelicDefinition } from './relic';
 
 /** ショップに並ぶ 1 品。買うと sold になり、同じ店では二度と買えない。 */
 export type ShopOffer<T> = {
@@ -12,6 +13,7 @@ export type ShopOffer<T> = {
 
 export type ShopStock = {
   cards: ShopOffer<CardDefinition>[];
+  relics: ShopOffer<RelicDefinition>[];
   potions: ShopOffer<PotionDefinition>[];
   /** カード削除サービス。1 店につき 1 回。 */
   removal: { price: number; used: boolean };
@@ -25,6 +27,7 @@ export type EconomyConfig = {
   /** レリックの候補が尽きていたとき、代わりにもらえるゴールド。 */
   relicFallbackGold: number;
   cardPrice: Record<CardType, number>;
+  relicPrice: number;
   potionPrice: number;
   /** 0.1 なら基準価格の ±10% の範囲でばらつく。 */
   priceVariance: number;
@@ -32,5 +35,8 @@ export type EconomyConfig = {
   removalBasePrice: number;
   removalPriceStep: number;
   shopCardCount: number;
+  shopRelicCount: number;
   shopPotionCount: number;
+  /** 宝箱に入っているゴールド（レリックと一緒にもらえる）。 */
+  treasureGold: { min: number; max: number };
 };

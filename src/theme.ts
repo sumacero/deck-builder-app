@@ -48,6 +48,8 @@ export const MAP_LAYOUT = {
   jitter: 8,
   dotSpacing: 9,
   dotSize: 4,
+  /** マップを開いたとき、今いるマスを表示領域の下端からこれだけ上に置く。 */
+  currentNodeBottomOffset: 80,
 } as const;
 
 /** 演出のタイミング（ミリ秒）。 */

@@ -4,7 +4,7 @@ import type { RunState } from '../../domain/run';
 import type { ShopStock } from '../../domain/shop';
 import type { ShopActions } from '../../hooks/useRun';
 import { stackCards } from '../../logic/cards';
-import { describeCard, describePotion } from '../../logic/describe';
+import { describeCard, describePotion, describeRelic } from '../../logic/describe';
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardPickerModal } from '../cards/CardPickerModal';
@@ -20,7 +20,7 @@ type ShopScreenProps = {
   actions: ShopActions;
 };
 
-type Selection = { kind: 'card' | 'potion'; offerId: string };
+type Selection = { kind: 'card' | 'relic' | 'potion'; offerId: string };
 
 type Purchase = { name: string; detail: string; price: number; blocked: string | null };
 
@@ -33,6 +33,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   const buy = () => {
     if (!selection) return;
     if (selection.kind === 'card') actions.buyCard(selection.offerId);
+    else if (selection.kind === 'relic') actions.buyRelic(selection.offerId);
     else actions.buyPotion(selection.offerId);
     setSelection(null);
   };
@@ -63,6 +64,21 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
             />
           ))}
         </View>
+
+        {stock.relics.length > 0 && <Text style={styles.section}>レリック</Text>}
+        {stock.relics.map((offer) => (
+          <ShopRow
+            key={offer.offerId}
+            icon={offer.item.icon}
+            name={offer.item.name}
+            description={describeRelic(offer.item)}
+            price={offer.price}
+            affordable={canAfford(run, offer.price)}
+            sold={offer.sold}
+            selected={selection?.offerId === offer.offerId}
+            onPress={() => setSelection({ kind: 'relic', offerId: offer.offerId })}
+          />
+        ))}
 
         <Text style={styles.section}>ポーション</Text>
         {stock.potions.map((offer) => (
@@ -146,6 +162,16 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
       return {
         name: offer.item.name,
         detail: describeCard(offer.item),
+        price: offer.price,
+        blocked: canAfford(run, offer.price) ? null : 'ゴールドが足りない',
+      };
+    }
+    if (sel.kind === 'relic') {
+      const offer = stock.relics.find((o) => o.offerId === sel.offerId);
+      if (!offer || offer.sold) return null;
+      return {
+        name: offer.item.name,
+        detail: describeRelic(offer.item),
         price: offer.price,
         blocked: canAfford(run, offer.price) ? null : 'ゴールドが足りない',
       };

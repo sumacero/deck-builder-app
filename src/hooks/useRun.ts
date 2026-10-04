@@ -19,6 +19,10 @@ export function useRun(setup: RunSetup) {
     (card: CardDefinition | null) => dispatch({ type: 'resolveReward', card }),
     [],
   );
+  const chooseBossRelic = useCallback(
+    (relicId: string | null) => dispatch({ type: 'chooseBossRelic', relicId }),
+    [],
+  );
   const newRun = useCallback(
     () => dispatch({ type: 'newRun', setup, seed: createSeed() }),
     [setup],
@@ -43,9 +47,26 @@ export function useRun(setup: RunSetup) {
   const shopActions = useMemo(
     () => ({
       buyCard: (offerId: string) => dispatch({ type: 'buyCard', offerId }),
+      buyRelic: (offerId: string) => dispatch({ type: 'buyRelic', offerId }),
       buyPotion: (offerId: string) => dispatch({ type: 'buyPotion', offerId }),
       removeCard: (cardId: string) => dispatch({ type: 'removeCard', cardId }),
       leave: () => dispatch({ type: 'leaveShop' }),
+    }),
+    [],
+  );
+
+  const eventActions = useMemo(
+    () => ({
+      choose: (optionId: string) => dispatch({ type: 'chooseEventOption', optionId }),
+      leave: () => dispatch({ type: 'leaveEvent' }),
+    }),
+    [],
+  );
+
+  const treasureActions = useMemo(
+    () => ({
+      open: () => dispatch({ type: 'openTreasure' }),
+      leave: () => dispatch({ type: 'leaveTreasure' }),
     }),
     [],
   );
@@ -55,13 +76,18 @@ export function useRun(setup: RunSetup) {
     moveTo,
     finishCombat,
     resolveReward,
+    chooseBossRelic,
     newRun,
     blessingActions,
     restActions,
     shopActions,
+    eventActions,
+    treasureActions,
   };
 }
 
 export type BlessingActions = ReturnType<typeof useRun>['blessingActions'];
 export type RestActions = ReturnType<typeof useRun>['restActions'];
 export type ShopActions = ReturnType<typeof useRun>['shopActions'];
+export type EventActions = ReturnType<typeof useRun>['eventActions'];
+export type TreasureActions = ReturnType<typeof useRun>['treasureActions'];

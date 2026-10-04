@@ -4,6 +4,7 @@ import type { BlessingDefinition, GuideCharacter } from './blessing';
 import type { CardDefinition } from './card';
 import type { PotionSlot } from './combat';
 import type { EnemyDefinition } from './enemy';
+import type { EventDefinition } from './event';
 import type { GameMap } from './map';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
@@ -23,8 +24,12 @@ export type RunSetup = {
   rewardPool: CardDefinition[];
   /** ショップ・恩恵で手に入るポーションの候補。 */
   potionPool: PotionDefinition[];
-  /** エリート・ボス・恩恵で手に入るレリックの候補。持っているものは出ない。 */
+  /** エリート・宝箱・ショップ・恩恵で手に入るレリックの候補。持っているものは出ない。 */
   relicPool: RelicDefinition[];
+  /** ボス撃破後の 3 択に出るレリックの候補。 */
+  bossRelicPool: RelicDefinition[];
+  /** 「？」マスで起きるイベントの候補。 */
+  eventPool: EventDefinition[];
   blessingPool: BlessingDefinition[];
   guide: GuideCharacter;
   economy: EconomyConfig;
@@ -32,7 +37,7 @@ export type RunSetup = {
   restHealRatio: number;
 };
 
-/** 恩恵のあとのデッキ操作。 */
+/** 恩恵・イベントのあとのデッキ操作。 */
 export type DeckEditMode = 'upgrade' | 'remove';
 
 /** ラン全体が今どの画面にいるか。 */
@@ -47,11 +52,16 @@ export type RunPhase =
       gold: number;
       /** すでに所持品に入っている。 */
       relic: RelicDefinition | null;
-      /** 報酬のあとに進む先。ボス撃破後は次の章へ。 */
-      next: 'map' | 'nextAct';
+      /** 報酬のあとに進む先。ボス撃破後はボスレリックの 3 択へ。 */
+      next: 'map' | 'bossRelic';
     }
+  | { kind: 'bossRelic'; choices: RelicDefinition[] }
   | { kind: 'rest' }
   | { kind: 'shop'; stock: ShopStock }
+  /** outcome は選択肢を選んだあとの結末。null ならまだ選んでいない。 */
+  | { kind: 'event'; event: EventDefinition; outcome: string | null }
+  /** opened までは中身は未定。開けた時点でレリックとゴールドが所持品に入る。 */
+  | { kind: 'treasure'; opened: boolean; relic: RelicDefinition | null; gold: number }
   | { kind: 'gameOver' }
   | { kind: 'cleared' };
 
@@ -83,6 +93,10 @@ export type RunState = {
   rewardPool: CardDefinition[];
   potionPool: PotionDefinition[];
   relicPool: RelicDefinition[];
+  bossRelicPool: RelicDefinition[];
+  eventPool: EventDefinition[];
+  /** このランで起きたイベント。候補が残っている間は同じイベントを出さない。 */
+  seenEventIds: string[];
   blessingPool: BlessingDefinition[];
   guide: GuideCharacter;
   economy: EconomyConfig;
