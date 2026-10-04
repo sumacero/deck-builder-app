@@ -204,6 +204,33 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     description:
       '使ったり敵を倒したりするたびに数値が増えるカード。「この戦闘中」はその戦闘の間だけ、「ランの間ずっと」はデッキのカード自体が強くなる。',
   },
+  attribute: {
+    id: 'attribute',
+    name: '属性',
+    icon: '🗡️',
+    description:
+      'アタックの属性。🗡️斬・🔨打・🔥炎・❄️氷・⚡雷の 5 種類。カードの種類の横に出ている。敵の弱点の属性で攻撃すると、ダウンゲージを削れる。',
+  },
+  weakness: {
+    id: 'weakness',
+    name: '弱点',
+    icon: '💥',
+    description:
+      '敵の名前の下に出ている属性。弱点の属性の攻撃は 1 ヒットごとにダウンゲージを 1 削る（連続攻撃ほど削れる）。弱点以外の攻撃ではゲージは減らない。',
+  },
+  enchant: {
+    id: 'enchant',
+    name: '魔法剣',
+    icon: '✨',
+    description: 'このターンの間、使うアタックすべてに属性が加わる。弱点が合わない敵にも、ダウンを狙えるようになる。',
+  },
+  mysticArte: {
+    id: 'mysticArte',
+    name: '秘奥義',
+    icon: '🌟',
+    description:
+      'カードを使うと秘奥義ゲージが溜まる（弱点を突くと多め、敵をダウンさせるとさらに多め）。満タンになると、キャラ固有の必殺技カードが手札に来る。全属性を持ち、どんな敵の弱点も突ける。',
+  },
   maxHp: {
     id: 'maxHp',
     name: '最大 HP',
@@ -244,10 +271,10 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   },
   stagger: {
     id: 'stagger',
-    name: 'よろめき',
+    name: 'ダウンゲージ',
     icon: '🌀',
     description:
-      '数値は「あと何回攻撃を当てればダウンするか」。ブロックで防がれた攻撃も 1 回に数える。連続攻撃や全体攻撃で一気に崩そう。',
+      '数値は「あと何回弱点を突けばダウンするか」。ブロックで防がれても 1 回に数える。0 になると敵はダウンして次の行動を休み、2 ターンの間受けるダメージが 1.5 倍になる。ダウンが明けるとゲージは元に戻る。',
   },
   sleep: {
     id: 'sleep',

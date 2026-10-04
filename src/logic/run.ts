@@ -8,9 +8,11 @@ import { generateBlessingOptions } from './blessing';
 import { soloEncounter, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
+import { pickRewardChoices } from './archetype';
 import { pickOne, pickUnique, randomInt } from './random';
 import { grantRandomRelic, obtainRelic, unownedRelics } from './runEffects';
 import { generateShopStock } from './shop';
+import { EMPTY_RUN_STATS, mergeStats } from './stats';
 
 export function currentAct(run: RunState): ActConfig {
   return run.acts[run.actIndex];
@@ -80,6 +82,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     economy: setup.economy,
     restHealRatio: setup.restHealRatio,
     removalCount: 0,
+    stats: EMPTY_RUN_STATS,
     rngSeed: afterActs,
   };
   return startAct(base, 0);
@@ -149,12 +152,14 @@ export function moveTo(run: RunState, nodeId: string): RunState {
  */
 export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (run.phase.kind !== 'combat') return run;
+  const stats = mergeStats(run.stats, result.stats, result.status === 'won');
   if (result.status === 'lost') {
-    return { ...run, player: { ...run.player, hp: 0 }, phase: { kind: 'gameOver' } };
+    return { ...run, stats, player: { ...run.player, hp: 0 }, phase: { kind: 'gameOver' } };
   }
   const { rank } = run.phase.encounter;
   const survived: RunState = {
     ...run,
+    stats,
     player: { hp: result.playerHp, maxHp: result.playerMaxHp },
     potions: result.potions,
     deck: result.deck,
@@ -165,7 +170,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
-  const offered = pickUnique(looted.run.rewardPool, 3, looted.run.rngSeed);
+  const offered = pickRewardChoices(looted.run.rewardPool, looted.run.deck, 3, looted.run.rngSeed);
   return {
     ...looted.run,
     rngSeed: offered.seed,

@@ -1,7 +1,9 @@
 import type { CardDefinition, CardInstance } from '../domain/card';
+import type { Attribute } from '../domain/attribute';
 import type {
   ActorId,
   CombatEventBody,
+  CombatStats,
   CombatLogEntry,
   CombatSetup,
   CombatSide,
@@ -18,8 +20,9 @@ import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
 import type { DebuffId, PowerId } from '../domain/status';
-import { growCard } from './cards';
-import { POWER_LABEL, STATUS_LABEL } from './describe';
+import { breakGaugeOf, cardAttributes, isWeakTo } from './attribute';
+import { baseCardId, growCard } from './cards';
+import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import { DOWN_MOVE, SLEEP_MOVE, traitOf } from './enemyTraits';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
@@ -197,6 +200,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
       energy: Math.max(0, state.player.maxEnergy - hindrance.paralysis),
       strength: state.player.strength + demonForm,
       tempStrength: 0,
+      enchant: [],
       hindrance,
       pendingHindrance: NO_HINDRANCE,
       statuses: turn > 1 ? tickStatuses(state.player.statuses) : state.player.statuses,
@@ -208,7 +212,38 @@ export function startPlayerTurn(state: CombatState): CombatState {
     ...hindranceLogs(hindrance),
   ];
   const logged = logs.reduce(withLog, withLog(started, `ターン ${turn} 開始`));
-  return drawCards(logged, Math.max(0, state.drawPerTurn - hindrance.chill));
+  return grantArteIfReady(drawCards(logged, Math.max(0, state.drawPerTurn - hindrance.chill)));
+}
+
+export const EMPTY_STATS: CombatStats = {
+  maxHit: 0,
+  enemiesDefeated: 0,
+  downs: 0,
+  artes: 0,
+  cardsPlayed: {},
+};
+
+/** 秘奥義ゲージの最大値と、溜まり方。 */
+export const ARTE_GAUGE_MAX = 20;
+const ARTE_PER_CARD = 1;
+const ARTE_PER_WEAK_CARD = 1;
+const ARTE_PER_DOWN = 3;
+
+function gainArte(state: CombatState, amount: number): CombatState {
+  const arteGauge = Math.min(ARTE_GAUGE_MAX, state.player.arteGauge + amount);
+  return { ...state, player: { ...state.player, arteGauge } };
+}
+
+/** ゲージが満タンなら秘奥義カードを手札に加えてゲージを空にする。手札がいっぱいなら空くまで待つ。 */
+function grantArteIfReady(state: CombatState): CombatState {
+  if (state.player.arteGauge < ARTE_GAUGE_MAX || isHandFull(state)) return state;
+  const arte: CardInstance = { instanceId: `arte-${state.nextEventId}`, card: state.mysticArte };
+  const granted: CombatState = {
+    ...state,
+    hand: [...state.hand, arte],
+    player: { ...state.player, arteGauge: 0 },
+  };
+  return callout(withLog(granted, `秘奥義「${state.mysticArte.name}」が使える！`), 'player', '秘奥義解放！');
 }
 
 export function createCombat(setup: CombatSetup, seed: number): CombatState {
@@ -231,6 +266,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       tempStrength: 0,
       endTurnBlock: 0,
       powers: {},
+      enchant: [],
+      arteGauge: 0,
       hindrance: NO_HINDRANCE,
       pendingHindrance: NO_HINDRANCE,
       statuses: {},
@@ -252,11 +289,15 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       traits: enemy.traits ?? [],
       asleep: traitOf(enemy, 'sleep')?.turns ?? 0,
       stunned: false,
-      stagger: traitOf(enemy, 'stagger')?.hits ?? 0,
+      weaknesses: enemy.weaknesses,
+      stagger: breakGaugeOf(enemy),
+      breakGauge: breakGaugeOf(enemy),
       ward: traitOf(enemy, 'ward')?.charges ?? 0,
       debuffsTaken: [],
     })),
     drawPerTurn: setup.drawPerTurn,
+    mysticArte: setup.agent.mysticArte,
+    stats: EMPTY_STATS,
     drawPile: shuffled.items,
     hand: [],
     discardPile: [],
@@ -317,32 +358,46 @@ function attackDamage(state: CombatState, base: number): number {
 }
 
 /**
- * base は筋力込みの値。熱血・衰弱・弱体の倍率は敵ごとにここでかける。
+ * 攻撃の種類。attributes は弱点の判定に使う属性（無ければダウンゲージは減らない）。
  * fixed（パワーの追加ダメージ）は倍率をかけず、霊体化の上限だけ効く。
  */
-function hitEnemy(state: CombatState, uid: EnemyUid, base: number, fixed = false): CombatState {
+type HitKind = { attributes: readonly Attribute[]; fixed?: boolean };
+
+const FIXED_HIT: HitKind = { attributes: [], fixed: true };
+/** レリック・ポーションなど、属性の無い攻撃。 */
+const NO_ATTRIBUTE: HitKind = { attributes: [] };
+
+/** base は筋力込みの値。熱血・衰弱・弱体の倍率は敵ごとにここでかける。 */
+function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || !isAlive(enemy)) return state;
-  const amount = fixed
+  const amount = kind.fixed
     ? hasStatus(enemy.statuses, 'intangible')
       ? Math.min(base, INTANGIBLE_CAP)
       : base
     : modifiedDamage(base, state.player.statuses, enemy.statuses);
   const result = applyDamage(enemy, amount);
-  const hit = withEvent(
-    withLog(updateEnemy(state, uid, () => result.target), formatHit(enemy.name, result)),
-    {
-      kind: 'hit',
-      target: uid,
-      hpLoss: result.hpLoss,
-      blocked: result.blocked,
-      before: vitalsOf(enemy),
-      after: vitalsOf(result.target),
+  const weak = isWeakTo(enemy.weaknesses, kind.attributes);
+  const recorded: CombatState = {
+    ...updateEnemy(state, uid, () => result.target),
+    stats: {
+      ...state.stats,
+      maxHit: Math.max(state.stats.maxHit, Math.min(result.hpLoss, enemy.hp)),
+      enemiesDefeated: state.stats.enemiesDefeated + (isAlive(result.target) ? 0 : 1),
     },
-  );
+  };
+  const hit = withEvent(withLog(recorded, formatHit(enemy.name, result) + (weak ? '（弱点）' : '')), {
+    kind: 'hit',
+    target: uid,
+    hpLoss: result.hpLoss,
+    blocked: result.blocked,
+    before: vitalsOf(enemy),
+    after: vitalsOf(result.target),
+    weak,
+  });
   if (isAlive(result.target)) {
     const woken = result.hpLoss > 0 && enemy.asleep > 0 ? wakeEnemy(hit, uid) : hit;
-    return staggerEnemy(woken, uid);
+    return weak ? staggerEnemy(woken, uid) : woken;
   }
   const defeated = withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
   return onEnemyDefeated(defeated, uid);
@@ -365,7 +420,7 @@ function wakeEnemy(state: CombatState, uid: EnemyUid): CombatState {
 /** ダウン中の被ダメージ倍率がかかるターン数（このターンの残りと、次の自分のターン）。 */
 const DOWN_TURNS = 2;
 
-/** よろめきゲージを 1 減らし、尽きたらダウンさせる。ダウン中は減らない。 */
+/** ダウンゲージを 1 減らし、尽きたらダウンさせる。ダウン中は減らない。 */
 function staggerEnemy(state: CombatState, uid: EnemyUid): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || enemy.stagger <= 0 || hasStatus(enemy.statuses, 'down')) return state;
@@ -377,7 +432,8 @@ function staggerEnemy(state: CombatState, uid: EnemyUid): CombatState {
     stunned: true,
     statuses: addStatus(e.statuses, 'down', DOWN_TURNS),
   }));
-  return callout(withLog(downed, `${enemy.name}はダウンした！`), uid, 'ダウン！');
+  const counted = gainArte({ ...downed, stats: { ...downed.stats, downs: downed.stats.downs + 1 } }, ARTE_PER_DOWN);
+  return callout(withLog(counted, `${enemy.name}はダウンした！`), uid, 'ダウン！');
 }
 
 /** 仇討ち（残った仲間の筋力が上がる）と、倒れた敵の死に際の行動。 */
@@ -414,7 +470,7 @@ function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns:
     `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
   );
   const sadistic = powerOf(debuffed, 'sadistic');
-  return sadistic > 0 ? hitEnemy(debuffed, uid, sadistic, true) : debuffed;
+  return sadistic > 0 ? hitEnemy(debuffed, uid, sadistic, FIXED_HIT) : debuffed;
 }
 
 const totalDebuffTurns = (enemy: EnemyState) =>
@@ -446,7 +502,7 @@ function consumeWard(state: CombatState, enemy: EnemyState): CombatState {
   return callout(withLog(warded, `${enemy.name}の加護がデバフを防いだ`), enemy.uid, '無効！');
 }
 
-function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState {
+function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitKind = NO_ATTRIBUTE): CombatState {
   switch (effect.kind) {
     case 'gainEnergy':
       return withLog(
@@ -503,13 +559,13 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
       const amount = attackDamage(state, effect.amount);
       let next = state;
       for (let i = 0; i < (effect.hits ?? 1); i++) {
-        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount), next);
+        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), next);
       }
       return next;
     }
     case 'damageFromBlock': {
       const amount = attackDamage(state, state.player.block);
-      return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount), state);
+      return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), state);
     }
     case 'block':
       return gainPlayerBlock(state, effect.amount);
@@ -547,14 +603,14 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
         const enemy = findEnemy(current, uid);
         if (!enemy) return current;
         const base = effect.base + totalDebuffTurns(enemy) * effect.perTurn;
-        return hitEnemy(current, uid, attackDamage(current, base));
+        return hitEnemy(current, uid, attackDamage(current, base), hitKind);
       }, state);
     case 'detonateDebuffs':
       return aimedUids(state, aim).reduce((current, uid) => {
         const enemy = findEnemy(current, uid);
         const turns = enemy ? totalDebuffTurns(enemy) : 0;
         if (turns === 0) return withLog(current, '消せるデバフが無かった');
-        const hit = hitEnemy(current, uid, attackDamage(current, turns * effect.perTurn));
+        const hit = hitEnemy(current, uid, attackDamage(current, turns * effect.perTurn), hitKind);
         const cleared = updateEnemy(hit, uid, (e) => ({
           ...e,
           statuses: Object.fromEntries(
@@ -568,19 +624,19 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
         const enemy = findEnemy(state, uid);
         return enemy !== undefined && hasStatus(enemy.statuses, effect.status);
       });
-      return met ? applyEffects(state, effect.effects, aim) : state;
+      return met ? applyEffects(state, effect.effects, aim, hitKind) : state;
     }
     case 'consumeBlock': {
       const block = state.player.block;
       if (block === 0) return withLog(state, 'ブロックが無かった');
       const spent = withLog({ ...state, player: { ...state.player, block: 0 } }, `ブロック ${block} を失った`);
       const amount = attackDamage(spent, block * effect.multiplier);
-      return aimedUids(spent, aim).reduce((current, uid) => hitEnemy(current, uid, amount), spent);
+      return aimedUids(spent, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), spent);
     }
     case 'feed':
       return aimedUids(state, aim).reduce((current, uid) => {
         const before = findEnemy(current, uid);
-        const hit = hitEnemy(current, uid, attackDamage(current, effect.damage));
+        const hit = hitEnemy(current, uid, attackDamage(current, effect.damage), hitKind);
         const after = findEnemy(hit, uid);
         if (!before || !isAlive(before) || !after || isAlive(after)) return hit;
         const player = {
@@ -594,6 +650,15 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
           `最大HP +${effect.maxHp}`,
         );
       }, state);
+    case 'enchant': {
+      const enchant = state.player.enchant.includes(effect.attribute)
+        ? state.player.enchant
+        : [...state.player.enchant, effect.attribute];
+      return withLog(
+        { ...state, player: { ...state.player, enchant } },
+        `このターン、アタックに${ATTRIBUTE_LABEL[effect.attribute]}属性が加わる`,
+      );
+    }
   }
 }
 
@@ -607,7 +672,7 @@ function gainPlayerBlock(state: CombatState, amount: number): CombatState {
   });
   const juggernaut = powerOf(gained, 'juggernaut');
   const target = juggernaut > 0 ? weakestEnemy(gained) : undefined;
-  return target ? hitEnemy(gained, target.uid, juggernaut, true) : gained;
+  return target ? hitEnemy(gained, target.uid, juggernaut, FIXED_HIT) : gained;
 }
 
 /** カードが廃棄されたとき（灰より立つ）。 */
@@ -616,8 +681,12 @@ function onExhausted(state: CombatState, count: number): CombatState {
   return block > 0 ? gainPlayerBlock(state, block) : state;
 }
 
-const applyEffects = (state: CombatState, effects: Effect[], aim: Aim): CombatState =>
-  effects.reduce((current, effect) => applyEffect(current, effect, aim), state);
+const applyEffects = (
+  state: CombatState,
+  effects: Effect[],
+  aim: Aim,
+  hitKind: HitKind = NO_ATTRIBUTE,
+): CombatState => effects.reduce((current, effect) => applyEffect(current, effect, aim, hitKind), state);
 
 function conditionMet(state: CombatState, condition: RelicCondition | undefined): boolean {
   switch (condition) {
@@ -717,14 +786,44 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     cardType: card.type,
     motion: cardMotion(card),
   });
+  const announced = card.mysticArte
+    ? withEvent(withLog(played, `秘奥義「${card.name}」！`), {
+        kind: 'mysticArte',
+        target: 'player',
+        name: card.name,
+      })
+    : played;
   const chosen = target ? findEnemy(state, target) : undefined;
   const guarded =
     aim !== 'all' && chosen && isAlive(chosen) && chosen.uid !== aim
-      ? callout(withLog(played, `${findEnemy(state, aim)?.name ?? '敵'}がかばった！`), aim, 'かばう！')
-      : played;
-  const resolved = applyEffects(guarded, card.effects, aim);
+      ? callout(withLog(announced, `${findEnemy(state, aim)?.name ?? '敵'}がかばった！`), aim, 'かばう！')
+      : announced;
+  const eventsBefore = guarded.events.length;
+  const resolved = applyEffects(guarded, card.effects, aim, { attributes: playedAttributes(state, card) });
   const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
-  return settle(growPlayedCard(exhausted, instance, livingEnemies(state).length));
+  const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
+  const weakHit = grown.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
+  return settle(grantArteIfReady(recordPlay(grown, card, weakHit)));
+}
+
+/** カードの属性に、魔法剣で加わった属性を足したもの（アタックのみ）。 */
+function playedAttributes(state: CombatState, card: CardDefinition): Attribute[] {
+  const own = cardAttributes(card);
+  if (card.type !== 'attack') return own;
+  return [...own, ...state.player.enchant.filter((attribute) => !own.includes(attribute))];
+}
+
+/** 使用回数を記録し、秘奥義ゲージを溜める（秘奥義そのものでは溜まらない）。 */
+function recordPlay(state: CombatState, card: CardDefinition, weakHit: boolean): CombatState {
+  const id = baseCardId(card.id);
+  const stats: CombatStats = {
+    ...state.stats,
+    artes: state.stats.artes + (card.mysticArte ? 1 : 0),
+    cardsPlayed: { ...state.stats.cardsPlayed, [id]: (state.stats.cardsPlayed[id] ?? 0) + 1 },
+  };
+  const recorded = { ...state, stats };
+  if (card.mysticArte) return recorded;
+  return gainArte(recorded, ARTE_PER_CARD + (weakHit ? ARTE_PER_WEAK_CARD : 0));
 }
 
 /** 成長するカードを、使った（または倒した）分だけ強くする。どの山に移っていても探して置き換える。 */
@@ -969,7 +1068,7 @@ function runEnemyTurn(state: CombatState): CombatState {
     enemies: next.enemies.map((enemy) => {
       const statuses = tickStatuses(enemy.statuses);
       const recovered = hasStatus(enemy.statuses, 'down') && !hasStatus(statuses, 'down');
-      const stagger = recovered ? (traitOf(enemy, 'stagger')?.hits ?? 0) : enemy.stagger;
+      const stagger = recovered ? enemy.breakGauge : enemy.stagger;
       return { ...enemy, statuses, stagger };
     }),
   };

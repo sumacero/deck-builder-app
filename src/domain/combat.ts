@@ -1,4 +1,5 @@
 import type { AgentDefinition } from './agent';
+import type { Attribute } from './attribute';
 import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
@@ -31,6 +32,10 @@ export type PlayerState = Fighter & {
   endTurnBlock: number;
   /** パワーカードで得た、戦闘の終わりまで続く能力。 */
   powers: Powers;
+  /** 魔法剣で、このターンのアタックに加わっている属性。 */
+  enchant: Attribute[];
+  /** 秘奥義ゲージ。ARTE_GAUGE_MAX で秘奥義カードが手札に来る。 */
+  arteGauge: number;
   /** 今のターンに効いている妨害。 */
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
@@ -59,8 +64,11 @@ export type EnemyState = Fighter & {
   asleep: number;
   /** ダウンして、次の行動を休む。 */
   stunned: boolean;
-  /** よろめきゲージの残り（あと何回当てるとダウンするか）。よろめきの性質が無ければ 0。 */
+  weaknesses: Attribute[];
+  /** ダウンゲージの残り（あと何回弱点を突くとダウンするか）。 */
   stagger: number;
+  /** ダウンゲージの最大値。ダウンが明けるとここまで戻る。 */
+  breakGauge: number;
   /** 加護の残り回数。 */
   ward: number;
   /** 不屈: これまでに受けたデバフ。 */
@@ -94,7 +102,18 @@ export type CombatEventBody =
    * after は起きた直後の HP とブロック。演出に合わせて 1 発ずつ表示を進めるのに使う。
    * hpLoss は倒しきった分も含むので、直前の値は before で持つ。
    */
-  | { kind: 'hit'; target: ActorId; hpLoss: number; blocked: number; before: Vitals; after: Vitals }
+  | {
+      kind: 'hit';
+      target: ActorId;
+      hpLoss: number;
+      blocked: number;
+      before: Vitals;
+      after: Vitals;
+      /** 弱点を突いた。 */
+      weak?: boolean;
+    }
+  /** 秘奥義を放った。画面全体にカットインを出す。 */
+  | { kind: 'mysticArte'; target: 'player'; name: string }
   | { kind: 'blockGain'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'heal'; target: ActorId; amount: number; after: Vitals }
   | { kind: 'defeated'; target: ActorId }
@@ -107,6 +126,17 @@ export type CombatEventBody =
 
 /** 直前の操作で起きた出来事。UI はこれを見て演出を再生する。 */
 export type CombatEvent = CombatEventBody & { id: number };
+
+/** ランの振り返りに使う記録。戦闘ごとに数え、ランで合算する。 */
+export type CombatStats = {
+  /** 1 ヒットで与えた最大ダメージ（HP に通った分）。 */
+  maxHit: number;
+  enemiesDefeated: number;
+  downs: number;
+  artes: number;
+  /** 強化前のカード id ごとの使用回数。 */
+  cardsPlayed: Record<string, number>;
+};
 
 /** ポーションスロット。空きは null。 */
 export type PotionSlot = PotionDefinition | null;
@@ -134,6 +164,9 @@ export type CombatState = {
   /** 倒した敵も HP 0 のまま残す（並び位置を保つため）。 */
   enemies: EnemyState[];
   drawPerTurn: number;
+  /** ゲージが溜まったら手札に加える秘奥義。 */
+  mysticArte: CardDefinition;
+  stats: CombatStats;
   drawPile: CardInstance[];
   hand: CardInstance[];
   discardPile: CardInstance[];

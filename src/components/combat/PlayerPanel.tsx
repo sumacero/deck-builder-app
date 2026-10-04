@@ -10,6 +10,7 @@ import { FighterInfoSheet } from './FighterInfoSheet';
 import { HpBar } from './HpBar';
 import { ActorFigure } from './model3d/ActorFigure';
 import { AGENT_MODELS } from './model3d/actorModels';
+import { ArteGauge } from './ArteGauge';
 import { ActorMotion } from './motion/ActorMotion';
 import { StatusRow } from './StatusRow';
 
@@ -70,6 +71,7 @@ export function PlayerPanel({
           </Text>
           <StatusRow statuses={statuses} />
           <HpBar hp={vitals.hp} maxHp={player.maxHp} block={vitals.block} />
+          <ArteGauge value={player.arteGauge} />
         </FighterEffects>
       </Pressable>
       {infoOpen && (

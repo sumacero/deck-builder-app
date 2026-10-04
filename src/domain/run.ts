@@ -2,7 +2,7 @@ import type { ActConfig } from './act';
 import type { AgentDefinition } from './agent';
 import type { BlessingDefinition, GuideCharacter } from './blessing';
 import type { CardDefinition } from './card';
-import type { PotionSlot } from './combat';
+import type { CombatStats, PotionSlot } from './combat';
 import type { EnemyDefinition, Encounter } from './enemy';
 import type { EventDefinition } from './event';
 import type { GameMap } from './map';
@@ -74,7 +74,11 @@ export type CombatResult = {
   potions: PotionSlot[];
   /** 永続的に成長したカードを反映したデッキ。 */
   deck: CardDefinition[];
+  stats: CombatStats;
 };
+
+/** ラン全体の記録（振り返り画面用）。 */
+export type RunStats = CombatStats & { combatsWon: number };
 
 export type RunState = {
   phase: RunPhase;
@@ -107,5 +111,6 @@ export type RunState = {
   restHealRatio: number;
   /** このランでカード削除を使った回数。削除の値段に影響する。 */
   removalCount: number;
+  stats: RunStats;
   rngSeed: number;
 };

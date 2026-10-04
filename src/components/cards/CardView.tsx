@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
-import { CARD_TYPE_LABEL, describeCard } from '../../logic/describe';
+import { cardAttributes } from '../../logic/attribute';
+import { CARD_TYPE_LABEL, describeAttributes, describeCard } from '../../logic/describe';
 import { CARD_ART, CARD_TYPE_COLORS, COLORS, HAND_LAYOUT, RADIUS, SPACING } from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
 import { CARD_TYPE_EMBLEM, cardArt } from './cardArt';
@@ -22,6 +23,8 @@ type CardViewProps = {
 const LONG_PRESS_MS = 350;
 
 const BASE_WIDTH = 96;
+/** これより細いカードでは属性をアイコンだけで示す。 */
+const NARROW_WIDTH = 90;
 const WIDE_WIDTH = 108;
 const BORDER_WIDTH = 2;
 const ART_INSET = 3;
@@ -56,7 +59,8 @@ export function CardView({
   detailOnHold = true,
 }: CardViewProps) {
   const [detailOpen, setDetailOpen] = useState(false);
-  const typeColor = CARD_TYPE_COLORS[card.type];
+  const typeColor = card.mysticArte ? COLORS.arte : CARD_TYPE_COLORS[card.type];
+  const attributes = cardAttributes(card);
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width) : null;
   const art = cardArt(card);
@@ -101,8 +105,14 @@ export function CardView({
           </View>
         </View>
         <View style={[styles.body, wide && styles.wideBody, scaled?.body]}>
-          <Text style={[styles.type, scaled?.type, { color: typeColor }]}>
+          <Text style={[styles.type, scaled?.type, { color: typeColor }]} numberOfLines={1}>
             {CARD_TYPE_LABEL[card.type]}
+            {attributes.length > 0 && (
+              <Text style={styles.attribute}>
+                {' '}
+                {describeAttributes(attributes, width !== undefined && width < NARROW_WIDTH)}
+              </Text>
+            )}
           </Text>
           <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
         </View>
@@ -197,5 +207,6 @@ const styles = StyleSheet.create({
   },
   upgradedName: { color: COLORS.upgraded },
   type: { fontSize: 10, fontWeight: '600' },
+  attribute: { color: COLORS.text },
   description: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },
 });

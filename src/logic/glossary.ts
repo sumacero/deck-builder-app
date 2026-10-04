@@ -4,6 +4,7 @@ import type { Effect } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { KeywordId, StatusView } from '../domain/glossary';
 import type { PowerId, StatusId, Statuses } from '../domain/status';
+import { cardAttributes } from './attribute';
 import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, hasStatus, statusTurns } from './status';
 
 function keywordsForEffect(effect: Effect): KeywordId[] {
@@ -45,6 +46,8 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['block', 'damage'];
     case 'feed':
       return ['damage', 'maxHp'];
+    case 'enchant':
+      return ['enchant', 'attribute', 'weakness'];
   }
 }
 
@@ -61,6 +64,8 @@ const unique = (ids: KeywordId[]): KeywordId[] => [...new Set(ids)];
 export function keywordsForCard(card: CardDefinition): KeywordId[] {
   return unique([
     card.type,
+    ...(card.mysticArte ? (['mysticArte'] as const) : []),
+    ...(cardAttributes(card).length > 0 ? (['attribute', 'weakness'] as const) : []),
     ...(card.target === 'allEnemies' ? (['areaAttack'] as const) : []),
     ...card.effects.flatMap(keywordsForEffect),
     ...(card.unplayable ? (['unplayable'] as const) : []),
@@ -78,8 +83,6 @@ function traitViews(enemy: EnemyState): StatusView[] {
     switch (trait.kind) {
       case 'sleep':
         return [{ keyword: 'sleep', value: enemy.asleep }];
-      case 'stagger':
-        return hasStatus(enemy.statuses, 'down') ? [] : [{ keyword: 'stagger', value: enemy.stagger }];
       case 'ward':
         return [{ keyword: 'ward', value: enemy.ward }];
       case 'vengeance':
@@ -112,6 +115,7 @@ export function enemyStatuses(enemy: EnemyState): StatusView[] {
   return nonZero([
     { keyword: 'block', value: enemy.block },
     { keyword: 'strength', value: enemy.strength },
+    ...(hasStatus(enemy.statuses, 'down') ? [] : [{ keyword: 'stagger' as const, value: enemy.stagger }]),
     ...statusViews(enemy.statuses, [...DEBUFF_IDS, ...ENEMY_STATUS_IDS]),
     ...traitViews(enemy),
   ]);

@@ -3,7 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
 import { currentIntent, enemyAttackDamage, isAlive } from '../../logic/combat';
-import { describeIntent, describeTrait, ENEMY_RANK_LABEL } from '../../logic/describe';
+import {
+  ATTRIBUTE_ICON,
+  describeIntent,
+  describeTrait,
+  describeWeaknesses,
+  ENEMY_RANK_LABEL,
+} from '../../logic/describe';
 import { enemyStatuses, keywordsForIntent } from '../../logic/glossary';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { DamagePreviewBadge } from './DamagePreviewBadge';
@@ -102,6 +108,14 @@ export function EnemyPanel({
           <Text style={[styles.name, compact && styles.compactName]} numberOfLines={1}>
             {enemy.name}
           </Text>
+          <View style={styles.weaknesses}>
+            <Text style={styles.weakLabel}>弱点</Text>
+            {enemy.weaknesses.map((attribute) => (
+              <Text key={attribute} style={[styles.weakIcon, compact && styles.compactWeakIcon]}>
+                {ATTRIBUTE_ICON[attribute]}
+              </Text>
+            ))}
+          </View>
           <StatusRow statuses={statuses} />
           <HpBar hp={vitals.hp} maxHp={enemy.maxHp} block={vitals.block} compact={compact} />
         </FighterEffects>
@@ -116,7 +130,7 @@ export function EnemyPanel({
           name={enemy.name}
           statuses={statuses}
           intent={{ moveName: move.name, keywords: keywordsForIntent(move) }}
-          traits={enemy.traits.map(describeTrait)}
+          traits={[describeWeaknesses(enemy.weaknesses), ...enemy.traits.map(describeTrait)]}
           onClose={() => setInfoOpen(false)}
         />
       )}
@@ -147,6 +161,10 @@ const styles = StyleSheet.create({
   },
   name: { color: COLORS.text, fontSize: 14, fontWeight: '700', textAlign: 'center' },
   compactName: { fontSize: 11 },
+  weaknesses: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 2 },
+  weakLabel: { color: COLORS.weakness, fontSize: 10, fontWeight: '800', marginRight: 2 },
+  weakIcon: { fontSize: 14 },
+  compactWeakIcon: { fontSize: 11 },
   unmeasured: { height: ACTOR_FIGURE.minSize },
   previewLayer: {
     position: 'absolute',

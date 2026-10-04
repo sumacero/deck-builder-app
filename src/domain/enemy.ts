@@ -1,3 +1,4 @@
+import type { Attribute } from './attribute';
 import type { CardDefinition } from './card';
 import type { DebuffId } from './status';
 
@@ -41,8 +42,6 @@ export type EnemyTrait =
   | { kind: 'resolute' }
   /** 加護: 最初の charges 回のデバフ（延長を含む）を無効にする。 */
   | { kind: 'ward'; charges: number }
-  /** よろめき: hits 回攻撃を当てる（ブロックで防がれても数える）とダウンし、次の行動を休む。 */
-  | { kind: 'stagger'; hits: number }
   /** かばう: 生きている間、仲間 1 体を狙った攻撃・デバフを代わりに受ける。 */
   | { kind: 'guardian' }
   /** 死に際: 倒れたときに action を行う。 */
@@ -60,6 +59,10 @@ export type EnemyDefinition = {
   /** 先頭から順に使い、最後まで行ったら先頭に戻る。 */
   moves: EnemyMove[];
   traits?: EnemyTrait[];
+  /** 弱点の属性。弱点を突いた 1 ヒットごとにダウンゲージが 1 減る。 */
+  weaknesses: Attribute[];
+  /** ダウンゲージの最大値。省略すると格と HP から決まる。 */
+  breakGauge?: number;
 };
 
 /** 1 回の戦闘で出てくる敵の組み合わせ。rank で報酬や BGM が変わる。 */

@@ -1,3 +1,4 @@
+import type { Attribute } from './attribute';
 import type { BuffId, DebuffId, PowerId } from './status';
 
 /**
@@ -36,7 +37,9 @@ export type Effect =
   /** ブロックをすべて失い、その multiplier 倍のダメージを与える。 */
   | { kind: 'consumeBlock'; multiplier: number }
   /** damage を与え、それで敵を倒したら最大 HP +maxHp（ランの間ずっと）。 */
-  | { kind: 'feed'; damage: number; maxHp: number };
+  | { kind: 'feed'; damage: number; maxHp: number }
+  /** 魔法剣: このターン、アタックに attribute の属性が加わる。 */
+  | { kind: 'enchant'; attribute: Attribute };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

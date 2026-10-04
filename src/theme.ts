@@ -46,6 +46,12 @@ export const COLORS = {
   fade: '#0A0E1C',
   /** カードのイラストの隅に重ねる、種類の紋章の下地。 */
   cardEmblemBg: 'rgba(10, 14, 30, 0.7)',
+  /** 弱点を突いたときの文字と、敵の弱点の表示。 */
+  weakness: '#FFB347',
+  /** 秘奥義ゲージ・秘奥義カードの縁と、カットインの帯。 */
+  arte: '#FF7A3D',
+  arteTrack: '#3A2418',
+  arteBand: 'rgba(40, 14, 6, 0.88)',
 } as const;
 
 export const MAP_NODE_COLORS: Record<MapNodeType, string> = {
@@ -124,6 +130,8 @@ export const MOTION = {
   goldCountMin: 400,
   goldCountMax: 1000,
   goldDelta: 1100,
+  /** 秘奥義のカットインを見せる時間（この間、後続の演出は待つ）。 */
+  arteCutIn: 1400,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {
@@ -175,7 +183,7 @@ export const ACTOR_FIGURE = {
 export const COMBAT_LAYOUT = {
   enemyChrome: 130,
   compactEnemyChrome: 108,
-  playerChrome: 84,
+  playerChrome: 98,
   /** パネルの枠線と内側の余白の合計（左右）。 */
   panelInset: 12,
   compactEnemyCount: 3,

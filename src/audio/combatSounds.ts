@@ -19,7 +19,7 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
     case 'hit':
       if (event.hpLoss === 0) return event.blocked > 0 ? 'guard' : null;
       if (event.target === 'player') return 'playerHurt';
-      return event.hpLoss >= HEAVY_HIT ? 'heavyHit' : 'hit';
+      return event.hpLoss >= HEAVY_HIT || event.weak ? 'heavyHit' : 'hit';
     case 'blockGain':
       return 'blockGain';
     case 'defeated':
@@ -31,5 +31,7 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
       return 'handFull';
     case 'callout':
       return null;
+    case 'mysticArte':
+      return 'relic';
   }
 }

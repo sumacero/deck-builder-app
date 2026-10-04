@@ -1,8 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import type { RelicDefinition } from '../../domain/relic';
-import { describeRelic } from '../../logic/describe';
+import { mainArchetype } from '../../logic/archetype';
+import { ARCHETYPE_LABEL, describeRelic } from '../../logic/describe';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { ArchetypeChips } from '../cards/ArchetypeChips';
 import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
 import { ScreenScroll } from '../layout/ScreenScroll';
@@ -28,6 +30,7 @@ export function RewardScreen({
   deck,
   onPick,
 }: RewardScreenProps) {
+  const archetype = mainArchetype(deck);
   return (
     <ScreenScroll contentStyle={styles.root}>
       <View style={styles.corner}>
@@ -45,9 +48,15 @@ export function RewardScreen({
       )}
       <Text style={styles.title}>カード報酬</Text>
       <Text style={styles.subtitle}>1 枚選んでデッキに加える</Text>
+      {archetype && (
+        <Text style={styles.archetype}>今のデッキの軸: {ARCHETYPE_LABEL[archetype]}</Text>
+      )}
       <View style={styles.row}>
         {choices.map((card) => (
-          <CardView key={card.id} card={card} size="md" onPress={() => onPick(card)} />
+          <View key={card.id} style={styles.choice}>
+            <CardView card={card} size="md" onPress={() => onPick(card)} />
+            <ArchetypeChips archetypes={card.archetypes ?? []} highlight={archetype} />
+          </View>
         ))}
       </View>
       <Pressable
@@ -87,7 +96,9 @@ const styles = StyleSheet.create({
   relicText: { color: COLORS.textMuted, fontSize: 12 },
   title: { color: COLORS.gold, fontSize: 26, fontWeight: '800', letterSpacing: 4 },
   subtitle: { color: COLORS.textMuted, fontSize: 14 },
+  archetype: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
   row: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.md, flexWrap: 'wrap' },
+  choice: { alignItems: 'center', gap: SPACING.xs },
   skip: {
     marginTop: SPACING.md,
     borderWidth: 1,

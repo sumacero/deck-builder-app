@@ -1,7 +1,14 @@
+import type { Attribute } from './attribute';
 import type { Effect, EffectTarget } from './effect';
 
 /** status は敵に混ぜられるお邪魔カード。報酬やショップには出ない。 */
 export type CardType = 'attack' | 'skill' | 'power' | 'status';
+
+/**
+ * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
+ * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突いてダウン）。
+ */
+export type Archetype = 'debuff' | 'block' | 'strength' | 'sacrifice' | 'growth' | 'element';
 
 /** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
 export type CardTarget = EffectTarget;
@@ -62,6 +69,11 @@ export type CardDefinition = {
   /** ターン終了時に手札にあるとかかる効果。 */
   turnEndInHand?: Effect[];
   growth?: CardGrowth;
+  /** 攻撃の属性。アタックで省略すると斬。秘奥義は全属性を持つ。 */
+  attributes?: Attribute[];
+  /** 秘奥義（ゲージが溜まると手札に来る必殺技）。 */
+  mysticArte?: boolean;
+  archetypes?: Archetype[];
   /** これまでに成長した回数（効果の数値には反映済み）。 */
   timesGrown?: number;
 };

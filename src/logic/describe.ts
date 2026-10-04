@@ -1,5 +1,6 @@
+import type { Attribute } from '../domain/attribute';
 import type { BlessingDefinition } from '../domain/blessing';
-import type { CardDefinition, CardGrowth, CardType } from '../domain/card';
+import type { Archetype, CardDefinition, CardGrowth, CardType } from '../domain/card';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
@@ -8,6 +9,7 @@ import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
+import { ALL_ATTRIBUTES } from './attribute';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -17,6 +19,15 @@ export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   event: 'イベント',
   treasure: '宝箱',
   boss: 'ボス',
+};
+
+export const ARCHETYPE_LABEL: Record<Archetype, string> = {
+  debuff: 'デバフ軸',
+  block: 'ブロック軸',
+  strength: '筋力軸',
+  sacrifice: '自傷軸',
+  growth: '成長軸',
+  element: '属性軸',
 };
 
 export const CARD_TYPE_LABEL: Record<CardType, string> = {
@@ -74,7 +85,37 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `ブロックをすべて失い、その ${effect.multiplier} 倍のダメージを与える。`;
     case 'feed':
       return `${effect.damage} ダメージを与える。これで敵を倒すと最大 HP +${effect.maxHp}（ランの間ずっと）。`;
+    case 'enchant':
+      return `このターン、アタックに${ATTRIBUTE_LABEL[effect.attribute]}属性が加わる。`;
   }
+}
+
+export const ATTRIBUTE_LABEL: Record<Attribute, string> = {
+  slash: '斬',
+  blunt: '打',
+  fire: '炎',
+  ice: '氷',
+  thunder: '雷',
+};
+
+export const ATTRIBUTE_ICON: Record<Attribute, string> = {
+  slash: '🗡️',
+  blunt: '🔨',
+  fire: '🔥',
+  ice: '❄️',
+  thunder: '⚡',
+};
+
+const attributeText = (attribute: Attribute) => `${ATTRIBUTE_ICON[attribute]}${ATTRIBUTE_LABEL[attribute]}`;
+
+/** 敵の詳細に出す弱点の説明。 */
+export const describeWeaknesses = (weaknesses: readonly Attribute[]) =>
+  `弱点: ${weaknesses.map(attributeText).join('・')}（弱点を突くとダウンゲージが減る）`;
+
+/** カードの属性の短い表記（秘奥義のように全属性なら「全属性」）。iconOnly は狭い手札用。 */
+export function describeAttributes(attributes: readonly Attribute[], iconOnly = false): string {
+  if (ALL_ATTRIBUTES.every((attribute) => attributes.includes(attribute))) return iconOnly ? '🌈' : '🌈全属性';
+  return attributes.map((attribute) => (iconOnly ? ATTRIBUTE_ICON[attribute] : attributeText(attribute))).join('');
 }
 
 export const POWER_LABEL: Record<PowerId, string> = {
@@ -259,8 +300,6 @@ export function describeTrait(trait: EnemyTrait): string {
       return '不屈: 同じ種類のデバフは 1 回しか効かない（延長も無効）';
     case 'ward':
       return `加護: デバフを ${trait.charges} 回まで無効にする`;
-    case 'stagger':
-      return `よろめき: 攻撃を ${trait.hits} 回当てるとダウン（次の行動を休み、被ダメージ 1.5 倍）`;
     case 'guardian':
       return 'かばう: 仲間を狙った攻撃・デバフを代わりに受ける';
     case 'deathThroes':

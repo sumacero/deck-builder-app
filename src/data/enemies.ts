@@ -32,6 +32,7 @@ export const EMBER_LIZARD: EnemyDefinition = {
   icon: '🦎',
   rank: 'normal',
   maxHp: 34,
+  weaknesses: ['ice', 'slash'],
   moves: [
     { id: 'bite', name: '噛みつき', actions: [atk(8)] },
     { id: 'sparks', name: '火の粉', actions: [atk(4, 2), addCard(BURN)] },
@@ -45,6 +46,7 @@ export const ROCK_SOLDIER: EnemyDefinition = {
   icon: '🪨',
   rank: 'normal',
   maxHp: 42,
+  weaknesses: ['blunt'],
   moves: [
     { id: 'shield-up', name: '盾構え', actions: [blk(9), atk(6)] },
     { id: 'cleave', name: '叩き斬り', actions: [atk(13)] },
@@ -59,6 +61,7 @@ export const MAGMA_SLIME: EnemyDefinition = {
   icon: '🔥',
   rank: 'normal',
   maxHp: 40,
+  weaknesses: ['ice', 'thunder'],
   moves: [
     { id: 'tackle', name: '体当たり', actions: [atk(11)] },
     { id: 'harden', name: '冷え固まる', actions: [blk(8), atk(4)] },
@@ -73,12 +76,13 @@ export const LAVA_KNIGHT: EnemyDefinition = {
   icon: '⚔️',
   rank: 'elite',
   maxHp: 82,
+  weaknesses: ['ice', 'blunt'],
   moves: [
     { id: 'temper', name: '鍛え直し', actions: [buff(2), blk(8)] },
     { id: 'flame-blade', name: '炎の大剣', actions: [atk(17)] },
     { id: 'lava-slash', name: '溶岩斬り', actions: [atk(7, 2)] },
   ],
-  traits: [{ kind: 'stagger', hits: 5 }],
+  breakGauge: 6,
 };
 
 export const BASALT_COLOSSUS: EnemyDefinition = {
@@ -87,6 +91,7 @@ export const BASALT_COLOSSUS: EnemyDefinition = {
   icon: '🗿',
   rank: 'elite',
   maxHp: 92,
+  weaknesses: ['blunt', 'ice'],
   moves: [
     { id: 'rock-wall', name: '岩壁', actions: [blk(14), atk(6)] },
     { id: 'giant-fist', name: '巨拳', actions: [atk(17)] },
@@ -101,13 +106,14 @@ export const FLAME_DRAGON: EnemyDefinition = {
   icon: '🐉',
   rank: 'boss',
   maxHp: 120,
+  weaknesses: ['ice', 'thunder'],
   moves: [
     { id: 'roar', name: '咆哮', actions: [buff(2), blk(12)] },
     { id: 'breath', name: '炎の息', actions: [atk(4, 3), addCard(BURN)] },
     { id: 'crunch', name: '噛み砕き', actions: [atk(16)] },
     { id: 'volcanic-bomb', name: '火山弾', actions: [atk(20)] },
   ],
-  traits: [{ kind: 'stagger', hits: 6 }],
+  breakGauge: 7,
 };
 
 // ==================== 草・風（風わたる草原） ====================
@@ -118,6 +124,7 @@ export const WIND_HAWK: EnemyDefinition = {
   icon: '🦅',
   rank: 'normal',
   maxHp: 30,
+  weaknesses: ['thunder', 'ice'],
   moves: [
     { id: 'talons', name: '爪の連撃', actions: [atk(3, 3)] },
     { id: 'dive', name: '急降下', actions: [atk(9)] },
@@ -131,6 +138,7 @@ export const LEAF_FAIRY: EnemyDefinition = {
   icon: '🧚',
   rank: 'normal',
   maxHp: 32,
+  weaknesses: ['fire', 'slash'],
   moves: [
     { id: 'healing-breeze', name: '癒しの風', actions: [healAll(7), blk(4)] },
     { id: 'leaf-blade', name: '葉の刃', actions: [atk(4, 2)] },
@@ -144,6 +152,7 @@ export const GRASS_WOLF: EnemyDefinition = {
   icon: '🐺',
   rank: 'normal',
   maxHp: 36,
+  weaknesses: ['fire', 'blunt'],
   moves: [
     { id: 'growl', name: '威嚇の唸り', actions: [atk(4), debuff('vulnerable')] },
     { id: 'pounce', name: '飛びかかり', actions: [atk(10)] },
@@ -157,6 +166,7 @@ export const FOREST_RANGER: EnemyDefinition = {
   icon: '🏹',
   rank: 'elite',
   maxHp: 74,
+  weaknesses: ['fire', 'thunder'],
   moves: [
     { id: 'mark', name: '狙いを定める', actions: [atk(6), debuff('vulnerable', 2)] },
     { id: 'snipe', name: '狙い撃ち', actions: [atk(15)] },
@@ -171,6 +181,7 @@ export const GREAT_TREANT: EnemyDefinition = {
   icon: '🌳',
   rank: 'elite',
   maxHp: 90,
+  weaknesses: ['fire', 'slash'],
   moves: [
     { id: 'root-whip', name: '根の鞭', actions: [atk(5, 3)] },
     { id: 'blessing', name: '大地の恵み', actions: [heal(14), blk(8)] },
@@ -185,6 +196,7 @@ export const STORM_GRIFFIN: EnemyDefinition = {
   icon: '🌀',
   rank: 'boss',
   maxHp: 112,
+  weaknesses: ['ice', 'blunt'],
   moves: [
     { id: 'wind-grace', name: '風の加護', actions: [heal(10), buff(1)] },
     { id: 'storm-claws', name: '嵐の爪', actions: [atk(4, 4)] },
@@ -202,6 +214,7 @@ export const FROST_JELLY: EnemyDefinition = {
   icon: '🪼',
   rank: 'normal',
   maxHp: 34,
+  weaknesses: ['thunder', 'fire'],
   moves: [
     { id: 'cold-tentacle', name: '冷たい触手', actions: [atk(7), chill()] },
     { id: 'sting', name: '刺す', actions: [atk(4, 2)] },
@@ -216,6 +229,7 @@ export const DROWNED_GUARD: EnemyDefinition = {
   icon: '🔱',
   rank: 'normal',
   maxHp: 44,
+  weaknesses: ['thunder', 'blunt'],
   moves: [
     { id: 'thrust', name: '突き', actions: [atk(11)] },
     { id: 'water-shield', name: '水の盾', actions: [blk(8), atk(5)] },
@@ -230,6 +244,7 @@ export const MIST_SIREN: EnemyDefinition = {
   icon: '🧜',
   rank: 'normal',
   maxHp: 36,
+  weaknesses: ['thunder', 'slash'],
   moves: [
     { id: 'binding-song', name: '封じの歌', actions: [SEAL, blk(6)] },
     { id: 'bewildering-arrow', name: '惑わしの水矢', actions: [atk(7), debuff('weak')] },
@@ -243,6 +258,7 @@ export const ICE_WITCH: EnemyDefinition = {
   icon: '🧊',
   rank: 'elite',
   maxHp: 78,
+  weaknesses: ['fire', 'thunder'],
   moves: [
     { id: 'sealing-ice', name: '封印の氷', actions: [SEAL, blk(10)] },
     { id: 'ice-lance', name: '氷の槍', actions: [atk(16)] },
@@ -257,12 +273,13 @@ export const ABYSS_SERPENT: EnemyDefinition = {
   icon: '🐍',
   rank: 'elite',
   maxHp: 92,
+  weaknesses: ['thunder', 'blunt'],
   moves: [
     { id: 'whirlpool', name: '渦潮', actions: [atk(6, 2), chill()] },
     { id: 'crunch', name: '噛み砕き', actions: [atk(17)] },
     { id: 'water-armor', name: '水の鎧', actions: [blk(14), buff(1)] },
   ],
-  traits: [{ kind: 'stagger', hits: 5 }],
+  breakGauge: 6,
 };
 
 export const FROZEN_EMPRESS: EnemyDefinition = {
@@ -271,6 +288,7 @@ export const FROZEN_EMPRESS: EnemyDefinition = {
   icon: '👑',
   rank: 'boss',
   maxHp: 118,
+  weaknesses: ['fire', 'thunder'],
   moves: [
     { id: 'permafrost', name: '永久凍土', actions: [SEAL, chill(), blk(10)] },
     { id: 'absolute-zero', name: '絶対零度', actions: [atk(20)] },
@@ -287,6 +305,7 @@ export const ANCIENT_PHANTOM: EnemyDefinition = {
   icon: '👻',
   rank: 'normal',
   maxHp: 30,
+  weaknesses: ['fire', 'thunder'],
   moves: [
     { id: 'fade', name: '霧に溶ける', actions: [INTANGIBLE] },
     { id: 'chilling-touch', name: '凍える手', actions: [atk(7), debuff('weak')] },
@@ -302,6 +321,7 @@ export const GEAR_SOLDIER: EnemyDefinition = {
   icon: '🤖',
   rank: 'normal',
   maxHp: 42,
+  weaknesses: ['blunt', 'ice'],
   moves: [
     { id: 'thrust', name: '突き', actions: [atk(10)] },
     { id: 'armor', name: '装甲展開', actions: [blk(8), atk(5)] },
@@ -317,6 +337,7 @@ export const SPARK_DRONE: EnemyDefinition = {
   icon: '🛸',
   rank: 'normal',
   maxHp: 32,
+  weaknesses: ['ice', 'slash'],
   moves: [
     { id: 'charge', name: 'チャージ', actions: [CHARGE, blk(5)] },
     { id: 'thunderbolt', name: '雷撃', actions: [atk(15)] },
@@ -330,6 +351,7 @@ export const IRON_HOUND: EnemyDefinition = {
   icon: '🐕',
   rank: 'normal',
   maxHp: 38,
+  weaknesses: ['fire', 'blunt'],
   moves: [
     { id: 'bite', name: '噛みつき', actions: [atk(9)] },
     { id: 'shock-fang', name: '電撃の牙', actions: [atk(5), paralyze()] },
@@ -344,12 +366,13 @@ export const CLOCKWORK_KNIGHT: EnemyDefinition = {
   icon: '⚙️',
   rank: 'elite',
   maxHp: 84,
+  weaknesses: ['blunt', 'ice'],
   moves: [
     { id: 'recharge', name: '充電', actions: [CHARGE, blk(12)] },
     { id: 'lightning-slash', name: '雷光斬り', actions: [atk(21)] },
     { id: 'twin-slash', name: '連続斬り', actions: [atk(6, 2), paralyze()] },
   ],
-  traits: [{ kind: 'stagger', hits: 4 }],
+  breakGauge: 5,
 };
 
 export const THUNDER_GOLEM: EnemyDefinition = {
@@ -358,6 +381,7 @@ export const THUNDER_GOLEM: EnemyDefinition = {
   icon: '⚡',
   rank: 'elite',
   maxHp: 94,
+  weaknesses: ['ice', 'blunt'],
   moves: [
     { id: 'discharge', name: '放電', actions: [atk(4, 3), paralyze()] },
     { id: 'store', name: '蓄電', actions: [CHARGE, blk(10)] },
@@ -372,6 +396,7 @@ export const GEAR_EMPEROR: EnemyDefinition = {
   icon: '🏭',
   rank: 'boss',
   maxHp: 125,
+  weaknesses: ['ice', 'blunt'],
   moves: [
     { id: 'boot', name: '起動', actions: [buff(2), blk(12)] },
     { id: 'thunderclap', name: '雷鳴', actions: [atk(7), paralyze()] },
@@ -379,7 +404,8 @@ export const GEAR_EMPEROR: EnemyDefinition = {
     { id: 'thunder-cannon', name: '雷神砲', actions: [atk(25)] },
     { id: 'gear-storm', name: '歯車の嵐', actions: [atk(4, 4), addCard(SCRAP, 2)] },
   ],
-  traits: [{ kind: 'stagger', hits: 7 }, { kind: 'resolute' }],
+  breakGauge: 8,
+  traits: [{ kind: 'resolute' }],
 };
 
 // ==================== 群れで出てくる小型の敵（1 体ずつは弱い） ====================
@@ -392,6 +418,7 @@ export const CINDER_IMP: EnemyDefinition = {
   icon: '😈',
   rank: 'normal',
   maxHp: 14,
+  weaknesses: ['ice', 'slash'],
   moves: [
     { id: 'claw', name: '火の爪', actions: [atk(5)] },
     { id: 'guard', name: '構え', actions: [blk(4), atk(3)] },
@@ -405,6 +432,7 @@ export const PEBBLE_GOLEM: EnemyDefinition = {
   icon: '⛰️',
   rank: 'normal',
   maxHp: 17,
+  weaknesses: ['blunt'],
   moves: [
     { id: 'stone-wall', name: '石の壁', actions: [blk(6), atk(2)] },
     { id: 'tackle', name: '体当たり', actions: [atk(6)] },
@@ -418,6 +446,7 @@ export const FIRE_BAT: EnemyDefinition = {
   icon: '🦇',
   rank: 'normal',
   maxHp: 12,
+  weaknesses: ['ice', 'thunder'],
   moves: [
     { id: 'fire-wing', name: '火の羽', actions: [atk(3, 2)] },
     { id: 'bite', name: '噛みつき', actions: [atk(5)] },
@@ -432,6 +461,7 @@ export const SEED_SPROUT: EnemyDefinition = {
   icon: '🌱',
   rank: 'normal',
   maxHp: 13,
+  weaknesses: ['fire', 'slash'],
   moves: [
     { id: 'photosynthesis', name: '光合成', actions: [heal(4), blk(3)] },
     { id: 'seed-shot', name: '種飛ばし', actions: [atk(2, 2)] },
@@ -445,6 +475,7 @@ export const GUST_SPRITE: EnemyDefinition = {
   icon: '🌪️',
   rank: 'normal',
   maxHp: 12,
+  weaknesses: ['thunder', 'blunt'],
   moves: [
     { id: 'whirlwind', name: 'つむじ風', actions: [atk(2, 3)] },
     { id: 'wind-blade', name: '風の刃', actions: [atk(3, 2)] },
@@ -457,6 +488,7 @@ export const HORN_RABBIT: EnemyDefinition = {
   icon: '🐇',
   rank: 'normal',
   maxHp: 13,
+  weaknesses: ['fire', 'blunt'],
   moves: [
     { id: 'horn', name: '角突き', actions: [atk(5)] },
     { id: 'hop', name: '跳ね回る', actions: [atk(2, 3)] },
@@ -472,6 +504,7 @@ export const ICE_WISP: EnemyDefinition = {
   icon: '❄️',
   rank: 'normal',
   maxHp: 13,
+  weaknesses: ['fire'],
   moves: [
     { id: 'cold-air', name: '冷気', actions: [atk(2), chill()] },
     { id: 'ice-pebble', name: '氷のつぶて', actions: [atk(4)] },
@@ -484,6 +517,7 @@ export const BUBBLE_SLIME: EnemyDefinition = {
   icon: '🫧',
   rank: 'normal',
   maxHp: 14,
+  weaknesses: ['thunder', 'slash'],
   moves: [
     { id: 'bump', name: 'ぶつかる', actions: [atk(5)] },
     { id: 'bubble', name: '泡の膜', actions: [blk(5), atk(2)] },
@@ -497,6 +531,7 @@ export const RUIN_CRAB: EnemyDefinition = {
   icon: '🦀',
   rank: 'normal',
   maxHp: 16,
+  weaknesses: ['blunt', 'thunder'],
   moves: [
     { id: 'pinch', name: 'はさみ', actions: [atk(3, 2)] },
     { id: 'shell', name: '甲羅', actions: [blk(6), atk(2)] },
@@ -512,6 +547,7 @@ export const BOLT_BUG: EnemyDefinition = {
   icon: '🐞',
   rank: 'normal',
   maxHp: 12,
+  weaknesses: ['fire', 'slash'],
   moves: [
     { id: 'tackle', name: '体当たり', actions: [atk(3, 2)] },
     { id: 'spark', name: '火花', actions: [atk(5)] },
@@ -525,6 +561,7 @@ export const COG_RAT: EnemyDefinition = {
   icon: '🐀',
   rank: 'normal',
   maxHp: 14,
+  weaknesses: ['blunt', 'slash'],
   moves: [
     { id: 'gnaw', name: 'かじる', actions: [atk(5)] },
     { id: 'junk-toss', name: 'ガラクタ投げ', actions: [blk(5), addCard(SCRAP)] },
@@ -538,6 +575,7 @@ export const TESLA_ORB: EnemyDefinition = {
   icon: '🔮',
   rank: 'normal',
   maxHp: 13,
+  weaknesses: ['ice', 'blunt'],
   moves: [
     { id: 'store', name: '蓄電', actions: [CHARGE, blk(3)] },
     { id: 'flash', name: '雷光', actions: [atk(9)] },

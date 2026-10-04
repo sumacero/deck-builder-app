@@ -29,6 +29,7 @@ import { canPlayByTap, type DropTarget } from './cardDrop';
 import { CombatFooter } from './CombatFooter';
 import { CombatLog } from './CombatLog';
 import { CombatResultOverlay } from './CombatResultOverlay';
+import { ArteCutIn } from './effects/ArteCutIn';
 import { DamageVignette } from './effects/DamageVignette';
 import { EnemyRow } from './EnemyRow';
 import { EnergyOrb } from './EnergyOrb';
@@ -297,6 +298,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
           </>
         )}
         <DamageVignette events={state.events} />
+        <ArteCutIn events={state.events} agentName={setup.agent.name} />
         {drag && (
           <Animated.View style={[styles.ghost, { transform: ghost.getTranslateTransform() }]}>
             {drag.kind === 'card' ? (
@@ -335,6 +337,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
                 playerMaxHp: state.player.maxHp,
                 potions: state.potions,
                 deck: deckAfterCombat(state, setup.deck),
+                stats: state.stats,
               })
             }
           />

@@ -44,7 +44,6 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
       return { ...trait, action: scaleAction(trait.action, scale) };
     case 'resolute':
     case 'ward':
-    case 'stagger':
     case 'guardian':
       return trait;
   }

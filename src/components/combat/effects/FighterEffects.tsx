@@ -23,6 +23,8 @@ type FighterEffectsProps = {
 };
 
 const BIG_HIT = 10;
+/** 同じ被弾イベントから出す「弱点！」の文字に、ダメージ数値と重ならない id を振る。 */
+const WEAK_POPUP_OFFSET = 0.5;
 
 const timing = (value: Animated.Value, toValue: number, duration: number) =>
   Animated.timing(value, { toValue, duration, useNativeDriver: true });
@@ -79,6 +81,7 @@ export function FighterEffects({
           if (!broke) addPopup({ id: event.id, text: 'ガード！', tone: 'guard', large: false });
         }
         if (broke) addPopup({ id: -event.id - 1, text: 'ブレイク！', tone: 'guard', large: false });
+        if (event.weak) addPopup({ id: event.id + WEAK_POPUP_OFFSET, text: '弱点！', tone: 'weak', large: false });
         return;
       }
       case 'blockGain':
@@ -100,6 +103,7 @@ export function FighterEffects({
       case 'defeated':
       case 'won':
       case 'handFull':
+      case 'mysticArte':
         return;
     }
   });

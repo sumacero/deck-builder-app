@@ -172,6 +172,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
       {ended && (
         <RunEndOverlay
           kind={run.phase.kind === 'cleared' ? 'cleared' : 'gameOver'}
+          run={run}
           onNewRun={onNewRun}
           onExitToTitle={onExitToTitle}
         />
