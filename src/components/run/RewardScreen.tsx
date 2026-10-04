@@ -2,11 +2,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import type { RelicDefinition } from '../../domain/relic';
 import { mainArchetype } from '../../logic/archetype';
-import { ARCHETYPE_LABEL, describeRelic } from '../../logic/describe';
+import { ARCHETYPE_LABEL } from '../../logic/describe';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { ArchetypeChips } from '../cards/ArchetypeChips';
 import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
+import { RelicCard } from '../items/RelicCard';
 import { ScreenScroll } from '../layout/ScreenScroll';
 
 type RewardScreenProps = {
@@ -37,15 +38,7 @@ export function RewardScreen({
         <DeckButton deck={deck} />
       </View>
       {gold > 0 && <Text style={styles.gold}>🪙 +{gold} ゴールド</Text>}
-      {relic && (
-        <View style={styles.relic}>
-          <Text style={styles.relicIcon}>{relic.icon}</Text>
-          <View style={styles.relicBody}>
-            <Text style={styles.relicName}>レリック獲得: {relic.name}</Text>
-            <Text style={styles.relicText}>{describeRelic(relic)}</Text>
-          </View>
-        </View>
-      )}
+      {relic && <RelicCard relic={relic} caption="レリック獲得" />}
       <Text style={styles.title}>カード報酬</Text>
       <Text style={styles.subtitle}>1 枚選んでデッキに加える</Text>
       {archetype && (
@@ -79,21 +72,6 @@ const styles = StyleSheet.create({
   },
   corner: { position: 'absolute', top: SPACING.lg, right: SPACING.lg },
   gold: { color: COLORS.gold, fontSize: 18, fontWeight: '800' },
-  relic: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    alignSelf: 'stretch',
-    backgroundColor: COLORS.panel,
-    borderWidth: 1,
-    borderColor: COLORS.gold,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-  },
-  relicIcon: { fontSize: 30 },
-  relicBody: { flex: 1, gap: 2 },
-  relicName: { color: COLORS.gold, fontSize: 14, fontWeight: '800' },
-  relicText: { color: COLORS.textMuted, fontSize: 12 },
   title: { color: COLORS.gold, fontSize: 26, fontWeight: '800', letterSpacing: 4 },
   subtitle: { color: COLORS.textMuted, fontSize: 14 },
   archetype: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },

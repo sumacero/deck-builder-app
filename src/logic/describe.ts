@@ -6,7 +6,7 @@ import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/en
 import type { EventOption } from '../domain/event';
 import type { MapNodeType } from '../domain/map';
 import type { PotionDefinition } from '../domain/potion';
-import type { RelicDefinition } from '../domain/relic';
+import type { RelicCondition, RelicDefinition, RelicRarity } from '../domain/relic';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
 import { ALL_ATTRIBUTES } from './attribute';
@@ -193,12 +193,23 @@ export function describePotion(potion: PotionDefinition): string {
   return describeEffects(potion.effects, potion.target);
 }
 
+const RELIC_CONDITION_TEXT: Record<RelicCondition, string> = {
+  noBlock: 'ブロックが 0 なら',
+  lowHp: 'HP が半分以下なら',
+  eliteOrBoss: 'エリート・ボス戦なら',
+  everyThirdTurn: '3 ターンごとに',
+};
+
 function relicTiming(relic: RelicDefinition): string {
+  const condition = relic.condition ? RELIC_CONDITION_TEXT[relic.condition] : '';
   switch (relic.trigger) {
     case 'combatStart':
-      return '戦闘開始時、';
+      return condition ? `${condition}戦闘開始時、` : '戦闘開始時、';
+    case 'turnStart':
+      if (relic.condition === 'everyThirdTurn') return '3 ターンごとのターン開始時、';
+      return condition ? `ターン開始時に${condition}、` : 'ターン開始時、';
     case 'turnEnd':
-      return relic.condition === 'noBlock' ? 'ターン終了時にブロックが 0 なら、' : 'ターン終了時、';
+      return condition ? `ターン終了時に${condition}、` : 'ターン終了時、';
     case 'combatWon':
       return '戦闘に勝利したとき、';
     case undefined:
@@ -214,6 +225,14 @@ export function describeRelic(relic: RelicDefinition): string {
   const passive = (relic.onObtain ?? []).map((effect) => `${describeRunEffect(effect)}。`).join('');
   return triggered + passive;
 }
+
+export const RELIC_RARITY_LABEL: Record<RelicRarity, string> = {
+  starter: '初期',
+  common: 'コモン',
+  uncommon: 'アンコモン',
+  rare: 'レア',
+  boss: 'ボス',
+};
 
 export type IntentView = {
   key: string;
@@ -333,7 +352,11 @@ export function describeRunEffect(effect: RunEffect): string {
     case 'loseGold':
       return `${effect.amount} ゴールドを払う`;
     case 'gainRelic':
-      return 'ランダムなレリックを得る';
+      return effect.tier
+        ? `ランダムな${RELIC_RARITY_LABEL[effect.tier]}のレリックを得る`
+        : 'ランダムなレリックを得る';
+    case 'addCard':
+      return `「${effect.card.name}」をデッキに加える`;
     case 'upgradeRandom':
       return `ランダムなカード ${effect.count} 枚を強化`;
     case 'fillPotions':
@@ -356,6 +379,8 @@ function isNegative(effect: RunEffect): boolean {
     case 'changeEnergyPerTurn':
     case 'changeDrawPerTurn':
       return effect.amount < 0;
+    case 'addCard':
+      return effect.card.type === 'status';
     default:
       return false;
   }

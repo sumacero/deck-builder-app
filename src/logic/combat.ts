@@ -316,7 +316,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
   };
   const names = groupedNames(setup.enemies.map((enemy) => enemy.name));
   const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
-  return triggerRelics(firstTurn, 'combatStart');
+  return triggerRelics(triggerRelics(firstTurn, 'combatStart'), 'turnStart');
 }
 
 /** ["小スライム", "苔の芽", "小スライム"] → "小スライム×2と苔の芽" */
@@ -686,6 +686,12 @@ function conditionMet(state: CombatState, condition: RelicCondition | undefined)
       return true;
     case 'noBlock':
       return state.player.block === 0;
+    case 'lowHp':
+      return state.player.hp * 2 <= state.player.maxHp;
+    case 'eliteOrBoss':
+      return state.enemies.some((enemy) => enemy.rank !== 'normal');
+    case 'everyThirdTurn':
+      return state.turn % 3 === 0;
   }
 }
 
@@ -1103,5 +1109,5 @@ export function endTurn(state: CombatState): CombatState {
   const discarded = settle(withLog(discardHand(afterMetal), 'ターン終了'));
   if (discarded.status !== 'playerTurn') return discarded;
   const afterEnemy = runEnemyTurn(discarded);
-  return afterEnemy.status === 'lost' ? afterEnemy : startPlayerTurn(afterEnemy);
+  return afterEnemy.status === 'lost' ? afterEnemy : finishIfWon(triggerRelics(startPlayerTurn(afterEnemy), 'turnStart'));
 }

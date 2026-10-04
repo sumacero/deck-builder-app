@@ -8,14 +8,7 @@ import { CRIMSON_PHOENIX, DEFEND, REWARD_CARDS, STRIKE, ULTIMATE_DEFEND, ULTIMAT
 import { STANDARD_EVENTS } from './events';
 import { STATUS_CARDS } from './statusCards';
 import { ALL_POTIONS } from './potions';
-import {
-  BOSS_RELIC_POOL,
-  EMBER_LANTERN,
-  FIGHTING_SPIRIT,
-  RELIC_POOL,
-  RUSTY_ANCHOR,
-  STEADFAST_STONE,
-} from './relics';
+import { BOSS_RELIC_POOL, FIGHTING_SPIRIT, RELIC_POOL } from './relics';
 
 /** 同じ id が複数の一覧に入っていても 1 つにまとめる（最初に出たものを残す）。 */
 function uniqueById<T extends { id: string }>(items: readonly T[]): T[] {
@@ -38,14 +31,7 @@ export const ALL_CARDS: CardDefinition[] = uniqueById([
   ...STATUS_CARDS,
 ]);
 
-export const ALL_RELICS: RelicDefinition[] = uniqueById([
-  RUSTY_ANCHOR,
-  EMBER_LANTERN,
-  STEADFAST_STONE,
-  FIGHTING_SPIRIT,
-  ...RELIC_POOL,
-  ...BOSS_RELIC_POOL,
-]);
+export const ALL_RELICS: RelicDefinition[] = uniqueById([FIGHTING_SPIRIT, ...RELIC_POOL, ...BOSS_RELIC_POOL]);
 
 export const CATALOG_POTIONS: PotionDefinition[] = uniqueById(ALL_POTIONS);
 

@@ -5,6 +5,7 @@ import type { RunState } from '../domain/run';
 import type { EconomyConfig, ShopOffer, ShopStock } from '../domain/shop';
 import { removeFromDeck } from './cards';
 import { nextRandom, pickUnique } from './random';
+import { isRelicTier, pickWeightedRelics } from './relics';
 import { obtainRelic } from './runEffects';
 
 /** 基準価格を ±variance の範囲でばらつかせる。 */
@@ -56,11 +57,11 @@ export function generateShopStock(
     economy.priceVariance,
     regular.seed,
   );
-  const pickedRelics = pickUnique(relicPool, economy.shopRelicCount, cards.seed);
+  const pickedRelics = pickWeightedRelics(relicPool, economy.shopRelicCount, economy.relicTierWeight, cards.seed);
   const relics = toOffers(
     pickedRelics.items,
     'relic',
-    () => economy.relicPrice,
+    (relic) => (isRelicTier(relic.rarity) ? economy.relicPrice[relic.rarity] : economy.relicPrice.rare),
     economy.priceVariance,
     pickedRelics.seed,
   );

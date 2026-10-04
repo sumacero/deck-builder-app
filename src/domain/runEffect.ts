@@ -1,4 +1,5 @@
 import type { CardDefinition } from './card';
+import type { RelicTier } from './relic';
 
 /**
  * ラン全体にかかる効果（戦闘の外で起きる）。恩恵・イベント・レリックの入手時に使う。
@@ -11,8 +12,10 @@ export type RunEffect =
   | { kind: 'loseHp'; amount: number }
   | { kind: 'gainGold'; amount: number }
   | { kind: 'loseGold'; amount: number }
-  /** まだ持っていないレリックからランダムに 1 つ。 */
-  | { kind: 'gainRelic' }
+  /** まだ持っていないレリックからランダムに 1 つ（レア度の出現率に従う）。tier を指定するとそのレア度から。 */
+  | { kind: 'gainRelic'; tier?: RelicTier }
+  /** デッキにカードを加える（お邪魔カードを押し付けられる代償など）。 */
+  | { kind: 'addCard'; card: CardDefinition }
   /** 強化できるカードからランダムに count 枚を強化。 */
   | { kind: 'upgradeRandom'; count: number }
   /** 空いているポーション枠をランダムなポーションで埋める。 */

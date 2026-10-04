@@ -2,7 +2,7 @@ import { useCallback, useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { CombatEvent, PotionSlot } from '../../domain/combat';
 import type { RelicDefinition } from '../../domain/relic';
-import { describePotion, describeRelic } from '../../logic/describe';
+import { describePotion, describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { ITEM_BAR, SPACING } from '../../theme';
 import { ItemInfo } from './ItemInfo';
@@ -108,7 +108,7 @@ export function ItemBar({
         <ItemInfo
           icon={relic.icon}
           name={relic.name}
-          description={describeRelic(relic)}
+          description={`【${RELIC_RARITY_LABEL[relic.rarity]}】${describeRelic(relic)}`}
           onClose={close}
         />
       );

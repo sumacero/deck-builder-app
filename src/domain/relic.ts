@@ -1,12 +1,23 @@
 import type { Effect } from './effect';
 import type { RunEffect } from './runEffect';
 
-export type RelicTrigger = 'combatStart' | 'turnEnd' | 'combatWon';
+/** combatStart は戦闘の最初に 1 回、turnStart は毎ターンの始め（1 ターン目も含む）。 */
+export type RelicTrigger = 'combatStart' | 'turnStart' | 'turnEnd' | 'combatWon';
 
-export type RelicCondition = 'noBlock';
+/**
+ * 発動の条件。
+ * - noBlock: ブロックが 0
+ * - lowHp: HP が最大 HP の半分以下
+ * - eliteOrBoss: エリートかボスがいる戦闘
+ * - everyThirdTurn: 3・6・9… ターン目
+ */
+export type RelicCondition = 'noBlock' | 'lowHp' | 'eliteOrBoss' | 'everyThirdTurn';
 
-/** 通常のレリックはエリート・宝箱・ショップ・恩恵で、ボスレリックはボス撃破後の 3 択で手に入る。 */
-export type RelicRarity = 'common' | 'boss';
+/** 通常のレリック（エリート・宝箱・ショップ・恩恵・イベント）のレア度。強いほど出にくい。 */
+export type RelicTier = 'common' | 'uncommon' | 'rare';
+
+/** starter はエージェントが最初から持つもの、boss はボス撃破後の 3 択で手に入るもの。 */
+export type RelicRarity = 'starter' | RelicTier | 'boss';
 
 /**
  * 所持しているだけで効果がある。

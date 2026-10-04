@@ -6,23 +6,16 @@ import { CRIMSON_STARTER_DECK, REWARD_CARDS } from './cards';
 import { STANDARD_ECONOMY } from './economy';
 import { STANDARD_EVENTS } from './events';
 import { ALL_POTIONS, FIRE_POTION, IRON_POTION, SWIFT_POTION } from './potions';
-import {
-  BOSS_RELIC_POOL,
-  EMBER_LANTERN,
-  FIGHTING_SPIRIT,
-  RELIC_POOL,
-  RUSTY_ANCHOR,
-  STEADFAST_STONE,
-} from './relics';
+import { BOSS_RELIC_POOL, FIGHTING_SPIRIT, RELIC_POOL } from './relics';
 
-/** レリックとポーションはすでに持っている前提で始める。 */
+/** レリックはカイルの初期レリック 1 つ、ポーションは 3 つ持って始める。 */
 export const STANDARD_RUN: RunSetup = {
   agent: CRIMSON_HERO,
   deck: CRIMSON_STARTER_DECK,
   playerMaxHp: 70,
   energyPerTurn: 3,
   drawPerTurn: 5,
-  relics: [RUSTY_ANCHOR, EMBER_LANTERN, STEADFAST_STONE, FIGHTING_SPIRIT],
+  relics: [FIGHTING_SPIRIT],
   potions: [FIRE_POTION, IRON_POTION, SWIFT_POTION],
   actChoices: STANDARD_ACT_CHOICES,
   rewardPool: REWARD_CARDS,

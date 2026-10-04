@@ -6,7 +6,7 @@ import { useMusic } from '../../hooks/useMusic';
 import type { ShopActions } from '../../hooks/useRun';
 import { isDraftable } from '../../logic/attribute';
 import { stackCards } from '../../logic/cards';
-import { describeCard, describePotion, describeRelic } from '../../logic/describe';
+import { describeCard, describePotion, describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardPickerModal } from '../cards/CardPickerModal';
@@ -75,7 +75,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
             key={offer.offerId}
             icon={offer.item.icon}
             name={offer.item.name}
-            description={describeRelic(offer.item)}
+            description={`【${RELIC_RARITY_LABEL[offer.item.rarity]}】${describeRelic(offer.item)}`}
             price={offer.price}
             affordable={canAfford(run, offer.price)}
             sold={offer.sold}

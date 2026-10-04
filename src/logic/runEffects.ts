@@ -1,10 +1,11 @@
-import type { RelicDefinition } from '../domain/relic';
+import type { RelicDefinition, RelicTier } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import { canUpgrade, countBase, fuseInDeck, upgradeCard } from './cards';
 import { draftPool, pickRewardChoices } from './archetype';
 import { attuneDeck } from './attribute';
 import { pickOne, shuffle } from './random';
+import { pickWeightedRelic, weightsFor } from './relics';
 
 /** pool のうち、まだ持っていないレリック。 */
 export function unownedRelics(run: RunState, pool: readonly RelicDefinition[]): RelicDefinition[] {
@@ -18,9 +19,16 @@ export function obtainRelic(run: RunState, relic: RelicDefinition): RunState {
   return (relic.onObtain ?? []).reduce(applyRunEffect, added);
 }
 
-/** まだ持っていないレリックを 1 つ与える。候補が尽きていたら代わりにゴールド。 */
-export function grantRandomRelic(run: RunState): { run: RunState; relic: RelicDefinition | null } {
-  const picked = pickOne(unownedRelics(run, run.relicPool), run.rngSeed);
+/**
+ * まだ持っていないレリックを、レア度の出現率に従って 1 つ与える。tier を指定するとそのレア度から。
+ * 候補が尽きていたら代わりにゴールド。
+ */
+export function grantRandomRelic(
+  run: RunState,
+  tier?: RelicTier,
+): { run: RunState; relic: RelicDefinition | null } {
+  const pool = unownedRelics(run, run.relicPool);
+  const picked = pickWeightedRelic(pool, weightsFor(run.economy.relicTierWeight, pool, tier), run.rngSeed);
   if (!picked.item) {
     return {
       run: { ...run, rngSeed: picked.seed, gold: run.gold + run.economy.relicFallbackGold },
@@ -80,7 +88,9 @@ export function applyRunEffect(run: RunState, effect: RunEffect): RunState {
     case 'loseGold':
       return { ...run, gold: Math.max(0, run.gold - effect.amount) };
     case 'gainRelic':
-      return grantRandomRelic(run).run;
+      return grantRandomRelic(run, effect.tier).run;
+    case 'addCard':
+      return { ...run, deck: [...run.deck, ...attuneDeck([effect.card], run.agent.attribute)] };
     case 'upgradeRandom':
       return upgradeRandomCards(run, effect.count);
     case 'fillPotions':

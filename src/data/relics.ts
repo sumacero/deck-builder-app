@@ -1,44 +1,21 @@
 import type { RelicDefinition } from '../domain/relic';
 
-export const RUSTY_ANCHOR: RelicDefinition = {
-  id: 'rusty-anchor',
-  name: '錆びた錨',
-  icon: '⚓',
-  rarity: 'common',
-  trigger: 'combatStart',
-  effects: [{ kind: 'block', amount: 10 }],
-};
-
-export const EMBER_LANTERN: RelicDefinition = {
-  id: 'ember-lantern',
-  name: '灯火のランタン',
-  icon: '🏮',
-  rarity: 'common',
-  trigger: 'combatStart',
-  effects: [{ kind: 'gainEnergy', amount: 1 }],
-};
-
-export const STEADFAST_STONE: RelicDefinition = {
-  id: 'steadfast-stone',
-  name: '不動の石',
-  icon: '🪨',
-  rarity: 'common',
-  trigger: 'turnEnd',
-  condition: 'noBlock',
-  effects: [{ kind: 'block', amount: 6 }],
-};
-
+/** カイルの初期レリック。 */
 export const FIGHTING_SPIRIT: RelicDefinition = {
   id: 'fighting-spirit',
   name: '闘志の炎',
   icon: '❤️‍🔥',
-  rarity: 'common',
+  rarity: 'starter',
   trigger: 'combatWon',
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/** エリート・宝箱・ショップ・恩恵で手に入る。 */
+/**
+ * エリート・宝箱・ショップ・恩恵・イベントで手に入る。レア度の重み（economy の relicTierWeight）で抽選する。
+ * コモン = 小さな底上げ / アンコモン = 毎ターン効く・条件つきで大きい / レア = デッキの軸を決定づける。
+ */
 export const RELIC_POOL: RelicDefinition[] = [
+  // --- コモン ---
   {
     id: 'migrant-feather',
     name: '渡り鳥の羽',
@@ -46,22 +23,6 @@ export const RELIC_POOL: RelicDefinition[] = [
     rarity: 'common',
     trigger: 'combatStart',
     effects: [{ kind: 'draw', amount: 2 }],
-  },
-  {
-    id: 'warrior-headband',
-    name: '戦士の鉢巻',
-    icon: '🎗️',
-    rarity: 'common',
-    trigger: 'combatStart',
-    effects: [{ kind: 'gainStrength', amount: 1, duration: 'combat' }],
-  },
-  {
-    id: 'thorn-armor',
-    name: '茨の鎧',
-    icon: '🌵',
-    rarity: 'common',
-    trigger: 'turnEnd',
-    effects: [{ kind: 'block', amount: 3 }],
   },
   {
     id: 'herb-pouch',
@@ -114,6 +75,183 @@ export const RELIC_POOL: RelicDefinition[] = [
       { kind: 'draw', amount: 1 },
     ],
   },
+  {
+    id: 'steadfast-stone',
+    name: '不動の石',
+    icon: '🪨',
+    rarity: 'common',
+    trigger: 'turnEnd',
+    condition: 'noBlock',
+    effects: [{ kind: 'block', amount: 6 }],
+  },
+  {
+    id: 'hunter-snare',
+    name: '狩人の罠',
+    icon: '🪤',
+    rarity: 'common',
+    trigger: 'combatStart',
+    effects: [{ kind: 'applyDebuff', status: 'vulnerable', turns: 1 }],
+  },
+  {
+    id: 'drowsy-incense',
+    name: '眠り草の香',
+    icon: '🌾',
+    rarity: 'common',
+    trigger: 'combatStart',
+    effects: [{ kind: 'applyDebuff', status: 'weak', turns: 1 }],
+  },
+  {
+    id: 'moon-sand',
+    name: '月の砂',
+    icon: '🌙',
+    rarity: 'common',
+    trigger: 'turnStart',
+    condition: 'everyThirdTurn',
+    effects: [{ kind: 'draw', amount: 2 }],
+  },
+  {
+    id: 'lily-charm',
+    name: '鈴蘭のお守り',
+    icon: '💮',
+    rarity: 'common',
+    trigger: 'combatStart',
+    effects: [{ kind: 'heal', amount: 3 }],
+  },
+  {
+    id: 'guardian-ring',
+    name: '守り手の指輪',
+    icon: '💍',
+    rarity: 'common',
+    trigger: 'turnStart',
+    condition: 'lowHp',
+    effects: [{ kind: 'block', amount: 4 }],
+  },
+  // --- アンコモン ---
+  {
+    id: 'warrior-headband',
+    name: '戦士の鉢巻',
+    icon: '🎗️',
+    rarity: 'uncommon',
+    trigger: 'combatStart',
+    effects: [{ kind: 'gainStrength', amount: 1, duration: 'combat' }],
+  },
+  {
+    id: 'thorn-armor',
+    name: '茨の鎧',
+    icon: '🌵',
+    rarity: 'uncommon',
+    trigger: 'turnEnd',
+    effects: [{ kind: 'block', amount: 3 }],
+  },
+  {
+    id: 'rusty-anchor',
+    name: '錆びた錨',
+    icon: '⚓',
+    rarity: 'uncommon',
+    trigger: 'combatStart',
+    effects: [{ kind: 'block', amount: 10 }],
+  },
+  {
+    id: 'ember-lantern',
+    name: '灯火のランタン',
+    icon: '🏮',
+    rarity: 'uncommon',
+    trigger: 'turnStart',
+    condition: 'everyThirdTurn',
+    effects: [{ kind: 'gainEnergy', amount: 1 }],
+  },
+  {
+    id: 'war-banner',
+    name: '戦旗',
+    icon: '🚩',
+    rarity: 'uncommon',
+    trigger: 'combatStart',
+    condition: 'eliteOrBoss',
+    effects: [{ kind: 'gainStrength', amount: 2, duration: 'combat' }],
+  },
+  {
+    id: 'adversity-amulet',
+    name: '逆境の護符',
+    icon: '🧿',
+    rarity: 'uncommon',
+    trigger: 'turnStart',
+    condition: 'lowHp',
+    effects: [{ kind: 'gainEnergy', amount: 1 }],
+  },
+  {
+    id: 'war-drum',
+    name: '戦太鼓',
+    icon: '🥁',
+    rarity: 'uncommon',
+    trigger: 'combatStart',
+    effects: [{ kind: 'gainBuff', status: 'blazing', turns: 1 }],
+  },
+  {
+    id: 'bastion-crest',
+    name: '守りの紋章',
+    icon: '🔰',
+    rarity: 'uncommon',
+    trigger: 'combatStart',
+    effects: [{ kind: 'gainBuff', status: 'retainBlock', turns: 2 }],
+  },
+  {
+    id: 'life-sapling',
+    name: '生命の苗木',
+    icon: '🌱',
+    rarity: 'uncommon',
+    trigger: 'turnEnd',
+    effects: [{ kind: 'heal', amount: 1 }],
+  },
+  // --- レア（デッキの軸を決定づける） ---
+  {
+    id: 'champion-belt',
+    name: '王者の剣帯',
+    icon: '🏅',
+    rarity: 'rare',
+    trigger: 'turnStart',
+    condition: 'everyThirdTurn',
+    effects: [{ kind: 'gainStrength', amount: 2, duration: 'combat' }],
+  },
+  {
+    id: 'hero-mantle',
+    name: '英雄の外套',
+    icon: '🧣',
+    rarity: 'rare',
+    trigger: 'turnEnd',
+    effects: [{ kind: 'block', amount: 6 }],
+  },
+  {
+    id: 'fortress-stone',
+    name: '城塞の礎石',
+    icon: '🏰',
+    rarity: 'rare',
+    trigger: 'combatStart',
+    effects: [{ kind: 'gainPower', power: 'barricade', amount: 1 }],
+  },
+  {
+    id: 'insight-eye',
+    name: '看破の魔眼',
+    icon: '👁️',
+    rarity: 'rare',
+    trigger: 'combatStart',
+    effects: [{ kind: 'gainPower', power: 'sadistic', amount: 3 }],
+  },
+  {
+    id: 'crimson-core',
+    name: '紅蓮の心核',
+    icon: '💎',
+    rarity: 'rare',
+    trigger: 'combatStart',
+    effects: [{ kind: 'gainPower', power: 'rupture', amount: 1 }],
+  },
+  {
+    id: 'iron-sigil',
+    name: '鉄壁の印章',
+    icon: '🪬',
+    rarity: 'rare',
+    trigger: 'combatStart',
+    effects: [{ kind: 'gainPower', power: 'juggernaut', amount: 3 }],
+  },
 ];
 
 /** ボス撃破後の 3 択。強力だが代償つきのものもある。 */
@@ -151,7 +289,7 @@ export const BOSS_RELIC_POOL: RelicDefinition[] = [
   {
     id: 'giant-heart',
     name: '巨人の心臓',
-    icon: '❤️‍🔥',
+    icon: '🫀',
     rarity: 'boss',
     effects: [],
     onObtain: [{ kind: 'gainMaxHp', amount: 20 }],
@@ -171,5 +309,34 @@ export const BOSS_RELIC_POOL: RelicDefinition[] = [
     rarity: 'boss',
     trigger: 'combatStart',
     effects: [{ kind: 'gainStrength', amount: 2, duration: 'combat' }],
+  },
+  {
+    id: 'crimson-scepter',
+    name: '紅蓮の王笏',
+    icon: '🔱',
+    rarity: 'boss',
+    trigger: 'combatStart',
+    effects: [{ kind: 'loseHp', amount: 3 }],
+    onObtain: [{ kind: 'changeEnergyPerTurn', amount: 1 }],
+  },
+  {
+    id: 'dragon-chalice',
+    name: '竜血の杯',
+    icon: '🏆',
+    rarity: 'boss',
+    trigger: 'combatWon',
+    effects: [{ kind: 'heal', amount: 8 }],
+    onObtain: [{ kind: 'gainMaxHp', amount: 10 }],
+  },
+  {
+    id: 'storm-orb',
+    name: '嵐の宝玉',
+    icon: '🌪️',
+    rarity: 'boss',
+    trigger: 'combatStart',
+    effects: [
+      { kind: 'damage', amount: 12 },
+      { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
+    ],
   },
 ];

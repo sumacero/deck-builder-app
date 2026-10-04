@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { RelicDefinition } from '../../domain/relic';
-import { describeRelic } from '../../logic/describe';
-import { COLORS, RADIUS, SPACING } from '../../theme';
+import { describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
+import { COLORS, RADIUS, RELIC_RARITY_COLORS, SPACING } from '../../theme';
 
 type RelicCardProps = {
   relic: RelicDefinition;
@@ -12,15 +12,16 @@ type RelicCardProps = {
   onPress?: () => void;
 };
 
-/** レリックのアイコン・名前・効果を 1 枚にまとめた表示。 */
+/** レリックのアイコン・名前・レア度・効果を 1 枚にまとめた表示。枠はレア度の色。 */
 export function RelicCard({ relic, caption, selected = false, onPress }: RelicCardProps) {
+  const rarityColor = RELIC_RARITY_COLORS[relic.rarity];
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       style={({ pressed }) => [
         styles.card,
-        relic.rarity === 'boss' && styles.boss,
+        { borderColor: rarityColor },
         selected && styles.selected,
         pressed && styles.pressed,
       ]}
@@ -31,6 +32,7 @@ export function RelicCard({ relic, caption, selected = false, onPress }: RelicCa
           {caption ? `${caption}: ` : ''}
           {relic.name}
         </Text>
+        <Text style={[styles.rarity, { color: rarityColor }]}>{RELIC_RARITY_LABEL[relic.rarity]}</Text>
         <Text style={styles.text}>{describeRelic(relic)}</Text>
       </View>
     </Pressable>
@@ -45,15 +47,14 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     backgroundColor: COLORS.panel,
     borderWidth: 1.5,
-    borderColor: COLORS.panelBorder,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
   },
-  boss: { borderColor: COLORS.danger },
   selected: { borderColor: COLORS.gold, backgroundColor: COLORS.goldDark },
   pressed: { opacity: 0.7 },
   icon: { fontSize: 30 },
   body: { flex: 1, gap: 2 },
   name: { color: COLORS.gold, fontSize: 14, fontWeight: '800' },
+  rarity: { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
   text: { color: COLORS.textMuted, fontSize: 12 },
 });

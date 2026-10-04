@@ -6,6 +6,7 @@ import {
   describeEventOption,
   describePotion,
   describeRelic,
+  RELIC_RARITY_LABEL,
 } from '../../logic/describe';
 
 /** 図鑑の 1 行分の表示内容。 */
@@ -24,7 +25,7 @@ export const RELIC_ITEMS: CatalogItem[] = ALL_RELICS.map((relic) => ({
   key: relic.id,
   icon: relic.icon,
   title: relic.name,
-  badge: relic.rarity === 'boss' ? 'ボス' : undefined,
+  badge: RELIC_RARITY_LABEL[relic.rarity],
   lines: [plain(describeRelic(relic))],
 }));
 

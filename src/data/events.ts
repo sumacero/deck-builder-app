@@ -1,5 +1,6 @@
 import type { EventDefinition } from '../domain/event';
 import { DEFEND, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
+import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
 const LEAVE = { id: 'leave', label: '立ち去る', effects: [], outcome: 'あなたは先を急いだ。' };
 
@@ -204,6 +205,233 @@ export const STANDARD_EVENTS: EventDefinition[] = [
         label: 'すぐによじ登る',
         effects: [{ kind: 'loseHp', amount: 4 }],
         outcome: '擦り傷だらけになったが、なんとか這い上がった。',
+      },
+    ],
+  },
+  {
+    id: 'fairy-ring',
+    title: '妖精の輪',
+    icon: '🧚',
+    text: 'キノコが輪になって生えている。中から、鈴を転がすような笑い声が聞こえる。',
+    options: [
+      {
+        id: 'dance',
+        label: '輪の中で踊る',
+        effects: [
+          { kind: 'gainMaxHp', amount: 3 },
+          { kind: 'heal', amount: 10 },
+        ],
+        outcome: '夢中で踊るうちに、体が羽のように軽くなっていた。',
+      },
+      {
+        id: 'gift',
+        label: '小瓶をねだる',
+        effects: [{ kind: 'fillPotions' }],
+        outcome: '妖精たちはくすくす笑いながら、色とりどりの小瓶を置いていった。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'abandoned-camp',
+    title: '打ち捨てられた野営地',
+    icon: '🏕️',
+    text: '焚き火の跡がまだ温かい。慌てて逃げ出したのか、荷物が散らばっている。',
+    options: [
+      {
+        id: 'rest',
+        label: 'ひと休みする',
+        effects: [{ kind: 'heal', amount: 15 }],
+        outcome: '焚き火に薪をくべ、しばし体を休めた。',
+      },
+      {
+        id: 'scavenge',
+        label: '荷物を漁る',
+        effects: [
+          { kind: 'gainGold', amount: 60 },
+          { kind: 'addCard', card: SCRAP },
+        ],
+        outcome: '金貨を見つけたが、余計なガラクタまで鞄に紛れ込んだ。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'dragon-hoard',
+    title: '竜の寝床',
+    icon: '🐉',
+    text: '眠る竜の腹の下で、財宝の山がまばゆく輝いている。熱い寝息が肌を焦がす。',
+    options: [
+      {
+        id: 'treasure',
+        label: '一番奥の宝を持ち出す',
+        effects: [
+          { kind: 'gainRelic', tier: 'rare' },
+          { kind: 'addCard', card: BURN },
+          { kind: 'addCard', card: BURN },
+        ],
+        outcome: '宝を抱えて逃げ出した。背中に浴びた火の粉が、まだ燻っている。',
+      },
+      {
+        id: 'coins',
+        label: '手前の金貨だけ拾う',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'gainGold', amount: 90 },
+        ],
+        outcome: '竜が寝返りを打った。尻尾に打たれたが、金貨は手放さなかった。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'mirror-lake',
+    title: '鏡の湖',
+    icon: '🪞',
+    text: '風ひとつない湖面に、もう一人の自分が映っている。その目は、何かを問いかけている。',
+    options: [
+      {
+        id: 'runes',
+        label: '湖底のルーンを刻む',
+        effects: [
+          { kind: 'loseMaxHp', amount: 5 },
+          { kind: 'upgradeRandom', count: 3 },
+        ],
+        outcome: '冷たい水に体温を奪われたが、技がいくつも冴えわたった。',
+      },
+      {
+        id: 'reflect',
+        label: '映る自分と向き合う',
+        effects: [],
+        choice: 'removeCard',
+        outcome: '湖面の自分が、迷いを一つ持ち去っていった。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'knight-trial',
+    title: '騎士の試練',
+    icon: '🏇',
+    text: '古びた鎧の騎士が道をふさいでいる。「我を越えてゆけ。さもなくば、教えを請え」',
+    options: [
+      {
+        id: 'duel',
+        label: '一騎打ちを挑む',
+        effects: [],
+        fight: 'elite',
+        outcome: '騎士が剣を抜いた！',
+      },
+      {
+        id: 'lesson',
+        label: '金貨を払って指南を受ける',
+        effects: [{ kind: 'loseGold', amount: 35 }],
+        choice: 'pickCard',
+        outcome: '騎士は厳しく、しかし丁寧に技を授けてくれた。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'wishing-well',
+    title: '願いの井戸',
+    icon: '🪙',
+    text: '底の見えない古井戸。水面のあたりで、投げ込まれた金貨がきらきらと光っている。',
+    options: [
+      {
+        id: 'coin',
+        label: '金貨を 1 枚投げる',
+        effects: [
+          { kind: 'loseGold', amount: 30 },
+          { kind: 'gainMaxHp', amount: 4 },
+        ],
+        outcome: '小さな願いは、ささやかに叶えられた。',
+      },
+      {
+        id: 'purse',
+        label: '財布ごと投げ込む',
+        effects: [
+          { kind: 'loseGold', amount: 100 },
+          { kind: 'gainRelic', tier: 'uncommon' },
+        ],
+        outcome: '井戸の底から、ひとつの宝が浮かび上がってきた。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'ancient-library',
+    title: '古の書庫',
+    icon: '📚',
+    text: '崩れかけた塔の中に、天井まで届く書架が並んでいる。最奥の一冊だけが鎖で縛られている。',
+    options: [
+      {
+        id: 'study',
+        label: '戦術書を読みふける',
+        effects: [],
+        choice: 'pickCard',
+        outcome: '夜が明けるまで読みふけり、新しい戦い方を身につけた。',
+      },
+      {
+        id: 'forbidden',
+        label: '鎖の禁書を開く',
+        effects: [
+          { kind: 'loseMaxHp', amount: 12 },
+          { kind: 'changeDrawPerTurn', amount: 1 },
+        ],
+        outcome: '生命を吸われる感覚と引き換えに、戦場が一手先まで見えるようになった。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'traveling-alchemist',
+    title: '旅の錬金術師',
+    icon: '⚗️',
+    text: '「新薬の実験台を探していてね。もちろん、普通に買ってくれてもいいんだよ」',
+    options: [
+      {
+        id: 'buy',
+        label: '薬を買う',
+        effects: [
+          { kind: 'loseGold', amount: 40 },
+          { kind: 'fillPotions' },
+        ],
+        outcome: '鞄の中で、小瓶がかちゃりと鳴った。',
+      },
+      {
+        id: 'test',
+        label: '実験台になる',
+        effects: [
+          { kind: 'loseHp', amount: 10 },
+          { kind: 'gainMaxHp', amount: 6 },
+          { kind: 'addCard', card: ICE_SHARD },
+        ],
+        outcome: '体の芯が凍えたが、なぜか前より丈夫になった気がする。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'grasping-tree',
+    title: '絡みつく大樹',
+    icon: '🌳',
+    text: '道を覆う大樹の枝が、生き物のようにうねっている。根元には旅人の荷物が埋もれている。',
+    options: [
+      {
+        id: 'force',
+        label: '枝を払いのけて荷物を掘り出す',
+        effects: [
+          { kind: 'loseHp', amount: 7 },
+          { kind: 'gainGold', amount: 50 },
+        ],
+        outcome: '枝に打たれながらも、金貨の袋を掘り当てた。',
+      },
+      {
+        id: 'sneak',
+        label: '枝の間をすり抜ける',
+        effects: [{ kind: 'addCard', card: TANGLING_VINE }],
+        outcome: 'うまく抜けたと思ったが、蔦が一本ついてきていた。',
       },
     ],
   },

@@ -1,7 +1,7 @@
 import type { CardDefinition, CardType } from './card';
 import type { EnemyRank } from './enemy';
 import type { PotionDefinition } from './potion';
-import type { RelicDefinition } from './relic';
+import type { RelicDefinition, RelicTier } from './relic';
 
 /** ショップに並ぶ 1 品。買うと sold になり、同じ店では二度と買えない。 */
 export type ShopOffer<T> = {
@@ -27,7 +27,10 @@ export type EconomyConfig = {
   /** レリックの候補が尽きていたとき、代わりにもらえるゴールド。 */
   relicFallbackGold: number;
   cardPrice: Record<CardType, number>;
-  relicPrice: number;
+  /** レリックの値段（レア度ごと）。 */
+  relicPrice: Record<RelicTier, number>;
+  /** レリックのレア度の出現しやすさ（重み）。エリート・宝箱・ショップ・イベントで共通。 */
+  relicTierWeight: Record<RelicTier, number>;
   potionPrice: number;
   /** 0.1 なら基準価格の ±10% の範囲でばらつく。 */
   priceVariance: number;

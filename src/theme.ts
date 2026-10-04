@@ -1,6 +1,7 @@
 import type { Attribute } from './domain/attribute';
 import type { CardType } from './domain/card';
 import type { MapNodeType } from './domain/map';
+import type { RelicRarity } from './domain/relic';
 
 /**
  * アニメ調ファンタジー RPG の配色。深い紺を土台に、金の縁取りで王道の気品を出す。
@@ -54,6 +55,15 @@ export const COLORS = {
   arteTrack: '#3A2418',
   arteBand: 'rgba(40, 14, 6, 0.88)',
 } as const;
+
+/** レリックのレア度の色（枠と名前の横のラベル）。 */
+export const RELIC_RARITY_COLORS: Record<RelicRarity, string> = {
+  starter: '#9AA3BF',
+  common: '#C9D1E6',
+  uncommon: '#5AA9FF',
+  rare: '#E2B84A',
+  boss: '#E5484D',
+};
 
 export const MAP_NODE_COLORS: Record<MapNodeType, string> = {
   enemy: '#D9534F',
