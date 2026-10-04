@@ -3,14 +3,14 @@ import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { MODAL_ORIENTATIONS } from '../layout/modalOrientations';
-import { ModelGallery } from './ModelGallery';
+import { Encyclopedia } from './Encyclopedia';
 
 type GalleryButtonProps = {
   /** タイトル画面用の大きいボタン。 */
   large?: boolean;
 };
 
-/** 「図鑑」ボタン。押すとキャラクターの 3D モデル一覧を全画面で開く。 */
+/** 「図鑑」ボタン。押すとキャラ・カード・レリックなどすべてを見られる図鑑を全画面で開く。 */
 export function GalleryButton({ large = false }: GalleryButtonProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -25,7 +25,7 @@ export function GalleryButton({ large = false }: GalleryButtonProps) {
           pressed && styles.pressed,
         ]}
       >
-        <Text style={[styles.text, large && styles.largeText]}>📖 {large ? 'モデル図鑑' : '図鑑'}</Text>
+        <Text style={[styles.text, large && styles.largeText]}>📖 図鑑</Text>
       </Pressable>
       <Modal
         visible={open}
@@ -34,7 +34,7 @@ export function GalleryButton({ large = false }: GalleryButtonProps) {
         supportedOrientations={MODAL_ORIENTATIONS}
       >
         <SafeAreaView style={styles.safeArea}>
-          {open && <ModelGallery onClose={close} />}
+          {open && <Encyclopedia onClose={close} />}
         </SafeAreaView>
       </Modal>
     </>

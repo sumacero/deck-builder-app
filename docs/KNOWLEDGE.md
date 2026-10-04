@@ -383,9 +383,13 @@
 
 ### タイトル画面・モデル図鑑（2026-10-04）
 
-- 起動するとタイトル画面（`components/title/TitleScreen`）。ゲーム名は仮で「星灯りの巡礼」（`src/data/gameInfo.ts` の `GAME_TITLE` を変えれば差し替わる）。背景は第 3 章のマップ画像、中央に自分の 3D、「冒険を始める」と「モデル図鑑」。
+- 起動するとタイトル画面（`components/title/TitleScreen`）。ゲーム名は仮で「星灯りの巡礼」（`src/data/gameInfo.ts` の `GAME_TITLE` を変えれば差し替わる）。背景は第 3 章のマップ画像、中央に自分の 3D、「冒険を始める」と「図鑑」。
 - 画面の切り替えは `components/GameRoot`（`'title' | 'run'`）。ランの状態は `RunRoot` の中の `useRun` にあるので、タイトルに戻ると破棄される。ラン終了（踏破・敗北）の画面に「タイトルへ」を追加。ラン途中でタイトルに戻る手段は、セーブ機能ができるまで作らない。
 - モデル図鑑（`components/gallery/`）: エージェントと全敵（`src/data/bestiary.ts` の `ALL_ENEMIES` は `enemies.ts` の export から自動で集める）の 3D を、6 体ずつページ送りで表示。GL の描画面を同時に持てる数には端末ごとに上限があるので、一度に全部は描かない。マップ画面の「📖 図鑑」とタイトルから開ける。
+- 図鑑の拡張（2026-10-04）: `Encyclopedia` がタブで「キャラ / カード / レリック / ポーション / イベント / 恩恵」を切り替える（タブに件数）。キャラは上の 3D 一覧（`ModelGallery`）。
+  - 並べる中身は `src/data/catalog.ts`（`ALL_CARDS` / `ALL_RELICS` / `CATALOG_POTIONS` / `ALL_EVENTS` / `ALL_BLESSINGS`、id の重複は除く）。新しいカード・レリックなどは元の一覧（`REWARD_CARDS` / `RELIC_POOL` など）に足せば図鑑にも出る。初期レリック（`runSetups` で使う 4 つ）は個別 export なので `catalog.ts` に列挙している。
+  - カードは `CardView` の格子。「強化後を見る」で `upgradeCard` 後の姿に切り替え、タップで `CardDetailSheet`。
+  - それ以外は `catalogEntries.ts` が表示用の行（アイコン・名前・札・説明・効果の行）に変換し、`EntryCatalog` / `CatalogEntry` で縦に並べる。イベントは導入文と「選択肢: 効果」、代償を含む行は赤字。恩恵には名前が無いのでグループ名（デッキ / 資源 / 代償つき）を見出しにする。
 
 ### ラン中の演出（強化・回復・マップ選択・画面切り替え）（2026-10-04）
 

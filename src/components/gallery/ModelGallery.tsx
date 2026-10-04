@@ -48,12 +48,8 @@ const ENTRIES: GalleryEntry[] = [
 const PER_PAGE = 6;
 const NO_EVENTS: CombatEvent[] = [];
 
-type ModelGalleryProps = {
-  onClose: () => void;
-};
-
-/** キャラクターの 3D モデルを一覧で見る図鑑。 */
-export function ModelGallery({ onClose }: ModelGalleryProps) {
+/** キャラクター（エージェントと敵）の 3D モデルを、ページに分けて並べる。図鑑の「キャラ」タブ。 */
+export function ModelGallery() {
   const [page, setPage] = useState(0);
   const { width, height } = useWindowDimensions();
   const landscape = width > height;
@@ -65,10 +61,6 @@ export function ModelGallery({ onClose }: ModelGalleryProps) {
 
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.title}>モデル図鑑</Text>
-        <Text style={styles.count}>全 {ENTRIES.length} 体</Text>
-      </View>
       <View style={styles.grid}>
         {entries.map((entry) => (
           <View key={entry.key} style={[styles.cell, { width: cellWidth }]}>
@@ -99,12 +91,6 @@ export function ModelGallery({ onClose }: ModelGalleryProps) {
           disabled={page >= pageCount - 1}
           onPress={() => setPage(page + 1)}
         />
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => [styles.close, pressed && styles.pressed]}
-        >
-          <Text style={styles.closeText}>閉じる</Text>
-        </Pressable>
       </View>
     </View>
   );
@@ -129,10 +115,7 @@ function PageButton({ label, disabled, onPress }: PageButtonProps) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg, padding: SPACING.lg, gap: SPACING.md },
-  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  title: { color: COLORS.gold, fontSize: 20, fontWeight: '800', letterSpacing: 2 },
-  count: { color: COLORS.textMuted, fontSize: 13 },
+  root: { flex: 1, gap: SPACING.md },
   grid: {
     flex: 1,
     flexDirection: 'row',
@@ -163,14 +146,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
   },
   pageButtonText: { color: COLORS.gold, fontSize: 14, fontWeight: '800' },
-  close: {
-    borderWidth: 1,
-    borderColor: COLORS.panelBorder,
-    borderRadius: RADIUS.sm,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-  },
-  closeText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },
 });

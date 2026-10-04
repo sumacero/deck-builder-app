@@ -31,7 +31,7 @@ export const STEADFAST_STONE: RelicDefinition = {
 export const FIGHTING_SPIRIT: RelicDefinition = {
   id: 'fighting-spirit',
   name: '闘志のハート',
-  icon: '🩸',
+  icon: '❤️‍🔥',
   rarity: 'common',
   trigger: 'combatWon',
   effects: [{ kind: 'heal', amount: 6 }],
