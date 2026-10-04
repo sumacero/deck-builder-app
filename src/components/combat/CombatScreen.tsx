@@ -23,7 +23,7 @@ import { CardPileModal } from '../cards/CardPileModal';
 import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
 import { ItemBar } from '../items/ItemBar';
-import type { DropTarget } from './cardDrop';
+import { canPlayByTap, type DropTarget } from './cardDrop';
 import { CombatFooter } from './CombatFooter';
 import { CombatLog } from './CombatLog';
 import { CombatResultOverlay } from './CombatResultOverlay';
@@ -98,7 +98,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
     : portraitFigures(stageSize, enemyCount);
 
   const previews: DamagePreview[] =
-    drag && hover
+    drag && hover && hover.kind !== 'self'
       ? previewDamage(drag.instanceId, hover.kind === 'enemy' ? hover.uid : undefined)
       : [];
   const living = livingEnemies(state).map((enemy) => enemy.uid);
@@ -109,11 +109,9 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
   };
   const onTapCard = (instanceId: string) => {
     const instance = state.hand.find((c) => c.instanceId === instanceId);
-    if (instance?.card.target !== 'self') {
-      setTapHint(true);
-      return;
-    }
-    if (isPlayable(instanceId)) playCard(instanceId);
+    if (!instance || !isPlayable(instanceId)) return;
+    if (canPlayByTap(instance.card.target, living.length)) playCard(instanceId);
+    else setTapHint(true);
   };
   const hint = hintText({
     dragging: drag !== null,
@@ -159,6 +157,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
       events={state.events}
       defeatDelay={effectsTime}
       figureSize={figures.player}
+      highlighted={hover?.kind === 'self'}
     />
   );
   const hintRow =
@@ -320,7 +319,7 @@ function hintText(options: {
     if (options.hover) return '離して使う';
     return options.needsEnemy ? '狙う敵の上で離す' : 'もっと上まで持ち上げて離す';
   }
-  return options.tapHint ? '攻撃カードは敵へスワイプして使う' : null;
+  return options.tapHint ? '敵が複数いるときは、狙う敵へスワイプ' : null;
 }
 
 const styles = StyleSheet.create({

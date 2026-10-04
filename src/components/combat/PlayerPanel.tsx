@@ -19,15 +19,27 @@ type PlayerPanelProps = {
   defeatDelay: number;
   /** 3D の一辺。0 なら測り終わるまで描かない。 */
   figureSize: number;
+  /** 自分に使うカードを持ち上げている（離せば自分に使われる）。 */
+  highlighted: boolean;
 };
 
 /** 舞台の左下（横向きなら左の列）。エージェントと HP。タップでかかっている状態の解説。 */
-export function PlayerPanel({ agent, player, events, defeatDelay, figureSize }: PlayerPanelProps) {
+export function PlayerPanel({
+  agent,
+  player,
+  events,
+  defeatDelay,
+  figureSize,
+  highlighted,
+}: PlayerPanelProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   const statuses = playerStatuses(player);
   return (
     <>
-      <Pressable style={styles.frame} onPress={() => setInfoOpen(true)}>
+      <Pressable
+        style={[styles.frame, highlighted && styles.highlighted]}
+        onPress={() => setInfoOpen(true)}
+      >
         <FighterEffects
           target="player"
           events={events}
@@ -67,6 +79,7 @@ export function PlayerPanel({ agent, player, events, defeatDelay, figureSize }: 
 
 const styles = StyleSheet.create({
   frame: { borderRadius: RADIUS.md, borderWidth: 2, borderColor: 'transparent' },
+  highlighted: { borderColor: COLORS.gold, backgroundColor: COLORS.goldDark },
   unmeasured: { height: ACTOR_FIGURE.minSize },
   body: { gap: SPACING.xs, padding: SPACING.xs },
   name: { color: COLORS.text, fontSize: 14, fontWeight: '700', textAlign: 'center' },

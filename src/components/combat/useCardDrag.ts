@@ -104,6 +104,7 @@ export function useCardDrag({ hand, enemies, cardWidth, onPlay }: UseCardDragOpt
         setDrag(dragged);
         measureAll();
         moveGhost(point);
+        updateHover(point);
       },
       onDragMove: (point) => {
         moveGhost(point);

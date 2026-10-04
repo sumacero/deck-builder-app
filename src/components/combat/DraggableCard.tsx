@@ -26,8 +26,7 @@ type DraggableCardProps = CardDragHandlers & {
 const DRAG_START_DISTANCE = 8;
 
 /**
- * 手札の 1 枚。敵に使うカードは上へスワイプすると持ち上がり、指を離した場所で使われる。
- * 自分に使うカードはタップで使う（持ち上げない）。
+ * 手札の 1 枚。上へスワイプすると持ち上がり、指を離した場所で使われる（タップで使えるかは親が決める）。
  * 横方向の動きは手札のスクロールに、長押しは用語の解説に任せる。
  */
 export function DraggableCard({
@@ -39,21 +38,20 @@ export function DraggableCard({
   ...handlers
 }: DraggableCardProps) {
   const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
-  const draggable = playable && card.target !== 'self';
   // PanResponder は指の動きの途中経過を内部に持つ。ドラッグ中に作り直すと途切れるので、
   // 渡す関数は親で同じものを使い続けてもらう（作り直しは使えるかどうかが変わったときだけ）。
   const responder = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponderCapture: (_, g) =>
-          draggable && g.dy < -DRAG_START_DISTANCE && Math.abs(g.dy) > Math.abs(g.dx),
+          playable && g.dy < -DRAG_START_DISTANCE && Math.abs(g.dy) > Math.abs(g.dx),
         onPanResponderGrant: (_, g) => onDragStart(instanceId, { x: g.moveX, y: g.moveY }),
         onPanResponderMove: (_, g) => onDragMove({ x: g.moveX, y: g.moveY }),
         onPanResponderRelease: (_, g) => onDragEnd({ x: g.moveX, y: g.moveY }),
         onPanResponderTerminate: onDragCancel,
         onPanResponderTerminationRequest: () => false,
       }),
-    [draggable, instanceId, onDragStart, onDragMove, onDragEnd, onDragCancel],
+    [playable, instanceId, onDragStart, onDragMove, onDragEnd, onDragCancel],
   );
 
   return (
