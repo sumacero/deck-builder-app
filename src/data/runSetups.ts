@@ -1,8 +1,8 @@
 import type { RunSetup } from '../domain/run';
 import { STANDARD_ACT_CHOICES } from './acts';
-import { WANDERING_SWORDSMAN } from './agents';
+import { CRIMSON_HERO } from './agents';
 import { LANTERN_SPIRIT, STANDARD_BLESSINGS } from './blessings';
-import { PLAIN_STARTER_DECK, REWARD_CARDS } from './cards';
+import { CRIMSON_STARTER_DECK, REWARD_CARDS } from './cards';
 import { STANDARD_ECONOMY } from './economy';
 import { STANDARD_EVENTS } from './events';
 import { ALL_POTIONS, FIRE_POTION, IRON_POTION, SWIFT_POTION } from './potions';
@@ -17,8 +17,8 @@ import {
 
 /** レリックとポーションはすでに持っている前提で始める。 */
 export const STANDARD_RUN: RunSetup = {
-  agent: WANDERING_SWORDSMAN,
-  deck: PLAIN_STARTER_DECK,
+  agent: CRIMSON_HERO,
+  deck: CRIMSON_STARTER_DECK,
   playerMaxHp: 70,
   energyPerTurn: 3,
   drawPerTurn: 5,

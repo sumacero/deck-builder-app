@@ -112,6 +112,37 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '💪',
     description: '次のターン、筋力を得て以後の攻撃が強くなる。早めに倒すのが得策。',
   },
+  vulnerable: {
+    id: 'vulnerable',
+    name: '弱体',
+    icon: '🎯',
+    description: '受けるダメージが 1.5 倍になる。数値は残りターン数で、重ねてかけると加算される。',
+  },
+  weak: {
+    id: 'weak',
+    name: '衰弱',
+    icon: '🥀',
+    description: '攻撃で与えるダメージが半分になる。数値は残りターン数で、重ねてかけると加算される。',
+  },
+  retainBlock: {
+    id: 'retainBlock',
+    name: 'ブロック保持',
+    icon: '🏰',
+    description: '自分のターンが始まってもブロックが消えず、次のターンに引き継がれる。数値は残りターン数。',
+  },
+  blazing: {
+    id: 'blazing',
+    name: '熱血',
+    icon: '♨️',
+    description: '攻撃で与えるダメージが 1.5 倍になる。数値は残りターン数で、重ねてかけると加算される。',
+  },
+  statusTurns: {
+    id: 'statusTurns',
+    name: 'ターン数',
+    icon: '⏳',
+    description:
+      'バフ・デバフの数値は残りターン数。敵にかけたものは敵のターンの終わりに、自分にかけたものは次の自分のターンの始めに 1 減る。カードで増やして長く効かせられる。',
+  },
   paralysis: {
     id: 'paralysis',
     name: '麻痺',

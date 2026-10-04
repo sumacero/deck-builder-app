@@ -11,10 +11,16 @@ export function cardMotion(card: CardDefinition): CardMotion {
     if ((damage.hits ?? 1) > 1) return 'flurry';
     return damage.amount >= HEAVY_DAMAGE ? 'heavy' : 'strike';
   }
+  if (card.effects.some((effect) => effect.kind === 'damageFromBlock')) return 'heavy';
   if (card.effects.some((effect) => effect.kind === 'loseHp')) return 'sacrifice';
-  if (card.type === 'power' || card.effects.some((effect) => effect.kind === 'gainStrength')) {
+  const empowers = card.effects.some(
+    (effect) => effect.kind === 'gainStrength' || effect.kind === 'gainBuff' || effect.kind === 'extendBuffs',
+  );
+  if (card.type === 'power' || empowers) {
     return 'empower';
   }
-  if (card.effects.some((effect) => effect.kind === 'block')) return 'guard';
+  if (card.effects.some((effect) => effect.kind === 'block' || effect.kind === 'doubleBlock')) {
+    return 'guard';
+  }
   return 'focus';
 }

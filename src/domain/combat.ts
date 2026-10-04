@@ -3,11 +3,14 @@ import type { CardDefinition, CardInstance, CardMotion, CardType } from './card'
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
+import type { Statuses } from './status';
 
 export type Fighter = {
   hp: number;
   maxHp: number;
   block: number;
+  /** ターン数つきのバフ・デバフ。 */
+  statuses: Statuses;
 };
 
 /** 敵の妨害。かけられた次の自分のターンだけ効く。 */

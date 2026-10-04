@@ -1,8 +1,8 @@
 import type { AgentDefinition } from '../domain/agent';
 
-/** キャラクター固有の特性が決まるまでの、最初のエージェント。 */
-export const WANDERING_SWORDSMAN: AgentDefinition = {
-  id: 'wandering-swordsman',
-  name: '放浪の剣士',
-  icon: '🧝',
+/** 赤髪の熱血剣士。HP を燃やす力押しと、弱体・衰弱で敵を崩す戦い方が得意。 */
+export const CRIMSON_HERO: AgentDefinition = {
+  id: 'crimson-hero',
+  name: '紅蓮のカイル',
+  icon: '🔥',
 };

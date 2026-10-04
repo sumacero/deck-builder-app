@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
-import { WANDERING_SWORDSMAN } from '../../data/agents';
+import { CRIMSON_HERO } from '../../data/agents';
 import { GAME_SUBTITLE, GAME_TITLE } from '../../data/gameInfo';
 import type { Region } from '../../domain/act';
 import type { CombatEvent } from '../../domain/combat';
@@ -62,11 +62,11 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
         </Animated.View>
 
         <ActorFigure
-          model={AGENT_MODELS[WANDERING_SWORDSMAN.id]}
-          icon={WANDERING_SWORDSMAN.icon}
+          model={AGENT_MODELS[CRIMSON_HERO.id]}
+          icon={CRIMSON_HERO.icon}
           actorId="player"
           events={NO_EVENTS}
-          agentId={WANDERING_SWORDSMAN.id}
+          agentId={CRIMSON_HERO.id}
         />
 
         <Animated.View style={[styles.menu, { opacity: appear }]}>

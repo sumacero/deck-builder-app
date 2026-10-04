@@ -28,6 +28,17 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   flex: require('../../../assets/cards/flex.jpg'),
   inflame: require('../../../assets/cards/inflame.jpg'),
   metallicize: require('../../../assets/cards/metallicize.jpg'),
+  bash: require('../../../assets/cards/bash.jpg'),
+  intimidate: require('../../../assets/cards/intimidate.jpg'),
+  uppercut: require('../../../assets/cards/uppercut.jpg'),
+  shockwave: require('../../../assets/cards/shockwave.jpg'),
+  'body-slam': require('../../../assets/cards/body-slam.jpg'),
+  'steadfast-guard': require('../../../assets/cards/steadfast-guard.jpg'),
+  barricade: require('../../../assets/cards/barricade.jpg'),
+  entrench: require('../../../assets/cards/entrench.jpg'),
+  'searing-decree': require('../../../assets/cards/searing-decree.jpg'),
+  'heat-up': require('../../../assets/cards/heat-up.jpg'),
+  'soul-flame': require('../../../assets/cards/soul-flame.jpg'),
 };
 
 /** イラストの隅に重ねる種類の紋章。小さな手札でも種類がひと目で分かるように。 */

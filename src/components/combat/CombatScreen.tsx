@@ -171,6 +171,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const enemyRow = (
     <EnemyRow
       enemies={state.enemies}
+      player={state.player}
       events={state.events}
       defeatDelay={effectsTime}
       agentId={setup.agent.id}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { WANDERING_SWORDSMAN } from '../../data/agents';
+import { CRIMSON_HERO } from '../../data/agents';
 import { ALL_ENEMIES } from '../../data/bestiary';
 import type { ActorId, CombatEvent } from '../../domain/combat';
 import { ENEMY_RANK_LABEL } from '../../logic/describe';
@@ -23,12 +23,12 @@ type GalleryEntry = {
 
 const ENTRIES: GalleryEntry[] = [
   {
-    key: WANDERING_SWORDSMAN.id,
-    name: WANDERING_SWORDSMAN.name,
-    icon: WANDERING_SWORDSMAN.icon,
+    key: CRIMSON_HERO.id,
+    name: CRIMSON_HERO.name,
+    icon: CRIMSON_HERO.icon,
     label: 'エージェント',
     hp: null,
-    model: AGENT_MODELS[WANDERING_SWORDSMAN.id],
+    model: AGENT_MODELS[CRIMSON_HERO.id],
     actorId: 'player',
   },
   ...ALL_ENEMIES.map(
@@ -69,7 +69,7 @@ export function ModelGallery() {
               icon={entry.icon}
               actorId={entry.actorId}
               events={NO_EVENTS}
-              agentId={WANDERING_SWORDSMAN.id}
+              agentId={CRIMSON_HERO.id}
               size={size}
             />
             {entry.label && <Text style={styles.label}>{entry.label}</Text>}

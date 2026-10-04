@@ -11,13 +11,24 @@ import type {
   EnemyUid,
   Fighter,
   Hindrance,
+  PlayerState,
   Vitals,
 } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
+import { STATUS_LABEL } from './describe';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
+import {
+  addStatus,
+  BUFF_IDS,
+  DEBUFF_IDS,
+  extendStatuses,
+  hasStatus,
+  modifiedDamage,
+  tickStatuses,
+} from './status';
 
 type DamageResult<T extends Fighter> = {
   target: T;
@@ -157,23 +168,33 @@ function hindranceLogs(hindrance: Hindrance): string[] {
   ];
 }
 
+/**
+ * 自分のターンの開始。ブロック保持があればブロックを残す。
+ * 自分のバフ・デバフはここで 1 ターン進む（かけたターンと、その次の敵の行動までは効く）。
+ */
 export function startPlayerTurn(state: CombatState): CombatState {
   const turn = state.turn + 1;
   const hindrance = state.player.pendingHindrance;
+  const keepBlock = turn > 1 && hasStatus(state.player.statuses, 'retainBlock') && state.player.block > 0;
   const started: CombatState = {
     ...state,
     turn,
     status: 'playerTurn',
     player: {
       ...state.player,
-      block: 0,
+      block: keepBlock ? state.player.block : 0,
       energy: Math.max(0, state.player.maxEnergy - hindrance.paralysis),
       tempStrength: 0,
       hindrance,
       pendingHindrance: NO_HINDRANCE,
+      statuses: turn > 1 ? tickStatuses(state.player.statuses) : state.player.statuses,
     },
   };
-  const logged = hindranceLogs(hindrance).reduce(withLog, withLog(started, `ターン ${turn} 開始`));
+  const logs = [
+    ...(keepBlock ? [`ブロック保持でブロック ${state.player.block} を引き継いだ`] : []),
+    ...hindranceLogs(hindrance),
+  ];
+  const logged = logs.reduce(withLog, withLog(started, `ターン ${turn} 開始`));
   return drawCards(logged, Math.max(0, state.drawPerTurn - hindrance.chill));
 }
 
@@ -198,6 +219,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       endTurnBlock: 0,
       hindrance: NO_HINDRANCE,
       pendingHindrance: NO_HINDRANCE,
+      statuses: {},
     },
     enemies: setup.enemies.map((enemy, index) => ({
       uid: enemyUid(index),
@@ -209,6 +231,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       hp: enemy.maxHp,
       maxHp: enemy.maxHp,
       block: 0,
+      statuses: {},
       moves: enemy.moves,
       // 群れで同じ行動を一斉にしないよう、並び順で行動パターンの開始位置をずらす。
       moveIndex: index % enemy.moves.length,
@@ -268,10 +291,11 @@ function attackDamage(state: CombatState, base: number): number {
   return Math.max(0, base + state.player.strength + state.player.tempStrength);
 }
 
-function hitEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatState {
+/** base は筋力込みの値。熱血・衰弱・弱体の倍率は敵ごとにここでかける。 */
+function hitEnemy(state: CombatState, uid: EnemyUid, base: number): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || !isAlive(enemy)) return state;
-  const result = applyDamage(enemy, amount);
+  const result = applyDamage(enemy, modifiedDamage(base, state.player.statuses, enemy.statuses));
   const hit = withEvent(
     withLog(updateEnemy(state, uid, () => result.target), formatHit(enemy.name, result)),
     {
@@ -340,16 +364,59 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim): CombatState 
       }
       return next;
     }
-    case 'block': {
-      const player = gainBlock(state.player, effect.amount);
-      return withEvent(withLog({ ...state, player }, `ブロック +${effect.amount}`), {
-        kind: 'blockGain',
-        target: 'player',
-        amount: effect.amount,
-        after: vitalsOf(player),
-      });
+    case 'damageFromBlock': {
+      const amount = attackDamage(state, state.player.block);
+      return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount), state);
     }
+    case 'block':
+      return gainPlayerBlock(state, effect.amount);
+    case 'doubleBlock':
+      return state.player.block > 0 ? gainPlayerBlock(state, state.player.block) : state;
+    case 'applyDebuff':
+      return aimedUids(state, aim).reduce(
+        (current, uid) =>
+          withLog(
+            updateEnemy(current, uid, (e) => ({ ...e, statuses: addStatus(e.statuses, effect.status, effect.turns) })),
+            `${findEnemy(current, uid)?.name ?? '敵'}に${STATUS_LABEL[effect.status]} ${effect.turns} ターン`,
+          ),
+        state,
+      );
+    case 'gainBuff':
+      return withLog(
+        { ...state, player: { ...state.player, statuses: addStatus(state.player.statuses, effect.status, effect.turns) } },
+        `${STATUS_LABEL[effect.status]} +${effect.turns} ターン`,
+      );
+    case 'extendDebuffs':
+      return withLog(
+        aimedUids(state, aim).reduce(
+          (current, uid) =>
+            updateEnemy(current, uid, (e) => ({
+              ...e,
+              statuses: extendStatuses(e.statuses, DEBUFF_IDS, effect.turns),
+            })),
+          state,
+        ),
+        `敵のデバフのターン数 +${effect.turns}`,
+      );
+    case 'extendBuffs':
+      return withLog(
+        {
+          ...state,
+          player: { ...state.player, statuses: extendStatuses(state.player.statuses, BUFF_IDS, effect.turns) },
+        },
+        `自分のバフのターン数 +${effect.turns}`,
+      );
   }
+}
+
+function gainPlayerBlock(state: CombatState, amount: number): CombatState {
+  const player = gainBlock(state.player, amount);
+  return withEvent(withLog({ ...state, player }, `ブロック +${amount}`), {
+    kind: 'blockGain',
+    target: 'player',
+    amount,
+    after: vitalsOf(player),
+  });
 }
 
 const applyEffects = (state: CombatState, effects: Effect[], aim: Aim): CombatState =>
@@ -477,9 +544,9 @@ export function previewCardDamage(
   });
 }
 
-/** 敵の攻撃 1 回分のダメージ（筋力込み）。インテント表示でも使う。 */
-export function enemyAttackDamage(enemy: EnemyState, base: number): number {
-  return Math.max(0, base + enemy.strength);
+/** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体込み）。インテント表示でも使う。 */
+export function enemyAttackDamage(enemy: EnemyState, base: number, player: PlayerState): number {
+  return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses);
 }
 
 function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction): CombatState {
@@ -487,7 +554,7 @@ function applyEnemyAction(state: CombatState, uid: EnemyUid, action: EnemyAction
   if (!enemy) return state;
   switch (action.kind) {
     case 'attack': {
-      const amount = enemyAttackDamage(enemy, action.damage);
+      const amount = enemyAttackDamage(enemy, action.damage, state.player);
       let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
         next = withEvent(next, { kind: 'enemyAct', target: uid, action: 'attack' });
@@ -601,7 +668,11 @@ function runEnemyTurn(state: CombatState): CombatState {
     }
     next = updateEnemy(next, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
   }
-  return next;
+  // 敵のバフ・デバフは敵のターンの終わりに 1 ターン進む（かけたターンの敵の行動までは効く）。
+  return {
+    ...next,
+    enemies: next.enemies.map((enemy) => ({ ...enemy, statuses: tickStatuses(enemy.statuses) })),
+  };
 }
 
 export function endTurn(state: CombatState): CombatState {

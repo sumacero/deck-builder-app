@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { CombatEvent, DamagePreview, EnemyState } from '../../domain/combat';
+import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
-import { currentIntent, isAlive } from '../../logic/combat';
+import { currentIntent, enemyAttackDamage, isAlive } from '../../logic/combat';
 import { describeIntent, ENEMY_RANK_LABEL } from '../../logic/describe';
 import { enemyStatuses, keywordsForIntent } from '../../logic/glossary';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
@@ -18,6 +18,8 @@ import { StatusRow } from './StatusRow';
 
 type EnemyPanelProps = {
   enemy: EnemyState;
+  /** 攻撃予告の数値に、あなたの弱体などを反映するため。 */
+  player: PlayerState;
   events: CombatEvent[];
   defeatDelay: number;
   agentId: string;
@@ -37,6 +39,7 @@ type EnemyPanelProps = {
 /** 舞台の上側に並ぶ敵 1 体。上に次の行動、中央に敵、下に HP。タップで状態と次の行動の解説。 */
 export function EnemyPanel({
   enemy,
+  player,
   events,
   defeatDelay,
   agentId,
@@ -67,7 +70,7 @@ export function EnemyPanel({
             </Text>
           )}
           <View style={styles.badges}>
-            {describeIntent(move, enemy.strength).map((intent) => (
+            {describeIntent(move, (base) => enemyAttackDamage(enemy, base, player)).map((intent) => (
               <IntentBadge key={intent.key} intent={intent} compact={compact} />
             ))}
           </View>

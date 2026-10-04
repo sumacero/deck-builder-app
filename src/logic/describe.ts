@@ -7,6 +7,7 @@ import type { MapNodeType } from '../domain/map';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
+import type { StatusId } from '../domain/status';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -48,8 +49,28 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
         : `筋力 ${effect.amount} を得る。`;
     case 'gainEndTurnBlock':
       return `ターン終了時、ブロック ${effect.amount} を得る。`;
+    case 'damageFromBlock':
+      return target === 'allEnemies' ? '敵全体に、今のブロック値と同じダメージを与える。' : '今のブロック値と同じダメージを与える。';
+    case 'doubleBlock':
+      return '今のブロック値を 2 倍にする。';
+    case 'applyDebuff':
+      return `${target === 'allEnemies' ? '敵全体に' : ''}${STATUS_LABEL[effect.status]} ${effect.turns} を与える。`;
+    case 'gainBuff':
+      return `${STATUS_LABEL[effect.status]} ${effect.turns} を得る。`;
+    case 'extendDebuffs':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}デバフのターン数を ${effect.turns} 増やす。`;
+    case 'extendBuffs':
+      return `自分のバフのターン数を ${effect.turns} 増やす。`;
   }
 }
+
+/** 説明文での状態の名前（数値はターン数）。 */
+export const STATUS_LABEL: Record<StatusId, string> = {
+  vulnerable: '弱体',
+  weak: '衰弱',
+  retainBlock: 'ブロック保持',
+  blazing: '熱血',
+};
 
 const describeEffects = (effects: Effect[], target: EffectTarget) =>
   effects.map((effect) => describeEffect(effect, target)).join('');
@@ -95,13 +116,13 @@ export type IntentView = {
   label: string;
 };
 
-/** strength は敵の今の筋力。攻撃の数値は筋力込みで見せる。 */
-export function describeIntent(move: EnemyMove, strength: number): IntentView[] {
+/** damageOf は攻撃 1 回分の実ダメージ（筋力・衰弱・弱体込み）を求める関数。攻撃の数値は実ダメージで見せる。 */
+export function describeIntent(move: EnemyMove, damageOf: (base: number) => number): IntentView[] {
   return move.actions.map((action, index) => {
     const key = `${move.id}-${index}`;
     switch (action.kind) {
       case 'attack': {
-        const damage = Math.max(0, action.damage + strength);
+        const damage = damageOf(action.damage);
         return {
           key,
           tone: action.kind,

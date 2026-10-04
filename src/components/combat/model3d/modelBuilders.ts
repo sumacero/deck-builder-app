@@ -61,7 +61,7 @@ function crown(y: number, color = '#E2B53E', width = 0.26): ModelPart[] {
 
 // ---------- 人型 ----------
 
-export type Headgear = 'hood' | 'helmet' | 'wizardHat' | 'horns' | 'crown' | 'none';
+export type Headgear = 'hood' | 'helmet' | 'wizardHat' | 'horns' | 'crown' | 'spikyHair' | 'none';
 export type Weapon = 'sword' | 'axe' | 'staff' | 'spear' | 'club' | 'none';
 
 export type HumanoidOptions = {
@@ -93,8 +93,27 @@ function bangs(color: string): ModelPart[] {
 const eyeShine = (x: number, y: number, z: number): ModelPart =>
   sphere(0.018, '#FFFFFF', [x + 0.012, y + 0.018, z], { glow: true });
 
-function headgearParts(headgear: Headgear, color: string): ModelPart[] {
+/** 逆立った髪（hair の色を使う）。 */
+function spikyHair(color: string): ModelPart[] {
+  const spikes: [number, number, number, number][] = [
+    [0, 0.68, -0.02, 0],
+    [0.14, 0.64, -0.04, -0.5],
+    [-0.14, 0.64, -0.04, 0.5],
+    [0.07, 0.62, -0.16, -0.25],
+    [-0.07, 0.62, -0.16, 0.25],
+  ];
+  return [
+    sphere(0.26, color, [0, 0.45, -0.04], { scale: [1, 0.85, 1] }),
+    ...spikes.map(([x, y, z, tilt]) =>
+      cone(0.08, 0.24, color, [x, y, z], { rotation: [-0.35, 0, tilt] }),
+    ),
+  ];
+}
+
+function headgearParts(headgear: Headgear, color: string, hair: string): ModelPart[] {
   switch (headgear) {
+    case 'spikyHair':
+      return spikyHair(hair);
     case 'hood':
       return [
         sphere(0.28, color, [0, 0.42, -0.04], { scale: [1, 1.05, 1] }),
@@ -191,7 +210,7 @@ export function humanoid(options: HumanoidOptions, extra?: Partial<ActorModel>):
     box([0.06, glowEyes ? 0.06 : 0.09, 0.04], eye, [-0.08, 0.4, 0.22], { glow: glowEyes }),
     ...(glowEyes ? [] : [eyeShine(0.08, 0.4, 0.245), eyeShine(-0.08, 0.4, 0.245)]),
     ...(hair ? bangs(hair) : []),
-    ...headgearParts(headgear, accent),
+    ...headgearParts(headgear, accent, hair ?? accent),
     ...weaponParts(weapon),
   ];
   if (shield) {

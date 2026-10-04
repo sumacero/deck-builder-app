@@ -17,15 +17,15 @@ import type { ActorModel } from './modelTypes';
  */
 
 export const AGENT_MODELS: Record<string, ActorModel> = {
-  'wandering-swordsman': humanoid({
-    skin: '#F0C9A0',
-    body: '#3E6B4A',
-    legs: '#4A3A2A',
-    accent: '#2C4A34',
-    headgear: 'hood',
+  'crimson-hero': humanoid({
+    skin: '#F2CBA4',
+    body: '#B8322A',
+    legs: '#3A3448',
+    accent: '#E2B84A',
+    headgear: 'spikyHair',
     weapon: 'sword',
-    cape: '#7A2E2E',
-    hair: '#4A2E1E',
+    cape: '#7A1E1E',
+    hair: '#D8352A',
   }),
 };
 

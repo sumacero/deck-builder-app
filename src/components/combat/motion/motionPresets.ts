@@ -22,7 +22,7 @@ export type MotionPreset = {
   burst?: Burst;
 };
 
-/** 放浪の剣士: 踏み込んで斬る、剣を構えて守る。 */
+/** 紅蓮のカイル: 踏み込んで斬る、剣を構えて守る。 */
 const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
   strike: {
     keyframes: [
@@ -92,7 +92,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
 
 /** エージェント id ごとの動き。未登録のエージェントは剣士の動きを使う。 */
 const AGENT_MOTIONS: Record<string, Record<CardMotion, MotionPreset>> = {
-  'wandering-swordsman': SWORDSMAN_MOTIONS,
+  'crimson-hero': SWORDSMAN_MOTIONS,
 };
 
 /** 敵の動き。攻撃は 1 発ごとに体当たりする。 */

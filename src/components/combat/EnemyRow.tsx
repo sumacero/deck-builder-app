@@ -1,10 +1,11 @@
 import { StyleSheet, View } from 'react-native';
-import type { CombatEvent, DamagePreview, EnemyState, EnemyUid } from '../../domain/combat';
+import type { CombatEvent, DamagePreview, EnemyState, EnemyUid, PlayerState } from '../../domain/combat';
 import { SPACING } from '../../theme';
 import { EnemyPanel } from './EnemyPanel';
 
 type EnemyRowProps = {
   enemies: EnemyState[];
+  player: PlayerState;
   events: CombatEvent[];
   defeatDelay: number;
   agentId: string;
@@ -23,6 +24,7 @@ type EnemyRowProps = {
 /** 敵を左から順に横一列に並べる。1 体なら右に寄せ、自分と斜めに向かい合う。 */
 export function EnemyRow({
   enemies,
+  player,
   events,
   defeatDelay,
   agentId,
@@ -41,6 +43,7 @@ export function EnemyRow({
         <EnemyPanel
           key={enemy.uid}
           enemy={enemy}
+          player={player}
           events={events}
           defeatDelay={defeatDelay}
           agentId={agentId}
