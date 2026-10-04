@@ -128,6 +128,8 @@ export const COMBAT_LAYOUT = {
   landscapeCardHeightRatio: 0.3,
   /** 横向きでターン終了ボタンと山札・捨て札を縦に積む列の幅。 */
   landscapeFooterWidth: 136,
+  /** 横向きでレリック・ポーションの説明欄に確保する幅（左の列からはみ出して右に広げる）。 */
+  landscapePopoverWidth: 340,
 } as const;
 
 /** 手札の並べ方。visibleCards 枚がちょうど画面幅に収まるようにカード幅を決める。 */

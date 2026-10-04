@@ -27,7 +27,7 @@ export function RelicIcon({ relic, events, selected, onPress }: RelicIconProps) 
   const scale = glow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] });
 
   return (
-    <Pressable onPress={onPress} hitSlop={4}>
+    <Pressable onPress={onPress} onLongPress={onPress} hitSlop={4}>
       <Animated.View style={[styles.icon, selected && styles.selected, { transform: [{ scale }] }]}>
         <Animated.View style={[styles.glow, { opacity: glow }]} />
         <Text style={styles.emoji}>{relic.icon}</Text>

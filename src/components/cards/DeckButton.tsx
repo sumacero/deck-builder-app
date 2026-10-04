@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { stackCards } from '../../logic/cards';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { MODAL_ORIENTATIONS } from '../layout/modalOrientations';
 import { CardPileModal } from './CardPileModal';
 
 type DeckButtonProps = {
@@ -25,7 +26,13 @@ export function DeckButton({ deck }: DeckButtonProps) {
       >
         <Text style={styles.text}>🃏 デッキ {deck.length}</Text>
       </Pressable>
-      <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={close}
+        supportedOrientations={MODAL_ORIENTATIONS}
+      >
         <CardPileModal title="デッキ" stacks={stackCards(deck)} onClose={close} />
       </Modal>
     </>

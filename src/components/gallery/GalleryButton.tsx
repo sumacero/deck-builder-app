@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { MODAL_ORIENTATIONS } from '../layout/modalOrientations';
 import { ModelGallery } from './ModelGallery';
 
 type GalleryButtonProps = {
@@ -26,7 +27,12 @@ export function GalleryButton({ large = false }: GalleryButtonProps) {
       >
         <Text style={[styles.text, large && styles.largeText]}>📖 {large ? 'モデル図鑑' : '図鑑'}</Text>
       </Pressable>
-      <Modal visible={open} animationType="fade" onRequestClose={close}>
+      <Modal
+        visible={open}
+        animationType="fade"
+        onRequestClose={close}
+        supportedOrientations={MODAL_ORIENTATIONS}
+      >
         <SafeAreaView style={styles.safeArea}>
           {open && <ModelGallery onClose={close} />}
         </SafeAreaView>

@@ -13,6 +13,7 @@ export function PotionSlotView({ potion, selected, onPress }: PotionSlotViewProp
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onPress}
       hitSlop={4}
       style={({ pressed }) => [styles.slot, selected && styles.selected, pressed && styles.pressed]}
     >

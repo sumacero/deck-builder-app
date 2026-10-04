@@ -1,23 +1,52 @@
 import type { ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { MODAL_ORIENTATIONS } from '../layout/modalOrientations';
 
 type InfoSheetProps = {
   visible: boolean;
   title: string;
   onClose: () => void;
+  /** 解説の横（縦向きなら上）に添えるもの。カードの拡大表示など。 */
+  aside?: ReactNode;
   children: ReactNode;
 };
 
-/** 用語やキャラの状態の解説を出す小窓。外側をタップしても閉じる。 */
-export function InfoSheet({ visible, title, onClose, children }: InfoSheetProps) {
+/**
+ * 用語やキャラの状態の解説を出す小窓。外側をタップしても閉じる。
+ * 横向きは高さが足りないので、aside を左に、解説を右に並べ、解説だけをスクロールさせる。
+ */
+export function InfoSheet({ visible, title, onClose, aside, children }: InfoSheetProps) {
+  const landscape = useIsLandscape();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      supportedOrientations={MODAL_ORIENTATIONS}
+    >
       <Pressable style={styles.backdrop} onPress={onClose}>
         {/* 中身のタップでは閉じないよう、ここでタッチを受け止める。 */}
-        <Pressable style={styles.sheet} onPress={() => undefined}>
+        <Pressable
+          style={[styles.sheet, landscape && styles.landscapeSheet]}
+          onPress={() => undefined}
+        >
           <Text style={styles.title}>{title}</Text>
-          <ScrollView contentContainerStyle={styles.body}>{children}</ScrollView>
+          {landscape ? (
+            <View style={styles.columns}>
+              {aside && <View style={styles.aside}>{aside}</View>}
+              <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
+                {children}
+              </ScrollView>
+            </View>
+          ) : (
+            <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
+              {aside}
+              {children}
+            </ScrollView>
+          )}
           <View style={styles.footer}>
             <Pressable
               onPress={onClose}
@@ -48,7 +77,19 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     gap: SPACING.md,
   },
+  landscapeSheet: {
+    maxHeight: '100%',
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
   title: { color: COLORS.gold, fontSize: 17, fontWeight: '800', textAlign: 'center' },
+  /** 小窓の高さの上限に合わせて縮み、入りきらない分はスクロールする。 */
+  scroll: { flexShrink: 1 },
+  columns: { flexDirection: 'row', gap: SPACING.md, flexShrink: 1 },
+  aside: { justifyContent: 'center' },
   body: { gap: SPACING.md, alignItems: 'stretch' },
   footer: { alignItems: 'flex-end' },
   close: {

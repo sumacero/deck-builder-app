@@ -24,10 +24,18 @@ type ItemBarProps = {
     isDrinkable: (slot: number) => boolean;
     onDrink: (slot: number) => void;
   };
+  /** 置き場所が細いとき（横向きの左の列）、説明欄をはみ出させてでもこの幅は確保する。 */
+  popoverMinWidth?: number;
 };
 
 /** 画面上部の所持品欄。左にレリック、右にポーション。タップで説明を開く。 */
-export function ItemBar({ relics, potions, events = NO_EVENTS, potionUse }: ItemBarProps) {
+export function ItemBar({
+  relics,
+  potions,
+  events = NO_EVENTS,
+  potionUse,
+  popoverMinWidth,
+}: ItemBarProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
 
   const toggle = (next: Selection) =>
@@ -59,7 +67,9 @@ export function ItemBar({ relics, potions, events = NO_EVENTS, potionUse }: Item
           ))}
         </View>
       </View>
-      <View style={styles.popover}>{renderInfo()}</View>
+      <View style={[styles.popover, popoverMinWidth !== undefined && { minWidth: popoverMinWidth }]}>
+        {renderInfo()}
+      </View>
     </View>
   );
 
@@ -111,5 +121,13 @@ const styles = StyleSheet.create({
   group: { flexDirection: 'row', gap: SPACING.sm },
   /** レリックが増えたら折り返す。 */
   relics: { flex: 1, flexWrap: 'wrap' },
-  popover: { position: 'absolute', top: '100%', left: 0, right: 0, marginTop: SPACING.sm },
+  popover: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: SPACING.sm,
+    zIndex: 20,
+    elevation: 20,
+  },
 });

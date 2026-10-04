@@ -14,10 +14,16 @@ type CardDetailSheetProps = {
 /** カードを長押ししたときの、拡大表示と用語解説。 */
 export function CardDetailSheet({ card, visible, onClose }: CardDetailSheetProps) {
   return (
-    <InfoSheet visible={visible} title={card.name} onClose={onClose}>
-      <View style={styles.preview}>
-        <CardView card={card} size="md" detailOnHold={false} />
-      </View>
+    <InfoSheet
+      visible={visible}
+      title={card.name}
+      onClose={onClose}
+      aside={
+        <View style={styles.preview}>
+          <CardView card={card} size="md" detailOnHold={false} />
+        </View>
+      }
+    >
       <KeywordList entries={keywordsForCard(card).map((keyword) => ({ keyword }))} />
     </InfoSheet>
   );

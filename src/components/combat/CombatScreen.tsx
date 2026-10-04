@@ -126,6 +126,7 @@ export function CombatScreen({ setup, seed, actId, onFinish }: CombatScreenProps
       potions={state.potions}
       events={state.events}
       potionUse={{ isDrinkable, onDrink }}
+      popoverMinWidth={landscape ? COMBAT_LAYOUT.landscapePopoverWidth : undefined}
     />
   );
   const enemyRow = (
@@ -334,7 +335,13 @@ const styles = StyleSheet.create({
   playerSlot: { alignSelf: 'flex-start', width: `${COMBAT_LAYOUT.playerWidthRatio * 100}%` },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 64 },
   deck: { position: 'absolute', right: 0 },
-  side: { width: `${COMBAT_LAYOUT.landscapeSideRatio * 100}%`, gap: SPACING.sm },
+  /** 所持品の説明欄が右の舞台の上に重なって見えるよう、右の列より手前に置く。 */
+  side: {
+    width: `${COMBAT_LAYOUT.landscapeSideRatio * 100}%`,
+    gap: SPACING.sm,
+    zIndex: 10,
+    elevation: 10,
+  },
   sidePlayer: { flex: 1, justifyContent: 'center' },
   sideBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   main: { flex: 1, gap: SPACING.xs },
