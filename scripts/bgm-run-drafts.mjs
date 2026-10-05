@@ -555,15 +555,20 @@ const verseTail = {
   parts: verse.parts.map((part) => ({ ...part, notes: join4(...VERSE_BARS.slice(4)) })),
 };
 
+const runSection = (run) => ({ name: 'run', chords: bars(...run.chords), parts: runParts(run), comp: ['chug'], bass: 'gallop', drums: 'double', fill: 'toms' });
+
+/** 案の番号から B メロ（8 小節）の部分を作る。 */
+export const runDraftSection = (no) => {
+  const run = RUNS.find((r) => r.no === no);
+  if (!run) throw new Error(`B メロ案 ${no} は無い`);
+  return runSection(run);
+};
+
 export const RUN_DRAFTS = RUNS.map((run) => ({
   file: `run-draft-${pad2(run.no)}`,
   bpm: BOSS_BPM,
   mix: BOSS_MIX,
-  sections: [
-    verseTail,
-    { name: 'run', chords: bars(...run.chords), parts: runParts(run), comp: ['chug'], bass: 'gallop', drums: 'double', fill: 'toms' },
-    build,
-  ],
+  sections: [verseTail, runSection(run), build],
 }));
 
 export const writeRunDraftCatalog = (path) =>

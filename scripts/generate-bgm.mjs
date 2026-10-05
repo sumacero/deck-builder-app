@@ -16,6 +16,7 @@ import { MAIN_BOSS } from './bgm-boss.mjs';
 import { PART_DRAFTS, writePartDraftCatalog } from './bgm-boss-parts.mjs';
 import { INTRO_DRAFTS, writeIntroDraftCatalog } from './bgm-intro-drafts.mjs';
 import { RUN_DRAFTS, writeRunDraftCatalog } from './bgm-run-drafts.mjs';
+import { SONG_DRAFTS, writeSongDraftCatalog } from './bgm-song-drafts.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
 import {
   CHORUS,
@@ -197,7 +198,7 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, MAIN_BOSS, shop, ...REGION_SONGS, ...PART_DRAFTS, ...INTRO_DRAFTS, ...RUN_DRAFTS];
+const SONGS = [mainTitle, mainNormal, MAIN_BOSS, shop, ...REGION_SONGS, ...SONG_DRAFTS, ...PART_DRAFTS, ...INTRO_DRAFTS, ...RUN_DRAFTS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];
@@ -207,6 +208,7 @@ const AUDIO_SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'au
 writeIntroDraftCatalog(join(AUDIO_SRC, 'introDrafts.ts'));
 writePartDraftCatalog(join(AUDIO_SRC, 'partDrafts.ts'));
 writeRunDraftCatalog(join(AUDIO_SRC, 'runDrafts.ts'));
+writeSongDraftCatalog(join(AUDIO_SRC, 'songDrafts.ts'));
 for (const song of SONGS.filter((s) => !only || s.file.startsWith(only))) {
   seedNoise(4242);
   const samples = renderSong(song);
