@@ -1,6 +1,6 @@
 // タイトル曲の候補探し 第 8 弾（2026-10-06）: 「三つの旗 −試− 改」の改善案のうち、オーナーが気に入った
 // 1（8 小節の上り坂 × イントロのドラムも加速）・6（刻みで溜める × サビの最後をレに解決）・9（ギターの泣き × 解決）を統合した版。
-// 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 8（後半は G→A→B♭→C と上がる）/ サビ 16（2 回目はハモり、最後をレに解決）。
+// 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 8（後半は G→A→B♭→C と上がる）/ サビ 20（2 回目はハモり、締めに後半 4 小節を回してレに解決）。
 // 今の −試−（battle-boss.wav）とほかの曲が引用している素材は変えない。音源は song-draft-01.wav、図鑑の一覧 src/audio/songDrafts.ts はこの台本が書き出す。
 import { BOSS_AFTER_INTRO, BOSS_BPM, BOSS_MIX, bossIntroSection } from './bgm-boss.mjs';
 import { parsePhrase, shiftPhrase } from './bgm-engine.mjs';
@@ -137,13 +137,13 @@ const [buildCalm, buildRise] = [
 const build = [buildCalm, ...rampBars(buildRise, BUILD_RAMP)];
 
 /**
- * サビ（16 小節）: 1 回目は今のサビ（最後は高いラのまま 2 回目へ）。ドラムは 8 ビートで少し余力を残す。
- * 2 回目は金管の 3 度下のハモりと弦を足し、ツーバスで全開に。最後の小節はレに解決（コードも A → Dm）。
+ * サビ（20 小節）: 1 回目は今のサビ（最後は高いラのまま 2 回目へ）。ドラムは 8 ビートで少し余力を残す。
+ * 2 回目は金管の 3 度下のハモりと弦を足し、ツーバスで全開に（最後は高いラのまま）。
+ * 締め（4 小節）で 2 回目の後半 4 小節（頂上へ駆け上がる部分）をもう一度回し、最後の小節でレに解決する（コードも A → Dm）。
  */
 const chorus1 = { ...chorus, name: 'chorus1', drums: 'drive', level: 1.0 };
 
-const chorus2Notes = join4(...CHORUS_BARS.slice(0, 7), 'A5:0.5 C#6:0.5 E6:0.5 G6:0.5 F6:1 D6:1');
-const chorus2Harmony = join4(
+const HARMONY_BARS = [
   'Bb5:0.75 A5:0.75 G5:0.5 D5:1 Bb5:1',
   'C6:0.75 Bb5:0.75 A5:0.5 E5:1 C6:1',
   'A5:0.5 G#5:0.5 E5:0.5 C5:0.5 A5:1 C6:1',
@@ -151,36 +151,54 @@ const chorus2Harmony = join4(
   'G5:0.75 F5:0.75 E5:0.5 Bb4:1 G5:1',
   'A5:0.75 G5:0.75 F5:0.5 E5:0.5 C5:0.5 A5:1',
   'C5:0.5 F5:0.5 A5:0.5 C6:0.5 C#6:0.5 A5:0.5 E5:1',
-  'E5:0.5 A5:0.5 C#6:0.5 E6:0.5 D6:1 A5:1',
-);
-const chorus2 = {
-  ...chorus,
-  name: 'chorus2',
-  chords: bars(...CHORUS_CHORDS.slice(0, 7), 'A Dm'),
-  parts: [
-    { inst: 'brassLead', vol: 0.4, notes: chorus2Notes },
-    { inst: 'brassLead', vol: 0.26, notes: chorus2Harmony },
-    { inst: 'strings', vol: 0.18, notes: chorus2Harmony },
-    { inst: 'guitarLead', vol: 0.22, notes: shiftPhrase(chorus2Notes, -1) },
-  ],
-  fill: undefined,
+  'E5:0.5 A5:0.5 C#6:0.5 E6:0.5 E6:2',
+];
+const RESOLVED_BAR = 'A5:0.5 C#6:0.5 E6:0.5 G6:0.5 F6:1 D6:1';
+const RESOLVED_HARMONY_BAR = 'E5:0.5 A5:0.5 C#6:0.5 E6:0.5 D6:1 A5:1';
+
+/** ハモり付きのサビの部分（旋律・ハモり・弦・1 オクターブ下のギター）。 */
+const harmonizedChorus = (name, chords, melodyBars, harmonyBars) => {
+  const melody = join4(...melodyBars);
+  const harmony = join4(...harmonyBars);
+  return {
+    ...chorus,
+    name,
+    chords: bars(...chords),
+    parts: [
+      { inst: 'brassLead', vol: 0.4, notes: melody },
+      { inst: 'brassLead', vol: 0.26, notes: harmony },
+      { inst: 'strings', vol: 0.18, notes: harmony },
+      { inst: 'guitarLead', vol: 0.22, notes: shiftPhrase(melody, -1) },
+    ],
+  };
 };
 
+const chorus2 = harmonizedChorus('chorus2', CHORUS_CHORDS, CHORUS_BARS, HARMONY_BARS);
+
 /**
- * ループ: 2 回目のサビの最後の 2 小節で少しずつ音量を下げ、解決の小節はハーフのドラムにしておかずも入れない。
+ * 締めとループ: 最後の 2 小節で少しずつ音量を下げ、解決の小節はハーフのドラムにしておかずも入れない。
  * レの響きが落ち着いたところで、イントロの静かなティンパニの小節に戻る。
  */
-const CHORUS2_RAMP = [1, 1, 1, 1, 1, 1, 0.94, 0.84];
-const chorus2Bars = rampBars(chorus2, CHORUS2_RAMP).map((section, i) =>
-  i === CHORUS2_RAMP.length - 1 ? { ...section, drums: 'half', comp: ['stabs', 'strings'], bass: 'sustain' } : section,
+const tag = {
+  ...harmonizedChorus(
+    'tag',
+    [...CHORUS_CHORDS.slice(4, 7), 'A Dm'],
+    [...CHORUS_BARS.slice(4, 7), RESOLVED_BAR],
+    [...HARMONY_BARS.slice(4, 7), RESOLVED_HARMONY_BAR],
+  ),
+  fill: undefined,
+};
+const TAG_RAMP = [1, 1, 0.94, 0.84];
+const tagBars = rampBars(tag, TAG_RAMP).map((section, i) =>
+  i === TAG_RAMP.length - 1 ? { ...section, drums: 'half', comp: ['stabs', 'strings'], bass: 'sustain' } : section,
 );
 
 const SONGS = [
   {
     no: 1,
     name: '三つの旗 −試− 改 統合版',
-    desc: '改善案 1・6・9 の統合。イントロはドラムも一緒に加速。A メロは前半を低いギターと弦で歌い、後半で上がる。ためは 8 小節で、前半はギターが歌い、後半はコードが G→A→B♭→C と上がりながら 1 小節ずつ大きくなる。サビは 16 小節で、2 回目は金管のハモりとツーバスで全開に。最後はレに解決し、静まりながらイントロへ戻る。',
-    sections: [...intro, ...verseSections, { ...run, level: RUN_LEVEL }, ...build, chorus1, ...chorus2Bars],
+    desc: '改善案 1・6・9 の統合。イントロはドラムも一緒に加速。A メロは前半を低いギターと弦で歌い、後半で上がる。ためは 8 小節で、前半はギターが歌い、後半はコードが G→A→B♭→C と上がりながら 1 小節ずつ大きくなる。サビは 20 小節で、2 回目は金管のハモりとツーバスで全開に。締めに後半 4 小節をもう一度回してレに解決し、静まりながらイントロへ戻る。',
+    sections: [...intro, ...verseSections, { ...run, level: RUN_LEVEL }, ...build, chorus1, chorus2, ...tagBars],
   },
 ];
 
