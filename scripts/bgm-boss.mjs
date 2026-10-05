@@ -1,4 +1,4 @@
-// ボス戦「三つの旗 −試−」。イントロ違いの試作（bgm-intro-drafts.mjs）と共有する。
+// ボス戦「三つの旗 −試−」。改訂版の試作（bgm-song-drafts.mjs）と共有する。
 // パートの呼び方（2026-10-05 にオーナーが定義）: イントロ = 導入のリフ（INTRO）/ A メロ = VERSE /
 // B メロ = オルガンの駆け上がり（RUN）/ ため = サビ前 / サビ。
 import { shiftPhrase } from './bgm-engine.mjs';

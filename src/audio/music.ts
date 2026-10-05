@@ -1,9 +1,6 @@
 import type { AudioSource } from 'expo-audio';
 import type { Region } from '../domain/act';
 import type { EnemyRank } from '../domain/enemy';
-import { INTRO_DRAFT_TRACKS, type IntroDraftId } from './introDrafts';
-import { PART_DRAFT_TRACKS, type PartDraftId } from './partDrafts';
-import { RUN_DRAFT_TRACKS, type RunDraftId } from './runDrafts';
 import { SONG_DRAFT_TRACKS, type SongDraftId } from './songDrafts';
 
 /** 地域ごとの曲は `field:grassland` のように「種類:地域」で表す。 */
@@ -14,9 +11,6 @@ export type MusicId =
   | 'shop'
   | `field:${Region}`
   | `elite:${Region}`
-  | IntroDraftId
-  | PartDraftId
-  | RunDraftId
   | SongDraftId;
 
 type MusicDef = {
@@ -25,11 +19,8 @@ type MusicDef = {
 };
 
 const DRAFT_MUSIC = Object.fromEntries(
-  [...SONG_DRAFT_TRACKS, ...PART_DRAFT_TRACKS, ...INTRO_DRAFT_TRACKS, ...RUN_DRAFT_TRACKS].map((track) => [
-    track.id,
-    { source: track.source, volume: 0.32 },
-  ]),
-) as Record<SongDraftId | PartDraftId | IntroDraftId | RunDraftId, MusicDef>;
+  SONG_DRAFT_TRACKS.map((track) => [track.id, { source: track.source, volume: 0.32 }]),
+) as Record<SongDraftId, MusicDef>;
 
 /** 音源は scripts/generate-bgm.mjs で合成している（npm run bgm）。全曲がメインテーマ「三つの旗」の素材を共有する。 */
 export const MUSIC: Record<MusicId, MusicDef> = {
@@ -71,7 +62,7 @@ export type MusicEntry = {
 /** 図鑑の「BGM」で聴ける曲の一覧。 */
 export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'title', title: '三つの旗 −序−', description: 'タイトル。笛の旋律と、ゆったりした A メロの頭。' },
-  ...[...SONG_DRAFT_TRACKS, ...PART_DRAFT_TRACKS, ...INTRO_DRAFT_TRACKS, ...RUN_DRAFT_TRACKS].map(({ id, title, description }) => ({ id, title, description })),
+  ...SONG_DRAFT_TRACKS.map(({ id, title, description }) => ({ id, title, description })),
   { id: 'battleNormal', title: '三つの旗 −静−', description: '通常戦闘（全地域）。ハープとパッドだけの静かな曲。旋律は和音の奥にひそんでいる。' },
   { id: 'battleBoss', title: '三つの旗 −試−', description: 'ボス戦。ギターとオルガンのリフ、溜めのあとサビが初めて鳴る。' },
   { id: 'shop', title: 'にぎわいの市場', description: 'ショップ。ハープの刻みと笛、ボンゴ。中ほどにメインテーマが顔を出す。' },
