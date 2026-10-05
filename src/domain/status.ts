@@ -5,8 +5,10 @@
  * - retainBlock（ブロック保持）: ターンの始めにブロックが消えない
  * - blazing（熱血）: 与えるダメージが 1.5 倍
  * - intangible（霊体化。敵だけ）: 攻撃 1 回で受けるダメージが最大 1
+ * - seed（宿り木。敵だけに効く）: 敵のターンの始めに、残りターン数と同じダメージ（ブロック無視）を受ける。
+ *   ターン数がそのまま威力なので、デバフを延ばす・数えるカードとも噛み合う。
  */
-export type DebuffId = 'vulnerable' | 'weak';
+export type DebuffId = 'vulnerable' | 'weak' | 'seed';
 export type BuffId = 'retainBlock' | 'blazing';
 export type EnemyStatusId = 'intangible';
 export type StatusId = DebuffId | BuffId | EnemyStatusId;
@@ -21,7 +23,19 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - sadistic（弱点看破）: 敵にデバフを与えるたびに、その敵に N ダメージ
  * - rupture（燃える血潮）: HP を失うたびに筋力 +N
  * - feelNoPain（灰より立つ）: カードが廃棄されるたびにブロック +N
+ * - thorns（茨の鎧）: 敵の攻撃を 1 回受けるたびに、その敵に N ダメージ
+ * - overgrowth（森の侵蝕）: ターンの始めに、敵全体に宿り木 N
+ * - verdure（命の芽吹き）: 敵に宿り木を与えるたびに、ブロック +N
  */
-export type PowerId = 'barricade' | 'demonForm' | 'juggernaut' | 'sadistic' | 'rupture' | 'feelNoPain';
+export type PowerId =
+  | 'barricade'
+  | 'demonForm'
+  | 'juggernaut'
+  | 'sadistic'
+  | 'rupture'
+  | 'feelNoPain'
+  | 'thorns'
+  | 'overgrowth'
+  | 'verdure';
 
 export type Powers = Partial<Record<PowerId, number>>;

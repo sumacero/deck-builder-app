@@ -1,6 +1,6 @@
 import type { BuffId, DebuffId, EnemyStatusId, StatusId, Statuses } from '../domain/status';
 
-export const DEBUFF_IDS: readonly DebuffId[] = ['vulnerable', 'weak'];
+export const DEBUFF_IDS: readonly DebuffId[] = ['vulnerable', 'weak', 'seed'];
 export const BUFF_IDS: readonly BuffId[] = ['retainBlock', 'blazing'];
 export const ENEMY_STATUS_IDS: readonly EnemyStatusId[] = ['intangible'];
 

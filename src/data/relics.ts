@@ -10,6 +10,16 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
+/** リーネの初期レリック。 */
+export const WORLD_TREE_SPROUT: RelicDefinition = {
+  id: 'world-tree-sprout',
+  name: '世界樹の若葉',
+  icon: '🌱',
+  rarity: 'starter',
+  trigger: 'combatStart',
+  effects: [{ kind: 'applyDebuff', status: 'seed', turns: 4 }],
+};
+
 /**
  * エリート・宝箱・ショップ・恩恵・イベントで手に入る。レア度の重み（economy の relicTierWeight）で抽選する。
  * コモン = 小さな底上げ / アンコモン = 毎ターン効く・条件つきで大きい / レア = デッキの軸を決定づける。

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { fieldMusicFor } from '../../audio/music';
 import { prepareSounds } from '../../audio/soundPlayer';
 import { useMusic } from '../../hooks/useMusic';
-import { STANDARD_RUN } from '../../data/runSetups';
+import type { RunSetup } from '../../domain/run';
 import { useRun } from '../../hooks/useRun';
 import { buildCombatSetup, currentAct } from '../../logic/run';
 import { BlessingScreen } from '../blessing/BlessingScreen';
@@ -22,6 +22,8 @@ import { RunEventLayer } from './effects/RunEventLayer';
 import { RewardScreen } from './RewardScreen';
 
 type RunRootProps = {
+  /** 選んだエージェントのラン設定。「新しいラン」も同じエージェントで始める。 */
+  setup: RunSetup;
   /** ランが終わった画面から、タイトルに戻る。 */
   onExitToTitle: () => void;
 };
@@ -30,7 +32,7 @@ type RunRootProps = {
  * ラン全体の画面切り替え。マップから各マスの画面へ。
  * 画面が変わるたびに暗転から明け、回復・強化などの演出はどの画面の上にも重ねて出す。
  */
-export function RunRoot({ onExitToTitle }: RunRootProps) {
+export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
   const {
     run,
     events,
@@ -46,7 +48,7 @@ export function RunRoot({ onExitToTitle }: RunRootProps) {
     shopActions,
     eventActions,
     treasureActions,
-  } = useRun(STANDARD_RUN);
+  } = useRun(setup);
 
   // 新しいランでは、所持金の数え上げなどの記憶を捨てる。
   const [runCount, setRunCount] = useState(0);

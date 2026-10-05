@@ -42,7 +42,11 @@ export type Effect =
   /** damage を与え、それで敵を倒したら最大 HP +maxHp（ランの間ずっと）。 */
   | { kind: 'feed'; damage: number; maxHp: number }
   /** 魔法剣: このターン、アタックに attribute の属性が加わる。 */
-  | { kind: 'enchant'; attribute: Attribute };
+  | { kind: 'enchant'; attribute: Attribute }
+  /** 狙った敵の status のターン数を factor 倍にする（かかっていなければ何もしない）。 */
+  | { kind: 'multiplyDebuff'; status: DebuffId; factor: number }
+  /** 狙った敵の宿り木を、今すぐ 1 回発動させる（ターン数は減らない）。 */
+  | { kind: 'bloomSeed' };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

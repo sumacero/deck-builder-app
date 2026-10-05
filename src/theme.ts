@@ -189,6 +189,8 @@ export const RADIUS = {
 /** 戦闘画面のキャラクター（3D 表示）。size は描画領域の一辺、duration はミリ秒。 */
 export const ACTOR_FIGURE = {
   size: 128,
+  /** エージェント選択画面の 3D の一辺。 */
+  selectSize: 112,
   /** 敵が多い・画面が低いときに縮めても、これより小さくはしない。 */
   minSize: 48,
   /** サイズはこの刻みに丸める（わずかなレイアウトの揺れで 3D を作り直さないため）。 */

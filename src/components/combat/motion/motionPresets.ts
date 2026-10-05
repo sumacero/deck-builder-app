@@ -90,9 +90,70 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
   },
 };
 
+/** 翠風のリーネ: その場で弓を引き絞って放つ。踏み込まず、軽く跳んで距離を取る。 */
+const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
+  strike: {
+    keyframes: [
+      { x: -16, rotate: -6, duration: 140 },
+      { x: -16, rotate: -6, duration: 60 },
+      { x: 8, duration: 70 },
+      { duration: 160 },
+    ],
+    burst: { emoji: '🏹', on: 'opponent', delay: 220 },
+  },
+  flurry: {
+    keyframes: [
+      { x: -12, duration: 80 },
+      { x: 4, duration: 50 },
+      { x: -10, duration: 60 },
+      { x: 4, duration: 50 },
+      { x: -10, duration: 60 },
+      { x: 6, duration: 50 },
+      { duration: 140 },
+    ],
+    burst: { emoji: '🍃', on: 'opponent', delay: 120 },
+  },
+  heavy: {
+    keyframes: [
+      { y: -34, x: -14, scale: 1.12, rotate: -10, duration: 240 },
+      { y: -34, x: -14, scale: 1.12, rotate: -10, duration: 100 },
+      { x: 10, scale: 1.15, duration: 90 },
+      { duration: 240 },
+    ],
+    burst: { emoji: '🌪️', on: 'opponent', delay: 340 },
+  },
+  guard: {
+    keyframes: [
+      { x: -18, y: -10, duration: 120 },
+      { x: -18, duration: 100 },
+      { duration: 180 },
+    ],
+    burst: { emoji: '🌿', on: 'self', delay: 60 },
+  },
+  empower: {
+    keyframes: [
+      { y: -10, scale: 1.18, rotate: 4, duration: 220 },
+      { y: -10, scale: 1.18, rotate: -4, duration: 160 },
+      { duration: 220 },
+    ],
+    burst: { emoji: '🌸', on: 'self', delay: 120 },
+  },
+  focus: {
+    keyframes: [
+      { y: -12, duration: 160 },
+      { duration: 140 },
+      { y: -5, duration: 100 },
+      { duration: 100 },
+    ],
+    burst: { emoji: '🌱', on: 'opponent', delay: 120 },
+  },
+  sacrifice: SWORDSMAN_MOTIONS.sacrifice,
+};
+
 /** エージェント id ごとの動き。未登録のエージェントは剣士の動きを使う。 */
 const AGENT_MOTIONS: Record<string, Record<CardMotion, MotionPreset>> = {
   'crimson-hero': SWORDSMAN_MOTIONS,
+  'verdant-archer': ARCHER_MOTIONS,
 };
 
 /** 敵の動き。攻撃は 1 発ごとに体当たりする。 */

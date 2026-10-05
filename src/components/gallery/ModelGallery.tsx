@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { CRIMSON_HERO } from '../../data/agents';
+import { ALL_AGENTS, CRIMSON_HERO } from '../../data/agents';
 import { ALL_ENEMIES } from '../../data/bestiary';
 import type { ActorId, CombatEvent } from '../../domain/combat';
 import { ENEMY_RANK_LABEL } from '../../logic/describe';
@@ -22,15 +22,17 @@ type GalleryEntry = {
 };
 
 const ENTRIES: GalleryEntry[] = [
-  {
-    key: CRIMSON_HERO.id,
-    name: CRIMSON_HERO.name,
-    icon: CRIMSON_HERO.icon,
-    label: 'エージェント',
-    hp: null,
-    model: AGENT_MODELS[CRIMSON_HERO.id],
-    actorId: 'player',
-  },
+  ...ALL_AGENTS.map(
+    (agent): GalleryEntry => ({
+      key: agent.id,
+      name: agent.name,
+      icon: agent.icon,
+      label: 'エージェント',
+      hp: null,
+      model: AGENT_MODELS[agent.id],
+      actorId: 'player',
+    }),
+  ),
   ...ALL_ENEMIES.map(
     (enemy): GalleryEntry => ({
       key: enemy.id,

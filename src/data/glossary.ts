@@ -183,7 +183,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'sadistic',
     name: '弱点看破',
     icon: '👁️',
-    description: '敵に弱体・衰弱を与えるたびに、その敵にその数値のダメージ（筋力や弱体の影響を受けない）。敵全体にかけると全員に当たる。',
+    description: '敵に弱体・衰弱・宿り木を与えるたびに、その敵にその数値のダメージ（筋力や弱体の影響を受けない）。敵全体にかけると全員に当たる。',
   },
   rupture: {
     id: 'rupture',
@@ -196,6 +196,31 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '灰より立つ',
     icon: '🔆',
     description: 'カードが廃棄されるたびに、その数値の分だけブロックを得る。',
+  },
+  seed: {
+    id: 'seed',
+    name: '宿り木',
+    icon: '🌱',
+    description:
+      '敵のターンの始めに、その数値と同じダメージを受ける（ブロック無視、筋力や弱体の影響なし）。そのあと 1 減る。重ねがけで加算され、デバフを延ばすカードでも増える。',
+  },
+  thorns: {
+    id: 'thorns',
+    name: '茨の鎧',
+    icon: '🌹',
+    description: '敵の攻撃を 1 回受けるたびに、攻撃してきた敵にその数値のダメージを返す（連続攻撃なら回数分）。',
+  },
+  overgrowth: {
+    id: 'overgrowth',
+    name: '森の侵蝕',
+    icon: '🌳',
+    description: '自分のターンの始めに、敵全体にその数値の宿り木を与える。',
+  },
+  verdure: {
+    id: 'verdure',
+    name: '命の芽吹き',
+    icon: '🍃',
+    description: '敵に宿り木を与えるたびに、その数値の分だけブロックを得る（敵全体なら敵の数だけ）。',
   },
   growth: {
     id: 'growth',

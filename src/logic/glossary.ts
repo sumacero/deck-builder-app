@@ -34,7 +34,7 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'gainBuff':
       return [effect.status, 'statusTurns'];
     case 'extendDebuffs':
-      return ['vulnerable', 'weak', 'statusTurns'];
+      return ['vulnerable', 'weak', 'seed', 'statusTurns'];
     case 'extendBuffs':
       return ['retainBlock', 'blazing', 'statusTurns'];
     case 'gainPower':
@@ -50,10 +50,24 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['damage', 'maxHp'];
     case 'enchant':
       return ['enchant', 'attribute', 'weakness'];
+    case 'multiplyDebuff':
+      return [effect.status, 'statusTurns'];
+    case 'bloomSeed':
+      return ['seed'];
   }
 }
 
-const POWER_IDS: readonly PowerId[] = ['barricade', 'demonForm', 'juggernaut', 'sadistic', 'rupture', 'feelNoPain'];
+const POWER_IDS: readonly PowerId[] = [
+  'barricade',
+  'demonForm',
+  'juggernaut',
+  'sadistic',
+  'rupture',
+  'feelNoPain',
+  'thorns',
+  'overgrowth',
+  'verdure',
+];
 
 /** 状態のターン数（0 は表示しない）。 */
 function statusViews(statuses: Statuses, ids: readonly StatusId[]): StatusView[] {

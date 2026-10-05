@@ -91,6 +91,10 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${effect.damage} ダメージを与える。これで敵を倒すと最大 HP +${effect.maxHp}（ランの間ずっと）。`;
     case 'enchant':
       return `このターン、アタックに${ATTRIBUTE_LABEL[effect.attribute]}属性が加わる。`;
+    case 'multiplyDebuff':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}${STATUS_LABEL[effect.status]}を ${effect.factor} 倍にする。`;
+    case 'bloomSeed':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}宿り木を今すぐ発動させる（数値は減らない）。`;
   }
 }
 
@@ -129,6 +133,9 @@ export const POWER_LABEL: Record<PowerId, string> = {
   sadistic: '弱点看破',
   rupture: '燃える血潮',
   feelNoPain: '灰より立つ',
+  thorns: '茨の鎧',
+  overgrowth: '森の侵蝕',
+  verdure: '命の芽吹き',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -146,6 +153,12 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、HP を失うたびに筋力 ${amount} を得る。`;
     case 'feelNoPain':
       return `この戦闘中、カードが廃棄されるたびにブロック ${amount} を得る。`;
+    case 'thorns':
+      return `この戦闘中、敵の攻撃を受けるたびにその敵に ${amount} ダメージ。`;
+    case 'overgrowth':
+      return `この戦闘中、ターンの始めに敵全体に宿り木 ${amount} を与える。`;
+    case 'verdure':
+      return `この戦闘中、敵に宿り木を与えるたびにブロック ${amount} を得る。`;
   }
 }
 
@@ -160,6 +173,7 @@ function describeGrowth(growth: CardGrowth): string {
 export const STATUS_LABEL: Record<StatusId, string> = {
   vulnerable: '弱体',
   weak: '衰弱',
+  seed: '宿り木',
   retainBlock: 'ブロック保持',
   blazing: '熱血',
   intangible: '霊体化',
@@ -169,6 +183,7 @@ export const STATUS_LABEL: Record<StatusId, string> = {
 export const DEBUFF_ICON: Record<DebuffId, string> = {
   vulnerable: '🎯',
   weak: '🥀',
+  seed: '🌱',
 };
 
 const describeEffects = (effects: Effect[], target: EffectTarget) =>

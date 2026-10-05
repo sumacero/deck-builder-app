@@ -456,8 +456,33 @@ function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns:
     })),
     `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
   );
-  const sadistic = powerOf(debuffed, 'sadistic');
-  return sadistic > 0 ? hitEnemy(debuffed, uid, sadistic, FIXED_HIT) : debuffed;
+  const verdure = status === 'seed' ? powerOf(debuffed, 'verdure') : 0;
+  const sprouted = verdure > 0 ? gainPlayerBlock(debuffed, verdure) : debuffed;
+  const sadistic = powerOf(sprouted, 'sadistic');
+  return sadistic > 0 ? hitEnemy(sprouted, uid, sadistic, FIXED_HIT) : sprouted;
+}
+
+/** 宿り木の発動: 残りターン数と同じ固定ダメージ。ターン数は減らさない（減るのは敵のターンの終わり）。 */
+function bloomEnemySeed(state: CombatState, uid: EnemyUid): CombatState {
+  const enemy = findEnemy(state, uid);
+  const seed = enemy && isAlive(enemy) ? statusTurns(enemy.statuses, 'seed') : 0;
+  if (seed === 0) return state;
+  return hitEnemy(withLog(state, `${enemy?.name ?? '敵'}の宿り木が芽吹いた`), uid, seed, FIXED_HIT);
+}
+
+function multiplyEnemyDebuff(state: CombatState, uid: EnemyUid, status: DebuffId, factor: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || !hasStatus(enemy.statuses, status)) return state;
+  if (enemy.ward > 0) return consumeWard(state, enemy);
+  const turns = statusTurns(enemy.statuses, status) * factor;
+  return callout(
+    withLog(
+      updateEnemy(state, uid, (e) => ({ ...e, statuses: { ...e.statuses, [status]: turns } })),
+      `${enemy.name}の${STATUS_LABEL[status]}が ${turns} に`,
+    ),
+    uid,
+    `${STATUS_LABEL[status]} ×${factor}`,
+  );
 }
 
 const totalDebuffTurns = (enemy: EnemyState) =>
@@ -651,6 +676,13 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         `このターン、アタックに${ATTRIBUTE_LABEL[effect.attribute]}属性が加わる`,
       );
     }
+    case 'multiplyDebuff':
+      return aimedUids(state, aim).reduce(
+        (current, uid) => multiplyEnemyDebuff(current, uid, effect.status, effect.factor),
+        state,
+      );
+    case 'bloomSeed':
+      return aimedUids(state, aim).reduce(bloomEnemySeed, state);
   }
 }
 
@@ -920,8 +952,11 @@ function applyEnemyAction(
       const affinity = enemyAffinity(enemy.attribute, state.player.attribute);
       const weak = affinity === 'weak';
       const note = weak ? '（弱点）' : affinity === 'resist' ? '（相性で軽減）' : '';
+      const thorns = powerOf(state, 'thorns');
       let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
+        const attacker = findEnemy(next, uid);
+        if (!attacker || !isAlive(attacker)) break;
         next = act(next);
         const result = applyDamage(next.player, amount);
         next = withEvent(
@@ -936,6 +971,7 @@ function applyEnemyAction(
             weak,
           },
         );
+        if (thorns > 0 && next.player.hp > 0) next = hitEnemy(next, uid, thorns, FIXED_HIT);
       }
       return next;
     }
@@ -1042,15 +1078,20 @@ function healEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatSta
   });
 }
 
-/** 生きている敵が左から順に行動する。敵のブロックは敵のターン開始時に消える。 */
+/**
+ * 生きている敵が左から順に行動する。敵のブロックは敵のターン開始時に消え、そのあと宿り木が発動する。
+ * 宿り木や茨の鎧で全員倒れたら、その場で勝利。
+ */
 function runEnemyTurn(state: CombatState): CombatState {
-  let next: CombatState = {
+  const unblocked: CombatState = {
     ...state,
     enemies: state.enemies.map((enemy) => (isAlive(enemy) ? { ...enemy, block: 0 } : enemy)),
   };
+  let next = livingEnemies(unblocked).reduce((current, { uid }) => bloomEnemySeed(current, uid), unblocked);
+  if (livingEnemies(next).length === 0) return finishIfWon(next);
   for (const { uid } of livingEnemies(next)) {
     const enemy = findEnemy(next, uid);
-    if (!enemy) continue;
+    if (!enemy || !isAlive(enemy)) continue;
     const move = currentIntent(enemy);
     next = withLog(next, `${enemy.name}の「${move.name}」`);
     for (const action of move.actions) {
@@ -1063,6 +1104,7 @@ function runEnemyTurn(state: CombatState): CombatState {
       }
     }
     next = advanceEnemy(next, uid);
+    if (livingEnemies(next).length === 0) return finishIfWon(next);
   }
   // 敵のバフ・デバフは敵のターンの終わりに 1 ターン進む（かけたターンの敵の行動までは効く）。
   return {
@@ -1109,5 +1151,17 @@ export function endTurn(state: CombatState): CombatState {
   const discarded = settle(withLog(discardHand(afterMetal), 'ターン終了'));
   if (discarded.status !== 'playerTurn') return discarded;
   const afterEnemy = runEnemyTurn(discarded);
-  return afterEnemy.status === 'lost' ? afterEnemy : finishIfWon(triggerRelics(startPlayerTurn(afterEnemy), 'turnStart'));
+  if (afterEnemy.status !== 'playerTurn') return afterEnemy;
+  const started = triggerRelics(startPlayerTurn(afterEnemy), 'turnStart');
+  return finishIfWon(spreadOvergrowth(started));
+}
+
+/** 森の侵蝕: ターンの始めに敵全体へ宿り木。 */
+function spreadOvergrowth(state: CombatState): CombatState {
+  const amount = powerOf(state, 'overgrowth');
+  if (amount === 0) return state;
+  return livingEnemies(state).reduce(
+    (current, { uid }) => debuffEnemy(current, uid, 'seed', amount),
+    withLog(state, '森の侵蝕が広がる'),
+  );
 }
