@@ -2,7 +2,7 @@
 // 元はタイトル曲の候補探し 第 8 弾（2026-10-06）の【試作 1】統合版: 「三つの旗 −試− 改」の改善案のうち、オーナーが気に入った
 // 1（8 小節の上り坂 × イントロのドラムも加速）・6（刻みで溜める × サビの最後をレに解決）・9（ギターの泣き × 解決）を統合した版。
 // 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 8（後半は G→A→B♭→C と上がる）/ サビ 20（2 回目はハモり、締めに後半 4 小節を回してレに解決）。
-// 章のボス戦「三つの旗 −試−」（battle-boss.wav）もこの台本から作る（CHAPTER_BOSS_SONG、ラスサビ抜き・楽器を減らし・140 BPM）。
+// 章のボス戦「三つの旗 −試−」（battle-boss.wav）もこの台本から作る（CHAPTER_BOSS_SONG、サビ抜き・楽器を減らし・140 BPM）。
 // ほかの曲が引用している素材（bgm-theme.mjs）は変えない。
 import { BOSS_AFTER_INTRO, BOSS_BPM, BOSS_MIX, bossIntroSection } from './bgm-boss.mjs';
 import { parsePhrase, shiftPhrase } from './bgm-engine.mjs';
@@ -202,31 +202,15 @@ export const FINAL_BOSS_SONG = {
 };
 
 /**
- * 章のボス戦「三つの旗 −試−」（battle-boss.wav、140 BPM・約 62 秒）。ラスボス戦からラスサビ（2 回目のサビと締め）を抜き、
- * 楽器を減らして、テンポも一回り落とした弟分。ラスボス戦で初めてハモりとツーバスの全開のサビが鳴るようにする。
- * 減らすもの: イントロのオルガンの重ね、A メロ前半の弦の重ね・後半のオルガンの伴奏、ため前半の金管・後半の金管の刻み、
- * サビの 1 オクターブ下のギターと伴奏のスタブ・金管の刻み。
- * サビ 1 回だけで終わるので、最後の小節をレに解決して音量を下げ、イントロへ戻る（ラスボス戦の締めと同じ仕掛け）。
+ * 章のボス戦「三つの旗 −試−」（battle-boss.wav、140 BPM・約 41 秒）。ラスボス戦からサビを丸ごと抜き、
+ * 楽器を減らして、テンポも一回り落とした弟分。サビはラスボス戦で初めて鳴る。
+ * ため後半（上り坂とロール）はサビへ飛び込むための部分なので、これもラスボス戦だけに残す。
+ * ため前半の静かな 4 小節（A で止まる）から、加速するイントロへそのまま戻ってループする。
+ * 減らすもの: イントロのオルガンの重ね、A メロ前半の弦の重ね・後半のオルガンの伴奏、ため前半の金管。
  */
 const CHAPTER_BOSS_BPM = 140;
 
 const withoutParts = (section, insts) => ({ ...section, parts: section.parts.filter((part) => !insts.includes(part.inst)) });
-/** サビの楽器が減ったぶん、A メロ・B メロも下げてサビとの段差を保つ。 */
-const CHAPTER_CALM = 0.85;
-const calmer = (section) => ({ ...section, level: section.level * CHAPTER_CALM });
-
-const chapterChorus = {
-  ...chorus1,
-  name: 'chorus',
-  chords: bars(...CHORUS_CHORDS.slice(0, 7), 'A Dm'),
-  parts: [{ inst: 'brassLead', vol: 0.4, notes: join4(...CHORUS_BARS.slice(0, 7), RESOLVED_BAR) }],
-  comp: ['chug'],
-  fill: undefined,
-};
-const CHAPTER_CHORUS_RAMP = [1, 1, 1, 1, 1, 1, 0.94, 0.84];
-const chapterChorusBars = rampBars(chapterChorus, CHAPTER_CHORUS_RAMP).map((section, i) =>
-  i === CHAPTER_CHORUS_RAMP.length - 1 ? { ...section, drums: 'half', comp: ['strings'], bass: 'sustain' } : section,
-);
 
 export const CHAPTER_BOSS_SONG = {
   file: 'battle-boss',
@@ -234,12 +218,10 @@ export const CHAPTER_BOSS_SONG = {
   mix: BOSS_MIX,
   sections: [
     ...intro.map((section) => withoutParts(section, ['organ'])),
-    calmer(withoutParts(verseSections[0], ['strings'])),
-    calmer({ ...verseSections[1], comp: ['chug'] }),
-    calmer({ ...run, level: RUN_LEVEL }),
+    withoutParts(verseSections[0], ['strings']),
+    { ...verseSections[1], comp: ['chug'] },
+    { ...run, level: RUN_LEVEL },
     withoutParts(buildCalm, ['brassLead']),
-    ...rampBars({ ...buildRise, comp: ['strings'] }, BUILD_RAMP),
-    ...chapterChorusBars,
   ],
 };
 
