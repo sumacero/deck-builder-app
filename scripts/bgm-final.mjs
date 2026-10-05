@@ -7,7 +7,14 @@
 import { BOSS_AFTER_INTRO, BOSS_BPM, BOSS_MIX, bossIntroSection } from './bgm-boss.mjs';
 import { parsePhrase, shiftPhrase } from './bgm-engine.mjs';
 import { bars, join4 } from './bgm-song.mjs';
-import { CHORUS_BARS, CHORUS_CHORDS, VERSE_BARS, VERSE_CHORDS } from './bgm-theme.mjs';
+import {
+  CHORUS_BARS,
+  CHORUS_CHORDS,
+  INTRO_BARS as THEME_INTRO_BARS,
+  INTRO_CHORDS as THEME_INTRO_CHORDS,
+  VERSE_BARS,
+  VERSE_CHORDS,
+} from './bgm-theme.mjs';
 
 const [verse, , , chorus] = BOSS_AFTER_INTRO;
 
@@ -206,18 +213,24 @@ export const FINAL_BOSS_SONG = {
  * 楽器を減らして、テンポも一回り落とした弟分。サビはラスボス戦で初めて鳴る。
  * ため後半（上り坂とロール）はサビへ飛び込むための部分なので、これもラスボス戦だけに残す。
  * ため前半の静かな 4 小節（A で止まる）から、加速するイントロへそのまま戻ってループする。
+ * イントロもサビ頭の予告を使わず、元の導入のリフにする（サビの旋律はどこにも出てこない）。
  * 減らすもの: イントロのオルガンの重ね、A メロ前半の弦の重ね・後半のオルガンの伴奏、ため前半の金管。
  */
 const CHAPTER_BOSS_BPM = 140;
 
 const withoutParts = (section, insts) => ({ ...section, parts: section.parts.filter((part) => !insts.includes(part.inst)) });
 
+/** ラスボス戦のイントロはサビ頭の予告なので使わず、元の導入のリフ（ギターだけ）にドラムの加速だけを残す。 */
+const chapterIntro = THEME_INTRO_BARS.map((notes, i) =>
+  withoutParts(bossIntroSection({ chords: [THEME_INTRO_CHORDS[i]], notes, arrange: { fill: undefined, ...ACCEL[i] } }), ['organ']),
+);
+
 export const CHAPTER_BOSS_SONG = {
   file: 'battle-boss',
   bpm: CHAPTER_BOSS_BPM,
   mix: BOSS_MIX,
   sections: [
-    ...intro.map((section) => withoutParts(section, ['organ'])),
+    ...chapterIntro,
     withoutParts(verseSections[0], ['strings']),
     { ...verseSections[1], comp: ['chug'] },
     { ...run, level: RUN_LEVEL },
