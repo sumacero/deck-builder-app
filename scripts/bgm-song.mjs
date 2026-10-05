@@ -197,6 +197,7 @@ const scaledTrack = (track, level) =>
  * section: { name, chords, parts: [{ inst, notes, vol, send?, double? }], comp: [], bass, drums, fill?, energy?, level? }
  * double はその旋律を何オクターブずらして重ねるか（-1 で 1 オクターブ下）。
  * energy はドラムだけ、level はその部分の全部の音量にかかる（静かな出だし・だんだん大きくなる溜め用）。
+ * crash: false で部分の頭のシンバルを鳴らさない（1 部分を小節ごとに分けて音量を変えるとき用）。
  */
 export function renderSong(song) {
   const totalBars = song.sections.reduce((n, s) => n + s.chords.length, 0);
@@ -224,7 +225,7 @@ export function renderSong(song) {
         track.drum(kind, (bar + i) * 4 + beat, volume * energy, kind === 'snare' || kind === 'clap' ? 0.25 : 0.1);
       }
     }
-    if (!QUIET_DRUMS.has(drums)) track.drum('crash', bar * 4, 0.22 * energy, 0.3);
+    if (!QUIET_DRUMS.has(drums) && section.crash !== false) track.drum('crash', bar * 4, 0.22 * energy, 0.3);
     bar += length;
   }
   const beat = 60 / song.bpm;

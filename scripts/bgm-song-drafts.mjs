@@ -18,6 +18,14 @@ const brass = (vol, ...barsText) => ({ inst: 'brassLead', vol, notes: join4(...b
 const guitar = (vol, ...barsText) => ({ inst: 'guitarLead', vol, notes: join4(...barsText) });
 
 /**
+ * 強弱の段差: A メロ・B メロを抑えて、サビだけが全開に聞こえるようにする。
+ * A メロはドラムも 8 ビートに落とす。ため後半は 1 小節ずつ上げてロールの小節を一番大きく。
+ */
+const VERSE_LEVEL = 0.75;
+const RUN_LEVEL = 0.78;
+const BUILD_RAMP = [0.85, 1.0, 1.15, 1.3];
+
+/**
  * イントロ: サビ頭の「レー・ドー・シ♭」の形を、小節ごとに倍の速さにしていく。
  * ドラムも旋律と一緒にティンパニ → ハーフ → 8 ビート → ツーバスと加速させ、サビの終わりからゆったりした頭へ自然に戻す。
  */
@@ -29,10 +37,10 @@ const INTRO_BARS = [
   'F6:0.25 E6:0.25 D6:0.25 C#6:0.25 E6:0.25 D6:0.25 C#6:0.25 A5:0.25 E5:1 C#5:1',
 ];
 const ACCEL = [
-  { drums: 'timp', level: 0.7 },
-  { drums: 'half', level: 0.8 },
-  { drums: 'rock', level: 0.9 },
-  { drums: 'double', level: 1, fill: 'toms' },
+  { drums: 'timp', level: 0.6 },
+  { drums: 'half', level: 0.7 },
+  { drums: 'rock', level: 0.8 },
+  { drums: 'double', level: 0.85, fill: 'toms' },
 ];
 const intro = INTRO_BARS.map((notes, i) =>
   bossIntroSection({ chords: [INTRO_CHORDS[i]], notes, organShift: 0, arrange: { fill: undefined, ...ACCEL[i] } }),
@@ -64,11 +72,26 @@ const run = {
   fill: 'toms',
 };
 
+/** 部分を 1 小節ずつに分け、小節ごとに音量 levels を変える（2 小節目からは頭のシンバルを鳴らさない）。 */
+const rampBars = (section, levels) => {
+  const partBars = section.parts.map((part) => part.notes.split('|').map((text) => text.trim()));
+  return levels.map((level, i) => ({
+    ...section,
+    name: `${section.name}-${i + 1}`,
+    chords: [section.chords[i]],
+    parts: section.parts.map((part, p) => ({ ...part, notes: partBars[p][i] })),
+    fill: i === levels.length - 1 ? section.fill : undefined,
+    crash: i === 0,
+    level,
+  }));
+};
+
 /**
  * ため（8 小節）: 前半はギターが歌い（案 9）、低い金管が支える。
  * 後半は金管の長い音が 1 段ずつ高く上がり（案 1）、ギターが同じ音を 8 分 → 16 分で刻んで行進のスネアと前へ押す（案 6）。
+ * 後半は 1 小節ずつ音量を上げ、ロールの小節を一番大きくしてサビへ飛び込む。
  */
-const build = [
+const [buildCalm, buildRise] = [
   {
     name: 'build',
     chords: bars('Gm', 'A', 'Bb', 'A'),
@@ -76,7 +99,7 @@ const build = [
     comp: ['strings'],
     bass: 'sustain',
     drums: 'half',
-    level: 0.85,
+    level: 0.7,
   },
   {
     name: 'build2',
@@ -91,6 +114,7 @@ const build = [
     fill: 'roll',
   },
 ];
+const build = [buildCalm, ...rampBars(buildRise, BUILD_RAMP)];
 
 /** サビ: 最後の小節を高いラで終わらずレに解決させる（コードも A → Dm）。イントロの頭の B♭ へなめらかにつながる。 */
 const chorusNotes = join4(...CHORUS_BARS.slice(0, 7), 'A5:0.5 C#6:0.5 E6:0.5 G6:0.5 F6:1 D6:1');
@@ -107,8 +131,8 @@ const SONGS = [
   {
     no: 1,
     name: '三つの旗 −試− 改 統合版',
-    desc: '改善案 1・6・9 の統合。イントロはドラムも一緒に加速。ためは 8 小節で、前半はギターが歌い、後半は金管が上り詰めてギターの刻みと行進のスネアで押す。サビの最後はレに解決してイントロへ戻る。',
-    sections: [...intro, verse, run, ...build, resolvedChorus],
+    desc: '改善案 1・6・9 の統合。イントロはドラムも一緒に加速。ためは 8 小節で、前半はギターが歌い、後半は金管が上り詰めてギターの刻みと行進のスネアで押す。サビの最後はレに解決してイントロへ戻る。A メロ・B メロを抑え、ため後半は 1 小節ずつ大きくして、サビが一番大きく聞こえるようにした。',
+    sections: [...intro, { ...verse, drums: 'rock', level: VERSE_LEVEL }, { ...run, level: RUN_LEVEL }, ...build, resolvedChorus],
   },
 ];
 
