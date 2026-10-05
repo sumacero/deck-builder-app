@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SAMPLE_RATE, seedNoise, shiftPhrase } from './bgm-engine.mjs';
 import { REGION_SONGS } from './bgm-regions.mjs';
-import { TITLE_DRAFTS } from './bgm-title-drafts.mjs';
+import { CHORUS_DRAFTS, writeChorusDraftCatalog } from './bgm-chorus-drafts.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
 import {
   CHORUS,
@@ -238,12 +238,13 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, mainBoss, shop, ...REGION_SONGS, ...TITLE_DRAFTS];
+const SONGS = [mainTitle, mainNormal, mainBoss, shop, ...REGION_SONGS, ...CHORUS_DRAFTS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];
 
 mkdirSync(OUT_DIR, { recursive: true });
+writeChorusDraftCatalog(join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'audio', 'chorusDrafts.ts'));
 for (const song of SONGS.filter((s) => !only || s.file.startsWith(only))) {
   seedNoise(4242);
   const samples = renderSong(song);
