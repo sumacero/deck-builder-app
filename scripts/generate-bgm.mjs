@@ -12,7 +12,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SAMPLE_RATE, seedNoise, shiftPhrase } from './bgm-engine.mjs';
 import { REGION_SONGS } from './bgm-regions.mjs';
-import { BOSS_DRAFTS, writeBossDraftCatalog } from './bgm-boss-drafts.mjs';
+import { MAIN_BOSS } from './bgm-boss.mjs';
+import { INTRO_DRAFTS, writeIntroDraftCatalog } from './bgm-intro-drafts.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
 import {
   CHORUS,
@@ -100,50 +101,6 @@ const mainNormal = {
       bass: 'sustain',
       drums: 'light',
       energy: 0.35,
-    },
-  ],
-};
-
-/** ボス戦「三つの旗 −試−」（156 BPM・約 43 秒）。05 のテンポを落とし、サビの前に溜めを入れた。サビはここで初めて登場。 */
-const mainBoss = {
-  file: 'battle-boss',
-  bpm: 156,
-  mix: { drive: 0.5, tone: 0.7 },
-  sections: [
-    {
-      name: 'riff',
-      chords: bars(...INTRO_CHORDS),
-      parts: [
-        { inst: 'guitarLead', vol: 0.38, notes: INTRO },
-        { inst: 'organ', vol: 0.2, notes: shiftPhrase(INTRO, 1) },
-      ],
-      comp: ['chug'],
-      bass: 'gallop',
-      drums: 'rock',
-      fill: 'toms',
-    },
-    { name: 'verse', chords: bars(...VERSE_CHORDS), parts: [{ inst: 'guitarLead', vol: 0.4, notes: VERSE }], comp: ['organ', 'chug'], bass: 'gallop', drums: 'drive', fill: 'snare' },
-    { name: 'run', chords: bars(...RUN_CHORDS), parts: [{ inst: 'organ', vol: 0.36, notes: RUN }], comp: ['chug'], bass: 'gallop', drums: 'double', fill: 'toms' },
-    {
-      name: 'build',
-      chords: bars('Gm', 'A', 'Bb', 'A'),
-      parts: [{ inst: 'brassLead', vol: 0.36, notes: join4('G5:4', 'A5:4', 'Bb5:4', 'C#6:4') }],
-      comp: ['strings'],
-      bass: 'sustain',
-      drums: 'half',
-      fill: 'roll',
-    },
-    {
-      name: 'chorus',
-      chords: bars(...CHORUS_CHORDS),
-      parts: [
-        { inst: 'brassLead', vol: 0.4, notes: CHORUS },
-        { inst: 'guitarLead', vol: 0.22, notes: shiftPhrase(CHORUS, -1) },
-      ],
-      comp: ['stabs', 'chug', 'brassHits'],
-      bass: 'drive8',
-      drums: 'double',
-      fill: 'toms',
     },
   ],
 };
@@ -238,14 +195,14 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, mainBoss, shop, ...REGION_SONGS, ...BOSS_DRAFTS];
+const SONGS = [mainTitle, mainNormal, MAIN_BOSS, shop, ...REGION_SONGS, ...INTRO_DRAFTS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];
 
 mkdirSync(OUT_DIR, { recursive: true });
 const AUDIO_SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'audio');
-writeBossDraftCatalog(join(AUDIO_SRC, 'bossDrafts.ts'));
+writeIntroDraftCatalog(join(AUDIO_SRC, 'introDrafts.ts'));
 for (const song of SONGS.filter((s) => !only || s.file.startsWith(only))) {
   seedNoise(4242);
   const samples = renderSong(song);
