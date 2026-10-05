@@ -209,33 +209,60 @@ export const FINAL_BOSS_SONG = {
 };
 
 /**
- * 章のボス戦「三つの旗 −試−」（battle-boss.wav、140 BPM・約 41 秒）。ラスボス戦からサビを丸ごと抜き、
- * 楽器を減らして、テンポも一回り落とした弟分。サビはラスボス戦で初めて鳴る。
- * ため後半（上り坂とロール）はサビへ飛び込むための部分なので、これもラスボス戦だけに残す。
- * ため前半の静かな 4 小節（A で止まる）から、加速するイントロへそのまま戻ってループする。
- * イントロもサビ頭の予告を使わず、元の導入のリフにする（サビの旋律はどこにも出てこない）。
- * 減らすもの: イントロのオルガンの重ね、A メロ前半の弦の重ね・後半のオルガンの伴奏、ため前半の金管。
+ * 章のボス戦「三つの旗 −試−」（battle-boss.wav、140 BPM・約 41 秒）。ラスボス戦の構成・コードを踏襲し、
+ * 旋律を少しずつ変えた弟分。サビはラスボス戦で初めて鳴るので、ここにはサビもため後半（サビへの上り坂）もない。
+ * イントロ 4（元の導入のリフ・ドラムは加速）/ A メロ 8 / B メロ 8（五度圏を落ち着いて歌う）/ ため 4（少しずつ上げてイントロへ戻る）。
  */
 const CHAPTER_BOSS_BPM = 140;
 
-const withoutParts = (section, insts) => ({ ...section, parts: section.parts.filter((part) => !insts.includes(part.inst)) });
+/** 導入のリフ。最後の小節だけ変えて、シ♭を経由してド♯へ上がる。 */
+const CHAPTER_INTRO_BARS = [...THEME_INTRO_BARS.slice(0, 3), 'E5:0.5 F5:0.5 G5:0.5 Bb5:0.5 C#6:1 A5:1'];
+const chapterIntro = CHAPTER_INTRO_BARS.map((notes, i) =>
+  bossIntroSection({ chords: [THEME_INTRO_CHORDS[i]], notes, arrange: { fill: undefined, comp: ['chug', 'strings'], ...ACCEL[i] } }),
+);
 
-/** ラスボス戦のイントロはサビ頭の予告なので使わず、元の導入のリフ（ギターだけ）にドラムの加速だけを残す。 */
-const chapterIntro = THEME_INTRO_BARS.map((notes, i) =>
-  withoutParts(bossIntroSection({ chords: [THEME_INTRO_CHORDS[i]], notes, arrange: { fill: undefined, ...ACCEL[i] } }), ['organ']),
+/** A メロ。ラスボス戦と同じ流れで、言い回しを少し変える（前半は 1 オクターブ下）。 */
+const CHAPTER_VERSE_LOW = join4(
+  ...[
+    'A4:1 D5:0.5 E5:0.5 F5:1.5 G5:0.5',
+    VERSE_BARS[1],
+    'D5:0.5 F5:0.5 G5:1 Bb5:1.5 A5:0.5',
+    'A5:1.5 G5:0.5 E5:1 C#5:1',
+  ].map((text) => shiftPhrase(text, -1)),
+);
+const CHAPTER_VERSE_HIGH = [VERSE_BARS[4], 'C#6:1 D6:0.5 C#6:0.5 A5:1 E5:1', VERSE_BARS[6], 'A5:1 G5:0.5 F5:0.5 E5:0.5 D5:0.5 C#5:1'];
+const chapterVerse = [
+  { ...verseSections[0], parts: [{ inst: 'guitarLead', vol: 0.44, notes: CHAPTER_VERSE_LOW }, strings(0.24, CHAPTER_VERSE_LOW)], comp: ['chug', 'pad'] },
+  { ...verseSections[1], parts: [guitar(0.4, ...CHAPTER_VERSE_HIGH)], comp: ['organ', 'chug', 'arp8'] },
+];
+
+/** B メロ: ラスボス戦と同じ五度圏のコードを、ギターの長い音で落ち着いて歌う。オルガンは和音、ハープが分散和音で流れる。 */
+const B_MELODY = ['A5:3 F5:1', 'Bb5:2 A5:1 G5:1', 'G5:2 E5:1 C5:1', 'F5:1 A5:2 C6:1', 'D6:2 C6:1 Bb5:1', 'Bb5:2 G5:1 D5:1', 'E5:1 A5:1 C#6:2', 'E6:2 C#6:1 A5:1'];
+const chapterRun = {
+  name: 'run-calm',
+  chords: run.chords,
+  parts: [guitar(0.38, ...B_MELODY), strings(0.16, ...B_MELODY.map((text) => shiftPhrase(text, -1)))],
+  comp: ['organ', 'arp8'],
+  bass: 'sustain',
+  drums: 'half',
+  level: 0.66,
+};
+
+/** ため: 前半 4 小節だけ。ギターの言い回しを変え、1 小節ずつ少し上げてスネアのおかずでイントロへ戻る。 */
+const chapterBuild = rampBars(
+  {
+    ...buildCalm,
+    parts: [guitar(0.38, 'G5:1 A5:1 Bb5:2', 'A5:2 G5:1 E5:1', 'F5:1 G5:1 A5:1 Bb5:1', 'C#6:4'), brass(0.24, 'G4:4', 'A4:4', 'Bb4:4', 'C#5:4')],
+    fill: 'snare',
+  },
+  [0.72, 0.76, 0.82, 0.88],
 );
 
 export const CHAPTER_BOSS_SONG = {
   file: 'battle-boss',
   bpm: CHAPTER_BOSS_BPM,
   mix: BOSS_MIX,
-  sections: [
-    ...chapterIntro,
-    withoutParts(verseSections[0], ['strings']),
-    { ...verseSections[1], comp: ['chug'] },
-    { ...run, level: RUN_LEVEL },
-    withoutParts(buildCalm, ['brassLead']),
-  ],
+  sections: [...chapterIntro, ...chapterVerse, chapterRun, ...chapterBuild],
 };
 
 /** 1 小節ずつ 4 拍かを確かめる（renderSong は部分全体の拍数しか見ないため）。 */
