@@ -13,7 +13,7 @@ const PC = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb
 const QUALITY = { '': [0, 4, 7], m: [0, 3, 7], dim: [0, 3, 6], sus4: [0, 5, 7], 7: [0, 4, 7, 10], m7: [0, 3, 7, 10], maj7: [0, 4, 7, 11] };
 const nameOf = (midi) => `${NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`;
 
-function parseChord(symbol) {
+export function parseChord(symbol) {
   const [, root, quality] = /^([A-G][#b]?)(.*)$/.exec(symbol);
   return { root: PC[root], pcs: QUALITY[quality].map((i) => (PC[root] + i) % 12) };
 }
@@ -26,7 +26,7 @@ const chordAt = (barSymbol, pos) => {
 
 // ===== 音階（ハ長調 / イ短調を基準にした音の集合。key で移調） =====
 
-const SCALES = {
+export const SCALES = {
   diatonic: [0, 2, 4, 5, 7, 9, 11],
   harmonic: [0, 2, 4, 5, 8, 9, 11],
   penta: [0, 2, 4, 7, 9],
@@ -34,7 +34,7 @@ const SCALES = {
 };
 
 /** コード進行（ハ長調 / イ短調基準）。最後のコードの根音が主音。 */
-const PROGS = {
+export const PROGS = {
   royal: ['F', 'G', 'Em', 'Am', 'F', 'G', 'C', 'C'],
   canon: ['C', 'G', 'Am', 'Em', 'F', 'C', 'F G', 'C'],
   heroic: ['C', 'Am', 'F', 'G', 'C', 'Am', 'F G', 'C'],
@@ -109,7 +109,7 @@ function barScale(scalePcs, chord) {
   return pcs;
 }
 
-const notesIn = (pcs, lo, hi) => {
+export const notesIn = (pcs, lo, hi) => {
   const out = [];
   for (let m = lo; m <= hi; m++) if (pcs.includes(m % 12)) out.push(m);
   return out;
@@ -185,7 +185,7 @@ const firstPitch = (bar) => bar.find((n) => n.midi !== null)?.midi;
 const lastPitch = (bar) => [...bar].reverse().find((n) => n.midi !== null)?.midi;
 const nearestPc = (pc, around, lo, hi) => notesIn([pc], lo, hi).sort((a, b) => Math.abs(a - around) - Math.abs(b - around))[0];
 
-function composeMelody(spec, prog, scale) {
+export function composeMelody(spec, prog, scale) {
   const rng = mulberry32(spec.n * 7919 + 17);
   const center = (CENTER[spec.lead] ?? 74) + (spec.shift ?? 0);
   const ctx = { rng, lo: center - 9, hi: center + 10, scale };
@@ -219,7 +219,7 @@ function composeMelody(spec, prog, scale) {
 }
 
 /** 3 度下のハモり（その小節の音階で 2 つ下の音）。 */
-function harmonyOf(melody, prog, scale) {
+export function harmonyOf(melody, prog, scale) {
   return melody.map((bar, i) =>
     bar.map((n) => {
       if (n.midi === null) return n;
@@ -229,15 +229,15 @@ function harmonyOf(melody, prog, scale) {
   );
 }
 
-const phraseOf = (barsOfNotes) =>
+export const phraseOf = (barsOfNotes) =>
   barsOfNotes.map((bar) => bar.map((n) => `${n.midi === null ? '-' : nameOf(n.midi)}:${n.dur}`).join(' ')).join(' | ');
 
 // ===== 50 曲 =====
 
-const SOFT = { reverbLevel: 0.85, tone: 0.45, echoLevel: 0.35 };
-const GRAND = { reverbLevel: 0.9, tone: 0.5, echoLevel: 0.3 };
-const BRIGHT = { reverbLevel: 0.6, tone: 0.65, echoLevel: 0.25 };
-const LOUD = { drive: 0.4, tone: 0.7 };
+export const SOFT = { reverbLevel: 0.85, tone: 0.45, echoLevel: 0.35 };
+export const GRAND = { reverbLevel: 0.9, tone: 0.5, echoLevel: 0.3 };
+export const BRIGHT = { reverbLevel: 0.6, tone: 0.65, echoLevel: 0.25 };
+export const LOUD = { drive: 0.4, tone: 0.7 };
 const DARK = { reverbLevel: 0.95, tone: 0.35, echoLevel: 0.35 };
 const CHIP = { drive: 0.15, tone: 0.8, reverbLevel: 0.35 };
 
@@ -245,7 +245,7 @@ const CHIP = { drive: 0.15, tone: 0.8, reverbLevel: 0.35 };
  * n: 番号 / key: ハ長調・イ短調からの移調（半音）/ r: リズムの型 [1 小節目, 2 小節目, 7 小節目, 最後] /
  * harm: 3 度下でハモる楽器 / dbl: 旋律をオクターブ重ねる / shift: 旋律の高さの調整（半音）
  */
-const SPECS = [
+export const SPECS = [
   { n: 1, name: '蒼き約束', desc: '王道のアニメ主題歌。シンセブラスと三角波のハモり。', bpm: 152, key: 2, scale: 'diatonic', prog: 'royal', r: [10, 4, 7, 3], lead: 'synthBrass', harm: 'triLead', comp: ['stabs', 'pad'], bass: 'octave', drums: 'drive', fill: 'snare', mix: LOUD },
   { n: 2, name: '勇者の凱歌', desc: '金管が高らかに歌う、行進のスネアとティンパニ。', bpm: 132, key: 5, scale: 'diatonic', prog: 'heroic', r: [18, 2, 4, 9], lead: 'brassLead', dbl: -1, comp: ['strings', 'brassHits'], bass: 'sustain', drums: 'march', fill: 'roll', mix: GRAND },
   { n: 3, name: '哀しき姫君', desc: 'ゆっくりした短調の笛。ハープとパッドだけ。', bpm: 72, key: 4, scale: 'diatonic', prog: 'slowMinor', r: [5, 2, 20, 0], lead: 'flute', comp: ['arp8', 'pad'], bass: 'sustain', drums: 'none', mix: SOFT },
@@ -298,7 +298,7 @@ const SPECS = [
   { n: 50, name: '星灯りの巡礼', desc: 'ゲーム名の曲。ニ短調の壮大な金管と弦。', bpm: 120, key: 5, scale: 'diatonic', prog: 'epicMinor2', r: [18, 6, 4, 9], lead: 'brassLead', harm: 'strings', dbl: -1, comp: ['strings', 'brassHits', 'arp16'], bass: 'sustain', drums: 'march', fill: 'roll', mix: GRAND },
 ];
 
-const pad2 = (n) => String(n).padStart(2, '0');
+export const pad2 = (n) => String(n).padStart(2, '0');
 
 function buildSong(spec) {
   const prog = transposeSymbols(PROGS[spec.prog], spec.key);
@@ -328,28 +328,43 @@ function buildSong(spec) {
 
 export const CHORUS_DRAFTS = SPECS.map(buildSong);
 
-/** 図鑑の一覧（src/audio/chorusDrafts.ts）を書き出す。 */
-export function writeChorusDraftCatalog(path) {
-  const rows = SPECS.map(
-    (s) =>
-      `  { id: 'chorusDraft:${pad2(s.n)}', title: '【サビ ${s.n}】${s.name}', description: '${s.desc}（${s.bpm} BPM）', source: require('../../assets/music/chorus-draft-${pad2(s.n)}.wav') },`,
+/**
+ * 図鑑で聞く試作の一覧（TypeScript）を書き出す。
+ * entries: [{ no, name, desc, bpm }]、kind: 'chorus' なら id は chorusDraft:01、音源は chorus-draft-01.wav。
+ */
+export function writeDraftCatalog(path, { kind, label, script, doc, entries }) {
+  const Kind = kind[0].toUpperCase() + kind.slice(1);
+  const KIND = kind.toUpperCase();
+  const rows = entries.map(
+    (e) =>
+      `  { id: '${kind}Draft:${pad2(e.no)}', title: '【${label} ${e.no}】${e.name}', description: '${e.desc}（${e.bpm} BPM）', source: require('../../assets/music/${kind}-draft-${pad2(e.no)}.wav') },`,
   );
-  const text = `// scripts/bgm-chorus-drafts.mjs が書き出すファイル。手で直さない（npm run bgm -- chorus-draft）。
+  const text = `// ${script} が書き出すファイル。手で直さない（npm run bgm -- ${kind}-draft）。
 import type { AudioSource } from 'expo-audio';
 
-type ChorusDraftTrack = {
-  id: \`chorusDraft:\${string}\`;
+type ${Kind}DraftTrack = {
+  id: \`${kind}Draft:\${string}\`;
   title: string;
   description: string;
   source: AudioSource;
 };
 
-/** タイトル曲の候補探し: サビになるフレーズだけの短い試作 50 曲。図鑑で聞き比べるだけで、ゲーム中には流れない。 */
-export const CHORUS_DRAFT_TRACKS = [
+/** ${doc} */
+export const ${KIND}_DRAFT_TRACKS = [
 ${rows.join('\n')}
-] as const satisfies readonly ChorusDraftTrack[];
+] as const satisfies readonly ${Kind}DraftTrack[];
 
-export type ChorusDraftId = (typeof CHORUS_DRAFT_TRACKS)[number]['id'];
+export type ${Kind}DraftId = (typeof ${KIND}_DRAFT_TRACKS)[number]['id'];
 `;
   writeFileSync(path, text);
 }
+
+/** 図鑑の一覧（src/audio/chorusDrafts.ts）を書き出す。 */
+export const writeChorusDraftCatalog = (path) =>
+  writeDraftCatalog(path, {
+    kind: 'chorus',
+    label: 'サビ',
+    script: 'scripts/bgm-chorus-drafts.mjs',
+    doc: 'タイトル曲の候補探し: サビになるフレーズだけの短い試作 50 曲。図鑑で聞き比べるだけで、ゲーム中には流れない。',
+    entries: SPECS.map((s) => ({ no: s.n, name: s.name, desc: s.desc, bpm: s.bpm })),
+  });
