@@ -1,12 +1,12 @@
-// ボス戦「三つの旗 −試−」。A メロ違いの試作（bgm-intro-drafts.mjs）と共有する。
-// パートの呼び方（2026-10-05 にオーナーが定義）: A メロ = 導入のリフ / B メロ = 主題の A メロ（VERSE）/
-// C メロ = オルガンの駆け上がり（RUN）/ ため = サビ前 / サビ。
+// ボス戦「三つの旗 −試−」。イントロ違いの試作（bgm-intro-drafts.mjs）と共有する。
+// パートの呼び方（2026-10-05 にオーナーが定義）: イントロ = 導入のリフ（INTRO）/ A メロ = VERSE /
+// B メロ = オルガンの駆け上がり（RUN）/ ため = サビ前 / サビ。
 import { shiftPhrase } from './bgm-engine.mjs';
 import { bars, join4 } from './bgm-song.mjs';
 import { CHORUS, CHORUS_CHORDS, INTRO, INTRO_CHORDS, RUN, RUN_CHORDS, VERSE, VERSE_CHORDS } from './bgm-theme.mjs';
 
-/** A メロ（導入のリフ）。ギターと、1 オクターブ上のオルガン。 */
-export const bossIntroSection = ({ notes = INTRO, chords = INTRO_CHORDS, organShift = 1 } = {}) => ({
+/** イントロ（導入のリフ）。ギターと、1 オクターブ上のオルガン。arrange で伴奏や旋律の楽器を差し替えられる。 */
+export const bossIntroSection = ({ notes = INTRO, chords = INTRO_CHORDS, organShift = 1, arrange = {} } = {}) => ({
   name: 'riff',
   chords: bars(...chords),
   parts: [
@@ -17,9 +17,10 @@ export const bossIntroSection = ({ notes = INTRO, chords = INTRO_CHORDS, organSh
   bass: 'gallop',
   drums: 'rock',
   fill: 'toms',
+  ...arrange,
 });
 
-/** B メロ〜サビ。 */
+/** A メロ〜サビ。 */
 export const BOSS_AFTER_INTRO = [
   { name: 'verse', chords: bars(...VERSE_CHORDS), parts: [{ inst: 'guitarLead', vol: 0.4, notes: VERSE }], comp: ['organ', 'chug'], bass: 'gallop', drums: 'drive', fill: 'snare' },
   { name: 'run', chords: bars(...RUN_CHORDS), parts: [{ inst: 'organ', vol: 0.36, notes: RUN }], comp: ['chug'], bass: 'gallop', drums: 'double', fill: 'toms' },

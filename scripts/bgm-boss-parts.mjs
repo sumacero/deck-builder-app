@@ -6,9 +6,9 @@ import { pad2, writeDraftCatalog } from './bgm-melody.mjs';
 const [verse, run, build, chorus] = BOSS_AFTER_INTRO;
 
 const PARTS = [
-  { no: 1, name: 'A メロ', desc: '−試− の導入のリフ。ギターとオルガン（4 小節）。', section: bossIntroSection() },
-  { no: 2, name: 'B メロ', desc: 'ギターの主旋律（8 小節）。', section: verse },
-  { no: 3, name: 'C メロ', desc: 'オルガンの駆け上がり（4 小節）。', section: run },
+  { no: 1, name: 'イントロ', desc: '−試− の導入のリフ。ギターとオルガン（4 小節）。', section: bossIntroSection() },
+  { no: 2, name: 'A メロ', desc: 'ギターの主旋律（8 小節）。', section: verse },
+  { no: 3, name: 'B メロ', desc: 'オルガンの駆け上がり（4 小節）。', section: run },
   { no: 4, name: 'ため', desc: 'サビ前。金管の長い音とスネアのロール（4 小節）。', section: build },
   { no: 5, name: 'サビ', desc: '金管の主旋律と低いギター（8 小節）。', section: chorus },
 ];
