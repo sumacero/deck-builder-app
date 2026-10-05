@@ -17,10 +17,16 @@ export function floorMultiplier(run: RunState): number {
   return start + perFloor * (node?.floor ?? 0);
 }
 
-/** 戦闘を始める。今いる階に応じて敵を強くし、戦闘ごとのシャッフル用シードもここで決める。 */
-export function startCombat(run: RunState, nodeId: string, encounter: Encounter): RunState {
+/**
+ * 戦闘を始める。今いる階に応じて敵を強くし（multiplier を渡せばその倍率）、戦闘ごとのシャッフル用シードもここで決める。
+ */
+export function startCombat(
+  run: RunState,
+  nodeId: string,
+  encounter: Encounter,
+  multiplier = floorMultiplier(run),
+): RunState {
   const seedRoll = nextRandom(run.rngSeed);
-  const multiplier = floorMultiplier(run);
   const scaled = multiplier === 1 ? encounter : scaleEncounter(encounter, { hp: multiplier, power: multiplier });
   return {
     ...run,

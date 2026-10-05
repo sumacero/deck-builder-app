@@ -62,6 +62,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     actIndex: 0,
     map: { floorCount: 0, columns: 0, nodes: [], bossId: '' },
     boss: firstAct.bossPool[0],
+    finalBoss: setup.finalBoss,
     currentNodeId: null,
     visitedNodeIds: [],
     agent: setup.agent,
@@ -150,15 +151,20 @@ export function moveTo(run: RunState, nodeId: string): RunState {
 
 /**
  * 勝てばゴールドとカード 3 択。エリートはレリックも、ボスはそのあとボスレリックの 3 択。
- * 最後の章のボスならクリア。
+ * ラスボスを倒したらクリア。
  */
 export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (run.phase.kind !== 'combat') return run;
   const stats = mergeStats(run.stats, result.stats, result.status === 'won');
-  if (result.status === 'lost') {
-    return { ...run, stats, player: { ...run.player, hp: 0 }, phase: { kind: 'gameOver' } };
-  }
   const { rank } = run.phase.encounter;
+  if (result.status === 'lost') {
+    return {
+      ...run,
+      stats,
+      player: { ...run.player, hp: 0 },
+      phase: { kind: 'gameOver', atFinale: rank === 'final' },
+    };
+  }
   const survived: RunState = {
     ...run,
     stats,
@@ -166,7 +172,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
     potions: result.potions,
     deck: result.deck,
   };
-  if (rank === 'boss' && isFinalAct(run)) return { ...survived, phase: { kind: 'cleared' } };
+  if (rank === 'final') return { ...survived, phase: { kind: 'cleared' } };
 
   const { min, max } = run.economy.encounterGold[rank];
   const gold = randomInt(min, max, survived.rngSeed);
@@ -186,10 +192,20 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   };
 }
 
-/** HP を全回復して次の章へ。 */
+/** HP を全回復して次の章へ。最後の章のあとはラスボスとの決戦の前へ。 */
 function advanceAct(run: RunState): RunState {
-  return startAct({ ...run, player: { ...run.player, hp: run.player.maxHp } }, run.actIndex + 1);
+  const healed: RunState = { ...run, player: { ...run.player, hp: run.player.maxHp } };
+  if (isFinalAct(run)) return { ...healed, phase: { kind: 'finale' } };
+  return startAct(healed, run.actIndex + 1);
 }
+
+/** ラスボスと戦う。マップのマスではないので、階による倍率はかけない（強さはデータの時点で決まっている）。 */
+export function startFinalBattle(run: RunState): RunState {
+  if (run.phase.kind !== 'finale') return run;
+  return startCombat(run, FINAL_BATTLE_NODE_ID, soloEncounter(run.finalBoss), 1);
+}
+
+export const FINAL_BATTLE_NODE_ID = 'final';
 
 const BOSS_RELIC_CHOICES = 3;
 

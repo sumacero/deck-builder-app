@@ -7,6 +7,8 @@ export const STANDARD_ECONOMY: EconomyConfig = {
     normal: { min: 10, max: 20 },
     elite: { min: 25, max: 35 },
     boss: { min: 95, max: 105 },
+    // ラスボスを倒すとそのままクリアなので、ゴールドは使い道が無い。
+    final: { min: 0, max: 0 },
   },
   relicFallbackGold: 50,
   cardPrice: { attack: 50, skill: 50, power: 75, status: 0 },

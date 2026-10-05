@@ -107,6 +107,8 @@ function traitViews(enemy: EnemyState): StatusView[] {
       case 'guardian':
       case 'deathThroes':
         return [{ keyword: trait.kind, value: 1, flag: true }];
+      case 'awaken':
+        return enemy.awakened ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
     }
   });
 }
@@ -160,6 +162,8 @@ function keywordForIntent(action: EnemyAction): KeywordId {
       return 'intentAddCard';
     case 'intangible':
       return 'intentIntangible';
+    case 'shiftAttribute':
+      return 'intentBanner';
     case 'idle':
       return 'intentSleep';
   }

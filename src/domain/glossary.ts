@@ -49,6 +49,7 @@ export type KeywordId =
   | 'ward'
   | 'guardian'
   | 'deathThroes'
+  | 'awaken'
   | 'intentAttack'
   | 'intentBlock'
   | 'intentBuff'
@@ -61,6 +62,7 @@ export type KeywordId =
   | 'intentDebuff'
   | 'intentAddCard'
   | 'intentIntangible'
+  | 'intentBanner'
   | 'intentSleep';
 
 export type KeywordDefinition = {

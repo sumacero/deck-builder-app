@@ -1,5 +1,6 @@
 import type { ActConfig, Region } from '../domain/act';
 import { scaleEncounter, scaleEnemy, type ChapterScale } from '../logic/scaling';
+import { STAR_DEVOURER } from './enemies';
 import { REGION_ENEMIES } from './encounters';
 import { STANDARD_ACT_MAP } from './mapConfigs';
 
@@ -42,9 +43,12 @@ const CHAPTERS: ChapterDef[] = [
     number: 3,
     scale: { hp: 2.4, power: 1.95 },
     greetingBefore: 'ここが最後の道。',
-    greetingAfter: '奥で待つ主を倒せば、旅は終わる。私の灯りを持っていって。',
+    greetingAfter: 'この地の主の先で、星を喰らう魔皇が待っている。私の灯りを持っていって。',
   },
 ];
+
+/** ラスボスは第 3 章の倍率で強くする（素の数値がボスより一段強い）。 */
+export const FINAL_BOSS = scaleEnemy(STAR_DEVOURER, CHAPTERS[CHAPTERS.length - 1].scale);
 
 const REGIONS: RegionDef[] = [
   {

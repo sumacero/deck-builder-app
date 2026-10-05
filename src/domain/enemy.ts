@@ -23,6 +23,8 @@ export type EnemyAction =
   | { kind: 'addCard'; card: CardDefinition; count: number }
   /** 霊体化: 次のプレイヤーのターンの間、攻撃 1 回で受けるダメージが最大 1。 */
   | { kind: 'intangible' }
+  /** 旗を掲げる: 自分の属性（と弱点）が変わる。同じ行動のあとの攻撃から新しい属性になる。 */
+  | { kind: 'shiftAttribute'; attribute: Attribute }
   /** 眠っていて何もしない（行動パターンには書かない。状態から自動で決まる）。 */
   | { kind: 'idle'; reason: 'sleep' };
 
@@ -45,10 +47,15 @@ export type EnemyTrait =
   /** かばう: 生きている間、仲間 1 体を狙った攻撃・デバフを代わりに受ける。 */
   | { kind: 'guardian' }
   /** 死に際: 倒れたときに action を行う。 */
-  | { kind: 'deathThroes'; action: EnemyAction };
+  | { kind: 'deathThroes'; action: EnemyAction }
+  /**
+   * 覚醒: HP が最大 HP の threshold 倍以下になると、筋力とブロックを得て行動パターンが moves に替わる（1 回だけ）。
+   * 覚醒する前は HP がその値より下がらない（倒しきれず、余ったダメージは消える）。
+   */
+  | { kind: 'awaken'; threshold: number; strength: number; block: number; moves: EnemyMove[] };
 
-/** 通常敵 / エリート / ボス。報酬の内容が変わる。 */
-export type EnemyRank = 'normal' | 'elite' | 'boss';
+/** 通常敵 / エリート / ボス / 最後の章のあとに戦うラスボス。報酬や BGM が変わる。 */
+export type EnemyRank = 'normal' | 'elite' | 'boss' | 'final';
 
 export type EnemyDefinition = {
   id: string;

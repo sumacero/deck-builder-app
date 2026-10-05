@@ -1,10 +1,10 @@
-// BGM（タイトル・通常戦闘・ボス戦・ショップ + 地域ごとのフィールド曲・エリート戦）を合成して
-// assets/music/*.wav に書き出す。地域の曲は bgm-regions.mjs、主題の素材は bgm-theme.mjs。
+// BGM（タイトル・通常戦闘・ボス戦・ラスボス戦・ショップ + 地域ごとのフィールド曲・エリート戦）を合成して
+// assets/music/*.wav に書き出す。地域の曲は bgm-regions.mjs、ラスボス戦は bgm-final.mjs、主題の素材は bgm-theme.mjs。
 // 実行: npm run bgm（`npm run bgm -- field-` でファイル名がその文字列で始まる曲だけ）
 //
 // 全曲がメインテーマ「三つの旗」の素材（導入の動機・A メロ・サビ・オルガンの駆け上がり、ニ短調）を共有する。
 // オーナーの方針:
-// - サビはボス戦（三つの旗 −試−）だけ。
+// - サビはボス戦（三つの旗 −試−）とラスボス戦（−試− 改）だけ。
 // - 曲の出だしは曲ごとに別のフレーズにし、共通の旋律は曲の途中にだけ置く。共通箇所は少なめに。
 // - 通常戦闘は全地域共通で静かに。旋律は普通の人が気づかない程度にさりげなく入れる。
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { SAMPLE_RATE, seedNoise, shiftPhrase } from './bgm-engine.mjs';
 import { REGION_SONGS } from './bgm-regions.mjs';
 import { MAIN_BOSS } from './bgm-boss.mjs';
-import { SONG_DRAFTS, writeSongDraftCatalog } from './bgm-song-drafts.mjs';
+import { FINAL_BOSS_SONG } from './bgm-final.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
 import {
   CHORUS,
@@ -195,14 +195,12 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, MAIN_BOSS, shop, ...REGION_SONGS, ...SONG_DRAFTS];
+const SONGS = [mainTitle, mainNormal, MAIN_BOSS, FINAL_BOSS_SONG, shop, ...REGION_SONGS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];
 
 mkdirSync(OUT_DIR, { recursive: true });
-const AUDIO_SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'audio');
-writeSongDraftCatalog(join(AUDIO_SRC, 'songDrafts.ts'));
 for (const song of SONGS.filter((s) => !only || s.file.startsWith(only))) {
   seedNoise(4242);
   const samples = renderSong(song);

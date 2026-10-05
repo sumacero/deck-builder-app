@@ -21,10 +21,11 @@ export function RunEndOverlay({ kind, run, onNewRun, onExitToTitle }: RunEndOver
   const { stats } = run;
   const favorites = favoriteCards(stats, [...run.deck, run.agent.mysticArte], FAVORITE_COUNT);
   const archetype = mainArchetype(run.deck);
+  const atFinale = cleared || (run.phase.kind === 'gameOver' && run.phase.atFinale);
   const records: { label: string; value: string }[] = [
     {
       label: '到達',
-      value: `${currentAct(run).name}　${reachedFloor(run)} 階`,
+      value: atFinale ? `最終決戦　${run.finalBoss.name}` : `${currentAct(run).name}　${reachedFloor(run)} 階`,
     },
     { label: '勝利した戦闘', value: `${stats.combatsWon} 回` },
     { label: '倒した敵', value: `${stats.enemiesDefeated} 体` },
@@ -41,7 +42,7 @@ export function RunEndOverlay({ kind, run, onNewRun, onExitToTitle }: RunEndOver
           {cleared ? '踏破' : '敗北'}
         </Text>
         <Text style={styles.subtitle}>
-          {cleared ? 'すべての章を踏破した！' : 'あなたは力尽きた…'}
+          {cleared ? `${run.finalBoss.name}を打ち倒し、星灯りを取り戻した！` : 'あなたは力尽きた…'}
         </Text>
 
         <View style={styles.panel}>

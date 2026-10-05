@@ -324,6 +324,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '☠️',
     description: '倒れたときに最後の悪あがきをする（敵の詳細の行動を見よう）。',
   },
+  awaken: {
+    id: 'awaken',
+    name: '覚醒',
+    icon: '🌑',
+    description:
+      'HP が一定まで減ると真の姿を現し、筋力とブロックを得て行動が変わる。それまでは HP がその値より減らない。',
+  },
   intentHeal: {
     id: 'intentHeal',
     name: '回復の予告',
@@ -377,6 +384,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '霊体化',
     icon: '👻',
     description: '霊体化する。次のあなたのターンの間、攻撃 1 回で受けるダメージが最大 1 になる。',
+  },
+  intentBanner: {
+    id: 'intentBanner',
+    name: '旗を掲げる',
+    icon: '🚩',
+    description: '旗の属性に変わる。弱点も変わり、同じ行動の攻撃からその属性で殴ってくる。',
   },
   intentSleep: {
     id: 'intentSleep',

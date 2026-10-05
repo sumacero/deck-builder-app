@@ -2,6 +2,7 @@ import { humanoid } from './modelBuilders';
 import type { ActorModel } from './modelTypes';
 import { box, capsule, cone, cylinder, sphere, taper, torus } from './parts';
 import { CLOCKWORK_MODELS } from './regions/clockworkModels';
+import { FINAL_MODELS } from './regions/finalModels';
 import { GRASSLAND_MODELS } from './regions/grasslandModels';
 import { SUNKEN_CITY_MODELS } from './regions/sunkenCityModels';
 import { VOLCANO_MODELS } from './regions/volcanoModels';
@@ -82,4 +83,5 @@ export const ENEMY_MODELS: Record<string, ActorModel> = {
   ...GRASSLAND_MODELS,
   ...SUNKEN_CITY_MODELS,
   ...CLOCKWORK_MODELS,
+  ...FINAL_MODELS,
 };

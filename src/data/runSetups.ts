@@ -1,5 +1,5 @@
 import type { RunSetup } from '../domain/run';
-import { STANDARD_ACT_CHOICES } from './acts';
+import { FINAL_BOSS, STANDARD_ACT_CHOICES } from './acts';
 import { CRIMSON_HERO, VERDANT_ARCHER } from './agents';
 import { LANTERN_SPIRIT, STANDARD_BLESSINGS } from './blessings';
 import { CRIMSON_STARTER_DECK, REWARD_CARDS } from './cards';
@@ -25,6 +25,7 @@ export const STANDARD_RUN: RunSetup = {
   relics: [FIGHTING_SPIRIT],
   potions: [FIRE_POTION, IRON_POTION, SWIFT_POTION],
   actChoices: STANDARD_ACT_CHOICES,
+  finalBoss: FINAL_BOSS,
   rewardPool: ALL_REWARD_CARDS,
   potionPool: ALL_POTIONS,
   relicPool: RELIC_POOL,

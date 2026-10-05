@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
-import { currentIntent, enemyAttackDamage, isAlive } from '../../logic/combat';
+import { attackerFor, currentIntent, enemyAttackDamage, isAlive } from '../../logic/combat';
 import {
   ATTRIBUTE_ICON,
   describeEnemyAttribute,
@@ -59,6 +59,7 @@ export function EnemyPanel({
   const [infoOpen, setInfoOpen] = useState(false);
   const alive = isAlive(enemy);
   const move = currentIntent(enemy);
+  const attacker = attackerFor(enemy, move);
   const rankLabel = ENEMY_RANK_LABEL[enemy.rank];
   const statuses = enemyStatuses(enemy);
   const vitals = useDisplayedVitals(enemy.uid, events, enemy);
@@ -76,7 +77,7 @@ export function EnemyPanel({
             </Text>
           )}
           <View style={styles.badges}>
-            {describeIntent(move, (base) => enemyAttackDamage(enemy, base, player)).map((intent) => (
+            {describeIntent(move, (base) => enemyAttackDamage(attacker, base, player)).map((intent) => (
               <IntentBadge key={intent.key} intent={intent} compact={compact} />
             ))}
           </View>
@@ -135,7 +136,9 @@ export function EnemyPanel({
           intent={{ moveName: move.name, keywords: keywordsForIntent(move) }}
           traits={[
             describeEnemyAttribute(enemy.attribute, enemy.weaknesses),
-            ...enemy.traits.map(describeTrait),
+            ...enemy.traits
+              .filter((trait) => !(trait.kind === 'awaken' && enemy.awakened))
+              .map(describeTrait),
           ]}
           onClose={() => setInfoOpen(false)}
         />

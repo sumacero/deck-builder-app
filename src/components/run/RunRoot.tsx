@@ -15,6 +15,7 @@ import { RestScreen } from '../rest/RestScreen';
 import { ShopScreen } from '../shop/ShopScreen';
 import { TreasureScreen } from '../treasure/TreasureScreen';
 import { BossRelicScreen } from './BossRelicScreen';
+import { FinaleScreen } from './FinaleScreen';
 import { MOTION } from '../../theme';
 import { FadeOverlay } from '../effects/FadeOverlay';
 import { AcquireProvider } from './acquire/AcquireContext';
@@ -42,6 +43,7 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
     finishCombat,
     resolveReward,
     chooseBossRelic,
+    startFinalBattle,
     newRun,
     blessingActions,
     restActions,
@@ -61,9 +63,11 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
     void prepareSounds();
   }, []);
 
-  // 戦闘とショップは自分の画面で曲を流す。それ以外（マップ・休憩所・イベントなど）は地域のフィールド曲。
+  // 戦闘とショップは自分の画面で曲を流す。ラスボス戦の前は静かにする。
+  // それ以外（マップ・休憩所・イベントなど）は地域のフィールド曲。
   const kind = run.phase.kind;
-  const ownMusic = kind === 'combat' || kind === 'shop' || kind === 'gameOver' || kind === 'cleared';
+  const ownMusic =
+    kind === 'combat' || kind === 'shop' || kind === 'gameOver' || kind === 'cleared' || kind === 'finale';
   useMusic(ownMusic ? null : fieldMusicFor(currentAct(run).region));
 
   let screen: ReactNode;
@@ -88,6 +92,9 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
       break;
     case 'bossRelic':
       screen = <BossRelicScreen run={run} choices={run.phase.choices} onChoose={chooseBossRelic} />;
+      break;
+    case 'finale':
+      screen = <FinaleScreen run={run} onStart={startFinalBattle} />;
       break;
     case 'combat':
       screen = (

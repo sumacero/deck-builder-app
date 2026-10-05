@@ -19,8 +19,10 @@ export type RunSetup = {
   drawPerTurn: number;
   relics: RelicDefinition[];
   potions: PotionSlot[];
-  /** 章ごとの地域の候補。この順に進み、ランの開始時に各章から 1 つ選ばれる。最後の章のボスを倒したらクリア。 */
+  /** 章ごとの地域の候補。この順に進み、ランの開始時に各章から 1 つ選ばれる。 */
   actChoices: ActConfig[][];
+  /** 最後の章のボスを倒したあとに戦うラスボス（強さの倍率はかけ済み）。倒したらクリア。 */
+  finalBoss: EnemyDefinition;
   rewardPool: CardDefinition[];
   /** ショップ・恩恵で手に入るポーションの候補。 */
   potionPool: PotionDefinition[];
@@ -56,13 +58,16 @@ export type RunPhase =
       next: 'map' | 'bossRelic';
     }
   | { kind: 'bossRelic'; choices: RelicDefinition[] }
+  /** 最後の章を終え、ラスボスとの決戦の前。HP は全回復している。 */
+  | { kind: 'finale' }
   | { kind: 'rest' }
   | { kind: 'shop'; stock: ShopStock }
   /** outcome は選択肢を選んだあとの結末。null ならまだ選んでいない。 */
   | { kind: 'event'; event: EventDefinition; outcome: string | null }
   /** opened までは中身は未定。開けた時点でレリックとゴールドが所持品に入る。 */
   | { kind: 'treasure'; opened: boolean; relic: RelicDefinition | null; gold: number }
-  | { kind: 'gameOver' }
+  /** atFinale はラスボス戦で力尽きた。 */
+  | { kind: 'gameOver'; atFinale: boolean }
   | { kind: 'cleared' };
 
 /** 戦闘から持ち帰る結果。 */
@@ -88,6 +93,7 @@ export type RunState = {
   map: GameMap;
   /** 今の章のボス。 */
   boss: EnemyDefinition;
+  finalBoss: EnemyDefinition;
   currentNodeId: string | null;
   visitedNodeIds: string[];
   agent: AgentDefinition;

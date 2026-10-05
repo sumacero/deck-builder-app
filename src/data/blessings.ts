@@ -3,6 +3,8 @@ import type { BlessingDefinition, GuideCharacter } from '../domain/blessing';
 export const LANTERN_SPIRIT: GuideCharacter = {
   name: '灯守りのルーメ',
   icon: '🕯️',
+  finaleLine:
+    '三つの地の主を倒したのね。でも、彼らに魔力を与えていたのは星喰みの魔皇ノクス。火・水・草の三つの旗を掲げ替えて、弱点を変えてくる。旗の色を見て、突ける番を逃さないで。傷はすっかり癒やしておいたわ。さあ、最後の戦いへ。',
 };
 
 /** 各章の最初の 3 択。グループごとに 1 つずつ出る。 */

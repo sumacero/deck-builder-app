@@ -1,3 +1,4 @@
+import type { Attribute } from '../domain/attribute';
 import type { CardDefinition } from '../domain/card';
 import type { EnemyAction, EnemyDefinition } from '../domain/enemy';
 import type { DebuffId } from '../domain/status';
@@ -24,6 +25,7 @@ const CHARGE: EnemyAction = { kind: 'charge' };
 const debuff = (status: DebuffId, turns = 1): EnemyAction => ({ kind: 'debuff', status, turns });
 const addCard = (card: CardDefinition, count = 1): EnemyAction => ({ kind: 'addCard', card, count });
 const INTANGIBLE: EnemyAction = { kind: 'intangible' };
+const shift = (attribute: Attribute): EnemyAction => ({ kind: 'shiftAttribute', attribute });
 
 // ==================== 火・岩（紅蓮の火山） ====================
 
@@ -396,6 +398,46 @@ export const GEAR_EMPEROR: EnemyDefinition = {
     { id: 'gear-storm', name: '歯車の嵐', actions: [atk(4, 4), addCard(SCRAP, 2)] },
   ],
   traits: [{ kind: 'resolute' }],
+};
+
+// ==================== ラスボス（3 つの章を終えたあと） ====================
+
+/**
+ * 各地の魔力を奪った三つの旗（火・水・草）を掲げ替えて戦う。旗を掲げるたびに属性と弱点が変わるので、
+ * どの属性のデッキにも突ける番と突かれる番がある。HP が半分になると覚醒し、旗を掲げながら殴ってくる。
+ * 数値は他の敵と同じく第 1 章の強さで書き、data/acts.ts で第 3 章の倍率をかける。
+ */
+export const STAR_DEVOURER: EnemyDefinition = {
+  id: 'star-devourer',
+  name: '星喰みの魔皇ノクス',
+  icon: '🌑',
+  rank: 'final',
+  maxHp: 150,
+  attribute: 'fire',
+  moves: [
+    { id: 'crimson-banner', name: '紅の旗', actions: [shift('fire'), buff(2), blk(12)] },
+    { id: 'crimson-blade', name: '紅蓮の剣', actions: [atk(7, 2), addCard(BURN)] },
+    { id: 'azure-banner', name: '蒼の旗', actions: [shift('water'), SEAL, blk(12)] },
+    { id: 'ice-lance', name: '氷の槍', actions: [atk(18), chill()] },
+    { id: 'verdant-banner', name: '翠の旗', actions: [shift('grass'), heal(10), debuff('weak')] },
+    { id: 'gale-flurry', name: '疾風の連撃', actions: [atk(4, 4)] },
+  ],
+  traits: [
+    { kind: 'ward', charges: 2 },
+    {
+      kind: 'awaken',
+      threshold: 0.5,
+      strength: 3,
+      block: 20,
+      moves: [
+        { id: 'devour-light', name: '星を喰らう', actions: [CHARGE, blk(16)] },
+        { id: 'star-eater', name: '星喰み', actions: [atk(28)] },
+        { id: 'crimson-storm', name: '紅蓮の旗', actions: [shift('fire'), atk(6, 3), addCard(BURN)] },
+        { id: 'azure-frost', name: '蒼氷の旗', actions: [shift('water'), atk(14), SEAL] },
+        { id: 'verdant-gale', name: '翠嵐の旗', actions: [shift('grass'), atk(5, 3), heal(10)] },
+      ],
+    },
+  ],
 };
 
 // ==================== 群れで出てくる小型の敵（1 体ずつは弱い） ====================

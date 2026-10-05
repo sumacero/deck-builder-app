@@ -29,6 +29,7 @@ export function useRun(setup: RunSetup) {
     (relicId: string | null) => dispatch({ type: 'chooseBossRelic', relicId }),
     [],
   );
+  const startFinalBattle = useCallback(() => dispatch({ type: 'startFinalBattle' }), []);
   const discardPotion = useCallback(
     (slot: number) => dispatch({ type: 'discardPotion', slot }),
     [],
@@ -90,6 +91,7 @@ export function useRun(setup: RunSetup) {
     finishCombat,
     resolveReward,
     chooseBossRelic,
+    startFinalBattle,
     newRun,
     discardPotion,
     blessingActions,

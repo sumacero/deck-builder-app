@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { RelicDefinition } from '../../domain/relic';
 import type { RunState } from '../../domain/run';
+import { isFinalAct } from '../../logic/run';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { RelicCard } from '../items/RelicCard';
 import { ScreenScroll } from '../layout/ScreenScroll';
@@ -36,7 +37,9 @@ export function BossRelicScreen({ run, choices, onChoose }: BossRelicScreenProps
             />
           ))}
         </View>
-        <Text style={styles.note}>選ぶと HP が全回復し、次の章へ進む</Text>
+        <Text style={styles.note}>
+          {isFinalAct(run) ? '選ぶと HP が全回復し、最終決戦へ' : '選ぶと HP が全回復し、次の章へ進む'}
+        </Text>
       </View>
 
       <View style={styles.buttons}>

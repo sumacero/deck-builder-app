@@ -74,6 +74,8 @@ export type EnemyState = Fighter & {
   ward: number;
   /** 不屈: これまでに受けたデバフ。 */
   debuffsTaken: DebuffId[];
+  /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
+  awakened: boolean;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -148,7 +150,7 @@ export type CombatSetup = {
   deck: CardDefinition[];
   /** 左から順に並ぶ敵。 */
   enemies: EnemyDefinition[];
-  /** 戦闘の格（通常・エリート・ボス）。BGM の切り替えに使う。 */
+  /** 戦闘の格（通常・エリート・ボス・ラスボス）。BGM と背景の切り替えに使う。 */
   rank: EnemyRank;
   /** ラン途中の戦闘を想定し、最大 HP とは別に現在 HP を持つ。 */
   playerHp: number;

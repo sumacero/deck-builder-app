@@ -1,10 +1,10 @@
-// タイトル曲の候補探し 第 8 弾（2026-10-06）: 「三つの旗 −試− 改」の改善案のうち、オーナーが気に入った
+// ラスボス戦「三つの旗 −試− 改」（battle-final.wav、156 BPM・約 74 秒）。3 つの章を終えたあとの、星喰みの魔皇ノクスとの決戦で流れる。
+// 元はタイトル曲の候補探し 第 8 弾（2026-10-06）の【試作 1】統合版: 「三つの旗 −試− 改」の改善案のうち、オーナーが気に入った
 // 1（8 小節の上り坂 × イントロのドラムも加速）・6（刻みで溜める × サビの最後をレに解決）・9（ギターの泣き × 解決）を統合した版。
 // 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 8（後半は G→A→B♭→C と上がる）/ サビ 20（2 回目はハモり、締めに後半 4 小節を回してレに解決）。
-// 今の −試−（battle-boss.wav）とほかの曲が引用している素材は変えない。音源は song-draft-01.wav、図鑑の一覧 src/audio/songDrafts.ts はこの台本が書き出す。
+// 章のボス戦の −試−（battle-boss.wav）とほかの曲が引用している素材は変えない。
 import { BOSS_AFTER_INTRO, BOSS_BPM, BOSS_MIX, bossIntroSection } from './bgm-boss.mjs';
 import { parsePhrase, shiftPhrase } from './bgm-engine.mjs';
-import { pad2, writeDraftCatalog } from './bgm-melody.mjs';
 import { bars, join4 } from './bgm-song.mjs';
 import { CHORUS_BARS, CHORUS_CHORDS, VERSE_BARS, VERSE_CHORDS } from './bgm-theme.mjs';
 
@@ -193,34 +193,19 @@ const tagBars = rampBars(tag, TAG_RAMP).map((section, i) =>
   i === TAG_RAMP.length - 1 ? { ...section, drums: 'half', comp: ['stabs', 'strings'], bass: 'sustain' } : section,
 );
 
-const SONGS = [
-  {
-    no: 1,
-    name: '三つの旗 −試− 改 統合版',
-    desc: '改善案 1・6・9 の統合。イントロはドラムも一緒に加速。A メロは前半を低いギターと弦で歌い、後半で上がる。ためは 8 小節で、前半はギターが歌い、後半はコードが G→A→B♭→C と上がりながら 1 小節ずつ大きくなる。サビは 20 小節で、2 回目は金管のハモりとツーバスで全開に。締めに後半 4 小節をもう一度回してレに解決し、静まりながらイントロへ戻る。',
-    sections: [...intro, ...verseSections, { ...run, level: RUN_LEVEL }, ...build, chorus1, chorus2, ...tagBars],
-  },
-];
+export const FINAL_BOSS_SONG = {
+  file: 'battle-final',
+  bpm: BOSS_BPM,
+  mix: BOSS_MIX,
+  sections: [...intro, ...verseSections, { ...run, level: RUN_LEVEL }, ...build, chorus1, chorus2, ...tagBars],
+};
 
 /** 1 小節ずつ 4 拍かを確かめる（renderSong は部分全体の拍数しか見ないため）。 */
-for (const song of SONGS) {
-  for (const section of song.sections) {
-    for (const part of section.parts ?? []) {
-      part.notes.split('|').forEach((text, i) => {
-        const beats = parsePhrase(text).reduce((sum, [, n]) => sum + n, 0);
-        if (Math.abs(beats - 4) > 1e-9) throw new Error(`試作 ${song.no} ${section.name} ${part.inst} の ${i + 1} 小節目: ${beats} 拍`);
-      });
-    }
+for (const section of FINAL_BOSS_SONG.sections) {
+  for (const part of section.parts ?? []) {
+    part.notes.split('|').forEach((text, i) => {
+      const beats = parsePhrase(text).reduce((sum, [, n]) => sum + n, 0);
+      if (Math.abs(beats - 4) > 1e-9) throw new Error(`ラスボス戦 ${section.name} ${part.inst} の ${i + 1} 小節目: ${beats} 拍`);
+    });
   }
 }
-
-export const SONG_DRAFTS = SONGS.map((song) => ({ file: `song-draft-${pad2(song.no)}`, bpm: BOSS_BPM, mix: BOSS_MIX, sections: song.sections }));
-
-export const writeSongDraftCatalog = (path) =>
-  writeDraftCatalog(path, {
-    kind: 'song',
-    label: '試作',
-    script: 'scripts/bgm-song-drafts.mjs',
-    doc: 'タイトル曲の候補探し 第 8 弾: 三つの旗 −試− 改の改善案 1・6・9 を統合した版。図鑑で聞くだけで、ゲーム中には流れない。',
-    entries: SONGS.map((song) => ({ no: song.no, name: song.name, desc: song.desc, bpm: BOSS_BPM })),
-  });

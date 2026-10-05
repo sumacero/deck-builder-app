@@ -3,7 +3,15 @@ import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { chooseBlessing, finishDeckEdit } from './blessing';
 import { chooseEventOption, leaveEvent } from './event';
 import { rest, smith } from './rest';
-import { chooseBossRelic, createRun, discardPotion, finishCombat, moveTo, resolveReward } from './run';
+import {
+  chooseBossRelic,
+  createRun,
+  discardPotion,
+  finishCombat,
+  moveTo,
+  resolveReward,
+  startFinalBattle,
+} from './run';
 import { buyCard, buyPotion, buyRelic, leaveShop, removeCard } from './shop';
 import { leaveTreasure, openTreasure } from './treasure';
 
@@ -14,6 +22,7 @@ export type RunAction =
   | { type: 'finishCombat'; result: CombatResult }
   | { type: 'resolveReward'; card: CardDefinition | null }
   | { type: 'chooseBossRelic'; relicId: string | null }
+  | { type: 'startFinalBattle' }
   | { type: 'rest' }
   | { type: 'smith'; cardId: string }
   | { type: 'buyCard'; offerId: string }
@@ -42,6 +51,8 @@ export function runReducer(run: RunState, action: RunAction): RunState {
       return resolveReward(run, action.card);
     case 'chooseBossRelic':
       return chooseBossRelic(run, action.relicId);
+    case 'startFinalBattle':
+      return startFinalBattle(run);
     case 'rest':
       return rest(run);
     case 'smith':

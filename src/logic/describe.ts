@@ -290,6 +290,8 @@ export function describeIntent(move: EnemyMove, damageOf: (base: number) => numb
         return { key, tone: action.kind, icon: '🃏', label: `${action.count}` };
       case 'intangible':
         return { key, tone: action.kind, icon: '👻', label: '' };
+      case 'shiftAttribute':
+        return { key, tone: action.kind, icon: '🚩', label: ATTRIBUTE_ICON[action.attribute] };
       case 'idle':
         return { key, tone: action.kind, icon: '💤', label: '' };
     }
@@ -321,6 +323,8 @@ function describeEnemyAction(action: EnemyAction): string {
       return `捨て札に「${action.card.name}」を ${action.count} 枚混ぜる`;
     case 'intangible':
       return '霊体化する';
+    case 'shiftAttribute':
+      return `${ATTRIBUTE_LABEL[action.attribute]}属性になる`;
     case 'idle':
       return '何もしない';
   }
@@ -341,6 +345,8 @@ export function describeTrait(trait: EnemyTrait): string {
       return 'かばう: 仲間を狙った攻撃・デバフを代わりに受ける';
     case 'deathThroes':
       return `死に際: 倒れると${describeEnemyAction(trait.action)}`;
+    case 'awaken':
+      return `覚醒: HP が ${Math.round(trait.threshold * 100)}% になると真の姿を現し、筋力 +${trait.strength}・ブロック +${trait.block}。それまでは HP がそれより減らない`;
   }
 }
 
@@ -348,6 +354,7 @@ export const ENEMY_RANK_LABEL: Record<EnemyRank, string | null> = {
   normal: null,
   elite: 'エリート',
   boss: 'ボス',
+  final: 'ラスボス',
 };
 
 const signed = (amount: number) => (amount >= 0 ? `+${amount}` : `${amount}`);

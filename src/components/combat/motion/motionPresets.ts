@@ -240,6 +240,14 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
     ],
     burst: { emoji: '👻', on: 'self', delay: 120 },
   },
+  shiftAttribute: {
+    keyframes: [
+      { y: -14, scale: 1.2, duration: 220 },
+      { y: -14, scale: 1.2, duration: 120 },
+      { duration: 220 },
+    ],
+    burst: { emoji: '🚩', on: 'self', delay: 120 },
+  },
   idle: {
     keyframes: [
       { y: 4, scale: 0.97, duration: 260 },

@@ -299,6 +299,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       weaknesses: weaknessesOf(enemy.attribute),
       ward: traitOf(enemy, 'ward')?.charges ?? 0,
       debuffsTaken: [],
+      awakened: false,
     })),
     drawPerTurn: setup.drawPerTurn,
     mysticArte: setup.agent.mysticArte,
@@ -383,7 +384,7 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
       ? Math.min(base, INTANGIBLE_CAP)
       : base
     : modifiedDamage(base, state.player.statuses, enemy.statuses, affinityMultiplier(kind.attributes, enemy.attribute));
-  const result = applyDamage(enemy, amount);
+  const result = holdUntilAwakened(enemy, applyDamage(enemy, amount));
   const recorded: CombatState = {
     ...updateEnemy(state, uid, () => result.target),
     stats: {
@@ -403,6 +404,8 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
     weak,
   });
   if (isAlive(result.target)) {
+    const threshold = awakeningThreshold(result.target);
+    if (threshold !== null && result.target.hp <= threshold) return awakenEnemy(hit, uid);
     return result.hpLoss > 0 && enemy.asleep > 0 ? wakeEnemy(hit, uid) : hit;
   }
   const defeated = withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
@@ -412,6 +415,68 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
 function callout(state: CombatState, target: ActorId, text: string): CombatState {
   return withEvent(state, { kind: 'callout', target, text });
 }
+
+/** まだ覚醒していない敵の、覚醒する HP。覚醒の性質が無いか、覚醒済みなら null。 */
+function awakeningThreshold(enemy: EnemyState): number | null {
+  const awaken = traitOf(enemy, 'awaken');
+  if (!awaken || enemy.awakened) return null;
+  return Math.floor(enemy.maxHp * awaken.threshold);
+}
+
+/** 覚醒する前の敵は、覚醒する HP より下がらない。 */
+function holdUntilAwakened(
+  before: EnemyState,
+  result: DamageResult<EnemyState>,
+): DamageResult<EnemyState> {
+  const threshold = awakeningThreshold(before);
+  if (threshold === null || result.target.hp >= threshold) return result;
+  const floor = Math.min(before.hp, threshold);
+  return {
+    ...result,
+    target: { ...result.target, hp: floor },
+    hpLoss: before.hp - floor,
+  };
+}
+
+/** 覚醒: 筋力とブロックを得て、行動パターンが第二形態に替わる（次の行動は第二形態の先頭から）。 */
+function awakenEnemy(state: CombatState, uid: EnemyUid): CombatState {
+  const enemy = findEnemy(state, uid);
+  const awaken = enemy ? traitOf(enemy, 'awaken') : undefined;
+  if (!enemy || !awaken) return state;
+  const awakened = updateEnemy(state, uid, (e) => ({
+    ...gainBlock(e, awaken.block),
+    awakened: true,
+    asleep: 0,
+    strength: e.strength + awaken.strength,
+    moves: awaken.moves,
+    moveIndex: 0,
+  }));
+  const after = findEnemy(awakened, uid);
+  const logged = withLog(
+    awakened,
+    `${enemy.name}が真の姿を現した！（筋力 +${awaken.strength}・ブロック +${awaken.block}）`,
+  );
+  const withBlock = after
+    ? withEvent(logged, { kind: 'blockGain', target: uid, amount: awaken.block, after: vitalsOf(after) })
+    : logged;
+  return callout(withBlock, uid, '覚醒！');
+}
+
+/**
+ * 行動の中で旗を掲げる（属性が変わる）なら、変わったあとの敵。攻撃の予告ダメージを、実際に当たる属性で出すのに使う。
+ */
+export function attackerFor(enemy: EnemyState, move: EnemyMove): EnemyState {
+  const shift = move.actions.find(
+    (action): action is Extract<EnemyAction, { kind: 'shiftAttribute' }> => action.kind === 'shiftAttribute',
+  );
+  return shift ? withAttribute(enemy, shift.attribute) : enemy;
+}
+
+const withAttribute = (enemy: EnemyState, attribute: Attribute): EnemyState => ({
+  ...enemy,
+  attribute,
+  weaknesses: weaknessesOf(attribute),
+});
 
 /** 眠りから覚めて筋力が上がる（攻撃で起こされても、時間で起きても同じ）。 */
 function wakeEnemy(state: CombatState, uid: EnemyUid): CombatState {
@@ -1036,6 +1101,11 @@ function applyEnemyAction(
       }));
       return callout(withLog(acted, `${enemy.name}は霊体化した`), uid, '霊体化');
     }
+    case 'shiftAttribute': {
+      const acted = updateEnemy(act(state), uid, (e) => withAttribute(e, action.attribute));
+      const label = ATTRIBUTE_LABEL[action.attribute];
+      return callout(withLog(acted, `${enemy.name}が${label}の旗を掲げた（${label}属性になった）`), uid, `${label}の旗`);
+    }
     case 'idle':
       return withLog(
         act(state),
@@ -1103,7 +1173,8 @@ function runEnemyTurn(state: CombatState): CombatState {
         });
       }
     }
-    next = advanceEnemy(next, uid);
+    // 行動中に（茨の鎧などで）覚醒したら、第二形態の先頭の行動から始めるため順番を進めない。
+    if (findEnemy(next, uid)?.moves === enemy.moves) next = advanceEnemy(next, uid);
     if (livingEnemies(next).length === 0) return finishIfWon(next);
   }
   // 敵のバフ・デバフは敵のターンの終わりに 1 ターン進む（かけたターンの敵の行動までは効く）。

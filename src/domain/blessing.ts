@@ -15,4 +15,6 @@ export type BlessingDefinition = {
 export type GuideCharacter = {
   name: string;
   icon: string;
+  /** 最後の章を終え、ラスボスに挑む前のセリフ。 */
+  finaleLine: string;
 };
