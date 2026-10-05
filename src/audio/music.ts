@@ -1,6 +1,7 @@
 import type { AudioSource } from 'expo-audio';
 import type { Region } from '../domain/act';
 import type { EnemyRank } from '../domain/enemy';
+import { TITLE_DRAFT_TRACKS, type TitleDraftId } from './titleDrafts';
 
 /** 地域ごとの曲は `field:grassland` のように「種類:地域」で表す。 */
 export type MusicId =
@@ -10,18 +11,20 @@ export type MusicId =
   | 'shop'
   | `field:${Region}`
   | `elite:${Region}`
-  | `titleDraft:${TitleDraft}`;
-
-/** タイトル曲の試作（図鑑で聞き比べるだけで、ゲーム中には流れない）。 */
-type TitleDraft = 'orchestra' | 'dawn' | 'tease' | 'fanfare';
+  | TitleDraftId;
 
 type MusicDef = {
   source: AudioSource;
   volume: number;
 };
 
+const TITLE_DRAFT_MUSIC = Object.fromEntries(
+  TITLE_DRAFT_TRACKS.map((track) => [track.id, { source: track.source, volume: 0.34 }]),
+) as Record<TitleDraftId, MusicDef>;
+
 /** 音源は scripts/generate-bgm.mjs で合成している（npm run bgm）。全曲がメインテーマ「三つの旗」の素材を共有する。 */
 export const MUSIC: Record<MusicId, MusicDef> = {
+  ...TITLE_DRAFT_MUSIC,
   title: { source: require('../../assets/music/title.wav'), volume: 0.34 },
   battleNormal: { source: require('../../assets/music/battle-normal.wav'), volume: 0.36 },
   battleBoss: { source: require('../../assets/music/battle-boss.wav'), volume: 0.32 },
@@ -34,10 +37,6 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   'elite:grassland': { source: require('../../assets/music/elite-grassland.wav'), volume: 0.32 },
   'elite:sunkenCity': { source: require('../../assets/music/elite-sunken-city.wav'), volume: 0.32 },
   'elite:clockwork': { source: require('../../assets/music/elite-clockwork.wav'), volume: 0.3 },
-  'titleDraft:orchestra': { source: require('../../assets/music/title-draft-orchestra.wav'), volume: 0.34 },
-  'titleDraft:dawn': { source: require('../../assets/music/title-draft-dawn.wav'), volume: 0.34 },
-  'titleDraft:tease': { source: require('../../assets/music/title-draft-tease.wav'), volume: 0.34 },
-  'titleDraft:fanfare': { source: require('../../assets/music/title-draft-fanfare.wav'), volume: 0.34 },
 };
 
 /** 通常戦闘とボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -63,10 +62,7 @@ export type MusicEntry = {
 /** 図鑑の「BGM」で聴ける曲の一覧。 */
 export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'title', title: '三つの旗 −序−', description: 'タイトル。笛の旋律と、ゆったりした A メロの頭。' },
-  { id: 'titleDraft:orchestra', title: '【試作 1】三つの旗 −凱−', description: 'タイトル案。旋律はそのままで、金管・弦・ティンパニのオーケストラ版。' },
-  { id: 'titleDraft:dawn', title: '【試作 2】三つの旗 −夜明け−', description: 'タイトル案。ハープだけで始まり、笛・弦・金管と増えて盛り上がる。' },
-  { id: 'titleDraft:tease', title: '【試作 4】三つの旗 −予兆−', description: 'タイトル案。今の曲の最後に、ボス戦のサビの頭を遠くの金管が小さく鳴らす。' },
-  { id: 'titleDraft:fanfare', title: '【試作 5】三つの旗 −旗揚げ−', description: 'タイトル案。金管とティンパニのファンファーレで幕を開けてから今の曲へ。' },
+  ...TITLE_DRAFT_TRACKS.map(({ id, title, description }) => ({ id, title, description })),
   { id: 'battleNormal', title: '三つの旗 −静−', description: '通常戦闘（全地域）。ハープとパッドだけの静かな曲。旋律は和音の奥にひそんでいる。' },
   { id: 'battleBoss', title: '三つの旗 −試−', description: 'ボス戦。ギターとオルガンのリフ、溜めのあとサビが初めて鳴る。' },
   { id: 'shop', title: 'にぎわいの市場', description: 'ショップ。ハープの刻みと笛、ボンゴ。中ほどにメインテーマが顔を出す。' },
