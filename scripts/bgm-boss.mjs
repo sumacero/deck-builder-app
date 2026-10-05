@@ -1,4 +1,5 @@
-// ボス戦「三つの旗 −試−」。改訂版の試作（bgm-song-drafts.mjs）と共有する。
+// ボス戦の素材（イントロ・A メロ〜サビの元の形）。ラスボス戦と章のボス戦（bgm-final.mjs）はこれを組み替えて作る。
+// 元の「三つの旗 −試−」（156 BPM・約 43 秒、イントロ + A メロ〜サビ 4 小節ため）は 2026-10-06 に置き換えた（git の履歴に残る）。
 // パートの呼び方（2026-10-05 にオーナーが定義）: イントロ = 導入のリフ（INTRO）/ A メロ = VERSE /
 // B メロ = オルガンの駆け上がり（RUN）/ ため = サビ前 / サビ。
 import { shiftPhrase } from './bgm-engine.mjs';
@@ -49,11 +50,3 @@ export const BOSS_AFTER_INTRO = [
 
 export const BOSS_BPM = 156;
 export const BOSS_MIX = { drive: 0.5, tone: 0.7 };
-
-/** ボス戦「三つの旗 −試−」（156 BPM・約 43 秒）。サビはここで初めて登場。 */
-export const MAIN_BOSS = {
-  file: 'battle-boss',
-  bpm: BOSS_BPM,
-  mix: BOSS_MIX,
-  sections: [bossIntroSection(), ...BOSS_AFTER_INTRO],
-};

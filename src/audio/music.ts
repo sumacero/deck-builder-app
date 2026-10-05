@@ -21,7 +21,7 @@ type MusicDef = {
 export const MUSIC: Record<MusicId, MusicDef> = {
   title: { source: require('../../assets/music/title.wav'), volume: 0.34 },
   battleNormal: { source: require('../../assets/music/battle-normal.wav'), volume: 0.36 },
-  battleBoss: { source: require('../../assets/music/battle-boss.wav'), volume: 0.32 },
+  battleBoss: { source: require('../../assets/music/battle-boss.wav'), volume: 0.3 },
   battleFinal: { source: require('../../assets/music/battle-final.wav'), volume: 0.32 },
   shop: { source: require('../../assets/music/shop.wav'), volume: 0.32 },
   'field:volcano': { source: require('../../assets/music/field-volcano.wav'), volume: 0.32 },
@@ -60,7 +60,7 @@ export type MusicEntry = {
 export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'title', title: '三つの旗 −序−', description: 'タイトル。笛の旋律と、ゆったりした A メロの頭。' },
   { id: 'battleNormal', title: '三つの旗 −静−', description: '通常戦闘（全地域）。ハープとパッドだけの静かな曲。旋律は和音の奥にひそんでいる。' },
-  { id: 'battleBoss', title: '三つの旗 −試−', description: 'ボス戦。ギターとオルガンのリフ、溜めのあとサビが初めて鳴る。' },
+  { id: 'battleBoss', title: '三つの旗 −試−', description: '各章のボス戦。ラスボス曲を 140 BPM に落とし、オルガンや弦を減らした編成。ラスサビはなく、サビ 1 回でレに解決してイントロへ戻る。' },
   { id: 'battleFinal', title: '三つの旗 −試− 改', description: 'ラスボス戦（星喰みの魔皇ノクス）。加速するイントロ、低く歌う A メロ、五度圏を巡る B メロ、上り坂のためを経て、ハモり付きの 20 小節のサビ。締めはレに解決してイントロへ戻る。' },
   { id: 'shop', title: 'にぎわいの市場', description: 'ショップ。ハープの刻みと笛、ボンゴ。中ほどにメインテーマが顔を出す。' },
   { id: 'field:volcano', title: '紅蓮の火山', description: 'フィールド（火・岩）。地響きのタムと低い金管。' },
