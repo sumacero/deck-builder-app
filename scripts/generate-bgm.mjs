@@ -12,6 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SAMPLE_RATE, seedNoise, shiftPhrase } from './bgm-engine.mjs';
 import { REGION_SONGS } from './bgm-regions.mjs';
+import { TITLE_DRAFTS } from './bgm-title-drafts.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
 import {
   CHORUS,
@@ -237,7 +238,7 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, mainBoss, shop, ...REGION_SONGS];
+const SONGS = [mainTitle, mainNormal, mainBoss, shop, ...REGION_SONGS, ...TITLE_DRAFTS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];
