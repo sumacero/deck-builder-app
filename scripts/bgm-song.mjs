@@ -181,15 +181,29 @@ const QUIET_DRUMS = new Set(['none', 'light', 'timp', 'swamp', 'desert', 'tribal
 
 // ===== 曲を組み立てる =====
 
+/** 部分の音量（旋律・伴奏・ベース・ドラムすべて）を level 倍にして書き込むトラック。 */
+const scaledTrack = (track, level) =>
+  level === 1
+    ? track
+    : {
+        ...track,
+        note: (inst, beat, name, beats, vol, send) => track.note(inst, beat, name, beats, vol * level, send),
+        phrase: (inst, beat, text, vol, send) => track.phrase(inst, beat, text, vol * level, send),
+        chord: (inst, beat, names, beats, vol, send) => track.chord(inst, beat, names, beats, vol * level, send),
+        drum: (kind, beat, vol, send) => track.drum(kind, beat, vol * level, send),
+      };
+
 /**
- * section: { name, chords, parts: [{ inst, notes, vol, send?, double? }], comp: [], bass, drums, fill?, energy? }
+ * section: { name, chords, parts: [{ inst, notes, vol, send?, double? }], comp: [], bass, drums, fill?, energy?, level? }
  * double はその旋律を何オクターブずらして重ねるか（-1 で 1 オクターブ下）。
+ * energy はドラムだけ、level はその部分の全部の音量にかかる（静かな出だし・だんだん大きくなる溜め用）。
  */
 export function renderSong(song) {
   const totalBars = song.sections.reduce((n, s) => n + s.chords.length, 0);
-  const track = createTrack({ bpm: song.bpm, bars: totalBars });
+  const baseTrack = createTrack({ bpm: song.bpm, bars: totalBars });
   let bar = 0;
   for (const section of song.sections) {
+    const track = scaledTrack(baseTrack, section.level ?? 1);
     const length = section.chords.length;
     const energy = section.energy ?? 1;
     for (const part of section.parts ?? []) {
@@ -214,7 +228,7 @@ export function renderSong(song) {
     bar += length;
   }
   const beat = 60 / song.bpm;
-  return mixdown(track, { echoSeconds: beat * 0.75, echoFeedback: 0.25, echoLevel: 0.25, reverbLevel: 0.45, tone: 0.65, ...song.mix });
+  return mixdown(baseTrack, { echoSeconds: beat * 0.75, echoFeedback: 0.25, echoLevel: 0.25, reverbLevel: 0.45, tone: 0.65, ...song.mix });
 }
 
 export const join4 = (...barsText) => barsText.join(' | ');
