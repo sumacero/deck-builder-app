@@ -96,17 +96,16 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
   ]);
 }
 
-/** 敵の性質。量のある性質（眠りのターン数、加護の回数など）は数値も出す。 */
+/** 敵の性質。量のある性質（眠りのターン数、アーティファクトの残り回数など）は数値も出す。 */
 function traitViews(enemy: EnemyState): StatusView[] {
   return enemy.traits.flatMap((trait): StatusView[] => {
     switch (trait.kind) {
       case 'sleep':
         return [{ keyword: 'sleep', value: enemy.asleep }];
-      case 'ward':
-        return [{ keyword: 'ward', value: enemy.ward }];
+      case 'artifact':
+        return [{ keyword: 'artifact', value: enemy.artifact }];
       case 'vengeance':
         return [{ keyword: 'vengeance', value: trait.strength }];
-      case 'resolute':
       case 'guardian':
       case 'deathThroes':
         return [{ keyword: trait.kind, value: 1, flag: true }];

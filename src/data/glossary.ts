@@ -306,17 +306,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '😡',
     description: '仲間が倒れるたびに、数値の分だけ筋力が上がる。倒す順番に気をつけよう。',
   },
-  resolute: {
-    id: 'resolute',
-    name: '不屈',
-    icon: '🗿',
-    description: '同じ種類のデバフは戦闘中 1 回しか受け付けない。2 回目以降やターン数の延長は効かない。',
-  },
-  ward: {
-    id: 'ward',
-    name: '加護',
-    icon: '💧',
-    description: '数値の回数だけ、受けたデバフ（延長を含む）を無効にする。弱いデバフで先に加護をはがそう。',
+  artifact: {
+    id: 'artifact',
+    name: 'アーティファクト',
+    icon: '💠',
+    description:
+      '数値の回数だけ、次に受けるデバフを 1 回ずつ無効にする。付与・延長・倍化が 1 回分。回数を使い切ると、同じデバフも重ねてかかる。弱いデバフで先にはがそう。',
   },
   guardian: {
     id: 'guardian',
