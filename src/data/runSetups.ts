@@ -11,19 +11,20 @@ import { BOSS_RELIC_POOL, FIGHTING_SPIRIT, RELIC_POOL, WORLD_TREE_SPROUT } from 
 import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 
 /**
- * 全エージェント共通のカードの候補。エージェントと違う属性のカードは報酬に出ず、ショップでだけ買える
- * （`isDraftable`）ので、ほかのエージェントの属性カードもここに入れておく。
+ * 報酬に出るカードは「共通の無属性カード」+「そのキャラのカード」。キャラのカードの枚数はどのキャラも同じにする
+ * （カイル: 戦士の無属性 + 火属性、リーネ: 草属性。2026-10-07 時点で各 38 種、共通 8 種）。
+ * エージェントと違う属性のカードは報酬に出ず、ショップでだけ買える（`isDraftable`）ので、候補には入れておく。
  */
 const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS];
 
 /**
- * リーネ（森の狩人）の報酬に出す無属性カード。ムチと弓で戦う狩人らしいもの（ムチの薙ぎ払い・連射・
- * 足払い・急所を突く・弱点を見抜く）だけにし、剣・盾・雄叫び・血を払う戦士らしいカードは外す。
+ * どのキャラにも似合う無属性カード（連撃・薙ぎ払い・雷鳴・見切り・足払い・つけ込む・急所蹴り・弱点看破）。
+ * これ以外の無属性カードは剣・盾・雄叫び・血を払う戦士のカードで、カイルにだけ出る。
  */
-const HUNTER_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
+const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'twin-strike',
   'cleave',
-  'whirlwind',
+  'thunderclap',
   'seeing-red',
   'trip',
   'exploit',
@@ -34,11 +35,11 @@ const HUNTER_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
 
 /**
- * 属性カード（草は報酬、火・水はショップ限定）はそのまま、無属性は狩人らしいものだけ。
+ * リーネの候補: 属性カード（草は報酬、火・水はショップ限定）と、共通の無属性カードだけ。
  * リーネは守りで勝つキャラにしないので、ブロック軸のカードは報酬にもショップにも出さない。
  */
 const HUNTER_REWARD_CARDS = [
-  ...REWARD_CARDS.filter((card) => card.attribute !== undefined || HUNTER_NEUTRAL_CARD_IDS.has(card.id)),
+  ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),
   ...VERDANT_CARDS,
 ].filter((card) => !isBlockAxis(card));
 
