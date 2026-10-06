@@ -100,3 +100,11 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Cursor Cloud specific instructions
+
+- デフォルトイメージの Node.js 22.14 で足りる（SDK 57 の下限は 22.13）。パッケージマネージャは npm（`package-lock.json`）。bun は使わない。
+- `npm ci` だけでは Web 用の peer（`react-dom` / `react-native-web` / `@expo/metro-runtime`）は入らない。Cloud Agent の install は `npm ci` のあとに `npm install --no-save --no-package-lock react-dom@19.2.3 react-native-web@0.21.3 @expo/metro-runtime@57.0.16` を実行する。実機確認は Expo Go なので、これらのパッケージは `package.json` には入れない。自分で `npm ci` したあとに Web を起動するときは、同じ `npm install` を続けないと `react-dom` を解決できない。
+- 開発サーバ（ポート 8081）: `EXPO_NO_TELEMETRY=1 BROWSER=none npx expo start --web --host lan`。`CI=1` は付けない（Metro の watch が止まる）。ブラウザは http://localhost:8081 。起動確認はタイトルの「冒険を始める」。
+- 品質チェックは `npx tsc --noEmit` と `npx expo lint`。自動テストランナーはない。
+- ローカルプロトタイプにシークレット、データベース、外部サービスは不要。

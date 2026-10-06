@@ -102,6 +102,7 @@
   （PowerShell では `&&` / `||` が使えない点に注意。bash -lc の中なら使える）
 - Node.js v20（nodesource）、パッケージマネージャーは npm（`package-lock.json`）。bun は未使用。
 - 実機確認: Android 端末の Expo Go。`npx expo start --tunnel` で起動（WSL のネットワーク分離のため tunnel を使用。`@expo/ngrok` はグローバルにインストール済み）。
+- Cloud Agent（2026-10-06）: ブラウザ検証は `npx expo start --web`（ポート 8081）。Web 用の `react-dom` / `react-native-web` / `@expo/metro-runtime` は `package.json` に入れず、環境の install で `--no-save` する。手順は `AGENTS.md` の「Cursor Cloud specific instructions」。
 
 ## 6. 技術スタック（2026-10-03 時点）
 
