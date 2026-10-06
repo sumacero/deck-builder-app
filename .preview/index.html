@@ -1,38 +1,68 @@
 <!doctype html>
 <html>
-  <body style="margin:0;background:#141A2E;display:flex;flex-wrap:wrap;gap:8px;padding:8px">
+  <body style="margin:0;background:#141A2E;display:flex;flex-wrap:wrap;gap:8px;padding:8px;font:12px sans-serif;color:#E2B84A">
     <script type="importmap">
       { "imports": { "three": "/three" } }
     </script>
     <script type="module">
       import { createActorStage } from '/out/components/combat/model3d/actorStage';
       import { AGENT_MODELS, ENEMY_MODELS } from '/out/components/combat/model3d/actorModels';
+      import { NEUTRAL_POSE, pulsePose, sampleAction, sampleHit } from '/out/components/combat/model3d/actorActions';
 
       const params = new URLSearchParams(location.search);
-      const recoilAt = Number(params.get('recoil') ?? -1);
-      const entries = [
-        ['crimson-hero', AGENT_MODELS['crimson-hero'], 1],
-        ...Object.entries(ENEMY_MODELS)
-          .slice(Number(params.get('from') ?? 0), Number(params.get('to') ?? 11))
-          .map(([id, model]) => [id, model, -1]),
-      ];
-      const stages = entries.map(([id, model, facing]) => {
+      const list = (key) => (params.get(key) ?? '').split(',').filter(Boolean);
+
+      const addStage = (label, model, facing) => {
+        const box = document.createElement('div');
         const canvas = document.createElement('canvas');
         canvas.width = 256;
         canvas.height = 256;
-        canvas.style.cssText = 'width:200px;height:200px;background:#1E2742;border-radius:8px';
-        canvas.title = id;
-        document.body.append(canvas);
+        canvas.style.cssText = 'display:block;width:200px;height:200px;background:#1E2742;border-radius:8px';
+        box.append(canvas, label);
+        document.body.append(box);
         const gl = canvas.getContext('webgl2', { antialias: true, alpha: true });
         gl.endFrameEXP = () => {};
         return createActorStage(gl, model, facing);
-      });
+      };
+
+      // ?agent=crimson-hero&actions=slash,combo&ms=0,150,300 … 動きの各コマを並べて止めて表示する（hits= で被弾の動き）。
+      // ms を省略すると、各動きを繰り返し再生する。
+      const agent = params.get('agent');
+      const stages = [];
+      if (agent) {
+        const model = AGENT_MODELS[agent];
+        const moves = [
+          ...list('actions').map((name) => [name, (ms) => sampleAction(name, ms)]),
+          ...list('hits').map((name) => [name, (ms) => sampleHit(name, ms)]),
+        ];
+        const frames = list('ms').map(Number);
+        for (const [name, sample] of moves) {
+          if (frames.length === 0) {
+            stages.push([addStage(name, model, 1), (time) => sample((time * 1000) % 1200) ?? NEUTRAL_POSE]);
+          } else {
+            for (const ms of frames) {
+              const pose = sample(ms) ?? NEUTRAL_POSE;
+              stages.push([addStage(`${name} ${ms}ms`, model, 1), () => pose]);
+            }
+          }
+        }
+      } else {
+        const recoilAt = Number(params.get('recoil') ?? -1);
+        const entries = [
+          ['crimson-hero', AGENT_MODELS['crimson-hero'], 1],
+          ...Object.entries(ENEMY_MODELS)
+            .slice(Number(params.get('from') ?? 0), Number(params.get('to') ?? 11))
+            .map(([id, model]) => [id, model, -1]),
+        ];
+        entries.forEach(([id, model, facing], i) => {
+          const pose = pulsePose(0, i === recoilAt ? 1 : 0);
+          stages.push([addStage(id, model, facing), () => pose]);
+        });
+      }
       const start = performance.now();
       const loop = () => {
         const time = (performance.now() - start) / 1000;
-        stages.forEach((stage, i) =>
-          stage.render({ time, lean: 0, recoil: i === recoilAt ? 1 : 0 }),
-        );
+        stages.forEach(([stage, poseAt]) => stage.render({ time, pose: poseAt(time) }));
         requestAnimationFrame(loop);
       };
       loop();

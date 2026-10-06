@@ -7,6 +7,7 @@ const HEAVY_DAMAGE = 12;
 export function cardMotion(card: CardDefinition): CardMotion {
   if (card.motion) return card.motion;
   const damage = card.effects.find((effect) => effect.kind === 'damage');
+  if (damage && card.target === 'allEnemies') return 'sweep';
   if (damage) {
     if ((damage.hits ?? 1) > 1) return 'flurry';
     return damage.amount >= HEAVY_DAMAGE ? 'heavy' : 'strike';

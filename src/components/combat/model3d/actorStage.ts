@@ -28,19 +28,19 @@ import {
   WebGLRenderer,
 } from 'three';
 import { ACTOR_FIGURE } from '../../../theme';
-import type { ActorModel, AuraStyle, ModelPart, PartAnimation, PartShape } from './modelTypes';
+import type { BodyPose } from './actorActions';
+import type { ActorModel, AuraStyle, Bone, ModelPart, PartAnimation, PartShape, Vec3 } from './modelTypes';
 
-/** 1 フレームごとに外から渡す姿勢。lean は相手への踏み込み、recoil は被弾ののけぞり（0〜1）。 */
-export type ActorPose = { time: number; lean: number; recoil: number };
+/** 1 フレームごとに外から渡す姿勢。time は経過秒、pose は攻撃・被弾による全身のずれ。 */
+export type ActorPose = { time: number; pose: BodyPose };
 
 export type ActorStage = {
   render: (pose: ActorPose) => void;
   dispose: () => void;
 };
 
-const LEAN_ANGLE = 0.35;
-const LEAN_STEP = 0.12;
-const RECOIL_ANGLE = 0.3;
+/** crouch = 1 のときに縮める背丈の割合。 */
+const CROUCH_SQUASH = 0.14;
 const FLAP_SPEED = 9;
 const FLAP_ANGLE = 0.45;
 const SPIN_SPEED = 0.9;
@@ -328,6 +328,24 @@ function animatePart(part: AnimatedPart, time: number): void {
   }
 }
 
+type BoneNode = { group: Group; origin: Vec3 };
+
+/** 関節の Group を作る。武器は腕の子にして、腕を振ると一緒に動くようにする。 */
+function createBones(body: Group, rig: Record<Bone, Vec3>): Record<Bone, BoneNode> {
+  const node = (origin: Vec3, parent: Group, parentOrigin: Vec3): BoneNode => {
+    const group = new Group();
+    group.position.set(origin[0] - parentOrigin[0], origin[1] - parentOrigin[1], origin[2] - parentOrigin[2]);
+    parent.add(group);
+    return { group, origin };
+  };
+  const arm = node(rig.arm, body, [0, 0, 0]);
+  return {
+    arm,
+    weapon: node(rig.weapon, arm.group, rig.arm),
+    offArm: node(rig.offArm, body, [0, 0, 0]),
+  };
+}
+
 /**
  * expo-gl のコンテキストを three.js に渡す。three.js はブラウザの <canvas> を前提にしているため、
  * 必要なプロパティだけを持つ代用品を渡す。
@@ -423,21 +441,32 @@ export function createActorStage(
   pivot.add(body);
   scene.add(pivot);
 
+  // 関節: 肩に置いた腕の Group、その中の手首に置いた武器の Group、反対の肩の Group。
+  const bones = model.rig ? createBones(body, model.rig) : null;
+  const parentOf = (bone: Bone | undefined): { group: Group; origin: Vec3 } =>
+    bones && bone ? bones[bone] : { group: body, origin: [0, 0, 0] };
+
   const materials: { material: MeshToonMaterial; emissive: Color; intensity: number }[] = [];
   const halos: Mesh[] = [];
   const animated: AnimatedPart[] = [];
+  const whipParts: { mesh: Mesh; showWhileLashing: boolean }[] = [];
   for (const part of model.parts) {
     const { mesh, material, halo } = createPart(part, baseScale);
+    const parent = parentOf(part.bone);
+    mesh.position.sub(new Vector3(...parent.origin));
     // 支点がある部品は、支点に置いた蝶番（Group）にぶら下げて、蝶番ごと回す。
     let hinge: Group | null = null;
     if (part.pivot) {
       hinge = new Group();
-      hinge.position.set(...part.pivot);
+      hinge.position.set(...part.pivot).sub(new Vector3(...parent.origin));
       mesh.position.sub(hinge.position);
       hinge.add(mesh);
-      body.add(hinge);
+      parent.group.add(hinge);
     } else {
-      body.add(mesh);
+      parent.group.add(mesh);
+    }
+    if (part.showWith || part.hideWith) {
+      whipParts.push({ mesh, showWhileLashing: part.showWith === 'whip' });
     }
     materials.push({
       material,
@@ -460,6 +489,8 @@ export function createActorStage(
   }
 
   const applyIdle = (time: number) => {
+    pivot.position.y = 0;
+    body.scale.set(baseScale * facing, baseScale, baseScale);
     switch (model.idle) {
       case 'bob': {
         const breath = Math.sin(time * 2.2);
@@ -492,21 +523,37 @@ export function createActorStage(
   };
 
   /** 被弾した瞬間、全身を白く光らせる（アニメのヒットフラッシュ）。 */
-  const applyFlash = (recoil: number) => {
-    const flash = recoil * FLASH_STRENGTH;
+  const applyFlash = (amount: number) => {
+    const flash = amount * FLASH_STRENGTH;
     for (const { material, emissive, intensity } of materials) {
       material.emissive.copy(emissive).lerp(WHITE, flash);
       material.emissiveIntensity = intensity + (1 - intensity) * flash;
     }
   };
 
-  const render = ({ time, lean, recoil }: ActorPose) => {
+  /** 攻撃・被弾の姿勢。前傾と踏み込みは相手の方向（プレイヤーは右、敵は左）へ。 */
+  const applyPose = (pose: BodyPose) => {
+    pivot.rotation.z = -pose.lean * facing;
+    pivot.rotation.y = pose.spin * facing;
+    pivot.position.x = pose.step * facing;
+    // 沈み込みは背丈を縮め、足元が浮かないように下げる。
+    const squash = pose.crouch * CROUCH_SQUASH;
+    body.scale.y *= 1 - squash;
+    pivot.position.y += pose.hop - squash * baseScale;
+    if (bones) {
+      bones.arm.group.rotation.set(pose.armReach, 0, pose.arm);
+      bones.weapon.group.rotation.z = pose.weapon;
+      bones.offArm.group.rotation.set(pose.offReach, 0, pose.offArm);
+    }
+    const lashing = pose.whip >= 0.5;
+    for (const { mesh, showWhileLashing } of whipParts) mesh.visible = showWhileLashing === lashing;
+  };
+
+  const render = ({ time, pose }: ActorPose) => {
     applyIdle(time);
     applyAura(time);
-    applyFlash(recoil);
-    // 上体を相手の方へ倒しつつ半歩踏み込む（プレイヤーは右、敵は左）。のけぞりは逆向き。
-    pivot.rotation.z = (-lean * LEAN_ANGLE + recoil * RECOIL_ANGLE) * facing;
-    pivot.position.x = (lean - recoil * 0.5) * LEAN_STEP * facing;
+    applyFlash(pose.flash);
+    applyPose(pose);
     for (const part of animated) animatePart(part, time);
     renderer.render(scene, camera);
     gl.endFrameEXP();

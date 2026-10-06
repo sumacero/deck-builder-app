@@ -1,4 +1,4 @@
-import type { ModelPart, Vec3 } from './modelTypes';
+import type { Bone, ModelPart, Vec3 } from './modelTypes';
 
 /**
  * モデルを組み立てる部品の作成関数。基本図形と、炎・結晶・歯車などの使い回す飾り。
@@ -16,6 +16,9 @@ function attributes(extra: Extra | undefined): PartExtra {
 }
 
 export const EYE_COLOR = '#111111';
+
+/** 部品をまとめて関節にぶら下げる（腕と一緒に動く籠手・刃の炎など）。 */
+export const onBone = (bone: Bone, parts: ModelPart[]): ModelPart[] => parts.map((part) => ({ ...part, bone }));
 
 export const box = (size: Vec3, color: string, position: Vec3, extra?: Extra): ModelPart => ({
   shape: { kind: 'box', size },

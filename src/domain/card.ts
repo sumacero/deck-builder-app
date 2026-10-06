@@ -16,11 +16,14 @@ export type CardTarget = EffectTarget;
 /**
  * カードを使ったときのキャラクターの動きの種類。
  * 実際の動き方はキャラクターごとに違う（同じ strike でも剣士と魔法使いで別の動き）。
+ * sweep は敵全体への攻撃（回転斬り・回転ムチ）、lash はムチで打つ攻撃。
  */
 export type CardMotion =
   | 'strike'
   | 'flurry'
   | 'heavy'
+  | 'sweep'
+  | 'lash'
   | 'guard'
   | 'empower'
   | 'focus'

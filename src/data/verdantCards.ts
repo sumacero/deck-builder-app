@@ -368,7 +368,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     target: 'enemy',
     effects: [{ kind: 'damage', amount: 2, hits: 4 }],
     upgrade: { effects: [{ kind: 'damage', amount: 3, hits: 4 }] },
-    motion: 'flurry',
+    motion: 'lash',
   },
   {
     id: 'vital-shot',
@@ -411,7 +411,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     target: 'allEnemies',
     effects: [{ kind: 'damage', amount: 5, hits: 2 }],
     upgrade: { effects: [{ kind: 'damage', amount: 7, hits: 2 }] },
-    motion: 'flurry',
+    motion: 'sweep',
   },
   {
     id: 'hunters-focus',
@@ -606,7 +606,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     target: 'allEnemies',
     effects: [{ kind: 'damage', amount: 3, hits: 3 }],
     upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 3 }] },
-    motion: 'flurry',
+    motion: 'sweep',
   },
   {
     id: 'snare-whip',
@@ -626,7 +626,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
         { kind: 'applyDebuff', status: 'weak', turns: 2 },
       ],
     },
-    motion: 'flurry',
+    motion: 'lash',
   },
   {
     id: 'hunters-mark',

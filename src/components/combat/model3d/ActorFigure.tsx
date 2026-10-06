@@ -6,8 +6,20 @@ import { useCombatEvents } from '../../../hooks/useCombatEvents';
 import { sideOf } from '../../../logic/combat';
 import { ACTOR_FIGURE } from '../../../theme';
 import { motionForEvent } from '../motion/motionPresets';
+import {
+  type ActorAction,
+  combinePoses,
+  type HitReaction,
+  hitReactionFor,
+  pulsePose,
+  sampleAction,
+  sampleHit,
+} from './actorActions';
 import { type ActorStage, createActorStage } from './actorStage';
 import type { ActorModel } from './modelTypes';
+
+/** いつ始まった動きか。 */
+type Timed<Kind> = { kind: Kind; at: number };
 
 type ActorFigureProps = {
   /** 未登録のキャラクターは undefined で、絵文字アイコンを表示する。 */
@@ -31,7 +43,8 @@ function pulse(start: number | null, now: number, duration: number): number {
 
 /**
  * キャラクターの見た目。3D モデルがあればローポリの 3D で、無ければ絵文字で描く。
- * 自分の行動では相手の方へ体を傾け、被弾するとのけぞる。
+ * プレイヤーはカードと武器ごとの動き（斬る・射る・ムチを振るう）と、ダメージに応じた被弾の動きをする。
+ * 敵は行動で相手の方へ体を傾け、被弾するとのけぞる。
  */
 export function ActorFigure({
   model,
@@ -46,12 +59,21 @@ export function ActorFigure({
   const frameRef = useRef<number | null>(null);
   const actedAt = useRef<number | null>(null);
   const hitAt = useRef<number | null>(null);
+  const action = useRef<Timed<ActorAction> | null>(null);
+  const reaction = useRef<Timed<HitReaction> | null>(null);
+  const isPlayer = sideOf(actorId) === 'player';
 
   useCombatEvents(events, (event) => {
-    if (motionForEvent(event, agentId)?.actor === actorId) actedAt.current = Date.now();
-    if (event.kind === 'hit' && event.target === actorId && event.hpLoss > 0) {
-      hitAt.current = Date.now();
+    const plan = motionForEvent(event, agentId);
+    if (plan?.actor === actorId) {
+      if (plan.preset.action) action.current = { kind: plan.preset.action, at: Date.now() };
+      else actedAt.current = Date.now();
     }
+    if (event.kind !== 'hit' || event.target !== actorId) return;
+    // プレイヤーはダメージの大きさやブロックで動きを変える。敵は今までどおりのけぞるだけ。
+    const hit = isPlayer ? hitReactionFor(event) : null;
+    if (hit) reaction.current = { kind: hit, at: Date.now() };
+    else if (event.hpLoss > 0) hitAt.current = Date.now();
   });
 
   useEffect(
@@ -81,10 +103,18 @@ export function ActorFigure({
     const loop = () => {
       const now = Date.now();
       try {
+        const current = action.current;
+        const hit = reaction.current;
         stage.render({
           time: (now - startedAt) / 1000,
-          lean: pulse(actedAt.current, now, ACTOR_FIGURE.leanDuration),
-          recoil: pulse(hitAt.current, now, ACTOR_FIGURE.recoilDuration),
+          pose: combinePoses([
+            pulsePose(
+              pulse(actedAt.current, now, ACTOR_FIGURE.leanDuration),
+              pulse(hitAt.current, now, ACTOR_FIGURE.recoilDuration),
+            ),
+            current && sampleAction(current.kind, now - current.at),
+            hit && sampleHit(hit.kind, now - hit.at),
+          ]),
         });
       } catch (error: unknown) {
         console.warn('3D 表示の描画に失敗したため絵文字で表示します', error);

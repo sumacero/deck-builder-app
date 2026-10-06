@@ -1,6 +1,6 @@
 import { humanoid } from './modelBuilders';
 import type { ActorModel } from './modelTypes';
-import { box, capsule, cone, cylinder, flame, sphere, taper, torus } from './parts';
+import { box, capsule, cone, cylinder, flame, onBone, sphere, taper, torus } from './parts';
 import { CLOCKWORK_MODELS } from './regions/clockworkModels';
 import { FINAL_MODELS } from './regions/finalModels';
 import { GRASSLAND_MODELS } from './regions/grasslandModels';
@@ -28,10 +28,24 @@ const tallBoots = (color: string, cuff: string) =>
 
 /** 腕の籠手（手首の少し上）と、上端の縁取り。 */
 const bracers = (color: string, trim: string) =>
-  [0.375, -0.375].flatMap((x) => [
-    cylinder(0.08, 0.14, color, [x, -0.33, 0.01]),
-    torus(0.08, 0.012, trim, [x, -0.26, 0.01], { rotation: [Math.PI / 2, 0, 0] }),
-  ]);
+  ([[0.375, 'arm'], [-0.375, 'offArm']] as const).flatMap(([x, bone]) =>
+    onBone(bone, [
+      cylinder(0.08, 0.14, color, [x, -0.33, 0.01]),
+      torus(0.08, 0.012, trim, [x, -0.26, 0.01], { rotation: [Math.PI / 2, 0, 0] }),
+    ]),
+  );
+
+/** 左手に握って振るうムチ。振っている間だけ見え、腕の延長として先へ伸びる。 */
+const heldWhip = () =>
+  onBone('offArm', [
+    cylinder(0.026, 0.18, '#3A2618', [-0.38, -0.5, 0.04]),
+    ...[0, 1, 2, 3].map((i) =>
+      capsule(0.022 - i * 0.003, 0.17, WHIP, [-0.38 - i * 0.022, -0.68 - i * 0.19, 0.04], {
+        rotation: [0, 0, -0.08 - i * 0.04],
+      }),
+    ),
+    sphere(0.035, LEAF, [-0.48, -1.35, 0.04], { glow: true }),
+  ]).map((part) => ({ ...part, showWith: 'whip' as const }));
 
 /** 瞳の色（黒目の下半分に重ねる）。 */
 const irises = (color: string) =>
@@ -77,18 +91,20 @@ export const AGENT_MODELS: Record<string, ActorModel> = {
       box([0.09, 0.08, 0.04], GOLD, [0, -0.42, 0.18]),
       box([0.1, 0.12, 0.08], LEATHER, [-0.18, -0.48, 0.17]),
       // 紺の袖（上着の下に着た肌着）。
-      capsule(0.076, 0.3, '#2A2F4A', [0.35, -0.18, 0], { rotation: [0, 0, 0.12] }),
-      capsule(0.076, 0.3, '#2A2F4A', [-0.35, -0.18, 0], { rotation: [0, 0, -0.12] }),
+      ...onBone('arm', [capsule(0.076, 0.3, '#2A2F4A', [0.35, -0.18, 0], { rotation: [0, 0, 0.12] })]),
+      ...onBone('offArm', [capsule(0.076, 0.3, '#2A2F4A', [-0.35, -0.18, 0], { rotation: [0, 0, -0.12] })]),
       ...bracers('#9A2620', GOLD),
       ...tallBoots(BOOT, GOLD),
       // マントの裾の金の縁取り。
       box([0.62, 0.025, 0.045], GOLD, [0, -0.76, -0.275], { rotation: [0.14, 0, 0] }),
       // 刃にまとう炎。
-      ...flame([0.44, -0.3, 0.17], 0.75, 0),
-      ...flame([0.4, -0.02, 0.18], 0.7, 0.4),
-      ...flame([0.44, 0.24, 0.17], 0.6, 0.8),
-      ...flame([0.42, 0.46, 0.16], 0.45, 1.2),
-      sphere(0.09, '#FFB347', [0.42, 0.1, 0.15], { glow: true, opacity: 0.35, scale: [1, 4.5, 1] }),
+      ...onBone('weapon', [
+        ...flame([0.44, -0.3, 0.17], 0.75, 0),
+        ...flame([0.4, -0.02, 0.18], 0.7, 0.4),
+        ...flame([0.44, 0.24, 0.17], 0.6, 0.8),
+        ...flame([0.42, 0.46, 0.16], 0.45, 1.2),
+        sphere(0.09, '#FFB347', [0.42, 0.1, 0.15], { glow: true, opacity: 0.35, scale: [1, 4.5, 1] }),
+      ]),
     ],
   }),
   // イラスト（2026-10-07）に寄せた姿: 薄緑の長い髪・緑の瞳、若葉の冠に白い花、毛皮の肩当てと革の籠手、
@@ -130,29 +146,35 @@ export const AGENT_MODELS: Record<string, ActorModel> = {
         box([0.05, 0.5, 0.035], LEATHER, [0, -0.16, 0.185], { rotation: [0, 0, -0.7] }),
         ...tallBoots(BOOT, '#8A6A44'),
         // ツタの巻いた弓と、つがえた光る矢。
-        ...([
-          [0.389, 0.221],
-          [0.491, -0.061],
-          [0.491, -0.279],
-          [0.389, -0.561],
-        ] as const).map(([x, y], i) =>
-          sphere(0.035, LEAF, [x, y, 0.17], { scale: [0.6, 1.1, 0.3], rotation: [0, 0, i % 2 === 0 ? 0.6 : -0.6] }),
-        ),
-        box([0.012, 0.012, 0.46], '#9CFFB0', [0.4, -0.17, 0.33], { glow: true }),
-        cone(0.03, 0.08, '#9CFFB0', [0.4, -0.17, 0.6], { rotation: [Math.PI / 2, 0, 0], glow: true, segments: 4 }),
+        ...onBone('weapon', [
+          ...([
+            [0.389, 0.221],
+            [0.491, -0.061],
+            [0.491, -0.279],
+            [0.389, -0.561],
+          ] as const).map(([x, y], i) =>
+            sphere(0.035, LEAF, [x, y, 0.17], { scale: [0.6, 1.1, 0.3], rotation: [0, 0, i % 2 === 0 ? 0.6 : -0.6] }),
+          ),
+          box([0.012, 0.012, 0.46], '#9CFFB0', [0.4, -0.17, 0.33], { glow: true }),
+          cone(0.03, 0.08, '#9CFFB0', [0.4, -0.17, 0.6], { rotation: [Math.PI / 2, 0, 0], glow: true, segments: 4 }),
+        ]),
         ...bracers(LEATHER, '#8A6A44'),
         box([0.12, 0.12, 0.08], LEATHER, [0.2, -0.5, 0.15]),
         sphere(0.14, '#8A6648', [-0.3, 0.06, 0], { scale: [1.15, 0.65, 1.05] }),
         sphere(0.09, '#A8845E', [-0.32, 0.12, 0.04], { scale: [1.1, 0.5, 1] }),
         // 左腰のムチ: ベルトに差した握りと、腰の横に巻いて吊るした革ひも、少しだけ垂れる先端。
-        cylinder(0.028, 0.18, '#3A2618', [-0.24, -0.42, 0.15], { rotation: [0.9, 0, 0.15] }),
-        sphere(0.034, '#C9A86A', [-0.235, -0.37, 0.22]),
-        ...[0, 1, 2].map((i) =>
-          torus(0.1 - i * 0.014, 0.018, WHIP, [-0.3 - i * 0.008, -0.58 - i * 0.012, 0.08 + i * 0.01], {
-            rotation: [0.12 * i, -0.6, 0],
-          }),
-        ),
-        capsule(0.012, 0.1, WHIP, [-0.33, -0.72, 0.1], { rotation: [0.3, 0, 0.15], animation: 'sway' }),
+        // ムチを振るう間は手に移るので隠す。
+        ...[
+          cylinder(0.028, 0.18, '#3A2618', [-0.24, -0.42, 0.15], { rotation: [0.9, 0, 0.15] }),
+          sphere(0.034, '#C9A86A', [-0.235, -0.37, 0.22]),
+          ...[0, 1, 2].map((i) =>
+            torus(0.1 - i * 0.014, 0.018, WHIP, [-0.3 - i * 0.008, -0.58 - i * 0.012, 0.08 + i * 0.01], {
+              rotation: [0.12 * i, -0.6, 0],
+            }),
+          ),
+          capsule(0.012, 0.1, WHIP, [-0.33, -0.72, 0.1], { rotation: [0.3, 0, 0.15], animation: 'sway' }),
+        ].map((part) => ({ ...part, hideWith: 'whip' as const })),
+        ...heldWhip(),
         // 背中の矢筒。
         cylinder(0.07, 0.5, '#6A4A2E', [-0.16, 0.0, -0.24], { rotation: [0.15, 0, 0.45] }),
         ...[0, 1, 2].map((i) =>

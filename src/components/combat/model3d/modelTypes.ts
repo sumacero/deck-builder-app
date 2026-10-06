@@ -71,7 +71,22 @@ export type ModelPart = {
    * roll では 0.5 以上で逆回転になる（噛み合う歯車を逆に回すため）。
    */
   phase?: number;
+  /** 動く関節にぶら下げる（腕・武器）。モデルに rig が無ければ無視される。 */
+  bone?: Bone;
+  /** whip: ムチを振るっている間だけ見える（手に持つムチ）。 */
+  showWith?: 'whip';
+  /** whip: ムチを振るっている間は隠す（腰に吊るしたムチ）。 */
+  hideWith?: 'whip';
 };
+
+/**
+ * 攻撃の動きで回す関節。arm = 武器を持つ腕（肩が支点）、weapon = 武器（手首が支点、arm と一緒に動く）、
+ * offArm = 反対の腕（肩が支点）。
+ */
+export type Bone = 'arm' | 'weapon' | 'offArm';
+
+/** 関節の支点（モデル座標）。 */
+export type Rig = Record<Bone, Vec3>;
 
 /** 待機中の動き。bob は呼吸、float は浮遊、squish は伸び縮み。 */
 export type IdleStyle = 'bob' | 'float' | 'squish';
@@ -92,4 +107,6 @@ export type ActorModel = {
   yaw?: number;
   /** 省略時はプレイヤー = 金、敵 = arcane。 */
   aura?: AuraStyle;
+  /** 腕と武器を動かせる人型。攻撃・被弾の動きで使う。 */
+  rig?: Rig;
 };

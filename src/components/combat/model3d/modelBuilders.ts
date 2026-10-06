@@ -1,4 +1,4 @@
-import type { ActorModel, AuraStyle, ModelPart, Vec3 } from './modelTypes';
+import type { ActorModel, AuraStyle, ModelPart, Rig, Vec3 } from './modelTypes';
 import {
   EYE_COLOR,
   box,
@@ -10,6 +10,7 @@ import {
   eyeShine,
   eyes,
   flame,
+  onBone,
   rock,
   sphere,
   taper,
@@ -79,6 +80,13 @@ export type HumanoidOptions = {
 };
 
 const HAND: Vec3 = [0.42, -0.4, 0.14];
+
+/** 人型の関節の支点: 両肩と、武器の握り。 */
+const HUMANOID_RIG: Rig = {
+  arm: [0.34, 0.07, 0],
+  weapon: [0.42, -0.42, 0.14],
+  offArm: [-0.34, 0.07, 0],
+};
 
 /** 額にかかる前髪。 */
 function bangs(color: string): ModelPart[] {
@@ -312,15 +320,19 @@ export function humanoid(options: HumanoidOptions, extra?: Partial<ActorModel>):
     box([0.08, 0.08, 0.04], emblem, [0, -0.42, 0.17]),
     box([0.2, 0.2, 0.04], accent, [0, -0.04, 0.17], { rotation: [0, 0, Math.PI / 4] }),
     cylinder(0.08, 0.1, skin, [0, 0.16, 0]),
-    capsule(0.07, 0.34, body, [0.35, -0.16, 0], { rotation: [0, 0, 0.12] }),
-    capsule(0.07, 0.34, body, [-0.35, -0.16, 0], { rotation: [0, 0, -0.12] }),
-    sphere(0.075, skin, [0.38, -0.42, 0.02]),
-    sphere(0.075, skin, [-0.38, -0.42, 0.02]),
+    ...onBone('arm', [
+      capsule(0.07, 0.34, body, [0.35, -0.16, 0], { rotation: [0, 0, 0.12] }),
+      sphere(0.075, skin, [0.38, -0.42, 0.02]),
+    ]),
+    ...onBone('offArm', [
+      capsule(0.07, 0.34, body, [-0.35, -0.16, 0], { rotation: [0, 0, -0.12] }),
+      sphere(0.075, skin, [-0.38, -0.42, 0.02]),
+    ]),
     sphere(0.24, skin, [0, 0.38, 0]),
     ...eyeParts,
     ...(hair ? bangs(hair) : []),
     ...headgearParts(headgear, accent, hair ?? accent, magic),
-    ...weaponParts(weapon, magic),
+    ...onBone('weapon', weaponParts(weapon, magic)),
   ];
   if (pauldrons) {
     parts.push(
@@ -330,9 +342,11 @@ export function humanoid(options: HumanoidOptions, extra?: Partial<ActorModel>):
   }
   if (shield) {
     parts.push(
-      cylinder(0.27, 0.06, accent, [-0.5, -0.2, 0.12], { rotation: [Math.PI / 2, 0, 0] }),
-      torus(0.26, 0.025, emblem, [-0.5, -0.2, 0.16]),
-      sphere(0.07, emblem, [-0.5, -0.2, 0.17], { scale: [1, 1, 0.5] }),
+      ...onBone('offArm', [
+        cylinder(0.27, 0.06, accent, [-0.5, -0.2, 0.12], { rotation: [Math.PI / 2, 0, 0] }),
+        torus(0.26, 0.025, emblem, [-0.5, -0.2, 0.16]),
+        sphere(0.07, emblem, [-0.5, -0.2, 0.17], { scale: [1, 1, 0.5] }),
+      ]),
     );
   }
   if (cape) {
@@ -342,7 +356,7 @@ export function humanoid(options: HumanoidOptions, extra?: Partial<ActorModel>):
     );
   }
   parts.push(...extras);
-  return { parts, idle: 'bob', yaw: 0.5, ...extra };
+  return { parts, idle: 'bob', yaw: 0.5, rig: HUMANOID_RIG, ...extra };
 }
 
 // ---------- スライム ----------

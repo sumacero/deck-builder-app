@@ -1,6 +1,7 @@
 import type { CardMotion } from '../../../domain/card';
 import type { ActorId, CombatEvent } from '../../../domain/combat';
 import type { EnemyAction } from '../../../domain/enemy';
+import type { ActorAction } from '../model3d/actorActions';
 
 /**
  * 動きの 1 コマ。x は「相手に向かう方向」への踏み込み量（向きの反転と斜めの移動は描画側で行う）。
@@ -17,14 +18,20 @@ export type Keyframe = {
 /** 動きの最中に出すエフェクト絵文字。self は動いた本人、opponent は相手の位置に出る。 */
 export type Burst = { emoji: string; on: 'self' | 'opponent'; delay: number };
 
+/**
+ * keyframes は絵（3D の描画面ごと）の移動、action は 3D モデル自身の動き（腕・武器を振る）。
+ * action が無い動き（敵）は、3D では相手の方へ体を傾けるだけ。
+ */
 export type MotionPreset = {
   keyframes: Keyframe[];
   burst?: Burst;
+  action?: ActorAction;
 };
 
 /** 紅蓮のカイル: 踏み込んで斬る、剣を構えて守る。 */
 const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
   strike: {
+    action: 'slash',
     keyframes: [
       { x: -10, duration: 80 },
       { x: 48, rotate: 12, duration: 120 },
@@ -34,6 +41,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '🗡️', on: 'opponent', delay: 180 },
   },
   flurry: {
+    action: 'combo',
     keyframes: [
       { x: -6, duration: 60 },
       { x: 38, rotate: 10, duration: 80 },
@@ -46,6 +54,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '⚔️', on: 'opponent', delay: 140 },
   },
   heavy: {
+    action: 'cleave',
     keyframes: [
       { y: -26, scale: 1.15, rotate: -18, duration: 220 },
       { x: 54, scale: 1.2, rotate: 22, duration: 110 },
@@ -54,7 +63,29 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
     ],
     burst: { emoji: '💥', on: 'opponent', delay: 330 },
   },
+  sweep: {
+    action: 'spin',
+    keyframes: [
+      { scale: 0.95, duration: 100 },
+      { x: 24, scale: 1.08, duration: 320 },
+      { x: 18, duration: 120 },
+      { duration: 180 },
+    ],
+    burst: { emoji: '🌀', on: 'opponent', delay: 300 },
+  },
+  // 剣士にムチのカードは無いが、型を埋めるため通常の斬撃と同じにする。
+  lash: {
+    action: 'slash',
+    keyframes: [
+      { x: -10, duration: 80 },
+      { x: 48, rotate: 12, duration: 120 },
+      { x: 48, rotate: 12, duration: 60 },
+      { duration: 180 },
+    ],
+    burst: { emoji: '🗡️', on: 'opponent', delay: 180 },
+  },
   guard: {
+    action: 'guard',
     keyframes: [
       { x: -12, scale: 0.92, duration: 120 },
       { x: -12, scale: 0.92, duration: 160 },
@@ -63,6 +94,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '🛡️', on: 'self', delay: 60 },
   },
   empower: {
+    action: 'raise',
     keyframes: [
       { y: -12, scale: 1.25, duration: 220 },
       { y: -12, scale: 1.25, duration: 140 },
@@ -71,6 +103,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '🔥', on: 'self', delay: 120 },
   },
   focus: {
+    action: 'charge',
     keyframes: [
       { y: -14, duration: 150 },
       { duration: 150 },
@@ -80,6 +113,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '✨', on: 'self', delay: 80 },
   },
   sacrifice: {
+    action: 'wince',
     keyframes: [
       { rotate: -10, scale: 0.95, duration: 60 },
       { rotate: 10, scale: 0.95, duration: 60 },
@@ -93,6 +127,7 @@ const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
 /** 翠風のリーネ: その場で弓を引き絞って放つ。踏み込まず、軽く跳んで距離を取る。 */
 const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
   strike: {
+    action: 'shoot',
     keyframes: [
       { x: -16, rotate: -6, duration: 140 },
       { x: -16, rotate: -6, duration: 60 },
@@ -102,6 +137,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '🏹', on: 'opponent', delay: 220 },
   },
   flurry: {
+    action: 'rapid',
     keyframes: [
       { x: -12, duration: 80 },
       { x: 4, duration: 50 },
@@ -114,6 +150,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '🍃', on: 'opponent', delay: 120 },
   },
   heavy: {
+    action: 'volley',
     keyframes: [
       { y: -34, x: -14, scale: 1.12, rotate: -10, duration: 240 },
       { y: -34, x: -14, scale: 1.12, rotate: -10, duration: 100 },
@@ -122,7 +159,29 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
     ],
     burst: { emoji: '🌪️', on: 'opponent', delay: 340 },
   },
+  // 腰のムチを抜いて、その場で回って敵全体を薙ぐ。
+  sweep: {
+    action: 'whirlLash',
+    keyframes: [
+      { x: 6, scale: 0.95, duration: 100 },
+      { x: 14, scale: 1.05, duration: 360 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '🌿', on: 'opponent', delay: 320 },
+  },
+  // 腰のムチを抜いて、頭上を回して打ち据える。
+  lash: {
+    action: 'lash',
+    keyframes: [
+      { x: -8, duration: 160 },
+      { x: 18, rotate: 6, duration: 110 },
+      { x: 14, duration: 120 },
+      { duration: 160 },
+    ],
+    burst: { emoji: '💫', on: 'opponent', delay: 290 },
+  },
   guard: {
+    action: 'hopBack',
     keyframes: [
       { x: -18, y: -10, duration: 120 },
       { x: -18, duration: 100 },
@@ -131,6 +190,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '🌿', on: 'self', delay: 60 },
   },
   empower: {
+    action: 'raise',
     keyframes: [
       { y: -10, scale: 1.18, rotate: 4, duration: 220 },
       { y: -10, scale: 1.18, rotate: -4, duration: 160 },
@@ -139,6 +199,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
     burst: { emoji: '🌸', on: 'self', delay: 120 },
   },
   focus: {
+    action: 'aim',
     keyframes: [
       { y: -12, duration: 160 },
       { duration: 140 },
