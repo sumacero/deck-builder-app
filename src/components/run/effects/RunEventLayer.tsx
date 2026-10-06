@@ -1,4 +1,5 @@
 import type { QueuedRunEvent } from '../../../domain/runEvent';
+import { describeRelic } from '../../../logic/describe';
 import { slotKey } from '../acquire/AcquireContext';
 import { AcquireFlyer } from '../acquire/AcquireFlyer';
 import { HealBurst } from './HealBurst';
@@ -32,7 +33,7 @@ export function RunEventLayer({ queued, onDone }: RunEventLayerProps) {
       return (
         <AcquireFlyer
           key={queued.id}
-          item={{ kind: 'icon', icon: event.relic.icon, label: event.relic.name }}
+          item={{ kind: 'icon', icon: event.relic.icon, label: event.relic.name, description: describeRelic(event.relic) }}
           targetKey={slotKey.relic(event.relic.id)}
           sound="relic"
           onDone={done}

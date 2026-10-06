@@ -1,5 +1,5 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { SoundId } from '../../../audio/sounds';
 import { playSound } from '../../../audio/soundPlayer';
 import type { CardDefinition } from '../../../domain/card';
@@ -8,7 +8,8 @@ import { CardView } from '../../cards/CardView';
 import { AcquireContext, measureView } from './AcquireContext';
 
 export type FlyingItem =
-  | { kind: 'icon'; icon: string; label: string }
+  /** description があれば、飛ぶ前に効果の説明を読ませる（レリック）。 */
+  | { kind: 'icon'; icon: string; label: string; description?: string }
   | { kind: 'card'; card: CardDefinition };
 
 type AcquireFlyerProps = {
@@ -21,6 +22,7 @@ type AcquireFlyerProps = {
 
 const ICON_SIZE = 64;
 const CARD_WIDTH = 84;
+const INFO_WIDTH = 300;
 const ARC_STEPS = [0, 0.25, 0.5, 0.75, 1];
 
 type Path = { dx: number; dy: number; endScale: number };
@@ -29,17 +31,25 @@ const runAnimation = (animation: Animated.CompositeAnimation) =>
   new Promise<boolean>((resolve) => animation.start(({ finished }) => resolve(finished)));
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+const readingTime = (text: string) =>
+  Math.min(MOTION.acquireInfoMax, MOTION.acquireInfoBase + text.length * MOTION.acquireInfoPerChar);
+
 /**
  * 手に入れたものが画面の真ん中に現れ、所持品のスロット（カードはデッキボタン）へ飛んで収まる。
- * 飛び先が今の画面に無ければ、その場で上へ消える。操作は止めない。
+ * レリックは効果の説明を出して読ませてから飛ぶ（画面のどこかをタップすると先へ進む）。
+ * 飛び先が今の画面に無ければ、その場で上へ消える。説明を読んでいる間以外は操作を止めない。
  */
 export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerProps) {
   const { measureSlot, land } = useContext(AcquireContext);
-  const container = useRef<View>(null);
+  const origin = useRef<View>(null);
+  const skipReading = useRef<(() => void) | null>(null);
   const [appear] = useState(() => new Animated.Value(0));
+  const [info] = useState(() => new Animated.Value(0));
   const [fly] = useState(() => new Animated.Value(0));
   const [fade] = useState(() => new Animated.Value(1));
   const [path, setPath] = useState<Path>({ dx: 0, dy: 0, endScale: 1 });
+  const [reading, setReading] = useState(false);
+  const description = item.kind === 'icon' ? item.description : undefined;
   const finish = useEffectEvent(onDone);
   const play = useEffectEvent(() => playSound(sound));
   const settle = useEffectEvent(() => {
@@ -48,7 +58,7 @@ export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerPro
   });
   const measure = useEffectEvent(async () => {
     const [self, target] = await Promise.all([
-      container.current ? measureView(container.current) : Promise.resolve(null),
+      origin.current ? measureView(origin.current) : Promise.resolve(null),
       measureSlot(targetKey),
     ]);
     if (!self || !target) return null;
@@ -58,6 +68,22 @@ export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerPro
       dy: target.y + target.height / 2 - (self.y + self.height / 2),
       endScale: Math.min(target.width, target.height) / size,
     };
+  });
+  /** 説明を読ませる。時間が来るか、タップされたら進む。 */
+  const read = useEffectEvent(async (text: string) => {
+    setReading(true);
+    await runAnimation(Animated.timing(info, { toValue: 1, duration: MOTION.acquireInfoFade, useNativeDriver: true }));
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(done, readingTime(text));
+      function done() {
+        clearTimeout(timer);
+        skipReading.current = null;
+        resolve();
+      }
+      skipReading.current = done;
+    });
+    setReading(false);
+    await runAnimation(Animated.timing(info, { toValue: 0, duration: MOTION.acquireInfoFade, useNativeDriver: true }));
   });
 
   useEffect(() => {
@@ -72,11 +98,13 @@ export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerPro
           useNativeDriver: true,
         }),
       );
+      await appeared;
+      if (description) await read(description);
+      else await wait(MOTION.acquireHold);
+      if (cancelled) return;
       // 画面が切り替わった直後は、飛び先のスロットがまだ並び終わっていないことがある。
       await wait(MOTION.acquireMeasureDelay);
       const measured = await measure();
-      await appeared;
-      await wait(MOTION.acquireHold);
       if (cancelled) return;
       if (measured) {
         setPath(measured);
@@ -101,8 +129,9 @@ export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerPro
     void sequence();
     return () => {
       cancelled = true;
+      skipReading.current?.();
     };
-  }, [appear, fly, fade]);
+  }, [appear, fly, fade, description]);
 
   const appearScale = appear.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] });
   const flyScale = fly.interpolate({ inputRange: [0, 1], outputRange: [1, path.endScale] });
@@ -117,8 +146,10 @@ export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerPro
   const glow = Animated.multiply(appear, fly.interpolate({ inputRange: [0, 0.4], outputRange: [1, 0], extrapolate: 'clamp' }));
 
   return (
-    <View ref={container} pointerEvents="none" style={styles.root}>
+    <View pointerEvents={reading ? 'auto' : 'none'} style={styles.root}>
+      {reading && <Pressable style={StyleSheet.absoluteFill} onPress={() => skipReading.current?.()} />}
       <Animated.View
+        pointerEvents="none"
         style={{
           opacity: fade,
           transform: [
@@ -129,18 +160,27 @@ export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerPro
         }}
       >
         <Animated.View style={[styles.glow, { opacity: glow }]} />
-        {item.kind === 'icon' ? (
-          <View style={styles.icon}>
-            <Text style={styles.emoji}>{item.icon}</Text>
-          </View>
-        ) : (
-          <CardView card={item.card} width={CARD_WIDTH} detailOnHold={false} />
-        )}
+        <View ref={origin}>
+          {item.kind === 'icon' ? (
+            <View style={styles.icon}>
+              <Text style={styles.emoji}>{item.icon}</Text>
+            </View>
+          ) : (
+            <CardView card={item.card} width={CARD_WIDTH} detailOnHold={false} />
+          )}
+        </View>
       </Animated.View>
-      {item.kind === 'icon' && (
+      {item.kind === 'icon' && description === undefined && (
         <Animated.Text style={[styles.label, { opacity: Animated.multiply(appear, glow) }]}>
           {item.label}
         </Animated.Text>
+      )}
+      {item.kind === 'icon' && description !== undefined && (
+        <Animated.View pointerEvents="none" style={[styles.info, { opacity: info }]}>
+          <Text style={styles.infoName}>{item.label}</Text>
+          <Text style={styles.infoText}>{description}</Text>
+          <Text style={styles.infoHint}>タップで次へ</Text>
+        </Animated.View>
       )}
     </View>
   );
@@ -187,4 +227,19 @@ const styles = StyleSheet.create({
     textShadowColor: COLORS.textOutline,
     textShadowRadius: 4,
   },
+  info: {
+    width: INFO_WIDTH,
+    maxWidth: '90%',
+    marginTop: SPACING.xl,
+    padding: SPACING.md,
+    gap: SPACING.xs,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.gold,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+  },
+  infoName: { color: COLORS.gold, fontSize: 16, fontWeight: '800' },
+  infoText: { color: COLORS.text, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  infoHint: { color: COLORS.textMuted, fontSize: 11, marginTop: SPACING.xs },
 });

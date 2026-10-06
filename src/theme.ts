@@ -143,6 +143,11 @@ export const MOTION = {
   acquireHold: 280,
   acquireFly: 480,
   acquireMeasureDelay: 120,
+  /** レリックの効果を読ませる時間: 基本 + 1 文字ごと（上限あり）。タップで先へ進める。説明が消えるまで。 */
+  acquireInfoBase: 1400,
+  acquireInfoPerChar: 40,
+  acquireInfoMax: 4200,
+  acquireInfoFade: 220,
   /** スロットに収まったときの弾み（小さいほどよく揺れる）。 */
   slotLandFriction: 4,
   /** 所持金が数え上がる時間（差が大きいほど長く、この範囲に収める）と、増減の数字が浮いて消えるまで。 */
