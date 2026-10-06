@@ -9,6 +9,8 @@ import { baseCardId } from '../../logic/cards';
 const CARD_ART: Record<string, ImageSourcePropType> = {
   strike: require('../../../assets/cards/strike.jpg'),
   defend: require('../../../assets/cards/defend.jpg'),
+  'strike-verdant': require('../../../assets/cards/strike-verdant.jpg'),
+  'defend-verdant': require('../../../assets/cards/defend-verdant.jpg'),
   'twin-strike': require('../../../assets/cards/twin-strike.jpg'),
   'pommel-strike': require('../../../assets/cards/pommel-strike.jpg'),
   'iron-wave': require('../../../assets/cards/iron-wave.jpg'),
@@ -96,5 +98,5 @@ export const CARD_TYPE_EMBLEM: Record<CardType, string> = {
 
 /** 強化後のカードも強化前と同じ絵。絵が未登録のカードは undefined（種類の色だけの枠になる）。 */
 export function cardArt(card: CardDefinition): ImageSourcePropType | undefined {
-  return CARD_ART[baseCardId(card.id)];
+  return CARD_ART[card.art ?? baseCardId(card.id)];
 }

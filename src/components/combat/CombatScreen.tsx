@@ -9,7 +9,8 @@ import {
   View,
 } from 'react-native';
 import type { Region } from '../../domain/act';
-import type { CombatSetup, DamagePreview, EnemyUid } from '../../domain/combat';
+import type { CardInstance } from '../../domain/card';
+import type { CombatSetup, CombatState, DamagePreview, EnemyUid } from '../../domain/combat';
 import type { CombatResult } from '../../domain/run';
 import { battleMusicFor } from '../../audio/music';
 import { useMusic } from '../../hooks/useMusic';
@@ -38,7 +39,20 @@ import { PlayerPanel } from './PlayerPanel';
 import { landscapeFigures, portraitFigures, type Size } from './stageLayout';
 import { useCardDrag } from './useCardDrag';
 
-type OpenPile = 'draw' | 'discard' | null;
+type Pile = 'draw' | 'discard' | 'exhaust';
+type OpenPile = Pile | null;
+
+const PILE_VIEW: Record<Pile, { title: string; note: string }> = {
+  draw: { title: '山札', note: '残っているカードです。順番はシャッフルされます。' },
+  discard: { title: '捨て札', note: '使ったカードと、ターン終了で捨てたカード。' },
+  exhaust: { title: '廃棄札', note: 'この戦闘ではもう使えないカード（廃棄・パワーなど）。戦闘が終わればデッキに戻ります。' },
+};
+
+/** 捨て札・廃棄札は新しいものから並べる。 */
+const pileCards = (state: CombatState, pile: Pile): CardInstance[] => {
+  if (pile === 'draw') return state.drawPile;
+  return [...(pile === 'discard' ? state.discardPile : state.exhaustPile)].reverse();
+};
 
 /** タップしたあと、使う相手の敵をタップで選んでいる最中のもの。 */
 type Pending = { kind: 'card'; instanceId: string } | { kind: 'potion'; slot: number };
@@ -236,10 +250,12 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     <CombatFooter
       drawCount={state.drawPile.length}
       discardCount={state.discardPile.length}
+      exhaustCount={state.exhaustPile.length}
       canEndTurn={inProgress}
       onEndTurn={endTurn}
       onOpenDraw={() => setOpenPile('draw')}
       onOpenDiscard={() => setOpenPile('discard')}
+      onOpenExhaust={() => setOpenPile('exhaust')}
       vertical={landscape}
     />
   );
@@ -317,9 +333,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
         )}
         {openPile && (
           <CardPileModal
-            title={openPile === 'draw' ? '山札' : '捨て札'}
-            note={openPile === 'draw' ? '残っているカードです。順番はシャッフルされます。' : '使ったカードと、ターン終了で捨てたカード。'}
-            stacks={stackInstances(openPile === 'draw' ? state.drawPile : [...state.discardPile].reverse())}
+            title={PILE_VIEW[openPile].title}
+            note={PILE_VIEW[openPile].note}
+            stacks={stackInstances(pileCards(state, openPile))}
             onClose={() => setOpenPile(null)}
           />
         )}

@@ -45,10 +45,10 @@ export const THOUSAND_YEAR_TREE: CardDefinition = {
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
-/** リーネの初期デッキ。ストライクはラン開始時に草属性になる。 */
+/** リーネの初期デッキ。ストライクはラン開始時に草属性になる。ストライク・防御は効果はそのままで、絵だけ弓とムチの狩人用。 */
 export const VERDANT_STARTER_DECK: CardDefinition[] = [
-  ...copies(STRIKE, 3),
-  ...copies(DEFEND, 2),
+  ...copies({ ...STRIKE, art: 'strike-verdant' }, 3),
+  ...copies({ ...DEFEND, art: 'defend-verdant' }, 2),
   SEED_ARROW,
 ];
 

@@ -77,6 +77,8 @@ export type CardDefinition = {
   attribute?: Attribute;
   /** ストライクのように、エージェントの属性を受け継ぐ初期カード。 */
   attuned?: boolean;
+  /** イラストの差し替え（キャラ専用の絵の名前）。効果は同じで絵だけ変える。省略でカード id の絵。 */
+  art?: string;
   /** 秘奥義（ゲージが溜まると手札に来る必殺技）。 */
   mysticArte?: boolean;
   archetypes?: Archetype[];

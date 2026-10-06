@@ -13,12 +13,12 @@ export const CRIMSON_HERO: AgentDefinition = {
   mysticArte: CRIMSON_PHOENIX,
 };
 
-/** 森の民の弓使い。宿り木で敵をじわじわ削り、茨の守りで受けた攻撃を返す。 */
+/** 森の民の狩人（弓とムチ）。宿り木で敵をじわじわ削り、茨の守りで受けた攻撃を返す。 */
 export const VERDANT_ARCHER: AgentDefinition = {
   id: 'verdant-archer',
   name: '翠風のリーネ',
   icon: '🌿',
-  title: '森の弓使い',
+  title: '弓とムチの森の狩人',
   playStyle:
     '宿り木の種を植えて毎ターン敵を削り、芽吹かせて一気に刈り取る。茨の鎧で受けた攻撃を返し、守りながら勝つ。',
   attribute: 'grass',

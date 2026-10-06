@@ -15,6 +15,28 @@ import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
  */
 const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS];
 
+/**
+ * リーネ（森の狩人）の報酬に出す無属性カード。ムチと弓で戦う狩人らしいもの（ムチの薙ぎ払い・連射・身をかわす・
+ * 足払い・急所を突く・弱点を見抜く）だけにし、剣・盾・雄叫び・血を払う戦士らしいカードは外す。
+ */
+const HUNTER_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
+  'twin-strike',
+  'cleave',
+  'whirlwind',
+  'shrug-it-off',
+  'seeing-red',
+  'trip',
+  'exploit',
+  'dropkick',
+  'weak-point',
+]);
+
+/** 属性カード（草は報酬、火・水はショップ限定）はそのまま、無属性は狩人らしいものだけ。 */
+const HUNTER_REWARD_CARDS = [
+  ...REWARD_CARDS.filter((card) => card.attribute !== undefined || HUNTER_NEUTRAL_CARD_IDS.has(card.id)),
+  ...VERDANT_CARDS,
+];
+
 /** レリックはカイルの初期レリック 1 つ、ポーションは 3 つ持って始める。 */
 export const STANDARD_RUN: RunSetup = {
   agent: CRIMSON_HERO,
@@ -44,6 +66,7 @@ export const VERDANT_RUN: RunSetup = {
   deck: VERDANT_STARTER_DECK,
   playerMaxHp: 68,
   relics: [WORLD_TREE_SPROUT],
+  rewardPool: HUNTER_REWARD_CARDS,
 };
 
 /** タイトルで選べるエージェント。並び順がそのまま選択画面の並び順。 */

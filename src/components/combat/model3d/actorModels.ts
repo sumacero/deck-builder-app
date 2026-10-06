@@ -14,6 +14,8 @@ import { VOLCANO_MODELS } from './regions/volcanoModels';
 
 const SCARF = '#E8402A';
 const LEAF = '#6FD38A';
+const LEATHER = '#6A4A2E';
+const WHIP = '#5A3A22';
 
 export const AGENT_MODELS: Record<string, ActorModel> = {
   'crimson-hero': humanoid({
@@ -56,6 +58,23 @@ export const AGENT_MODELS: Record<string, ActorModel> = {
           sphere(0.05, LEAF, [x, 0.6, 0.2], { scale: [0.6, 1.2, 0.3], rotation: [0, 0, -x * 3] }),
         ),
         sphere(0.035, '#FFF4D6', [0, 0.6, 0.23], { glow: true }),
+        // 狩人の装い: 背中に下ろしたフード、胸を斜めに渡る革帯、革の籠手、腰の小物入れ、毛皮の肩当て。
+        sphere(0.2, '#24553A', [0, 0.2, -0.22], { scale: [1.25, 0.7, 0.8] }),
+        box([0.06, 0.64, 0.04], LEATHER, [0, -0.12, 0.19], { rotation: [0, 0, 0.7] }),
+        cylinder(0.08, 0.14, LEATHER, [0.375, -0.33, 0.01]),
+        cylinder(0.08, 0.14, LEATHER, [-0.375, -0.33, 0.01]),
+        box([0.12, 0.12, 0.08], LEATHER, [0.2, -0.5, 0.15]),
+        sphere(0.14, '#B89A72', [-0.3, 0.06, 0], { scale: [1.15, 0.65, 1.05] }),
+        // 左手のムチ: 握りと、輪にして垂らした革ひも、揺れる先端。
+        cylinder(0.03, 0.22, '#3A2618', [-0.42, -0.5, 0.1], { rotation: [0, 0, -0.25] }),
+        sphere(0.035, '#C9A86A', [-0.39, -0.38, 0.1]),
+        ...[0, 1, 2].map((i) =>
+          torus(0.13 - i * 0.015, 0.016, WHIP, [-0.47 - i * 0.02, -0.7 - i * 0.03, 0.1 + i * 0.015], {
+            rotation: [0, 0.5, 0.2 * i],
+          }),
+        ),
+        capsule(0.012, 0.16, WHIP, [-0.66, -0.84, 0.13], { rotation: [0, 0, -1.1], animation: 'sway' }),
+        capsule(0.01, 0.1, WHIP, [-0.76, -0.8, 0.13], { rotation: [0, 0, 0.4], animation: 'sway' }),
         // 背中の矢筒。
         cylinder(0.07, 0.5, '#6A4A2E', [-0.16, 0.0, -0.24], { rotation: [0.15, 0, 0.45] }),
         ...[0, 1, 2].map((i) =>
