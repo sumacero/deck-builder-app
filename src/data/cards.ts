@@ -221,6 +221,17 @@ export const REWARD_CARDS: CardDefinition[] = [
     },
   },
   {
+    id: 'flurry-form',
+    name: '連閃の型',
+    type: 'power',
+    archetypes: ['strength', 'tempo'],
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'gainPower', power: 'flurry', amount: 2 }],
+    exhaust: true,
+    upgrade: { effects: [{ kind: 'gainPower', power: 'flurry', amount: 3 }] },
+  },
+  {
     id: 'whirlwind',
     name: '旋風',
     type: 'attack',

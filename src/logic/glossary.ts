@@ -70,6 +70,7 @@ const POWER_IDS: readonly PowerId[] = [
   'overgrowth',
   'verdure',
   'quickdraw',
+  'flurry',
 ];
 
 /** 状態のターン数（0 は表示しない）。 */
@@ -106,6 +107,8 @@ function traitViews(enemy: EnemyState): StatusView[] {
         return [{ keyword: 'ward', value: enemy.ward }];
       case 'vengeance':
         return [{ keyword: 'vengeance', value: trait.strength }];
+      case 'hitCap':
+        return [{ keyword: 'hitCap', value: trait.amount }];
       case 'resolute':
       case 'guardian':
       case 'deathThroes':

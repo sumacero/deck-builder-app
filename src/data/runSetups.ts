@@ -24,6 +24,7 @@ const HUNTER_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'twin-strike',
   'cleave',
   'whirlwind',
+  'flurry-form',
   'seeing-red',
   'trip',
   'exploit',

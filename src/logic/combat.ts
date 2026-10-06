@@ -381,11 +381,15 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
   const enemy = findEnemy(state, uid);
   if (!enemy || !isAlive(enemy)) return state;
   const weak = !kind.fixed && hasAdvantage(kind.attributes, enemy.attribute);
-  const amount = kind.fixed
+  const raw = kind.fixed
     ? hasStatus(enemy.statuses, 'intangible')
       ? Math.min(base, INTANGIBLE_CAP)
       : base
     : modifiedDamage(base, state.player.statuses, enemy.statuses, affinityMultiplier(kind.attributes, enemy.attribute));
+  // 鉄鱗は攻撃ヒットだけを頭打ちにする。宿り木などの固定ダメージは通す。
+  const cap = kind.fixed ? undefined : traitOf(enemy, 'hitCap')?.amount;
+  const scaled = cap !== undefined && raw > cap;
+  const amount = cap === undefined ? raw : Math.min(raw, cap);
   const result = holdUntilAwakened(enemy, applyDamage(enemy, amount));
   const recorded: CombatState = {
     ...updateEnemy(state, uid, () => result.target),
@@ -396,15 +400,18 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
       weakHits: state.stats.weakHits + (weak ? 1 : 0),
     },
   };
-  const hit = withEvent(withLog(recorded, formatHit(enemy.name, result) + (weak ? '（弱点）' : '')), {
-    kind: 'hit',
-    target: uid,
-    hpLoss: result.hpLoss,
-    blocked: result.blocked,
-    before: vitalsOf(enemy),
-    after: vitalsOf(result.target),
-    weak,
-  });
+  const hit = withEvent(
+    withLog(recorded, formatHit(enemy.name, result) + (weak ? '（弱点）' : '') + (scaled ? '（鉄鱗）' : '')),
+    {
+      kind: 'hit',
+      target: uid,
+      hpLoss: result.hpLoss,
+      blocked: result.blocked,
+      before: vitalsOf(enemy),
+      after: vitalsOf(result.target),
+      weak,
+    },
+  );
   if (isAlive(result.target)) {
     const threshold = awakeningThreshold(result.target);
     if (threshold !== null && result.target.hp <= threshold) return awakenEnemy(hit, uid);
@@ -636,10 +643,14 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       );
     case 'damage': {
       // 全体攻撃の連撃は、1 発目を全員に当ててから 2 発目へ。
+      // 連閃は 2 ヒット目から乗るので、1 ヒットだけの大剣には効かない。
       const amount = attackDamage(state, effect.amount, effect.strengthMultiplier);
+      const flurry = powerOf(state, 'flurry');
       let next = state;
-      for (let i = 0; i < (effect.hits ?? 1); i++) {
-        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), next);
+      const hits = effect.hits ?? 1;
+      for (let i = 0; i < hits; i++) {
+        const hitAmount = amount + (i > 0 ? flurry : 0);
+        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, hitAmount, hitKind), next);
       }
       return next;
     }

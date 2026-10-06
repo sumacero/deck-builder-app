@@ -55,6 +55,7 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
       };
     case 'resolute':
     case 'ward':
+    case 'hitCap':
     case 'guardian':
       return trait;
   }

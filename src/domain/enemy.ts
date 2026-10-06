@@ -44,6 +44,11 @@ export type EnemyTrait =
   | { kind: 'resolute' }
   /** 加護: 最初の charges 回のデバフ（延長を含む）を無効にする。 */
   | { kind: 'ward'; charges: number }
+  /**
+   * 鉄鱗: 攻撃 1 ヒットで受けるダメージの上限。超える一撃はここまで削られる。
+   * 多段攻撃はヒットごとにこの上限まで通る。固定ダメージ（宿り木・弱点看破など）は対象外。
+   */
+  | { kind: 'hitCap'; amount: number }
   /** かばう: 生きている間、仲間 1 体を狙った攻撃・デバフを代わりに受ける。 */
   | { kind: 'guardian' }
   /** 死に際: 倒れたときに action を行う。 */

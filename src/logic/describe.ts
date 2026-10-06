@@ -140,6 +140,7 @@ export const POWER_LABEL: Record<PowerId, string> = {
   overgrowth: '森の侵蝕',
   verdure: '命の芽吹き',
   quickdraw: '速射の構え',
+  flurry: '連閃',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -165,6 +166,8 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、敵に宿り木を与えるたびにブロック ${amount} を得る。`;
     case 'quickdraw':
       return `この戦闘中、カードを使うたびに HP が一番低い敵に ${amount} ダメージ。`;
+    case 'flurry':
+      return `この戦闘中、同じ攻撃の 2 ヒット目から 1 ヒットごとにダメージ +${amount}。`;
   }
 }
 
@@ -347,6 +350,8 @@ export function describeTrait(trait: EnemyTrait): string {
       return '不屈: 同じ種類のデバフは 1 回しか効かない（延長も無効）';
     case 'ward':
       return `加護: デバフを ${trait.charges} 回まで無効にする`;
+    case 'hitCap':
+      return `鉄鱗: 攻撃 1 ヒットのダメージは ${trait.amount} まで。多段攻撃はヒットごとに通る`;
     case 'guardian':
       return 'かばう: 仲間を狙った攻撃・デバフを代わりに受ける';
     case 'deathThroes':
