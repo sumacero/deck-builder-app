@@ -343,10 +343,8 @@ export function describeTrait(trait: EnemyTrait): string {
       return `仇討ち: 仲間が倒れるたびに筋力 +${trait.strength}`;
     case 'sleep':
       return `眠り: 最初の ${trait.turns} ターンは眠っている。目覚めると筋力 +${trait.wakeStrength}`;
-    case 'resolute':
-      return '不屈: 同じ種類のデバフは 1 回しか効かない（延長も無効）';
-    case 'ward':
-      return `加護: デバフを ${trait.charges} 回まで無効にする`;
+    case 'artifact':
+      return `アーティファクト: デバフを ${trait.charges} 回無効にする。使い切ると同じデバフも重ねられる`;
     case 'guardian':
       return 'かばう: 仲間を狙った攻撃・デバフを代わりに受ける';
     case 'deathThroes':

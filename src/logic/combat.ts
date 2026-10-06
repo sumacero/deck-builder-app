@@ -299,8 +299,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       asleep: traitOf(enemy, 'sleep')?.turns ?? 0,
       attribute: enemy.attribute ?? null,
       weaknesses: weaknessesOf(enemy.attribute),
-      ward: traitOf(enemy, 'ward')?.charges ?? 0,
-      debuffsTaken: [],
+      artifact: traitOf(enemy, 'artifact')?.charges ?? 0,
       awakened: false,
     })),
     drawPerTurn: setup.drawPerTurn,
@@ -511,15 +510,11 @@ function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
 function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns: number): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy) return state;
-  if (enemy.ward > 0) return consumeWard(state, enemy);
-  if (traitOf(enemy, 'resolute') && enemy.debuffsTaken.includes(status)) {
-    return callout(withLog(state, `${enemy.name}は不屈で${STATUS_LABEL[status]}を受け付けない`), uid, '無効！');
-  }
+  if (enemy.artifact > 0) return consumeArtifact(state, enemy);
   const debuffed = withLog(
     updateEnemy(state, uid, (e) => ({
       ...e,
       statuses: addStatus(e.statuses, status, turns),
-      debuffsTaken: e.debuffsTaken.includes(status) ? e.debuffsTaken : [...e.debuffsTaken, status],
     })),
     `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
   );
@@ -540,7 +535,7 @@ function bloomEnemySeed(state: CombatState, uid: EnemyUid): CombatState {
 function multiplyEnemyDebuff(state: CombatState, uid: EnemyUid, status: DebuffId, factor: number): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || !hasStatus(enemy.statuses, status)) return state;
-  if (enemy.ward > 0) return consumeWard(state, enemy);
+  if (enemy.artifact > 0) return consumeArtifact(state, enemy);
   const turns = statusTurns(enemy.statuses, status) * factor;
   return callout(
     withLog(
@@ -566,19 +561,22 @@ function weakestEnemy(state: CombatState): EnemyState | undefined {
 function extendEnemyDebuffs(state: CombatState, uid: EnemyUid, turns: number): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || !DEBUFF_IDS.some((id) => hasStatus(enemy.statuses, id))) return state;
-  if (enemy.ward > 0) return consumeWard(state, enemy);
-  if (traitOf(enemy, 'resolute')) {
-    return callout(withLog(state, `${enemy.name}は不屈でデバフを延ばせない`), uid, '無効！');
-  }
+  if (enemy.artifact > 0) return consumeArtifact(state, enemy);
   return withLog(
     updateEnemy(state, uid, (e) => ({ ...e, statuses: extendStatuses(e.statuses, DEBUFF_IDS, turns) })),
     `${enemy.name}のデバフのターン数 +${turns}`,
   );
 }
 
-function consumeWard(state: CombatState, enemy: EnemyState): CombatState {
-  const warded = updateEnemy(state, enemy.uid, (e) => ({ ...e, ward: e.ward - 1 }));
-  return callout(withLog(warded, `${enemy.name}の加護がデバフを防いだ`), enemy.uid, '無効！');
+/** アーティファクトを 1 消費して、今回のデバフ（付与・延長・倍化）を丸ごと無効にする。 */
+function consumeArtifact(state: CombatState, enemy: EnemyState): CombatState {
+  const left = enemy.artifact - 1;
+  const consumed = updateEnemy(state, enemy.uid, (e) => ({ ...e, artifact: left }));
+  return callout(
+    withLog(consumed, `${enemy.name}のアーティファクトがデバフを防いだ（残り ${left}）`),
+    enemy.uid,
+    '無効！',
+  );
 }
 
 function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitKind = NO_ATTRIBUTE): CombatState {

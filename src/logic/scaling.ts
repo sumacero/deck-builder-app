@@ -53,8 +53,7 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
         block: power(trait.block),
         moves: scaleMoves(trait.moves, scale),
       };
-    case 'resolute':
-    case 'ward':
+    case 'artifact':
     case 'guardian':
       return trait;
   }
