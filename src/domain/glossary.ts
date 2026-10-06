@@ -33,6 +33,7 @@ export type KeywordId =
   | 'thorns'
   | 'overgrowth'
   | 'verdure'
+  | 'quickdraw'
   | 'growth'
   | 'maxHp'
   | 'attribute'

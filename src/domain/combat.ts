@@ -36,6 +36,8 @@ export type PlayerState = Fighter & {
   attribute: Attribute;
   /** 魔法剣で、このターンのアタックに加わっている属性。 */
   enchant: Attribute[];
+  /** このターンに使ったカードの枚数（手数を数えるカード用）。 */
+  cardsThisTurn: number;
   /** この戦闘で、カードの効果（HP を払う）で失った HP の合計。 */
   selfHpLost: number;
   /** 秘奥義ゲージ。ARTE_GAUGE_MAX で秘奥義カードが手札に来る。 */

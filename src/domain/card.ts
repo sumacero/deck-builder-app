@@ -6,9 +6,9 @@ export type CardType = 'attack' | 'skill' | 'power' | 'status';
 
 /**
  * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
- * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突く）。
+ * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突く）/ 手数（軽いカードを次々使う）。
  */
-export type Archetype = 'debuff' | 'block' | 'strength' | 'sacrifice' | 'growth' | 'element';
+export type Archetype = 'debuff' | 'block' | 'strength' | 'sacrifice' | 'growth' | 'element' | 'tempo';
 
 /** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
 export type CardTarget = EffectTarget;

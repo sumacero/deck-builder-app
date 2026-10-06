@@ -3,7 +3,8 @@ import { DEFEND, STRIKE } from './cards';
 
 /**
  * 翠風のリーネ（草属性）のためのカード。草属性なので、リーネは戦闘報酬で、ほかのエージェントはショップでだけ手に入る。
- * 軸は 3 つ: 宿り木（毎ターン削る）/ 茨（受けるほど返す）/ 芽吹き（使うほど育つ）。
+ * リーネの軸は 3 つ: 弓（軽いカードを次々使う手数）/ 宿り木（毎ターン削る）/ ムチ（敵全体と連打）。
+ * 茨と守りのカードはリーネの報酬・ショップには出さない（守りで勝つキャラにしない）。ほかのエージェントがショップで買える。
  */
 
 export const SEED_ARROW: CardDefinition = {
@@ -209,6 +210,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     name: '木漏れ日',
     type: 'skill',
     attribute: 'grass',
+    archetypes: ['tempo'],
     cost: 0,
     target: 'self',
     effects: [
@@ -229,7 +231,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     name: '疾風の連矢',
     type: 'attack',
     attribute: 'grass',
-    archetypes: ['strength', 'element'],
+    archetypes: ['tempo', 'strength'],
     cost: 1,
     target: 'enemy',
     effects: [{ kind: 'damage', amount: 3, hits: 3 }],
@@ -252,25 +254,121 @@ export const VERDANT_CARDS: CardDefinition[] = [
     },
   },
 
-  // --- 狩人の弓とムチ: 戦士のカードの代わりに、狙い撃ちと集中で火力を伸ばす ---
+  // --- 弓: 軽いカードを次々に使い、使った枚数で押す ---
+  {
+    id: 'quick-shot',
+    name: '速射',
+    type: 'attack',
+    attribute: 'grass',
+    archetypes: ['tempo'],
+    cost: 0,
+    target: 'enemy',
+    effects: [
+      { kind: 'damage', amount: 3 },
+      { kind: 'draw', amount: 1 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'damage', amount: 5 },
+        { kind: 'draw', amount: 1 },
+      ],
+    },
+  },
+  {
+    id: 'nocking-rhythm',
+    name: '矢継ぎ早',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['tempo'],
+    cost: 1,
+    target: 'self',
+    effects: [
+      { kind: 'gainEnergy', amount: 1 },
+      { kind: 'draw', amount: 2 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'gainEnergy', amount: 1 },
+        { kind: 'draw', amount: 3 },
+      ],
+    },
+    motion: 'focus',
+  },
+  {
+    id: 'quickdraw-stance',
+    name: '速射の構え',
+    type: 'power',
+    attribute: 'grass',
+    archetypes: ['tempo'],
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'gainPower', power: 'quickdraw', amount: 2 }],
+    exhaust: true,
+    upgrade: { effects: [{ kind: 'gainPower', power: 'quickdraw', amount: 3 }] },
+  },
+  {
+    id: 'thousand-arrows',
+    name: '千本矢',
+    type: 'attack',
+    attribute: 'grass',
+    archetypes: ['tempo'],
+    cost: 1,
+    target: 'enemy',
+    effects: [{ kind: 'damagePerCardPlayed', base: 3, perCard: 3 }],
+    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 4, perCard: 4 }] },
+    motion: 'heavy',
+  },
+
+  // --- 狩人の弓とムチ: ムチは敵全体の薙ぎ払いと連打、弓は狙い撃ちと集中 ---
   {
     id: 'vine-lash',
-    name: '蔓ムチの一撃',
+    name: '蔓ムチの薙ぎ払い',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['debuff'],
     cost: 1,
-    target: 'enemy',
+    target: 'allEnemies',
     effects: [
-      { kind: 'damage', amount: 7 },
+      { kind: 'damage', amount: 5 },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 9 },
+        { kind: 'damage', amount: 7 },
         { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
       ],
     },
+  },
+  {
+    id: 'thorn-whip',
+    name: '茨鞭の種撒き',
+    type: 'attack',
+    attribute: 'grass',
+    archetypes: ['debuff'],
+    cost: 1,
+    target: 'allEnemies',
+    effects: [
+      { kind: 'damage', amount: 4 },
+      { kind: 'applyDebuff', status: 'seed', turns: 2 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'damage', amount: 6 },
+        { kind: 'applyDebuff', status: 'seed', turns: 3 },
+      ],
+    },
+  },
+  {
+    id: 'whip-flurry',
+    name: '鞭の乱れ打ち',
+    type: 'attack',
+    attribute: 'grass',
+    archetypes: ['strength', 'tempo'],
+    cost: 1,
+    target: 'enemy',
+    effects: [{ kind: 'damage', amount: 2, hits: 4 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 3, hits: 4 }] },
+    motion: 'flurry',
   },
   {
     id: 'vital-shot',
@@ -313,26 +411,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     target: 'allEnemies',
     effects: [{ kind: 'damage', amount: 5, hits: 2 }],
     upgrade: { effects: [{ kind: 'damage', amount: 7, hits: 2 }] },
-  },
-  {
-    id: 'whip-ward',
-    name: '鞭の結界',
-    type: 'skill',
-    attribute: 'grass',
-    archetypes: ['block', 'debuff'],
-    cost: 1,
-    target: 'allEnemies',
-    effects: [
-      { kind: 'block', amount: 7 },
-      { kind: 'applyDebuff', status: 'weak', turns: 1 },
-    ],
-    upgrade: {
-      effects: [
-        { kind: 'block', amount: 9 },
-        { kind: 'applyDebuff', status: 'weak', turns: 2 },
-      ],
-    },
-    motion: 'guard',
+    motion: 'flurry',
   },
   {
     id: 'hunters-focus',

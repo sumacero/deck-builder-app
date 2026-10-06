@@ -28,6 +28,7 @@ export const ARCHETYPE_LABEL: Record<Archetype, string> = {
   sacrifice: '自傷軸',
   growth: '成長軸',
   element: '属性軸',
+  tempo: '手数軸',
 };
 
 export const CARD_TYPE_LABEL: Record<CardType, string> = {
@@ -95,6 +96,8 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}${STATUS_LABEL[effect.status]}を ${effect.factor} 倍にする。`;
     case 'bloomSeed':
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}宿り木を今すぐ発動させる（数値は減らない）。`;
+    case 'damagePerCardPlayed':
+      return `${effect.base} ダメージ。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
   }
 }
 
@@ -136,6 +139,7 @@ export const POWER_LABEL: Record<PowerId, string> = {
   thorns: '茨の鎧',
   overgrowth: '森の侵蝕',
   verdure: '命の芽吹き',
+  quickdraw: '速射の構え',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -159,6 +163,8 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、ターンの始めに敵全体に宿り木 ${amount} を与える。`;
     case 'verdure':
       return `この戦闘中、敵に宿り木を与えるたびにブロック ${amount} を得る。`;
+    case 'quickdraw':
+      return `この戦闘中、カードを使うたびに HP が一番低い敵に ${amount} ダメージ。`;
   }
 }
 

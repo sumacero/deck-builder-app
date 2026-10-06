@@ -54,6 +54,8 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return [effect.status, 'statusTurns'];
     case 'bloomSeed':
       return ['seed'];
+    case 'damagePerCardPlayed':
+      return ['damage'];
   }
 }
 
@@ -67,6 +69,7 @@ const POWER_IDS: readonly PowerId[] = [
   'thorns',
   'overgrowth',
   'verdure',
+  'quickdraw',
 ];
 
 /** 状態のターン数（0 は表示しない）。 */

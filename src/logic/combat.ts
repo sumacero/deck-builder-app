@@ -207,6 +207,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
       strength: state.player.strength + demonForm,
       tempStrength: 0,
       enchant: [],
+      cardsThisTurn: 0,
       hindrance,
       pendingHindrance: NO_HINDRANCE,
       statuses: turn > 1 ? tickStatuses(state.player.statuses) : state.player.statuses,
@@ -273,6 +274,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       powers: {},
       attribute: setup.agent.attribute,
       enchant: [],
+      cardsThisTurn: 0,
       selfHpLost: 0,
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
@@ -748,6 +750,10 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       );
     case 'bloomSeed':
       return aimedUids(state, aim).reduce(bloomEnemySeed, state);
+    case 'damagePerCardPlayed': {
+      const amount = attackDamage(state, effect.base + state.player.cardsThisTurn * effect.perCard);
+      return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), state);
+    }
   }
 }
 
@@ -897,8 +903,16 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const resolved = applyEffects(guarded, card.effects, aim, { attributes: playedAttributes(state, card) });
   const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
   const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
-  const weakHit = grown.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
-  return settle(grantArteIfReady(recordPlay(grown, card, weakHit)));
+  const shot = quickdrawShot(grown, powerOf(state, 'quickdraw'));
+  const weakHit = shot.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
+  const counted = { ...shot, player: { ...shot.player, cardsThisTurn: shot.player.cardsThisTurn + 1 } };
+  return settle(grantArteIfReady(recordPlay(counted, card, weakHit)));
+}
+
+/** 速射の構え: カードを使うたびに HP が一番低い敵へ追撃。構えを張ったカード自身では撃たない。 */
+function quickdrawShot(state: CombatState, amount: number): CombatState {
+  const target = amount > 0 ? weakestEnemy(state) : undefined;
+  return target ? hitEnemy(state, target.uid, amount, FIXED_HIT) : state;
 }
 
 /** カードの属性に、魔法剣で加わった属性を足したもの（アタックのみ）。 */

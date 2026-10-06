@@ -26,6 +26,7 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - thorns（茨の鎧）: 敵の攻撃を 1 回受けるたびに、その敵に N ダメージ
  * - overgrowth（森の侵蝕）: ターンの始めに、敵全体に宿り木 N
  * - verdure（命の芽吹き）: 敵に宿り木を与えるたびに、ブロック +N
+ * - quickdraw（速射の構え）: カードを使うたびに、HP が一番低い敵に N ダメージ
  */
 export type PowerId =
   | 'barricade'
@@ -36,6 +37,7 @@ export type PowerId =
   | 'feelNoPain'
   | 'thorns'
   | 'overgrowth'
-  | 'verdure';
+  | 'verdure'
+  | 'quickdraw';
 
 export type Powers = Partial<Record<PowerId, number>>;

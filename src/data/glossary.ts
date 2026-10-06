@@ -222,6 +222,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '🍃',
     description: '敵に宿り木を与えるたびに、その数値の分だけブロックを得る（敵全体なら敵の数だけ）。',
   },
+  quickdraw: {
+    id: 'quickdraw',
+    name: '速射の構え',
+    icon: '🏹',
+    description: 'カードを使うたびに、HP が一番低い敵にその数値の分だけダメージを与える（筋力や弱体の影響を受けない）。',
+  },
   growth: {
     id: 'growth',
     name: '成長',
