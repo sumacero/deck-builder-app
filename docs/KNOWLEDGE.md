@@ -102,7 +102,7 @@
   （PowerShell では `&&` / `||` が使えない点に注意。bash -lc の中なら使える）
 - Node.js v20（nodesource）、パッケージマネージャーは npm（`package-lock.json`）。bun は未使用。
 - 実機確認: Android 端末の Expo Go。`npx expo start --tunnel` で起動（WSL のネットワーク分離のため tunnel を使用。`@expo/ngrok` はグローバルにインストール済み）。
-- **スマホ（Android）から指示する（2026-10-06）**: Cursor の **My Machines**（自分の PC で動くクラウドエージェント）。作業はこの PC のフォルダで直接行われる。
+- **スマホ（Android）から指示する（2026-10-06）**: Cursor の **My Machines**（自分の PC で動くクラウドエージェント）。作業はこの PC のフォルダで直接行われる。全体図と仕組みは `docs/DEV_ENVIRONMENT.md`。
   - Cursor CLI を `~/.local/bin/agent` に導入（PATH は `~/.bashrc`）。`agent login` 済み（`agent status` で確認）。
   - ワーカー起動: `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`。動かしている間だけ受け付ける。Windows がスリープすると止まる。
   - スマホ: Chrome で https://cursor.com/agents → メニューの「アプリをインストール」→ 実行場所に My Machines の `deck-pc` を選んで指示。
