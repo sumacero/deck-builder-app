@@ -28,6 +28,7 @@ import {
   hasAdvantage,
   weaknessesOf,
 } from './attribute';
+import { arrowDamage, forgeArrow } from './arrows';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import { SLEEP_MOVE, traitOf } from './enemyTraits';
@@ -277,6 +278,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       enchant: [],
       cardsThisTurn: 0,
       lashSeedThisTurn: 0,
+      arrowsSpent: 0,
+      arrowsForged: 0,
       selfHpLost: 0,
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
@@ -706,7 +709,8 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       );
     case 'gainPower': {
       const powers = { ...state.player.powers, [effect.power]: powerOf(state, effect.power) + effect.amount };
-      return withLog({ ...state, player: { ...state.player, powers } }, `${POWER_LABEL[effect.power]}を得た`);
+      const powered = withLog({ ...state, player: { ...state.player, powers } }, `${POWER_LABEL[effect.power]}を得た`);
+      return effect.power === 'arrowEdge' || effect.power === 'arrowSpread' ? reforgeArrows(powered) : powered;
     }
     case 'damagePerDebuff':
       return aimedUids(state, aim).reduce((current, uid) => {
@@ -729,6 +733,18 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         }));
         return callout(cleared, uid, `烙印 ${turns}`);
       }, state);
+    case 'addArrows':
+      return addArrows(state, effect.amount);
+    case 'volleySpentArrows': {
+      const hits = state.player.arrowsSpent;
+      if (hits === 0) return withLog(state, 'まだ矢を放っていない');
+      const amount = attackDamage(state, arrowDamage(state.player.powers));
+      let next = state;
+      for (let i = 0; i < hits; i++) {
+        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), next);
+      }
+      return next;
+    }
     case 'detonateSeed':
       return aimedUids(state, aim).reduce((current, uid) => {
         const enemy = findEnemy(current, uid);
@@ -952,7 +968,14 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
   const shot = quickdrawShot(lashed, powerOf(state, 'quickdraw'));
   const weakHit = shot.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
-  const counted = { ...shot, player: { ...shot.player, cardsThisTurn: shot.player.cardsThisTurn + 1 } };
+  const counted = {
+    ...shot,
+    player: {
+      ...shot.player,
+      cardsThisTurn: shot.player.cardsThisTurn + 1,
+      arrowsSpent: shot.player.arrowsSpent + (card.arrow ? 1 : 0),
+    },
+  };
   return settle(grantArteIfReady(recordPlay(counted, card, weakHit)));
 }
 
@@ -1279,12 +1302,16 @@ function discardHand(state: CombatState): CombatState {
     if (!card.turnEndInHand) return current;
     return applyEffects(withLog(current, `手札の${card.name}`), card.turnEndInHand, 'all');
   }, state);
-  const vanishing = afterEffects.hand.filter(({ card }) => card.ethereal);
-  const kept = afterEffects.hand.filter(({ card }) => !card.ethereal);
+  const retainArrows = powerOf(afterEffects, 'arrowRetain') > 0;
+  const isRetained = ({ card }: CardInstance) => retainArrows && card.arrow === true;
+  const retained = afterEffects.hand.filter(isRetained);
+  const rest = afterEffects.hand.filter((c) => !isRetained(c));
+  const vanishing = rest.filter(({ card }) => card.ethereal);
+  const kept = rest.filter(({ card }) => !card.ethereal);
   return onExhausted(
     {
       ...afterEffects,
-      hand: [],
+      hand: retained,
       discardPile: [...afterEffects.discardPile, ...kept],
       exhaustPile: [...afterEffects.exhaustPile, ...vanishing],
     },
@@ -1304,7 +1331,44 @@ export function endTurn(state: CombatState): CombatState {
   const afterEnemy = runEnemyTurn(discarded);
   if (afterEnemy.status !== 'playerTurn') return afterEnemy;
   const started = triggerRelics(startPlayerTurn(afterEnemy), 'turnStart');
-  return finishIfWon(spreadOvergrowth(started));
+  return finishIfWon(spreadOvergrowth(supplyArrows(started)));
+}
+
+/** 無限の矢筒: ターンの始めに矢を手札へ。 */
+function supplyArrows(state: CombatState): CombatState {
+  const amount = powerOf(state, 'arrowSupply');
+  return amount > 0 ? addArrows(withLog(state, '無限の矢筒から矢を取り出した'), amount) : state;
+}
+
+/** 矢を手札に加える。手札がいっぱいなら残りは捨て札へ。 */
+function addArrows(state: CombatState, amount: number): CombatState {
+  const arrow = forgeArrow(state.player.powers);
+  const made: CardInstance[] = Array.from({ length: amount }, (_, i) => ({
+    instanceId: `arrow-${state.player.arrowsForged + i}`,
+    card: arrow,
+  }));
+  const room = Math.max(0, MAX_HAND_SIZE - state.hand.length);
+  return withLog(
+    {
+      ...state,
+      hand: [...state.hand, ...made.slice(0, room)],
+      discardPile: [...state.discardPile, ...made.slice(room)],
+      player: { ...state.player, arrowsForged: state.player.arrowsForged + amount },
+    },
+    `矢を ${amount} 本作った`,
+  );
+}
+
+/** 矢のパワーが変わったら、手札・山札・捨て札の矢を今のパワーで作り直す。 */
+function reforgeArrows(state: CombatState): CombatState {
+  const arrow = forgeArrow(state.player.powers);
+  const reforge = (pile: CardInstance[]) => pile.map((c) => (c.card.arrow ? { ...c, card: arrow } : c));
+  return {
+    ...state,
+    hand: reforge(state.hand),
+    drawPile: reforge(state.drawPile),
+    discardPile: reforge(state.discardPile),
+  };
 }
 
 /** 森の侵蝕: ターンの始めに敵全体へ宿り木。 */

@@ -87,6 +87,8 @@ export type CardDefinition = {
   archetypes?: Archetype[];
   /** ムチで打つアタック。「ムチで攻撃するたびに宿り木」（宿り木の蔓など）が乗る。 */
   whip?: boolean;
+  /** 弓の「矢」（0 コストで廃棄されるアタック）。戦闘中にカードの効果で作られ、矢のパワーで強くなる。 */
+  arrow?: boolean;
   /** これまでに成長した回数（効果の数値には反映済み）。 */
   timesGrown?: number;
 };

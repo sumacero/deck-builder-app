@@ -36,14 +36,24 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
 
 /**
- * 宿り木を直接与えるカードのうち、リーネに出さないもの。宿り木は「ムチで打つたびに植える」（蔓の構え・宿り木の蔓）で
- * 増やす形にし、直接与えるカードは宿り木の矢・種子散布・森の侵蝕・茨鞭の種撒きの 4 種に絞った。カイルはショップで買える。
+ * 草属性だが、リーネには出さないカード（カイルはショップで買える）。
+ * - 宿り木を直接与えるカード: 宿り木は「ムチで打つたびに植える」（蔓の構え・宿り木の蔓）で増やす形にし、
+ *   直接与えるカードは宿り木の矢・種子散布・森の侵蝕・茨鞭の種撒きの 4 種に絞った。
+ * - 以前の弓のカード: 弓は「矢」（0 コストで廃棄されるアタックを作って放つ）の軸に作り替えた。
  */
-const HUNTER_EXCLUDED_SEED_CARD_IDS: ReadonlySet<string> = new Set([
+const HUNTER_EXCLUDED_CARD_IDS: ReadonlySet<string> = new Set([
   'vine-bind',
   'spore-cloud',
   'deep-roots',
   'hunters-mark',
+  'quick-shot',
+  'nocking-rhythm',
+  'gale-arrows',
+  'sunbeam',
+  'wind-read',
+  'double-shot',
+  'vital-shot',
+  'aimed-shot',
 ]);
 
 /**
@@ -53,7 +63,7 @@ const HUNTER_EXCLUDED_SEED_CARD_IDS: ReadonlySet<string> = new Set([
 const HUNTER_REWARD_CARDS = [
   ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),
   ...VERDANT_CARDS,
-].filter((card) => !isBlockAxis(card) && !HUNTER_EXCLUDED_SEED_CARD_IDS.has(card.id));
+].filter((card) => !isBlockAxis(card) && !HUNTER_EXCLUDED_CARD_IDS.has(card.id));
 
 /** レリックはカイルの初期レリック 1 つ、ポーションは 3 つ持って始める。 */
 export const STANDARD_RUN: RunSetup = {

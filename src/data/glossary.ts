@@ -254,6 +254,37 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '〰️',
     description: 'ムチで打つアタック。宿り木の蔓・蔓の構えがあると、当てた敵に宿り木を与える。',
   },
+  arrow: {
+    id: 'arrow',
+    name: '矢',
+    icon: '🏹',
+    description:
+      '0 コストで 4 ダメージを与え、使うと廃棄されるアタック。カードの効果で戦闘中に手札へ作られ、戦闘が終わると消える。鋭き鏃・散り矢の構えなどのパワーで強くなる。',
+  },
+  arrowEdge: {
+    id: 'arrowEdge',
+    name: '鋭き鏃',
+    icon: '🗡️',
+    description: '矢のダメージがその数値だけ増える。手札・山札・捨て札の矢にもすぐ反映される。',
+  },
+  arrowSpread: {
+    id: 'arrowSpread',
+    name: '散り矢の構え',
+    icon: '🎆',
+    description: '矢が敵全体に当たるようになる（対象を選ばず、上にスワイプするだけで使える）。',
+  },
+  arrowRetain: {
+    id: 'arrowRetain',
+    name: '矢筒の備え',
+    icon: '🎒',
+    description: 'ターン終了時、手札の矢を捨てずに残す。次のターンにまとめて放てる。',
+  },
+  arrowSupply: {
+    id: 'arrowSupply',
+    name: '無限の矢筒',
+    icon: '♾️',
+    description: '自分のターンの始めに、その数値の本数だけ矢を手札に加える。',
+  },
   growth: {
     id: 'growth',
     name: '成長',

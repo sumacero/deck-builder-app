@@ -84,6 +84,10 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${effect.base} ダメージ。敵のデバフ 1 ターンにつき +${effect.perTurn}。`;
     case 'detonateDebuffs':
       return `敵のデバフをすべて消し、消したターン数 × ${effect.perTurn} のダメージを与える。`;
+    case 'addArrows':
+      return `矢 ${effect.amount} 本を手札に加える。`;
+    case 'volleySpentArrows':
+      return `${target === 'allEnemies' ? '敵全体に、' : ''}この戦闘で廃棄した矢の数だけ、矢 1 本分のダメージを与える。`;
     case 'detonateSeed':
       return `${target === 'allEnemies' ? '敵全体に、' : ''}宿り木 × ${effect.perTurn} のダメージを与え、宿り木を消す。`;
     case 'ifTargetHas':
@@ -146,6 +150,10 @@ export const POWER_LABEL: Record<PowerId, string> = {
   quickdraw: '速射の構え',
   flurry: '連閃',
   lashSeed: '宿り木の蔓',
+  arrowEdge: '鋭き鏃',
+  arrowSpread: '散り矢の構え',
+  arrowRetain: '矢筒の備え',
+  arrowSupply: '無限の矢筒',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -175,6 +183,14 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、同じ攻撃の 2 ヒット目から 1 ヒットごとにダメージ +${amount}。`;
     case 'lashSeed':
       return `この戦闘中、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${amount} を与える。`;
+    case 'arrowEdge':
+      return `この戦闘中、矢のダメージ +${amount}。`;
+    case 'arrowSpread':
+      return 'この戦闘中、矢が敵全体に当たる。';
+    case 'arrowRetain':
+      return 'この戦闘中、ターン終了時に手札の矢を捨てずに残す。';
+    case 'arrowSupply':
+      return `この戦闘中、ターンの始めに矢 ${amount} 本を手札に加える。`;
   }
 }
 

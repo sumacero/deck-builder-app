@@ -52,7 +52,11 @@ export type Effect =
   /** このターン、ムチの攻撃が 1 回当たるたびにその敵へ宿り木 amount。 */
   | { kind: 'gainLashSeed'; amount: number }
   /** 狙った敵の宿り木 × perTurn のダメージを与え、その宿り木を消す。 */
-  | { kind: 'detonateSeed'; perTurn: number };
+  | { kind: 'detonateSeed'; perTurn: number }
+  /** 矢を amount 本、手札に加える（手札がいっぱいなら捨て札へ）。 */
+  | { kind: 'addArrows'; amount: number }
+  /** この戦闘で廃棄した矢の本数だけ、矢 1 本分のダメージを与える。 */
+  | { kind: 'volleySpentArrows' };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

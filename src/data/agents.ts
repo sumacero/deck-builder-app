@@ -20,7 +20,7 @@ export const VERDANT_ARCHER: AgentDefinition = {
   icon: '🌿',
   title: '弓とムチの森の狩人',
   playStyle:
-    '軽い矢を次々に放って手数で押し、宿り木の種で毎ターンじわじわ削る。腰のムチは敵全体の薙ぎ払いと連打。守りは苦手で、攻め続けて勝つ。',
+    '宿り木の種で毎ターンじわじわ削るのが基本。腰のムチで打つたびに宿り木を植え、弓は 0 コストの矢を次々に作って放つ。守りは苦手で、攻め続けて勝つ。',
   attribute: 'grass',
   mysticArte: THOUSAND_YEAR_TREE,
 };

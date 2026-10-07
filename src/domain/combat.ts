@@ -40,6 +40,10 @@ export type PlayerState = Fighter & {
   cardsThisTurn: number;
   /** このターンだけ、ムチの攻撃が 1 回当たるたびにその敵へ与える宿り木（パワーの宿り木の蔓とは別に足す）。 */
   lashSeedThisTurn: number;
+  /** この戦闘で使った（廃棄した）矢の本数。 */
+  arrowsSpent: number;
+  /** この戦闘で作った矢の本数（矢の instanceId を重ならないように振るため）。 */
+  arrowsForged: number;
   /** この戦闘で、カードの効果（HP を払う）で失った HP の合計。 */
   selfHpLost: number;
   /** 秘奥義ゲージ。ARTE_GAUGE_MAX で秘奥義カードが手札に来る。 */

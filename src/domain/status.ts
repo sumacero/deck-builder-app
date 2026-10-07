@@ -29,6 +29,10 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - quickdraw（速射の構え）: カードを使うたびに、HP が一番低い敵に N ダメージ
  * - flurry（連閃）: 同じ攻撃の 2 ヒット目以降、1 ヒットごとにダメージ +N
  * - lashSeed（宿り木の蔓）: ムチの攻撃が 1 回当たるたびに、その敵に宿り木 N
+ * - arrowEdge（鋭き鏃）: 矢のダメージ +N
+ * - arrowSpread（散り矢の構え）: 矢が敵全体に当たる
+ * - arrowRetain（矢筒の備え）: ターン終了時、手札の矢を捨てずに残す
+ * - arrowSupply（無限の矢筒）: ターンの始めに矢 N 本を手札に加える
  */
 export type PowerId =
   | 'barricade'
@@ -42,6 +46,10 @@ export type PowerId =
   | 'verdure'
   | 'quickdraw'
   | 'flurry'
-  | 'lashSeed';
+  | 'lashSeed'
+  | 'arrowEdge'
+  | 'arrowSpread'
+  | 'arrowRetain'
+  | 'arrowSupply';
 
 export type Powers = Partial<Record<PowerId, number>>;

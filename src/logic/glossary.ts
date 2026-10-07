@@ -38,7 +38,11 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'extendBuffs':
       return ['retainBlock', 'blazing', 'statusTurns'];
     case 'gainPower':
-      return effect.power === 'lashSeed' ? ['lashSeed', 'whip', 'seed'] : [effect.power];
+      if (effect.power === 'lashSeed') return ['lashSeed', 'whip', 'seed'];
+      return ARROW_POWERS.includes(effect.power) ? [effect.power, 'arrow'] : [effect.power];
+    case 'addArrows':
+    case 'volleySpentArrows':
+      return ['arrow', 'damage'];
     case 'damagePerDebuff':
     case 'detonateDebuffs':
       return ['damage', 'vulnerable', 'weak', 'statusTurns'];
@@ -76,7 +80,13 @@ const POWER_IDS: readonly PowerId[] = [
   'quickdraw',
   'flurry',
   'lashSeed',
+  'arrowEdge',
+  'arrowSpread',
+  'arrowRetain',
+  'arrowSupply',
 ];
+
+const ARROW_POWERS: readonly PowerId[] = ['arrowEdge', 'arrowSpread', 'arrowRetain', 'arrowSupply'];
 
 /** 状態のターン数（0 は表示しない）。 */
 function statusViews(statuses: Statuses, ids: readonly StatusId[]): StatusView[] {
@@ -91,6 +101,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     card.type,
     ...(card.mysticArte ? (['mysticArte'] as const) : []),
     ...(card.whip ? (['whip'] as const) : []),
+    ...(card.arrow ? (['arrow'] as const) : []),
     ...(cardAttributes(card).length > 0 ? (['attribute', 'weakness'] as const) : []),
     ...(card.target === 'allEnemies' ? (['areaAttack'] as const) : []),
     ...card.effects.flatMap(keywordsForEffect),
