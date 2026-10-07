@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent } from '../../../domain/combat';
 import { useCombatEvents } from '../../../hooks/useCombatEvents';
@@ -13,8 +13,13 @@ type HandFullEffectProps = {
 
 type Notice = { id: number; blocked: number };
 
+/**
+ * 手札の揺れは JS 側で動かす。
+ * ネイティブ駆動にすると、カードの絵が多い手札を 1 枚の絵として写し取り、
+ * 揺れのあと手札全体が透明なまま残ることがある。
+ */
 const timing = (value: Animated.Value, toValue: number, duration: number) =>
-  Animated.timing(value, { toValue, duration, useNativeDriver: true });
+  Animated.timing(value, { toValue, duration, useNativeDriver: false });
 
 /**
  * 手札を包み、上限で引けなかったときに手札を揺らして「手札がいっぱい！」の帯を出す。
@@ -24,21 +29,29 @@ export function HandFullEffect({ events, handSize, children }: HandFullEffectPro
   const [shakeX] = useState(() => new Animated.Value(0));
   const [banner] = useState(() => new Animated.Value(0));
   const [notice, setNotice] = useState<Notice | null>(null);
+  const running = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => () => running.current?.stop(), []);
 
   useCombatEvents(events, (event) => {
     if (event.kind !== 'handFull') return;
+    running.current?.stop();
+    shakeX.setValue(0);
     setNotice({ id: event.id, blocked: event.blocked });
     banner.setValue(0);
-    Animated.parallel([
+    const animation = Animated.parallel([
       Animated.sequence(
         [1, -1, 0.7, -0.7, 0.4, -0.4, 0].map((k) => timing(shakeX, k * 10, MOTION.shakeStep)),
       ),
       Animated.sequence([
-        Animated.spring(banner, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }),
+        Animated.spring(banner, { toValue: 1, friction: 5, tension: 140, useNativeDriver: false }),
         Animated.delay(MOTION.handFullHold),
         timing(banner, 0, MOTION.flashOut * 2),
       ]),
-    ]).start(({ finished }) => {
+    ]);
+    running.current = animation;
+    animation.start(({ finished }) => {
+      shakeX.setValue(0);
       if (finished) setNotice((current) => (current?.id === event.id ? null : current));
     });
   });
@@ -48,7 +61,9 @@ export function HandFullEffect({ events, handSize, children }: HandFullEffectPro
 
   return (
     <View>
-      <Animated.View style={{ transform: [{ translateX: shakeX }] }}>{children}</Animated.View>
+      <Animated.View collapsable={false} style={{ opacity: 1, transform: [{ translateX: shakeX }] }}>
+        {children}
+      </Animated.View>
       {full && (
         <View style={styles.counter}>
           <Text style={styles.counterText}>

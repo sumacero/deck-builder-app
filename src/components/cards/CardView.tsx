@@ -116,7 +116,6 @@ export function CardView({
           scaled?.card,
           { borderColor: selected ? COLORS.gold : frameColor },
           selected && styles.selected,
-          dimmed && styles.dimmed,
           pressed && onPress && styles.pressed,
         ]}
       >
@@ -179,6 +178,7 @@ export function CardView({
             <Text style={styles.countText}>×{count}</Text>
           </View>
         )}
+        {dimmed && <View pointerEvents="none" style={styles.dim} />}
       </Pressable>
       {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
     </>
@@ -205,7 +205,16 @@ const styles = StyleSheet.create({
   },
   wide: { width: WIDE_WIDTH, minHeight: 168 },
   selected: { borderWidth: 3 },
-  dimmed: { opacity: 0.4 },
+  /** はみ出すコストの宝石まで覆う。カードの不透明度は下げない。 */
+  dim: {
+    position: 'absolute',
+    top: -SPACING.sm,
+    right: -SPACING.xs,
+    bottom: 0,
+    left: -SPACING.sm,
+    backgroundColor: COLORS.cardDim,
+    borderRadius: RADIUS.md,
+  },
   pressed: { transform: [{ translateY: -8 }] },
   art: {
     height: artHeight(BASE_WIDTH),

@@ -11,6 +11,7 @@ import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardPickerModal } from '../cards/CardPickerModal';
 import { DeckButton } from '../cards/DeckButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { GoldBadge } from '../run/GoldBadge';
 import { ShopCardOffer } from './ShopCardOffer';
@@ -50,6 +51,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
           <View style={styles.headerRight}>
             <GoldBadge gold={run.gold} />
             <DeckButton deck={run.deck} />
+            <SettingsButton />
           </View>
         </View>
       </View>

@@ -1,19 +1,31 @@
 import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Platform } from 'react-native';
-import { outputVolume } from './gain';
+import { getAudioSettings, subscribeAudioSettings } from './audioSettings';
+import { outputVolume } from './levels';
 import { SOUND_MASTER_VOLUME, type SoundId, SOUNDS } from './sounds';
 
 const players = new Map<SoundId, AudioPlayer>();
 let preparing: Promise<void> | null = null;
 
+/** 各音の大きさ × 効果音全体のバランス × 設定（50 で今までどおり）。 */
+function soundVolume(id: SoundId): number {
+  return outputVolume(SOUNDS[id].volume * SOUND_MASTER_VOLUME, getAudioSettings().se);
+}
+
 function playerFor(id: SoundId): AudioPlayer {
   const existing = players.get(id);
   if (existing) return existing;
   const player = createAudioPlayer(SOUNDS[id].source);
-  player.volume = outputVolume(SOUNDS[id].volume * SOUND_MASTER_VOLUME);
+  player.volume = soundVolume(id);
   players.set(id, player);
   return player;
 }
+
+subscribeAudioSettings(() => {
+  players.forEach((player, id) => {
+    player.volume = soundVolume(id);
+  });
+});
 
 let configuring: Promise<void> | null = null;
 

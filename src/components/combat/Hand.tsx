@@ -61,7 +61,7 @@ export function Hand({
           cardWidth > 0 && (
             <View style={styles.row}>
               {cards.map(({ instanceId, card }, i) => (
-                <View key={instanceId} style={i > 0 && { marginLeft: spacing }}>
+                <View key={instanceId} style={[i > 0 && { marginLeft: spacing }, { zIndex: i }]}>
                   <DraggableCard
                     instanceId={instanceId}
                     card={card}

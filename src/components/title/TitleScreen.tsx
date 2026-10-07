@@ -10,6 +10,7 @@ import { SceneBackground } from '../backgrounds/SceneBackground';
 import { ActorFigure } from '../combat/model3d/ActorFigure';
 import { AGENT_MODELS } from '../combat/model3d/actorModels';
 import { GalleryButton } from '../gallery/GalleryButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { ScreenScroll } from '../layout/ScreenScroll';
 
 type TitleScreenProps = {
@@ -79,6 +80,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
             </Pressable>
           </Animated.View>
           <GalleryButton large />
+          <SettingsButton large />
         </Animated.View>
       </ScreenScroll>
     </SceneBackground>

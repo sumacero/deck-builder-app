@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { RunState } from '../../domain/run';
 import { COLORS, SPACING } from '../../theme';
 import { DeckButton } from '../cards/DeckButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { GoldBadge } from './GoldBadge';
 
@@ -21,6 +22,7 @@ export function RunHud({ run }: RunHudProps) {
         <View style={styles.right}>
           <GoldBadge gold={run.gold} />
           <DeckButton deck={run.deck} />
+          <SettingsButton />
         </View>
       </View>
     </View>
