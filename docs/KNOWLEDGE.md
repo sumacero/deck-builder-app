@@ -194,7 +194,7 @@
 - ファイル: `src/components/combat/effects/`（`useCombatEvents` / `FighterEffects` / `FloatingText` / `DamageVignette`）。タイミングは `src/theme.ts` の `MOTION`。
 - 効果音（2026-10-03）: `expo-audio` で再生。音源は `scripts/generate-sounds.mjs` で波形から合成した WAV（`npm run sounds` で `assets/sounds/` に再生成。権利問題なし）。
   - イベントと音の対応は純粋関数 `src/audio/combatSounds.ts` の `soundForEvent`。カード使用（`cardPlayed` イベント）・打撃・大ダメージ（10 以上）・ガード・ブロック獲得・被弾・勝利・敗北の 8 種。
-  - 再生は `src/audio/soundPlayer.ts`（起動時に全音を先読み。失敗してもゲームは止めない）。音量 = 各音の `volume` × `SOUND_MASTER_VOLUME`（`src/audio/sounds.ts`。2026-10-04 に BGM より大きいとのことで 0.6 → さらに 15% 下げて 0.51 に）。`src/hooks/useCombatSounds.ts` が演出と同じ時間差で鳴らす。
+  - 再生は `src/audio/soundPlayer.ts`（起動時に全音を先読み。失敗してもゲームは止めない）。音量 = 各音の `volume` × `SOUND_MASTER_VOLUME` × `OUTPUT_GAIN`（`src/audio/sounds.ts` の 0.51 は効果音と BGM の比率。2026-10-04 に BGM より大きいとのことで 0.6 → さらに 15% 下げて 0.51 に。2026-10-07 に全体を 2 倍にする `OUTPUT_GAIN` を `src/audio/gain.ts` に追加し、BGM の各曲の volume にも同じ倍率をかけた）。`src/hooks/useCombatSounds.ts` が演出と同じ時間差で鳴らす。
   - ~~マナーモード中は鳴らさない（`playsInSilentMode: false`）~~（変更: 2026-10-03。Android 実機で音が出なかった。Android ではこの設定だとバイブモードでも消音される）→ `playsInSilentMode` は Android で true（メディア音量に従う）、iOS で false（消音スイッチに従う）。他アプリの音楽は止めない（`mixWithOthers`）。
   - 音声モードは起動時に 1 回だけ設定するので、変更を試すときは保存だけでなく `r` でリロードが必要。
   - `app.json` の expo-audio プラグインでマイク権限・録音権限・バックグラウンド再生を無効化（ネイティブビルド時のみ影響）。
@@ -809,6 +809,11 @@
   - 完全ランダム: 到達 0.9%、ラスボス勝率 39%（母数 18）→ **クリア率 0.4%**（以前 1.0%）。
   - 全回復してから戦うので、第 3 章のボス（上手い勝率 34%）よりやや勝ちにくい = 「1 段階強い」。クリア率の目標（完全ランダムで約 1%）を保ちたいなら、第 3 章の倍率を下げるか、ラスボスの HP を下げる。
 - **未確認**: 実機での最終決戦の画面とラスボス戦の見た目。最終決戦の画面の背景は第 3 章の地域の戦闘背景を使い回している（専用の背景は未作成）。
+
+### 全体の音量を 2 倍（2026-10-07、オーナーの要望「効果音と BGM のバランスはそのまま」）
+
+- `OUTPUT_GAIN = 2`（`src/audio/gain.ts`）。効果音は `volume × 0.51 × 2`、BGM は曲ごとの `volume × 2`。比率用の数値は変えていない。
+- 再生機の音量は 0〜1。大ダメージの効果音だけ 1.02 になるので 1 で止まる（他は 2 倍のまま 1 未満）。1 を超える値をそのまま渡すとブラウザでは例外になる。
 
 ## 9. 未解決の課題・既知の問題
 

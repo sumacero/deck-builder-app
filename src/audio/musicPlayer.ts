@@ -1,4 +1,5 @@
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio';
+import { outputVolume } from './gain';
 import { MUSIC, type MusicId } from './music';
 import { configureAudioMode } from './soundPlayer';
 
@@ -55,7 +56,7 @@ export function playMusic(id: MusicId): void {
     player.volume = 0;
     void player.seekTo(0);
     player.play();
-    fadeTo(player, MUSIC[id].volume, FADE_IN_MS);
+    fadeTo(player, outputVolume(MUSIC[id].volume), FADE_IN_MS);
   } catch (error: unknown) {
     console.warn(`BGM ${id} の再生に失敗しました`, error);
   }
