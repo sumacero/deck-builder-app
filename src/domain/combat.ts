@@ -4,7 +4,7 @@ import type { CardDefinition, CardInstance, CardMotion, CardType } from './card'
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
-import type { DebuffId, Powers, Statuses } from './status';
+import type { Powers, Statuses } from './status';
 
 export type Fighter = {
   hp: number;
@@ -72,10 +72,8 @@ export type EnemyState = Fighter & {
   attribute: Attribute | null;
   /** 属性から決まる弱点（三つ巴で強い属性。無属性なら無し）。 */
   weaknesses: Attribute[];
-  /** 加護の残り回数。 */
-  ward: number;
-  /** 不屈: これまでに受けたデバフ。 */
-  debuffsTaken: DebuffId[];
+  /** アーティファクトの残り回数。0 ならデバフを普通に受ける。 */
+  artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
 };

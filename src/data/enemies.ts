@@ -9,8 +9,8 @@ import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
  * 属性: 火山 = 火 / 草原 = 草 / 水の古都 = 水 / 歯車塔 = 無属性（相性なし）。
  * - 火・岩: 攻撃と防御が中心。火傷を混ぜる、かばう、眠れる巨像
  * - 草・風: 手数が多い連続攻撃と回復。仇討ちの群れ、蔦を混ぜる、風の衣（霊体化）
- * - 水・氷: 凍え・封印・衰弱で行動を制限し、加護でデバフを無効にする。霊体化する亡霊
- * - 電・機械: 麻痺とチャージからの大技。ガラクタを混ぜる、不屈の機械、休眠中のゴーレム
+ * - 水・氷: 凍え・封印・衰弱で行動を制限し、アーティファクトでデバフを無効にする。霊体化する亡霊
+ * - 電・機械: 麻痺とチャージからの大技。ガラクタを混ぜる、アーティファクトを持つ機械、休眠中のゴーレム
  */
 
 const atk = (damage: number, hits = 1): EnemyAction => ({ kind: 'attack', damage, hits });
@@ -55,7 +55,7 @@ export const ROCK_SOLDIER: EnemyDefinition = {
     { id: 'cleave', name: '叩き斬り', actions: [atk(13)] },
     { id: 'stomp', name: '踏み込み', actions: [atk(5, 2)] },
   ],
-  traits: [{ kind: 'resolute' }],
+  traits: [{ kind: 'artifact', charges: 1 }],
 };
 
 export const MAGMA_SLIME: EnemyDefinition = {
@@ -99,7 +99,7 @@ export const BASALT_COLOSSUS: EnemyDefinition = {
     { id: 'giant-fist', name: '巨拳', actions: [atk(17)] },
     { id: 'tremor', name: '地鳴り', actions: [atk(5, 3)] },
   ],
-  traits: [{ kind: 'sleep', turns: 2, wakeStrength: 3 }, { kind: 'resolute' }],
+  traits: [{ kind: 'sleep', turns: 2, wakeStrength: 3 }, { kind: 'artifact', charges: 2 }],
 };
 
 export const FLAME_DRAGON: EnemyDefinition = {
@@ -236,7 +236,7 @@ export const DROWNED_GUARD: EnemyDefinition = {
     { id: 'water-shield', name: '水の盾', actions: [blk(8), atk(5)] },
     { id: 'sealing-spear', name: '封水の槍', actions: [atk(6), SEAL] },
   ],
-  traits: [{ kind: 'resolute' }],
+  traits: [{ kind: 'artifact', charges: 1 }],
 };
 
 export const MIST_SIREN: EnemyDefinition = {
@@ -265,7 +265,7 @@ export const ICE_WITCH: EnemyDefinition = {
     { id: 'ice-lance', name: '氷の槍', actions: [atk(16)] },
     { id: 'blizzard', name: '吹雪', actions: [atk(4, 3), addCard(ICE_SHARD, 2)] },
   ],
-  traits: [{ kind: 'ward', charges: 2 }],
+  traits: [{ kind: 'artifact', charges: 2 }],
 };
 
 export const ABYSS_SERPENT: EnemyDefinition = {
@@ -295,7 +295,7 @@ export const FROZEN_EMPRESS: EnemyDefinition = {
     { id: 'icicle-rain', name: '氷柱の雨', actions: [atk(4, 4), addCard(ICE_SHARD, 2)] },
     { id: 'frost-wave', name: '凍てつく波', actions: [atk(9), chill()] },
   ],
-  traits: [{ kind: 'ward', charges: 3 }],
+  traits: [{ kind: 'artifact', charges: 3 }],
 };
 
 /** 霊体化 → 攻撃 → 攻撃の順なので、1 体目に置くと最初のターンに霊体化する。 */
@@ -326,7 +326,7 @@ export const GEAR_SOLDIER: EnemyDefinition = {
     { id: 'armor', name: '装甲展開', actions: [blk(8), atk(5)] },
     { id: 'shock-spear', name: '放電の槍', actions: [atk(5), paralyze()] },
   ],
-  traits: [{ kind: 'resolute' }],
+  traits: [{ kind: 'artifact', charges: 1 }],
 };
 
 /** チャージ → 大技の順なので、群れでは行動の開始位置がずれないよう先頭に置く。 */
@@ -397,7 +397,7 @@ export const GEAR_EMPEROR: EnemyDefinition = {
     { id: 'thunder-cannon', name: '雷神砲', actions: [atk(25)] },
     { id: 'gear-storm', name: '歯車の嵐', actions: [atk(4, 4), addCard(SCRAP, 2)] },
   ],
-  traits: [{ kind: 'resolute' }],
+  traits: [{ kind: 'artifact', charges: 3 }],
 };
 
 // ==================== ラスボス（3 つの章を終えたあと） ====================
@@ -423,7 +423,7 @@ export const STAR_DEVOURER: EnemyDefinition = {
     { id: 'gale-flurry', name: '疾風の連撃', actions: [atk(4, 4)] },
   ],
   traits: [
-    { kind: 'ward', charges: 2 },
+    { kind: 'artifact', charges: 2 },
     {
       kind: 'awaken',
       threshold: 0.5,

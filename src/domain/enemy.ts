@@ -40,10 +40,11 @@ export type EnemyTrait =
   | { kind: 'vengeance'; strength: number }
   /** 眠り: 最初の turns ターンは眠っている。HP にダメージを受けるか、時間が来ると起きて筋力が上がる。 */
   | { kind: 'sleep'; turns: number; wakeStrength: number }
-  /** 不屈: 同じ種類のデバフは戦闘中 1 回しか受け付けない（延長も効かない）。 */
-  | { kind: 'resolute' }
-  /** 加護: 最初の charges 回のデバフ（延長を含む）を無効にする。 */
-  | { kind: 'ward'; charges: number }
+  /**
+   * アーティファクト: 次に受けるデバフを charges 回だけ無効にする。
+   * 付与・延長・倍化が 1 回分。使い切ったあとは、同じデバフも重ねてかかる。
+   */
+  | { kind: 'artifact'; charges: number }
   /** かばう: 生きている間、仲間 1 体を狙った攻撃・デバフを代わりに受ける。 */
   | { kind: 'guardian' }
   /** 死に際: 倒れたときに action を行う。 */
