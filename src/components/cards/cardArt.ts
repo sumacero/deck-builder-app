@@ -20,6 +20,7 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   anger: require('../../../assets/cards/anger.jpg'),
   cleave: require('../../../assets/cards/cleave.jpg'),
   thunderclap: require('../../../assets/cards/thunderclap.jpg'),
+  'flurry-form': require('../../../assets/cards/flurry-form.jpg'),
   whirlwind: require('../../../assets/cards/whirlwind.jpg'),
   'shrug-it-off': require('../../../assets/cards/shrug-it-off.jpg'),
   'seeing-red': require('../../../assets/cards/seeing-red.jpg'),
