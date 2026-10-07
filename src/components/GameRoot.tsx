@@ -24,6 +24,7 @@ export function GameRoot() {
       );
     case 'run':
       // ランの状態は RunRoot の中にあるので、タイトルに戻ると破棄され、次は新しいランになる。
+      // 途中の「あきらめる」も、ランの終わりの「タイトルへ」も、ここへ戻る。
       return <RunRoot setup={screen.setup} onExitToTitle={toTitle} />;
   }
 }

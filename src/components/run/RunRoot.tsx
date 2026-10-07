@@ -14,18 +14,19 @@ import { MapScreen } from '../map/MapScreen';
 import { RestScreen } from '../rest/RestScreen';
 import { ShopScreen } from '../shop/ShopScreen';
 import { TreasureScreen } from '../treasure/TreasureScreen';
-import { BossRelicScreen } from './BossRelicScreen';
-import { FinaleScreen } from './FinaleScreen';
 import { MOTION } from '../../theme';
 import { FadeOverlay } from '../effects/FadeOverlay';
+import { AbandonRunBar, AbandonRunConfirm, AbandonRunProvider } from './AbandonRun';
 import { AcquireProvider } from './acquire/AcquireContext';
-import { RunEventLayer } from './effects/RunEventLayer';
+import { BossRelicScreen } from './BossRelicScreen';
+import { FinaleScreen } from './FinaleScreen';
 import { RewardScreen } from './RewardScreen';
+import { RunEventLayer } from './effects/RunEventLayer';
 
 type RunRootProps = {
   /** 選んだエージェントのラン設定。「新しいラン」も同じエージェントで始める。 */
   setup: RunSetup;
-  /** ランが終わった画面から、タイトルに戻る。 */
+  /** タイトルに戻る。途中であきらめても、ランの終わりからでも。戻るとこのランは消える。 */
   onExitToTitle: () => void;
 };
 
@@ -54,7 +55,9 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
 
   // 新しいランでは、所持金の数え上げなどの記憶を捨てる。
   const [runCount, setRunCount] = useState(0);
+  const [askingToAbandon, setAskingToAbandon] = useState(false);
   const startNewRun = () => {
+    setAskingToAbandon(false);
     setRunCount((count) => count + 1);
     newRun();
   };
@@ -66,6 +69,8 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
   // 戦闘とショップは自分の画面で曲を流す。ラスボス戦の前は静かにする。
   // それ以外（マップ・休憩所・イベントなど）は地域のフィールド曲。
   const kind = run.phase.kind;
+  // 踏破・敗北は、振り返り画面に「タイトルへ」がある。上端のボタンはそこに被せない。
+  const ended = kind === 'gameOver' || kind === 'cleared';
   const ownMusic =
     kind === 'combat' || kind === 'shop' || kind === 'gameOver' || kind === 'cleared' || kind === 'finale';
   useMusic(ownMusic ? null : fieldMusicFor(currentAct(run).region));
@@ -151,21 +156,31 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
   }
 
   return (
-    <AcquireProvider key={runCount} queued={events} discardPotion={discardPotion}>
-      <View style={styles.root}>
-        {screen}
-        <FadeOverlay
-          key={`${run.actIndex}-${run.phase.kind}`}
-          from={1}
-          to={0}
-          duration={MOTION.phaseFadeIn}
-        />
-        <RunEventLayer queued={events[0]} onDone={dismissEvent} />
-      </View>
-    </AcquireProvider>
+    <AbandonRunProvider onAbandon={onExitToTitle}>
+      <AcquireProvider key={runCount} queued={events} discardPotion={discardPotion}>
+        <View style={styles.root}>
+          {!ended && <AbandonRunBar onPress={() => setAskingToAbandon(true)} />}
+          <View style={styles.play}>{screen}</View>
+          <FadeOverlay
+            key={`${run.actIndex}-${run.phase.kind}`}
+            from={1}
+            to={0}
+            duration={MOTION.phaseFadeIn}
+          />
+          <RunEventLayer queued={events[0]} onDone={dismissEvent} />
+          {askingToAbandon && !ended && (
+            <AbandonRunConfirm
+              onStay={() => setAskingToAbandon(false)}
+              onLeave={onExitToTitle}
+            />
+          )}
+        </View>
+      </AcquireProvider>
+    </AbandonRunProvider>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  play: { flex: 1 },
 });
