@@ -4,6 +4,7 @@ import { MUSIC_ENTRIES } from '../../audio/music';
 import { ALL_ENEMIES } from '../../data/bestiary';
 import { ALL_CARDS } from '../../data/catalog';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { AbandonRunConfirm, AbandonRunPressable, useAbandonPrompt } from '../run/AbandonRun';
 import { CardCatalog } from './CardCatalog';
 import { BLESSING_ITEMS, EVENT_ITEMS, POTION_ITEMS, RELIC_ITEMS } from './catalogEntries';
 import { EntryCatalog } from './EntryCatalog';
@@ -32,17 +33,21 @@ type EncyclopediaProps = {
 /** ゲームに登場するものをすべて見られる図鑑。上のタブで種類を切り替える。 */
 export function Encyclopedia({ onClose }: EncyclopediaProps) {
   const [tab, setTab] = useState<EncyclopediaTab>('characters');
+  const abandon = useAbandonPrompt();
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <Text style={styles.title}>📖 図鑑</Text>
-        <Pressable
-          onPress={onClose}
-          hitSlop={6}
-          style={({ pressed }) => [styles.close, pressed && styles.pressed]}
-        >
-          <Text style={styles.closeText}>閉じる</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          {abandon.available && <AbandonRunPressable onPress={abandon.ask} />}
+          <Pressable
+            onPress={onClose}
+            hitSlop={6}
+            style={({ pressed }) => [styles.close, pressed && styles.pressed]}
+          >
+            <Text style={styles.closeText}>閉じる</Text>
+          </Pressable>
+        </View>
       </View>
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
@@ -65,6 +70,7 @@ export function Encyclopedia({ onClose }: EncyclopediaProps) {
       <View style={styles.content}>
         <TabContent tab={tab} />
       </View>
+      {abandon.asking && <AbandonRunConfirm onStay={abandon.stay} onLeave={abandon.leave} />}
     </View>
   );
 }
@@ -90,8 +96,9 @@ function TabContent({ tab }: { tab: EncyclopediaTab }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg, padding: SPACING.lg, gap: SPACING.md },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { color: COLORS.gold, fontSize: 20, fontWeight: '800', letterSpacing: 2 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  title: { color: COLORS.gold, fontSize: 20, fontWeight: '800', letterSpacing: 2, flexShrink: 1 },
   close: {
     borderWidth: 1,
     borderColor: COLORS.panelBorder,
