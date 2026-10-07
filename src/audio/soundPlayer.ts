@@ -1,5 +1,6 @@
 import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Platform } from 'react-native';
+import { outputVolume } from './gain';
 import { SOUND_MASTER_VOLUME, type SoundId, SOUNDS } from './sounds';
 
 const players = new Map<SoundId, AudioPlayer>();
@@ -9,7 +10,7 @@ function playerFor(id: SoundId): AudioPlayer {
   const existing = players.get(id);
   if (existing) return existing;
   const player = createAudioPlayer(SOUNDS[id].source);
-  player.volume = SOUNDS[id].volume * SOUND_MASTER_VOLUME;
+  player.volume = outputVolume(SOUNDS[id].volume * SOUND_MASTER_VOLUME);
   players.set(id, player);
   return player;
 }
