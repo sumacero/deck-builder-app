@@ -8,14 +8,22 @@ type HpBarProps = {
   block: number;
   /** 敵が多いときの細い表示。 */
   compact?: boolean;
+  /**
+   * このターンの終わりに失う予定の HP（宿り木）。
+   * 今の HP の右側を緑にし、残りが全部緑ならターン終了で倒れる。
+   */
+  incoming?: number;
 };
 
 const toWidth = (value: Animated.Value) =>
   value.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
-/** 減った分は明るい残像が少し遅れて追いかける。 */
-export function HpBar({ hp, maxHp, block, compact = false }: HpBarProps) {
+/** 減った分は明るい残像が少し遅れて追いかける。宿り木の予定ダメージは、今の HP の右側を緑にする。 */
+export function HpBar({ hp, maxHp, block, compact = false, incoming = 0 }: HpBarProps) {
   const ratio = maxHp > 0 ? hp / maxHp : 0;
+  const loss = Math.min(Math.max(0, incoming), hp);
+  const safeRatio = maxHp > 0 ? (hp - loss) / maxHp : 0;
+  const lethal = hp > 0 && loss >= hp;
   const [fill] = useState(() => new Animated.Value(ratio));
   const [trail] = useState(() => new Animated.Value(ratio));
   const [badgeScale] = useState(() => new Animated.Value(1));
@@ -64,6 +72,16 @@ export function HpBar({ hp, maxHp, block, compact = false }: HpBarProps) {
       <View style={[styles.track, compact && styles.compactTrack]}>
         <Animated.View style={[styles.bar, styles.trail, { width: toWidth(trail) }]} />
         <Animated.View style={[styles.bar, styles.fill, { width: toWidth(fill) }]} />
+        {loss > 0 && maxHp > 0 && (
+          <View
+            style={[
+              styles.bar,
+              styles.incoming,
+              { left: `${safeRatio * 100}%`, width: `${(loss / maxHp) * 100}%` },
+            ]}
+          />
+        )}
+        {lethal && <View pointerEvents="none" style={styles.lethalRing} />}
         <Text style={[styles.label, compact && styles.compactLabel]}>
           {compact ? `${hp}/${maxHp}` : `${hp} / ${maxHp}`}
         </Text>
@@ -92,6 +110,19 @@ const styles = StyleSheet.create({
   bar: { position: 'absolute', top: 0, bottom: 0, left: 0 },
   trail: { backgroundColor: COLORS.hpTrail },
   fill: { backgroundColor: COLORS.hp },
+  /** 赤の上に重ねる。残像が追いつく前でも、失う予定の分だけ緑に見える。 */
+  incoming: { backgroundColor: COLORS.heal },
+  /** 残り HP が全部緑のとき、ゲージ全体を緑の輪で囲んで「ターン終了で倒れる」と分かるようにする。 */
+  lethalRing: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderWidth: 2,
+    borderColor: COLORS.heal,
+    borderRadius: RADIUS.round,
+  },
   label: {
     color: COLORS.text,
     fontSize: 12,

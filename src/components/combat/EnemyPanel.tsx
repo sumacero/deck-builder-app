@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
-import { attackerFor, currentIntent, enemyAttackDamage, isAlive } from '../../logic/combat';
+import { attackerFor, currentIntent, enemyAttackDamage, isAlive, pendingSeedLoss } from '../../logic/combat';
 import {
   ATTRIBUTE_ICON,
   describeEnemyAttribute,
@@ -121,7 +121,13 @@ export function EnemyPanel({
             ))}
           </View>
           <StatusRow statuses={statuses} />
-          <HpBar hp={vitals.hp} maxHp={enemy.maxHp} block={vitals.block} compact={compact} />
+          <HpBar
+            hp={vitals.hp}
+            maxHp={enemy.maxHp}
+            block={vitals.block}
+            compact={compact}
+            incoming={alive && vitals.hp === enemy.hp && vitals.block === enemy.block ? pendingSeedLoss(enemy) : 0}
+          />
         </FighterEffects>
         {preview && (
           <View style={styles.previewLayer}>
