@@ -108,6 +108,8 @@
   - スマホ: Chrome で https://cursor.com/agents → メニューの「アプリをインストール」→ 実行場所に My Machines の `deck-pc` を選んで指示。
   - GitHub への push は SSH 鍵（`~/.ssh/id_ed25519`、GitHub に「deck-builder-wsl」として登録）。リモートは `git@github.com:sumacero/deck-builder-app.git`。以前の HTTPS は Cursor 画面内のターミナルの認証を借りていたため、画面の外では失敗していた。
 
+- Cloud Agent（2026-10-06）: ブラウザ検証は `npx expo start --web`（ポート 8081）。Web 用の `react-dom` / `react-native-web` / `@expo/metro-runtime` は `package.json` に入れず、環境の install で `--no-save` する。手順は `AGENTS.md` の「Cursor Cloud specific instructions」。
+
 ## 6. 技術スタック（2026-10-03 時点）
 
 | 項目 | バージョン |
