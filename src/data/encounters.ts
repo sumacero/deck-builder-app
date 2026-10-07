@@ -42,11 +42,15 @@ import {
   WIND_HAWK,
 } from './enemies';
 
-/** 地域ごとの敵の顔ぶれ（第 1 章の強さ）。章ごとの強さは acts.ts で倍率をかける。 */
+/**
+ * 地域ごとの敵の顔ぶれ（第 1 章の強さ）。章ごとの強さは acts.ts で倍率をかける。
+ * エリート・ボスは取り巻きの小型の敵を連れて出る（敵全体への攻撃が単体の強敵にも腐らないように）。
+ * 名前の表示には encounterLeader を使う。
+ */
 export type RegionEnemies = {
   normal: Encounter[];
   elite: Encounter[];
-  boss: EnemyDefinition[];
+  boss: Encounter[];
 };
 
 /** 戦闘画面は 4 体まで並べても収まるように作っているので、それより多くは出さない。 */
@@ -69,8 +73,12 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('lizard-and-bat', [EMBER_LIZARD, FIRE_BAT]),
       group('ember-troop', [CINDER_IMP, FIRE_BAT, PEBBLE_GOLEM, CINDER_IMP]),
     ],
-    elite: [soloEncounter(LAVA_KNIGHT), soloEncounter(BASALT_COLOSSUS)],
-    boss: [FLAME_DRAGON],
+    elite: [
+      group('knight-and-imp', [CINDER_IMP, LAVA_KNIGHT], 'elite'),
+      // 小石のゴーレムがかばうので、眠る巨像を単体攻撃だけで削るのは遠回り。
+      group('colossus-and-golem', [PEBBLE_GOLEM, BASALT_COLOSSUS], 'elite'),
+    ],
+    boss: [group('dragon-and-bats', [FIRE_BAT, FLAME_DRAGON, FIRE_BAT], 'boss')],
   },
   grassland: {
     normal: [
@@ -85,10 +93,10 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
     ],
     // 大樹はかばう性質で、両脇の芽への攻撃を引き受ける。
     elite: [
-      soloEncounter(FOREST_RANGER),
+      group('ranger-hunt', [HORN_RABBIT, FOREST_RANGER], 'elite'),
       group('treant-grove', [SEED_SPROUT, GREAT_TREANT, SEED_SPROUT], 'elite'),
     ],
-    boss: [STORM_GRIFFIN],
+    boss: [group('griffin-and-gusts', [GUST_SPRITE, STORM_GRIFFIN, GUST_SPRITE], 'boss')],
   },
   sunkenCity: {
     normal: [
@@ -104,8 +112,11 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       // 亡霊は先頭に置き、最初のターンに霊体化させる。
       group('phantom-procession', [ANCIENT_PHANTOM, ICE_WISP]),
     ],
-    elite: [soloEncounter(ICE_WITCH), soloEncounter(ABYSS_SERPENT)],
-    boss: [FROZEN_EMPRESS],
+    elite: [
+      group('witch-and-wisp', [ICE_WISP, ICE_WITCH], 'elite'),
+      group('serpent-and-bubble', [BUBBLE_SLIME, ABYSS_SERPENT], 'elite'),
+    ],
+    boss: [group('empress-court', [ICE_WISP, FROZEN_EMPRESS, ICE_WISP], 'boss')],
   },
   clockwork: {
     normal: [
@@ -119,7 +130,10 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('hound-and-bug', [IRON_HOUND, BOLT_BUG]),
       group('workshop', [TESLA_ORB, BOLT_BUG, COG_RAT, BOLT_BUG]),
     ],
-    elite: [soloEncounter(CLOCKWORK_KNIGHT), soloEncounter(THUNDER_GOLEM)],
-    boss: [GEAR_EMPEROR],
+    elite: [
+      group('knight-and-bug', [BOLT_BUG, CLOCKWORK_KNIGHT], 'elite'),
+      group('golem-and-rat', [COG_RAT, THUNDER_GOLEM], 'elite'),
+    ],
+    boss: [group('emperor-guard', [BOLT_BUG, GEAR_EMPEROR, BOLT_BUG], 'boss')],
   },
 };

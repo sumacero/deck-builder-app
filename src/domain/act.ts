@@ -1,4 +1,4 @@
-import type { EnemyDefinition, Encounter } from './enemy';
+import type { Encounter } from './enemy';
 import type { MapConfig } from './map';
 
 /**
@@ -15,8 +15,8 @@ export type ActConfig = {
   map: MapConfig;
   enemyPool: Encounter[];
   elitePool: Encounter[];
-  /** 章の開始時に 1 体選ばれ、その章のボスになる。 */
-  bossPool: EnemyDefinition[];
+  /** 章の開始時に 1 つ選ばれ、その章のボス戦になる（ボスと取り巻き）。 */
+  bossPool: Encounter[];
   /** 章の最初に案内役がかける言葉。 */
   greeting: string;
   /**

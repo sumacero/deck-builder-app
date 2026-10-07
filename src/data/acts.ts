@@ -82,7 +82,7 @@ function buildAct(chapter: ChapterDef, region: RegionDef): ActConfig {
     map: STANDARD_ACT_MAP,
     enemyPool: enemies.normal.map((encounter) => scaleEncounter(encounter, chapter.scale)),
     elitePool: enemies.elite.map((encounter) => scaleEncounter(encounter, chapter.scale)),
-    bossPool: enemies.boss.map((boss) => scaleEnemy(boss, chapter.scale)),
+    bossPool: enemies.boss.map((encounter) => scaleEncounter(encounter, chapter.scale)),
     greeting: `${chapter.greetingBefore}${region.greeting}${chapter.greetingAfter}`,
     floorScaling: FLOOR_SCALING,
   };

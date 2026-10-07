@@ -94,7 +94,7 @@ export const LAVA_KNIGHT: EnemyDefinition = {
   name: '獄炎の騎士',
   icon: '⚔️',
   rank: 'elite',
-  maxHp: 82,
+  maxHp: 62,
   attribute: 'fire',
   moves: [
     { id: 'temper', name: '鍛え直し', actions: [buff(2), blk(8)] },
@@ -108,7 +108,7 @@ export const BASALT_COLOSSUS: EnemyDefinition = {
   name: '玄武岩の巨像',
   icon: '🗿',
   rank: 'elite',
-  maxHp: 92,
+  maxHp: 69,
   attribute: 'fire',
   moves: [
     { id: 'rock-wall', name: '岩壁', actions: [blk(14), atk(6)] },
@@ -123,7 +123,7 @@ export const FLAME_DRAGON: EnemyDefinition = {
   name: '紅蓮竜',
   icon: '🐉',
   rank: 'boss',
-  maxHp: 120,
+  maxHp: 74,
   attribute: 'fire',
   moves: [
     { id: 'roar', name: '咆哮', actions: [buff(2), blk(12)] },
@@ -182,7 +182,7 @@ export const FOREST_RANGER: EnemyDefinition = {
   name: '森の狩人',
   icon: '🏹',
   rank: 'elite',
-  maxHp: 74,
+  maxHp: 56,
   attribute: 'grass',
   moves: [
     { id: 'mark', name: '狙いを定める', actions: [atk(6), debuff('vulnerable', 2)] },
@@ -212,7 +212,7 @@ export const STORM_GRIFFIN: EnemyDefinition = {
   name: '嵐のグリフォン',
   icon: '🌀',
   rank: 'boss',
-  maxHp: 112,
+  maxHp: 70,
   attribute: 'grass',
   moves: [
     { id: 'wind-grace', name: '風の加護', actions: [heal(10), buff(1)] },
@@ -274,7 +274,7 @@ export const ICE_WITCH: EnemyDefinition = {
   name: '氷の魔女',
   icon: '🧊',
   rank: 'elite',
-  maxHp: 78,
+  maxHp: 59,
   attribute: 'water',
   moves: [
     { id: 'sealing-ice', name: '封印の氷', actions: [SEAL, blk(10)] },
@@ -289,7 +289,7 @@ export const ABYSS_SERPENT: EnemyDefinition = {
   name: '深淵の水竜',
   icon: '🐍',
   rank: 'elite',
-  maxHp: 92,
+  maxHp: 69,
   attribute: 'water',
   moves: [
     { id: 'whirlpool', name: '渦潮', actions: [atk(6, 2), chill()] },
@@ -303,7 +303,7 @@ export const FROZEN_EMPRESS: EnemyDefinition = {
   name: '凍れる女王',
   icon: '👑',
   rank: 'boss',
-  maxHp: 118,
+  maxHp: 72,
   attribute: 'water',
   moves: [
     { id: 'permafrost', name: '永久凍土', actions: [SEAL, chill(), blk(10)] },
@@ -378,7 +378,7 @@ export const CLOCKWORK_KNIGHT: EnemyDefinition = {
   name: '機巧騎士',
   icon: '⚙️',
   rank: 'elite',
-  maxHp: 84,
+  maxHp: 63,
   moves: [
     { id: 'recharge', name: '充電', actions: [CHARGE, blk(12)] },
     { id: 'lightning-slash', name: '雷光斬り', actions: [atk(21)] },
@@ -391,7 +391,7 @@ export const THUNDER_GOLEM: EnemyDefinition = {
   name: '雷鳴のゴーレム',
   icon: '⚡',
   rank: 'elite',
-  maxHp: 94,
+  maxHp: 71,
   moves: [
     { id: 'discharge', name: '放電', actions: [atk(4, 3), paralyze()] },
     { id: 'store', name: '蓄電', actions: [CHARGE, blk(10)] },
@@ -405,7 +405,7 @@ export const GEAR_EMPEROR: EnemyDefinition = {
   name: '歯車の機皇',
   icon: '🏭',
   rank: 'boss',
-  maxHp: 125,
+  maxHp: 78,
   moves: [
     { id: 'boot', name: '起動', actions: [buff(2), blk(12)] },
     { id: 'thunderclap', name: '雷鳴', actions: [atk(7), paralyze()] },

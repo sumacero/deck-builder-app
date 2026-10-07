@@ -4,6 +4,7 @@ import { playSound } from '../../audio/soundPlayer';
 import type { GameMap } from '../../domain/map';
 import type { RunState } from '../../domain/run';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
+import { encounterLeader } from '../../logic/encounter';
 import { currentAct, mapHint, reachedFloor } from '../../logic/run';
 import { COLORS, MAP_LAYOUT, MOTION, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
@@ -104,9 +105,10 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
       <HpBar hp={run.player.hp} maxHp={run.player.maxHp} block={0} />
     </View>
   );
+  const boss = encounterLeader(run.boss);
   const actLine = (
     <Text style={styles.act}>
-      {act.name}　ボス {run.boss.icon} {run.boss.name}
+      {act.name}　ボス {boss.icon} {boss.name}
     </Text>
   );
   const hint = <Text style={styles.hint}>{mapHint(run)}</Text>;

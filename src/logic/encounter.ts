@@ -10,6 +10,11 @@ export const soloEncounter = (enemy: EnemyDefinition): Encounter => ({
   enemies: [enemy],
 });
 
+/** 戦闘の主役（エリート・ボスなど一番格の高い敵）。取り巻きと一緒に出ても、名前を出すときはこの敵。 */
+export function encounterLeader(encounter: Encounter): EnemyDefinition {
+  return encounter.enemies.find((enemy) => enemy.rank === encounter.rank) ?? encounter.enemies[0];
+}
+
 /** 今いる階での、章の中の強さの倍率（1 階目が一番弱く、ボスの階で 1）。 */
 export function floorMultiplier(run: RunState): number {
   const node = run.map.nodes.find((n) => n.id === run.currentNodeId);

@@ -91,8 +91,8 @@ export type RunState = {
   /** 今の章（0 始まり）。 */
   actIndex: number;
   map: GameMap;
-  /** 今の章のボス。 */
-  boss: EnemyDefinition;
+  /** 今の章のボス戦（ボスと取り巻き）。 */
+  boss: Encounter;
   finalBoss: EnemyDefinition;
   currentNodeId: string | null;
   visitedNodeIds: string[];

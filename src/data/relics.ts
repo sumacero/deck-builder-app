@@ -17,7 +17,7 @@ export const WORLD_TREE_SPROUT: RelicDefinition = {
   icon: '🌱',
   rarity: 'starter',
   trigger: 'combatStart',
-  effects: [{ kind: 'applyDebuff', status: 'seed', turns: 4 }],
+  effects: [{ kind: 'applyDebuff', status: 'seed', turns: 3 }],
 };
 
 /**

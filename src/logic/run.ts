@@ -137,7 +137,7 @@ export function moveTo(run: RunState, nodeId: string): RunState {
     case 'elite':
       return startRandomCombat(moved, nodeId, act.elitePool);
     case 'boss':
-      return startCombat(moved, nodeId, soloEncounter(run.boss));
+      return startCombat(moved, nodeId, run.boss);
     case 'rest':
       return { ...moved, phase: { kind: 'rest' } };
     case 'shop':
