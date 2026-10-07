@@ -537,6 +537,21 @@ function bloomEnemySeed(state: CombatState, uid: EnemyUid): CombatState {
   return hitEnemy(withLog(state, `${enemy?.name ?? '敵'}の宿り木が芽吹いた`), uid, seed, FIXED_HIT);
 }
 
+/**
+ * ターンを終えたとき、宿り木でこの敵が失う HP。
+ * 敵のターンの始めにブロックが消えてから発動するので、今ついているブロックは数に入れない。
+ * 霊体化なら 1 で頭打ち。覚醒する前は、覚醒する HP より下がらない。
+ */
+export function pendingSeedLoss(enemy: EnemyState): number {
+  if (!isAlive(enemy)) return 0;
+  const seed = statusTurns(enemy.statuses, 'seed');
+  if (seed <= 0) return 0;
+  const amount = hasStatus(enemy.statuses, 'intangible') ? Math.min(seed, INTANGIBLE_CAP) : seed;
+  const unblocked = { ...enemy, block: 0 };
+  const result = holdUntilAwakened(unblocked, applyDamage(unblocked, amount));
+  return unblocked.hp - result.target.hp;
+}
+
 function multiplyEnemyDebuff(state: CombatState, uid: EnemyUid, status: DebuffId, factor: number): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || !hasStatus(enemy.statuses, status)) return state;
