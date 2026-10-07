@@ -46,6 +46,6 @@ const styles = StyleSheet.create({
   },
   text: { color: COLORS.gold, fontSize: 12, fontWeight: '800' },
   largeText: { fontSize: 15, letterSpacing: 2 },
-  safeArea: { flex: 1, backgroundColor: COLORS.bg },
+  safeArea: { flex: 1, width: '100%', backgroundColor: COLORS.bg, overflow: 'hidden' },
   pressed: { opacity: 0.7 },
 });

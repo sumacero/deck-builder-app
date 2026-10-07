@@ -82,11 +82,17 @@ function levelAt(x: number, width: number): number {
 }
 
 const styles = StyleSheet.create({
-  block: { gap: SPACING.sm },
-  heading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  block: { alignSelf: 'stretch', minWidth: 0, gap: SPACING.sm },
+  heading: {
+    alignSelf: 'stretch',
+    minWidth: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
   label: { color: COLORS.text, fontSize: 16, fontWeight: '800' },
   value: { color: COLORS.gold, fontSize: 18, fontWeight: '800' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  row: { alignSelf: 'stretch', minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   step: {
     width: 36,
     height: 36,
@@ -98,7 +104,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.panel,
   },
   stepText: { color: COLORS.gold, fontSize: 20, fontWeight: '800' },
-  trackHit: { flex: 1, height: TRACK_HIT, justifyContent: 'center' },
+  /** minWidth: 0 と overflow で、つまみの位置が行を横に押し広げないようにする。 */
+  trackHit: { flex: 1, minWidth: 0, height: TRACK_HIT, justifyContent: 'center', overflow: 'hidden' },
   track: {
     height: 8,
     borderRadius: RADIUS.round,
