@@ -24,6 +24,8 @@ export const COLORS = {
   energy: '#F0A830',
   danger: '#E5484D',
   overlay: 'rgba(8, 12, 26, 0.86)',
+  /** 使えないカードを暗くする覆い。カード自体は不透明のままにする（重ねた手札が透けない）。 */
+  cardDim: 'rgba(8, 12, 26, 0.55)',
   damageText: '#FF6B6B',
   heal: '#4CC27A',
   /** 敵の妨害（麻痺・凍え・封印）。 */

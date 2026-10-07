@@ -16,7 +16,11 @@ type DraggableCardProps = CardDragHandlers & {
   card: CardDefinition;
   width: number;
   playable: boolean;
-  /** 持ち上げている最中。元の位置は薄く残す。 */
+  /**
+   * 持ち上げている最中。元の位置は消す。
+   * 薄く残すと、10 枚近く重なった手札ではその 1 枚の向こうが透けて、手札全体が透明に見える。
+   * 指についてくるカードは別の場所に描く。
+   */
   dragging: boolean;
   /** タップして、狙う敵を選んでいる最中のカード。 */
   selected: boolean;
@@ -127,7 +131,7 @@ export function DraggableCard({
     <>
       <View
         {...responder.panHandlers}
-        style={{ opacity: dragging ? 0.25 : 1, transform: [{ translateY: selected ? LIFT : 0 }] }}
+        style={{ opacity: dragging ? 0 : 1, transform: [{ translateY: selected ? LIFT : 0 }] }}
       >
         <CardView
           card={card}
