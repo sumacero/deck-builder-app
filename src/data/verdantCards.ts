@@ -16,13 +16,13 @@ export const SEED_ARROW: CardDefinition = {
   cost: 1,
   target: 'enemy',
   effects: [
-    { kind: 'damage', amount: 4 },
-    { kind: 'applyDebuff', status: 'seed', turns: 3 },
+    { kind: 'damage', amount: 5 },
+    { kind: 'applyDebuff', status: 'seed', turns: 4 },
   ],
   upgrade: {
     effects: [
-      { kind: 'damage', amount: 6 },
-      { kind: 'applyDebuff', status: 'seed', turns: 4 },
+      { kind: 'damage', amount: 7 },
+      { kind: 'applyDebuff', status: 'seed', turns: 6 },
     ],
   },
 };
@@ -65,8 +65,8 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['debuff'],
     cost: 1,
     target: 'allEnemies',
-    effects: [{ kind: 'applyDebuff', status: 'seed', turns: 3 }],
-    upgrade: { effects: [{ kind: 'applyDebuff', status: 'seed', turns: 5 }] },
+    effects: [{ kind: 'applyDebuff', status: 'seed', turns: 4 }],
+    upgrade: { effects: [{ kind: 'applyDebuff', status: 'seed', turns: 6 }] },
   },
   {
     id: 'vine-bind',
@@ -93,10 +93,10 @@ export const VERDANT_CARDS: CardDefinition[] = [
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
-    cost: 1,
+    cost: 0,
     target: 'enemy',
     effects: [{ kind: 'bloomSeed' }],
-    upgrade: { cost: 0 },
+    upgrade: { effects: [{ kind: 'bloomSeed' }, { kind: 'draw', amount: 1 }] },
   },
   {
     id: 'rampant-growth',
@@ -120,12 +120,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     target: 'enemy',
     effects: [
       { kind: 'damage', amount: 10 },
-      { kind: 'ifTargetHas', status: 'seed', effects: [{ kind: 'damage', amount: 8 }] },
+      { kind: 'ifTargetHas', status: 'seed', effects: [{ kind: 'damage', amount: 12 }] },
     ],
     upgrade: {
       effects: [
         { kind: 'damage', amount: 13 },
-        { kind: 'ifTargetHas', status: 'seed', effects: [{ kind: 'damage', amount: 10 }] },
+        { kind: 'ifTargetHas', status: 'seed', effects: [{ kind: 'damage', amount: 15 }] },
       ],
     },
   },
@@ -135,11 +135,11 @@ export const VERDANT_CARDS: CardDefinition[] = [
     type: 'power',
     attribute: 'grass',
     archetypes: ['debuff'],
-    cost: 2,
+    cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'overgrowth', amount: 2 }],
+    effects: [{ kind: 'gainPower', power: 'overgrowth', amount: 3 }],
     exhaust: true,
-    upgrade: { cost: 1 },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'overgrowth', amount: 4 }] },
   },
 
   // --- 茨と守り: 受けるほど返す ---
@@ -351,12 +351,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     target: 'allEnemies',
     effects: [
       { kind: 'damage', amount: 4 },
-      { kind: 'applyDebuff', status: 'seed', turns: 2 },
+      { kind: 'applyDebuff', status: 'seed', turns: 3 },
     ],
     upgrade: {
       effects: [
         { kind: 'damage', amount: 6 },
-        { kind: 'applyDebuff', status: 'seed', turns: 3 },
+        { kind: 'applyDebuff', status: 'seed', turns: 4 },
       ],
     },
   },
@@ -568,12 +568,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 6 },
+      { kind: 'damage', amount: 8 },
       { kind: 'ifTargetHas', status: 'seed', effects: [{ kind: 'bloomSeed' }] },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 9 },
+        { kind: 'damage', amount: 11 },
         { kind: 'ifTargetHas', status: 'seed', effects: [{ kind: 'bloomSeed' }] },
       ],
     },
@@ -664,12 +664,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'self',
     effects: [
-      { kind: 'gainLashSeed', amount: 2 },
+      { kind: 'gainLashSeed', amount: 3 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'gainLashSeed', amount: 3 },
+        { kind: 'gainLashSeed', amount: 4 },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -681,11 +681,11 @@ export const VERDANT_CARDS: CardDefinition[] = [
     type: 'power',
     attribute: 'grass',
     archetypes: ['debuff'],
-    cost: 2,
+    cost: 1,
     target: 'self',
     effects: [{ kind: 'gainPower', power: 'lashSeed', amount: 1 }],
     exhaust: true,
-    upgrade: { cost: 1 },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'lashSeed', amount: 2 }] },
   },
   {
     id: 'strangling-vine',
@@ -793,9 +793,9 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo', 'strength'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 3 }],
+    effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 2 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 4 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 3 }] },
   },
   {
     id: 'scatter-stance',
@@ -827,10 +827,10 @@ export const VERDANT_CARDS: CardDefinition[] = [
     type: 'power',
     attribute: 'grass',
     archetypes: ['tempo'],
-    cost: 1,
+    cost: 2,
     target: 'self',
     effects: [{ kind: 'gainPower', power: 'arrowSupply', amount: 1 }],
     exhaust: true,
-    upgrade: { cost: 0 },
+    upgrade: { cost: 1 },
   },
 ];
