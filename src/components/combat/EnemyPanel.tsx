@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
+import { useHeldWhile } from '../../hooks/useHeldWhile';
 import { attackerFor, currentIntent, enemyAttackDamage, isAlive, pendingSeedLoss } from '../../logic/combat';
 import {
   ATTRIBUTE_ICON,
@@ -63,6 +64,10 @@ export function EnemyPanel({
   const rankLabel = ENEMY_RANK_LABEL[enemy.rank];
   const statuses = enemyStatuses(enemy);
   const vitals = useDisplayedVitals(enemy.uid, events, enemy);
+  // 被弾や倒れる演出の再生中は、直前の緑のまま見せる（赤に戻すとちらつく）。
+  // 再生中に新しい値へ切り替えないのは、宿り木の発動中に「次の宿り木」を今のゲージへ重ねないため。
+  const settled = vitals.hp === enemy.hp && vitals.block === enemy.block;
+  const incoming = useHeldWhile(!settled, pendingSeedLoss(enemy));
   return (
     <View ref={viewRef} style={styles.slot}>
       <Pressable
@@ -126,7 +131,7 @@ export function EnemyPanel({
             maxHp={enemy.maxHp}
             block={vitals.block}
             compact={compact}
-            incoming={alive && vitals.hp === enemy.hp && vitals.block === enemy.block ? pendingSeedLoss(enemy) : 0}
+            incoming={incoming}
           />
         </FighterEffects>
         {preview && (

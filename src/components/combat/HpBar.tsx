@@ -15,18 +15,24 @@ type HpBarProps = {
   incoming?: number;
 };
 
-const toWidth = (value: Animated.Value) =>
+const toWidth = (value: Animated.Value | Animated.AnimatedInterpolation<number> | Animated.AnimatedSubtraction<number>) =>
   value.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
 /** 減った分は明るい残像が少し遅れて追いかける。宿り木の予定ダメージは、今の HP の右側を緑にする。 */
 export function HpBar({ hp, maxHp, block, compact = false, incoming = 0 }: HpBarProps) {
   const ratio = maxHp > 0 ? hp / maxHp : 0;
   const loss = Math.min(Math.max(0, incoming), hp);
-  const safeRatio = maxHp > 0 ? (hp - loss) / maxHp : 0;
+  const lossRatio = maxHp > 0 ? loss / maxHp : 0;
   const lethal = hp > 0 && loss >= hp;
   const [fill] = useState(() => new Animated.Value(ratio));
   const [trail] = useState(() => new Animated.Value(ratio));
   const [badgeScale] = useState(() => new Animated.Value(1));
+  // 緑は赤いゲージの右端にくっつけて動かす。HP が減る途中でも、緑と空の間に赤がのぞかない。
+  const incomingLeft = Animated.subtract(fill, lossRatio).interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [0, 0, 1],
+  });
+  const incomingWidth = Animated.subtract(fill, incomingLeft);
 
   useEffect(() => {
     const animation = Animated.parallel([
@@ -73,11 +79,11 @@ export function HpBar({ hp, maxHp, block, compact = false, incoming = 0 }: HpBar
         <Animated.View style={[styles.bar, styles.trail, { width: toWidth(trail) }]} />
         <Animated.View style={[styles.bar, styles.fill, { width: toWidth(fill) }]} />
         {loss > 0 && maxHp > 0 && (
-          <View
+          <Animated.View
             style={[
               styles.bar,
               styles.incoming,
-              { left: `${safeRatio * 100}%`, width: `${(loss / maxHp) * 100}%` },
+              { left: toWidth(incomingLeft), width: toWidth(incomingWidth) },
             ]}
           />
         )}
