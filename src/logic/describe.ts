@@ -84,6 +84,8 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${effect.base} ダメージ。敵のデバフ 1 ターンにつき +${effect.perTurn}。`;
     case 'detonateDebuffs':
       return `敵のデバフをすべて消し、消したターン数 × ${effect.perTurn} のダメージを与える。`;
+    case 'detonateSeed':
+      return `${target === 'allEnemies' ? '敵全体に、' : ''}宿り木 × ${effect.perTurn} のダメージを与え、宿り木を消す。`;
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':

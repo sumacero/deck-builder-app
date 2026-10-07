@@ -50,7 +50,9 @@ export type Effect =
   /** base + このターンにこのカードより前に使ったカード 1 枚につき perCard のダメージ。 */
   | { kind: 'damagePerCardPlayed'; base: number; perCard: number }
   /** このターン、ムチの攻撃が 1 回当たるたびにその敵へ宿り木 amount。 */
-  | { kind: 'gainLashSeed'; amount: number };
+  | { kind: 'gainLashSeed'; amount: number }
+  /** 狙った敵の宿り木 × perTurn のダメージを与え、その宿り木を消す。 */
+  | { kind: 'detonateSeed'; perTurn: number };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

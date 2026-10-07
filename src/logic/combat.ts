@@ -729,6 +729,18 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         }));
         return callout(cleared, uid, `烙印 ${turns}`);
       }, state);
+    case 'detonateSeed':
+      return aimedUids(state, aim).reduce((current, uid) => {
+        const enemy = findEnemy(current, uid);
+        const seed = enemy ? statusTurns(enemy.statuses, 'seed') : 0;
+        if (seed === 0) return current;
+        const hit = hitEnemy(current, uid, attackDamage(current, seed * effect.perTurn), hitKind);
+        const cleared = updateEnemy(hit, uid, (e) => ({
+          ...e,
+          statuses: Object.fromEntries(Object.entries(e.statuses).filter(([id]) => id !== 'seed')),
+        }));
+        return callout(cleared, uid, `宿り木 ${seed}`);
+      }, state);
     case 'ifTargetHas': {
       const met = aimedUids(state, aim).some((uid) => {
         const enemy = findEnemy(state, uid);

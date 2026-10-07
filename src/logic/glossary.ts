@@ -42,6 +42,8 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'damagePerDebuff':
     case 'detonateDebuffs':
       return ['damage', 'vulnerable', 'weak', 'statusTurns'];
+    case 'detonateSeed':
+      return ['damage', 'seed'];
     case 'ifTargetHas':
       return [effect.status, ...effect.effects.flatMap(keywordsForEffect)];
     case 'consumeBlock':
