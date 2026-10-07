@@ -7,9 +7,9 @@ import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 /**
  * 敵は地域ごとに作る。数値は第 1 章の強さで書き、後の章では logic/scaling.ts の倍率で強くなる。
  * 属性: 火山 = 火 / 草原 = 草 / 水の古都 = 水 / 歯車塔 = 無属性（相性なし）。
- * - 火・岩: 攻撃と防御が中心。火傷を混ぜる、かばう、眠れる巨像
+ * - 火・岩: 攻撃と防御が中心。火傷を混ぜる、かばう、眠れる巨像、鉄鱗の甲騎士
  * - 草・風: 手数が多い連続攻撃と回復。仇討ちの群れ、蔦を混ぜる、風の衣（霊体化）
- * - 水・氷: 凍え・封印・衰弱で行動を制限し、アーティファクトでデバフを無効にする。霊体化する亡霊
+ * - 水・氷: 凍え・封印・衰弱で行動を制限し、アーティファクトでデバフを無効にする。霊体化する亡霊、鉄鱗の遺跡ガニ
  * - 電・機械: 麻痺とチャージからの大技。ガラクタを混ぜる、アーティファクトを持つ機械、休眠中のゴーレム
  */
 
@@ -56,6 +56,22 @@ export const ROCK_SOLDIER: EnemyDefinition = {
     { id: 'stomp', name: '踏み込み', actions: [atk(5, 2)] },
   ],
   traits: [{ kind: 'artifact', charges: 1 }],
+};
+
+/** 殻が厚く、攻撃 1 ヒットは 6 まで。大剣のような一撃は頭打ちになり、多段攻撃はヒット数だけ通る。 */
+export const OBSIDIAN_KNIGHT: EnemyDefinition = {
+  id: 'obsidian-knight',
+  name: '黒曜の甲騎士',
+  icon: '🛡️',
+  rank: 'normal',
+  maxHp: 46,
+  attribute: 'fire',
+  moves: [
+    { id: 'shell-guard', name: '殻の構え', actions: [blk(10), atk(5)] },
+    { id: 'shell-break', name: '殻割り', actions: [atk(13)] },
+    { id: 'drill', name: '連打', actions: [atk(4, 2)] },
+  ],
+  traits: [{ kind: 'hitCap', amount: 6 }],
 };
 
 export const MAGMA_SLIME: EnemyDefinition = {
@@ -568,7 +584,7 @@ export const RUIN_CRAB: EnemyDefinition = {
     { id: 'pinch', name: 'はさみ', actions: [atk(3, 2)] },
     { id: 'shell', name: '甲羅', actions: [blk(6), atk(2)] },
   ],
-  traits: [{ kind: 'guardian' }],
+  traits: [{ kind: 'guardian' }, { kind: 'hitCap', amount: 6 }],
 };
 
 // ---- 電・機械 ----

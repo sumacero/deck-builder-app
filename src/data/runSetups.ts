@@ -18,13 +18,14 @@ import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS];
 
 /**
- * どのキャラにも似合う無属性カード（連撃・薙ぎ払い・雷鳴・見切り・足払い・つけ込む・急所蹴り・弱点看破）。
+ * どのキャラにも似合う無属性カード（連撃・薙ぎ払い・雷鳴・連閃・見切り・足払い・つけ込む・急所蹴り・弱点看破）。
  * これ以外の無属性カードは剣・盾・雄叫び・血を払う戦士のカードで、カイルにだけ出る。
  */
 const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'twin-strike',
   'cleave',
   'thunderclap',
+  'flurry-form',
   'seeing-red',
   'trip',
   'exploit',

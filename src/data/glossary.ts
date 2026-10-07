@@ -228,6 +228,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '🏹',
     description: 'カードを使うたびに、HP が一番低い敵にその数値の分だけダメージを与える（筋力や弱体の影響を受けない）。',
   },
+  flurry: {
+    id: 'flurry',
+    name: '連閃',
+    icon: '⚔️',
+    description:
+      '同じ攻撃の 2 ヒット目から、1 ヒットごとにその数値のダメージが加わる。1 ヒットだけの攻撃には乗らない。双撃・旋風・連矢のような多段攻撃で伸びる。',
+  },
   growth: {
     id: 'growth',
     name: '成長',
@@ -312,6 +319,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '💠',
     description:
       '数値の回数だけ、次に受けるデバフを 1 回ずつ無効にする。付与・延長・倍化が 1 回分。回数を使い切ると、同じデバフも重ねてかかる。弱いデバフで先にはがそう。',
+  },
+  hitCap: {
+    id: 'hitCap',
+    name: '鉄鱗',
+    icon: '🐚',
+    description:
+      '攻撃 1 ヒットで受けるダメージは、この数値まで。それを超える一撃は削られる。多段攻撃はヒットごとにこの上限まで通るので、5×2 は 10 まで届く。宿り木などヒットでないダメージはそのまま通る。',
   },
   guardian: {
     id: 'guardian',

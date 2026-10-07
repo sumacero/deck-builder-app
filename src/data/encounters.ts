@@ -29,6 +29,7 @@ import {
   LAVA_KNIGHT,
   LEAF_FAIRY,
   MAGMA_SLIME,
+  OBSIDIAN_KNIGHT,
   MIST_SIREN,
   PEBBLE_GOLEM,
   ROCK_SOLDIER,
@@ -60,6 +61,7 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
     normal: [
       soloEncounter(EMBER_LIZARD),
       soloEncounter(ROCK_SOLDIER),
+      soloEncounter(OBSIDIAN_KNIGHT),
       soloEncounter(MAGMA_SLIME),
       group('imp-pair', [CINDER_IMP, CINDER_IMP]),
       group('fire-bat-swarm', [FIRE_BAT, FIRE_BAT, FIRE_BAT]),

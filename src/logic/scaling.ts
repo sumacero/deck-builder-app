@@ -54,6 +54,7 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
         moves: scaleMoves(trait.moves, scale),
       };
     case 'artifact':
+    case 'hitCap':
     case 'guardian':
       return trait;
   }
