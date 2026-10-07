@@ -98,6 +98,8 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}宿り木を今すぐ発動させる（数値は減らない）。`;
     case 'damagePerCardPlayed':
       return `${effect.base} ダメージ。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
+    case 'gainLashSeed':
+      return `このターン、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${effect.amount} を与える。`;
   }
 }
 
@@ -141,6 +143,7 @@ export const POWER_LABEL: Record<PowerId, string> = {
   verdure: '命の芽吹き',
   quickdraw: '速射の構え',
   flurry: '連閃',
+  lashSeed: '宿り木の蔓',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -168,6 +171,8 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、カードを使うたびに HP が一番低い敵に ${amount} ダメージ。`;
     case 'flurry':
       return `この戦闘中、同じ攻撃の 2 ヒット目から 1 ヒットごとにダメージ +${amount}。`;
+    case 'lashSeed':
+      return `この戦闘中、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${amount} を与える。`;
   }
 }
 
@@ -210,7 +215,7 @@ export function describeCard(card: CardDefinition): string {
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
     card.exhaust ? '廃棄。' : '',
   ].join('');
-  return describeEffects(card.effects, card.target) + extras;
+  return (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
 }
 
 export function describePotion(potion: PotionDefinition): string {

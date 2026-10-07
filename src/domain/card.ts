@@ -85,6 +85,8 @@ export type CardDefinition = {
   /** 秘奥義（ゲージが溜まると手札に来る必殺技）。 */
   mysticArte?: boolean;
   archetypes?: Archetype[];
+  /** ムチで打つアタック。「ムチで攻撃するたびに宿り木」（宿り木の蔓など）が乗る。 */
+  whip?: boolean;
   /** これまでに成長した回数（効果の数値には反映済み）。 */
   timesGrown?: number;
 };

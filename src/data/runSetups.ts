@@ -36,13 +36,24 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
 
 /**
+ * 宿り木を直接与えるカードのうち、リーネに出さないもの。宿り木は「ムチで打つたびに植える」（蔓の構え・宿り木の蔓）で
+ * 増やす形にし、直接与えるカードは宿り木の矢・種子散布・森の侵蝕・茨鞭の種撒きの 4 種に絞った。カイルはショップで買える。
+ */
+const HUNTER_EXCLUDED_SEED_CARD_IDS: ReadonlySet<string> = new Set([
+  'vine-bind',
+  'spore-cloud',
+  'deep-roots',
+  'hunters-mark',
+]);
+
+/**
  * リーネの候補: 属性カード（草は報酬、火・水はショップ限定）と、共通の無属性カードだけ。
  * リーネは守りで勝つキャラにしないので、ブロック軸のカードは報酬にもショップにも出さない。
  */
 const HUNTER_REWARD_CARDS = [
   ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),
   ...VERDANT_CARDS,
-].filter((card) => !isBlockAxis(card));
+].filter((card) => !isBlockAxis(card) && !HUNTER_EXCLUDED_SEED_CARD_IDS.has(card.id));
 
 /** レリックはカイルの初期レリック 1 つ、ポーションは 3 つ持って始める。 */
 export const STANDARD_RUN: RunSetup = {

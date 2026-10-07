@@ -235,6 +235,25 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     description:
       '同じ攻撃の 2 ヒット目から、1 ヒットごとにその数値のダメージが加わる。1 ヒットだけの攻撃には乗らない。双撃・旋風・連矢のような多段攻撃で伸びる。',
   },
+  lashSeed: {
+    id: 'lashSeed',
+    name: '宿り木の蔓',
+    icon: '🪢',
+    description: 'この戦闘中、ムチの攻撃が 1 回当たるたびに、その敵にその数値の宿り木を与える。2×4 のような連打なら 4 回分、敵全体の攻撃なら全員に植わる。',
+  },
+  lashSeedTurn: {
+    id: 'lashSeedTurn',
+    name: '蔓の構え',
+    icon: '🌿',
+    description:
+      'このターンだけ、ムチの攻撃が 1 回当たるたびに、その敵にその数値の宿り木を与える。連打なら回数分、敵全体の攻撃なら全員に植わる。ターンが終わると消える。',
+  },
+  whip: {
+    id: 'whip',
+    name: 'ムチ',
+    icon: '〰️',
+    description: 'ムチで打つアタック。宿り木の蔓・蔓の構えがあると、当てた敵に宿り木を与える。',
+  },
   growth: {
     id: 'growth',
     name: '成長',

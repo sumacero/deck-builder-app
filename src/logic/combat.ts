@@ -208,6 +208,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
       tempStrength: 0,
       enchant: [],
       cardsThisTurn: 0,
+      lashSeedThisTurn: 0,
       hindrance,
       pendingHindrance: NO_HINDRANCE,
       statuses: turn > 1 ? tickStatuses(state.player.statuses) : state.player.statuses,
@@ -275,6 +276,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       attribute: setup.agent.attribute,
       enchant: [],
       cardsThisTurn: 0,
+      lashSeedThisTurn: 0,
       selfHpLost: 0,
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
@@ -778,6 +780,14 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       const amount = attackDamage(state, effect.base + state.player.cardsThisTurn * effect.perCard);
       return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), state);
     }
+    case 'gainLashSeed':
+      return withLog(
+        {
+          ...state,
+          player: { ...state.player, lashSeedThisTurn: state.player.lashSeedThisTurn + effect.amount },
+        },
+        `このターン、ムチの攻撃に宿り木 ${effect.amount}`,
+      );
   }
 }
 
@@ -927,10 +937,30 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const resolved = applyEffects(guarded, card.effects, aim, { attributes: playedAttributes(state, card) });
   const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
   const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
-  const shot = quickdrawShot(grown, powerOf(state, 'quickdraw'));
+  const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
+  const shot = quickdrawShot(lashed, powerOf(state, 'quickdraw'));
   const weakHit = shot.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
   const counted = { ...shot, player: { ...shot.player, cardsThisTurn: shot.player.cardsThisTurn + 1 } };
   return settle(grantArteIfReady(recordPlay(counted, card, weakHit)));
+}
+
+/** カードのダメージの回数（2×4 なら 4）。条件付きの追加ダメージは数えない。 */
+const damageHits = (card: CardDefinition) =>
+  card.effects.reduce((sum, effect) => sum + (effect.kind === 'damage' ? (effect.hits ?? 1) : 0), 0);
+
+/**
+ * ムチのアタックの後、当てた敵（倒れていない敵）に 1 ヒットにつき宿り木。このターンの分とパワーの分を足す。
+ * 連打のムチほど多く植わる。
+ */
+function plantLashSeed(state: CombatState, card: CardDefinition, aim: Aim): CombatState {
+  const amount = (state.player.lashSeedThisTurn + powerOf(state, 'lashSeed')) * damageHits(card);
+  if (amount === 0) return state;
+  return aimedUids(state, aim)
+    .filter((uid) => {
+      const enemy = findEnemy(state, uid);
+      return enemy !== undefined && isAlive(enemy);
+    })
+    .reduce((current, uid) => debuffEnemy(current, uid, 'seed', amount), state);
 }
 
 /** 速射の構え: カードを使うたびに HP が一番低い敵へ追撃。構えを張ったカード自身では撃たない。 */

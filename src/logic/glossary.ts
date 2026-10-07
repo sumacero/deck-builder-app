@@ -38,7 +38,7 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'extendBuffs':
       return ['retainBlock', 'blazing', 'statusTurns'];
     case 'gainPower':
-      return [effect.power];
+      return effect.power === 'lashSeed' ? ['lashSeed', 'whip', 'seed'] : [effect.power];
     case 'damagePerDebuff':
     case 'detonateDebuffs':
       return ['damage', 'vulnerable', 'weak', 'statusTurns'];
@@ -56,6 +56,8 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['seed'];
     case 'damagePerCardPlayed':
       return ['damage'];
+    case 'gainLashSeed':
+      return ['lashSeedTurn', 'whip', 'seed'];
   }
 }
 
@@ -71,6 +73,7 @@ const POWER_IDS: readonly PowerId[] = [
   'verdure',
   'quickdraw',
   'flurry',
+  'lashSeed',
 ];
 
 /** 状態のターン数（0 は表示しない）。 */
@@ -85,6 +88,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
   return unique([
     card.type,
     ...(card.mysticArte ? (['mysticArte'] as const) : []),
+    ...(card.whip ? (['whip'] as const) : []),
     ...(cardAttributes(card).length > 0 ? (['attribute', 'weakness'] as const) : []),
     ...(card.target === 'allEnemies' ? (['areaAttack'] as const) : []),
     ...card.effects.flatMap(keywordsForEffect),
@@ -125,6 +129,7 @@ export function playerStatuses(player: PlayerState): StatusView[] {
     { keyword: 'block', value: player.block },
     { keyword: 'strength', value: player.strength },
     { keyword: 'tempStrength', value: player.tempStrength },
+    { keyword: 'lashSeedTurn', value: player.lashSeedThisTurn },
     { keyword: 'endTurnBlock', value: player.endTurnBlock },
     { keyword: 'paralysis', value: player.hindrance.paralysis },
     { keyword: 'chill', value: player.hindrance.chill },

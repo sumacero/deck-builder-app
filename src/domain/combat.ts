@@ -38,6 +38,8 @@ export type PlayerState = Fighter & {
   enchant: Attribute[];
   /** このターンに使ったカードの枚数（手数を数えるカード用）。 */
   cardsThisTurn: number;
+  /** このターンだけ、ムチの攻撃が 1 回当たるたびにその敵へ与える宿り木（パワーの宿り木の蔓とは別に足す）。 */
+  lashSeedThisTurn: number;
   /** この戦闘で、カードの効果（HP を払う）で失った HP の合計。 */
   selfHpLost: number;
   /** 秘奥義ゲージ。ARTE_GAUGE_MAX で秘奥義カードが手札に来る。 */

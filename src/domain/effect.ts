@@ -48,7 +48,9 @@ export type Effect =
   /** 狙った敵の宿り木を、今すぐ 1 回発動させる（ターン数は減らない）。 */
   | { kind: 'bloomSeed' }
   /** base + このターンにこのカードより前に使ったカード 1 枚につき perCard のダメージ。 */
-  | { kind: 'damagePerCardPlayed'; base: number; perCard: number };
+  | { kind: 'damagePerCardPlayed'; base: number; perCard: number }
+  /** このターン、ムチの攻撃が 1 回当たるたびにその敵へ宿り木 amount。 */
+  | { kind: 'gainLashSeed'; amount: number };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';
