@@ -7,6 +7,7 @@ import { COLORS, RADIUS, SPACING } from '../../theme';
 import { ArchetypeChips } from '../cards/ArchetypeChips';
 import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { RelicCard } from '../items/RelicCard';
 import { ScreenScroll } from '../layout/ScreenScroll';
 
@@ -35,6 +36,7 @@ export function RewardScreen({
   return (
     <ScreenScroll contentStyle={styles.root}>
       <View style={styles.corner}>
+        <SettingsButton />
         <DeckButton deck={deck} />
       </View>
       {gold > 0 && <Text style={styles.gold}>🪙 +{gold} ゴールド</Text>}
@@ -70,7 +72,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.lg,
   },
-  corner: { position: 'absolute', top: SPACING.lg, right: SPACING.lg },
+  corner: {
+    position: 'absolute',
+    top: SPACING.lg,
+    right: SPACING.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   gold: { color: COLORS.gold, fontSize: 18, fontWeight: '800' },
   title: { color: COLORS.gold, fontSize: 26, fontWeight: '800', letterSpacing: 4 },
   subtitle: { color: COLORS.textMuted, fontSize: 14 },

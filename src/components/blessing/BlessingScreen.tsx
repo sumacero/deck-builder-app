@@ -7,6 +7,7 @@ import { describeBlessing } from '../../logic/describe';
 import { currentAct } from '../../logic/run';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { DeckButton } from '../cards/DeckButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { ScreenScroll } from '../layout/ScreenScroll';
 import { GoldBadge } from '../run/GoldBadge';
@@ -33,6 +34,7 @@ export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
           <View style={styles.statusRight}>
             <GoldBadge gold={run.gold} />
             <DeckButton deck={run.deck} />
+            <SettingsButton />
           </View>
         </View>
       </View>

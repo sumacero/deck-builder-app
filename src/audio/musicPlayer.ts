@@ -1,4 +1,6 @@
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio';
+import { getAudioSettings, subscribeAudioSettings } from './audioSettings';
+import { outputVolume } from './levels';
 import { MUSIC, type MusicId } from './music';
 import { configureAudioMode } from './soundPlayer';
 
@@ -10,6 +12,11 @@ const players = new Map<MusicId, AudioPlayer>();
 /** いま流している（フェードアウト中は含まない）曲。 */
 let current: MusicId | null = null;
 let fadeTimer: ReturnType<typeof setInterval> | null = null;
+
+/** 曲ごとの音量 × 設定（50 で今までどおり）。 */
+function musicVolume(id: MusicId): number {
+  return outputVolume(MUSIC[id].volume, getAudioSettings().bgm);
+}
 
 function playerFor(id: MusicId): AudioPlayer {
   const existing = players.get(id);
@@ -25,17 +32,28 @@ function cancelFade(): void {
   fadeTimer = null;
 }
 
-/** 音量を target まで durationMs かけて変える。 */
-function fadeTo(player: AudioPlayer, target: number, durationMs: number, onDone?: () => void): void {
+/**
+ * 音量を target まで durationMs かけて変える。
+ * target が関数のときは、フェードの途中で設定が変わっても、終わりは新しい音量になる。
+ */
+function fadeTo(
+  player: AudioPlayer,
+  target: number | (() => number),
+  durationMs: number,
+  onDone?: () => void,
+): void {
   cancelFade();
   const from = player.volume;
   const steps = Math.max(1, Math.round(durationMs / FADE_STEP_MS));
   let step = 0;
+  const destination = () => (typeof target === 'function' ? target() : target);
   fadeTimer = setInterval(() => {
     step += 1;
-    player.volume = from + ((target - from) * step) / steps;
+    const to = destination();
+    player.volume = from + ((to - from) * step) / steps;
     if (step >= steps) {
       cancelFade();
+      player.volume = destination();
       onDone?.();
     }
   }, FADE_STEP_MS);
@@ -55,7 +73,7 @@ export function playMusic(id: MusicId): void {
     player.volume = 0;
     void player.seekTo(0);
     player.play();
-    fadeTo(player, MUSIC[id].volume, FADE_IN_MS);
+    fadeTo(player, () => musicVolume(id), FADE_IN_MS);
   } catch (error: unknown) {
     console.warn(`BGM ${id} の再生に失敗しました`, error);
   }
@@ -99,3 +117,9 @@ export function pauseMusic(): void {
 export function resumeMusic(): void {
   if (current) players.get(current)?.play();
 }
+
+subscribeAudioSettings(() => {
+  if (!current || fadeTimer) return;
+  const player = players.get(current);
+  if (player) player.volume = musicVolume(current);
+});

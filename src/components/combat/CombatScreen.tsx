@@ -25,6 +25,7 @@ import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
 import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { canPlayByTap, type DropTarget } from './cardDrop';
 import { CombatFooter } from './CombatFooter';
@@ -278,6 +279,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
                 {energyOrb}
                 {turnLabel}
                 <DeckButton deck={setup.deck} />
+                <SettingsButton />
               </View>
             </View>
             <View style={styles.main}>
@@ -295,6 +297,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
           <>
             {itemBar}
             <View style={styles.turnRow}>
+              <View style={styles.settings}>
+                <SettingsButton />
+              </View>
               {turnLabel}
               <View style={styles.deck}>
                 <DeckButton deck={setup.deck} />
@@ -397,6 +402,7 @@ const styles = StyleSheet.create({
   portraitHand: { marginHorizontal: -SPACING.lg },
   landscapeHand: { flex: 1 },
   turnRow: { justifyContent: 'center' },
+  settings: { position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'center' },
   /** 上に敵、左下にエージェント。斜めに向かい合って画面を広く使う。 */
   portraitStage: { flex: 1, justifyContent: 'space-between', paddingBottom: SPACING.sm },
   playerSlot: { alignSelf: 'flex-start', width: `${COMBAT_LAYOUT.playerWidthRatio * 100}%` },

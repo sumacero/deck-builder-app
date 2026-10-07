@@ -7,6 +7,7 @@ import { hasUpgradableCard, restHealAmount } from '../../logic/rest';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardPickerModal } from '../cards/CardPickerModal';
 import { DeckButton } from '../cards/DeckButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { HpBar } from '../combat/HpBar';
 import { ScreenScroll } from '../layout/ScreenScroll';
 
@@ -24,6 +25,7 @@ export function RestScreen({ run, actions }: RestScreenProps) {
   return (
     <ScreenScroll contentStyle={styles.root}>
       <View style={styles.corner}>
+        <SettingsButton />
         <DeckButton deck={run.deck} />
       </View>
       <Text style={styles.fire}>🔥</Text>
@@ -91,7 +93,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.md,
   },
-  corner: { position: 'absolute', top: SPACING.lg, right: SPACING.lg },
+  corner: {
+    position: 'absolute',
+    top: SPACING.lg,
+    right: SPACING.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   fire: { fontSize: 56 },
   title: { color: COLORS.gold, fontSize: 26, fontWeight: '800', letterSpacing: 4 },
   hp: { width: '70%' },

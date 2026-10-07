@@ -11,6 +11,7 @@ import { DeckButton } from '../cards/DeckButton';
 import { FadeOverlay } from '../effects/FadeOverlay';
 import { HpBar } from '../combat/HpBar';
 import { GalleryButton } from '../gallery/GalleryButton';
+import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { GoldBadge } from '../run/GoldBadge';
 import { RunEndOverlay } from '../run/RunEndOverlay';
@@ -146,6 +147,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
               <GoldBadge gold={run.gold} />
               <DeckButton deck={run.deck} />
               <GalleryButton />
+              <SettingsButton />
             </View>
             {actLine}
             {hint}
@@ -163,6 +165,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
               <GoldBadge gold={run.gold} />
               <DeckButton deck={run.deck} />
               <GalleryButton />
+              <SettingsButton />
             </View>
             {actLine}
             {hint}
