@@ -9,9 +9,10 @@ const createSeed = () => Math.floor(Math.random() * 2 ** 31);
 /**
  * ラン全体（マップ・現在地・HP・所持品・今の画面）を管理する。
  * 回復・強化などの出来事は events に順番に積まれ、演出が終わったら dismissEvent で消す。
+ * その出来事が画面の切り替わりと重なるときは、shown に前の画面を残す。
  */
 export function useRun(setup: RunSetup) {
-  const [{ run, events }, dispatch] = useReducer(runStoreReducer, setup, (s) =>
+  const [{ run, events, shown }, dispatch] = useReducer(runStoreReducer, setup, (s) =>
     createRunStore(createRun(s, createSeed())),
   );
 
@@ -86,6 +87,8 @@ export function useRun(setup: RunSetup) {
     run,
     /** まだ見せていない出来事。先頭から順に見せる。 */
     events,
+    /** 演出が終わるまで出す画面。null なら run を出す。 */
+    shown,
     dismissEvent,
     moveTo,
     finishCombat,
