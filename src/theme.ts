@@ -195,7 +195,7 @@ export const RADIUS = {
 
 /** 戦闘画面のキャラクター（3D 表示）。size は描画領域の一辺、duration はミリ秒。 */
 export const ACTOR_FIGURE = {
-  size: 128,
+  size: 160,
   /** エージェント選択画面の 3D の一辺。 */
   selectSize: 112,
   /** ラスボス戦の前の画面に立つ、ラスボスの 3D の一辺。 */

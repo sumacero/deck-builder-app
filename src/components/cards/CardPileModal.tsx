@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition, CardStack } from '../../domain/card';
 import { COLORS, RADIUS, SPACING } from '../../theme';
-import { AbandonRunConfirm, AbandonRunPressable, useAbandonPrompt } from '../run/AbandonRun';
 import { CardDetailSheet } from './CardDetailSheet';
 import { CardView } from './CardView';
 
@@ -11,18 +10,11 @@ type CardPileModalProps = {
   note?: string;
   stacks: CardStack[];
   onClose: () => void;
-  /**
-   * デッキ一覧は画面全体を覆う小窓なので、上端の「あきらめる」が隠れる。
-   * 戦闘中の山札・捨て札は小窓の外にボタンが残るので、こちらでは出さない。
-   */
-  offerAbandon?: boolean;
 };
 
 /** 山札・捨て札・デッキ全体の中身を見るオーバーレイ。カードをタップすると詳細（拡大と用語解説）を開く。 */
-export function CardPileModal({ title, note, stacks, onClose, offerAbandon = false }: CardPileModalProps) {
+export function CardPileModal({ title, note, stacks, onClose }: CardPileModalProps) {
   const [detail, setDetail] = useState<CardDefinition | null>(null);
-  const abandon = useAbandonPrompt();
-  const showAbandon = offerAbandon && abandon.available;
   const total = stacks.reduce((sum, stack) => sum + stack.count, 0);
   return (
     <View style={styles.overlay}>
@@ -46,7 +38,6 @@ export function CardPileModal({ title, note, stacks, onClose, offerAbandon = fal
             ))
           )}
         </ScrollView>
-        {showAbandon && <AbandonRunPressable onPress={abandon.ask} />}
         <Pressable
           onPress={onClose}
           style={({ pressed }) => [styles.close, pressed && styles.pressed]}
@@ -55,9 +46,6 @@ export function CardPileModal({ title, note, stacks, onClose, offerAbandon = fal
         </Pressable>
       </View>
       {detail && <CardDetailSheet card={detail} visible onClose={() => setDetail(null)} />}
-      {showAbandon && abandon.asking && (
-        <AbandonRunConfirm onStay={abandon.stay} onLeave={abandon.leave} />
-      )}
     </View>
   );
 }
