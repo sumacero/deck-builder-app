@@ -4,7 +4,8 @@ import { DEFEND, STRIKE } from './cards';
 /**
  * 翠風のリーネ（草属性）のためのカード。草属性なので、リーネは戦闘報酬で、ほかのエージェントはショップでだけ手に入る。
  * リーネの軸は 3 つ: 弓（軽いカードを次々使う手数）/ 宿り木（毎ターン削る）/ ムチ（敵全体と連打）。
- * 茨と守りのカードはリーネの報酬・ショップには出さない（守りで勝つキャラにしない）。ほかのエージェントがショップで買える。
+ * 以前の茨と守りのカード（茨の鎧・茨の垣根など）はリーネに出さない。
+ * 2026-10-08 に足した蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ、リーネのブロック軸として報酬に出る。
  */
 
 export const SEED_ARROW: CardDefinition = {
@@ -832,5 +833,75 @@ export const VERDANT_CARDS: CardDefinition[] = [
     effects: [{ kind: 'gainPower', power: 'arrowSupply', amount: 1 }],
     exhaust: true,
     upgrade: { cost: 1 },
+  },
+
+  // --- ブロックの取り方（2026-10-08）。盾ではなく、蔦・年輪・葉・鞭で受ける ---
+  {
+    id: 'vine-parry',
+    name: '蔦の受け',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block'],
+    cost: 0,
+    target: 'self',
+    effects: [{ kind: 'block', amount: 3 }],
+    upgrade: { effects: [{ kind: 'block', amount: 4 }] },
+    motion: 'guard',
+  },
+  {
+    id: 'ring-shield',
+    name: '年輪の盾',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block', 'growth'],
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'block', amount: 4 }],
+    growth: { stat: 'block', amount: 3, when: 'play', scope: 'combat' },
+    upgrade: {
+      effects: [{ kind: 'block', amount: 5 }],
+      growth: { stat: 'block', amount: 4, when: 'play', scope: 'combat' },
+    },
+    motion: 'guard',
+  },
+  {
+    id: 'leaf-nock',
+    name: '葉の番え',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block', 'tempo'],
+    cost: 1,
+    target: 'self',
+    effects: [
+      { kind: 'block', amount: 6 },
+      { kind: 'addArrows', amount: 1 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'block', amount: 8 },
+        { kind: 'addArrows', amount: 1 },
+      ],
+    },
+    motion: 'guard',
+  },
+  {
+    id: 'whip-check',
+    name: '鞭の牽制',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block', 'debuff'],
+    cost: 1,
+    target: 'self',
+    effects: [
+      { kind: 'block', amount: 5 },
+      { kind: 'gainLashSeed', amount: 2 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'block', amount: 8 },
+        { kind: 'gainLashSeed', amount: 2 },
+      ],
+    },
+    motion: 'guard',
   },
 ];
