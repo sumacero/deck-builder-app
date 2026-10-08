@@ -824,4 +824,67 @@ export const REWARD_CARDS: CardDefinition[] = [
     growth: { stat: 'block', amount: 2, when: 'play', scope: 'run' },
     upgrade: { growth: { stat: 'block', amount: 3, when: 'play', scope: 'run' } },
   },
+
+  // --- ブロックの取り方を分ける。数値だけの防御の繰り返しにしない ---
+  {
+    id: 'deflect',
+    name: '流し受け',
+    type: 'skill',
+    archetypes: ['block'],
+    cost: 0,
+    target: 'self',
+    effects: [{ kind: 'block', amount: 3 }],
+    upgrade: { effects: [{ kind: 'block', amount: 4 }] },
+  },
+  {
+    id: 'stacking-shield',
+    name: '積み上げる盾',
+    type: 'skill',
+    archetypes: ['block', 'growth'],
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'block', amount: 4 }],
+    growth: { stat: 'block', amount: 3, when: 'play', scope: 'combat' },
+    upgrade: {
+      effects: [{ kind: 'block', amount: 5 }],
+      growth: { stat: 'block', amount: 4, when: 'play', scope: 'combat' },
+    },
+  },
+  {
+    id: 'scorching-shield',
+    name: '焦熱の盾',
+    type: 'skill',
+    attribute: 'fire',
+    archetypes: ['block', 'sacrifice'],
+    cost: 1,
+    target: 'self',
+    effects: [
+      { kind: 'loseHp', amount: 3 },
+      { kind: 'block', amount: 12 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'loseHp', amount: 3 },
+        { kind: 'block', amount: 16 },
+      ],
+    },
+  },
+  {
+    id: 'glaring-wall',
+    name: '睨みの壁',
+    type: 'skill',
+    archetypes: ['block', 'debuff'],
+    cost: 1,
+    target: 'allEnemies',
+    effects: [
+      { kind: 'block', amount: 5 },
+      { kind: 'applyDebuff', status: 'weak', turns: 1 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'block', amount: 8 },
+        { kind: 'applyDebuff', status: 'weak', turns: 1 },
+      ],
+    },
+  },
 ];
