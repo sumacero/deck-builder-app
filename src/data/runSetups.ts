@@ -13,7 +13,7 @@ import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 /**
  * 報酬に出るカードは「共通の無属性カード」+「そのキャラのカード」。キャラのカードの枚数はどのキャラも同じにする
  * （カイル: 戦士の無属性 + 火属性、リーネ: 草属性。2026-10-07 時点で各 38 種、共通 8 種。
- * 2026-10-08 にブロックの取り方が違うカードを 4 種足し、カイルの報酬だけ 4 種多い。リーネにはブロック軸を出さない）。
+ * 2026-10-08 にカイルへブロック 4 種、リーネへ狩人のブロック 4 種を足した。リーネに出るのは蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ）。
  * エージェントと違う属性のカードは報酬に出ず、ショップでだけ買える（`isDraftable`）ので、候補には入れておく。
  */
 const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS];
@@ -35,6 +35,17 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
 ]);
 
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
+
+/**
+ * リーネのブロック軸。盾のカードは出さず、この 4 種だけ報酬とショップに出す。
+ * 以前の茨の鎧・茨の垣根・命の芽吹き・大樹の加護・世界樹の種は、ここに無いので出さない。
+ */
+const HUNTER_BLOCK_CARD_IDS: ReadonlySet<string> = new Set([
+  'vine-parry',
+  'ring-shield',
+  'leaf-nock',
+  'whip-check',
+]);
 
 /**
  * 草属性だが、リーネには出さないカード（カイルはショップで買える）。
@@ -59,12 +70,15 @@ const HUNTER_EXCLUDED_CARD_IDS: ReadonlySet<string> = new Set([
 
 /**
  * リーネの候補: 属性カード（草は報酬、火・水はショップ限定）と、共通の無属性カードだけ。
- * リーネは守りで勝つキャラにしないので、ブロック軸のカードは報酬にもショップにも出さない。
+ * ブロック軸は、狩人の 4 種（蔦の受け・年輪の盾・葉の番え・鞭の牽制）だけ出す。カイルの盾や以前の茨の守りは出さない。
  */
 const HUNTER_REWARD_CARDS = [
   ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),
   ...VERDANT_CARDS,
-].filter((card) => !isBlockAxis(card) && !HUNTER_EXCLUDED_CARD_IDS.has(card.id));
+].filter(
+  (card) =>
+    (!isBlockAxis(card) || HUNTER_BLOCK_CARD_IDS.has(card.id)) && !HUNTER_EXCLUDED_CARD_IDS.has(card.id),
+);
 
 /** レリックはカイルの初期レリック 1 つ、ポーションは 3 つ持って始める。 */
 export const STANDARD_RUN: RunSetup = {
