@@ -49,8 +49,8 @@ const copies = (card: CardDefinition, count: number): CardDefinition[] =>
 
 /** リーネの初期デッキ。ストライクはラン開始時に草属性になる。ストライク・防御は効果はそのままで、絵だけ弓とムチの狩人用。 */
 export const VERDANT_STARTER_DECK: CardDefinition[] = [
-  ...copies({ ...STRIKE, art: 'strike-verdant' }, 3),
-  ...copies({ ...DEFEND, art: 'defend-verdant' }, 2),
+  ...copies({ ...STRIKE, art: 'strike-verdant' }, 4),
+  ...copies({ ...DEFEND, art: 'defend-verdant' }, 4),
   SEED_ARROW,
 ];
 

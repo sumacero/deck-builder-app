@@ -81,8 +81,8 @@ const copies = (card: CardDefinition, count: number): CardDefinition[] =>
 
 /** 紅蓮のカイルの初期デッキ。ストライクはラン開始時にエージェントの属性になる。 */
 export const CRIMSON_STARTER_DECK: CardDefinition[] = [
-  ...copies(STRIKE, 3),
-  ...copies(DEFEND, 3),
+  ...copies(STRIKE, 4),
+  ...copies(DEFEND, 4),
 ];
 
 /** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。 */

@@ -44,8 +44,8 @@ import {
 
 /**
  * 地域ごとの敵の顔ぶれ（第 1 章の強さ）。章ごとの強さは acts.ts で倍率をかける。
- * エリート・ボスは取り巻きの小型の敵を連れて出る（敵全体への攻撃が単体の強敵にも腐らないように）。
- * 名前の表示には encounterLeader を使う。
+ * エリート・ボスは HP の近い相方と組んで出る（HP の比は 1:1〜1:2）。取り巻きを 1 ターンで倒して終わりにせず、
+ * 敵全体への攻撃が最後まで効くようにする。名前の表示には encounterLeader を使う。
  */
 export type RegionEnemies = {
   normal: Encounter[];
@@ -59,6 +59,9 @@ const group = (id: string, enemies: EnemyDefinition[], rank: Encounter['rank'] =
   rank,
   enemies,
 });
+
+/** 組んで出るときの HP。相方がいるぶん、単体で出るときより HP を下げる。 */
+const withHp = (enemy: EnemyDefinition, maxHp: number): EnemyDefinition => ({ ...enemy, maxHp });
 
 export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
   volcano: {
@@ -74,11 +77,12 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('ember-troop', [CINDER_IMP, FIRE_BAT, PEBBLE_GOLEM, CINDER_IMP]),
     ],
     elite: [
-      group('knight-and-imp', [CINDER_IMP, LAVA_KNIGHT], 'elite'),
-      // 小石のゴーレムがかばうので、眠る巨像を単体攻撃だけで削るのは遠回り。
-      group('colossus-and-golem', [PEBBLE_GOLEM, BASALT_COLOSSUS], 'elite'),
+      group('knight-and-lizard', [EMBER_LIZARD, withHp(LAVA_KNIGHT, 44)], 'elite'),
+      // 巨像が眠っている間に岩の兵士を倒すか、まとめて削るか。
+      group('colossus-and-soldier', [ROCK_SOLDIER, withHp(BASALT_COLOSSUS, 50)], 'elite'),
+      group('knight-and-colossus', [withHp(LAVA_KNIGHT, 34), withHp(BASALT_COLOSSUS, 36)], 'elite'),
     ],
-    boss: [group('dragon-and-bats', [FIRE_BAT, FLAME_DRAGON, FIRE_BAT], 'boss')],
+    boss: [group('dragon-and-slime', [withHp(MAGMA_SLIME, 34), withHp(FLAME_DRAGON, 70)], 'boss')],
   },
   grassland: {
     normal: [
@@ -91,12 +95,13 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('fairy-court', [HORN_RABBIT, LEAF_FAIRY, HORN_RABBIT]),
       group('meadow-pack', [SEED_SPROUT, GUST_SPRITE, HORN_RABBIT, SEED_SPROUT]),
     ],
-    // 大樹はかばう性質で、両脇の芽への攻撃を引き受ける。
+    // 大樹はかばう性質で、木の葉の精への攻撃を引き受ける。
     elite: [
-      group('ranger-hunt', [HORN_RABBIT, FOREST_RANGER], 'elite'),
-      group('treant-grove', [SEED_SPROUT, GREAT_TREANT, SEED_SPROUT], 'elite'),
+      group('ranger-and-wolf', [GRASS_WOLF, withHp(FOREST_RANGER, 40)], 'elite'),
+      group('treant-grove', [LEAF_FAIRY, withHp(GREAT_TREANT, 60)], 'elite'),
+      group('ranger-pair', [withHp(FOREST_RANGER, 34), withHp(FOREST_RANGER, 34)], 'elite'),
     ],
-    boss: [group('griffin-and-gusts', [GUST_SPRITE, STORM_GRIFFIN, GUST_SPRITE], 'boss')],
+    boss: [group('griffin-and-hawk', [withHp(WIND_HAWK, 32), withHp(STORM_GRIFFIN, 66)], 'boss')],
   },
   sunkenCity: {
     normal: [
@@ -113,10 +118,11 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('phantom-procession', [ANCIENT_PHANTOM, ICE_WISP]),
     ],
     elite: [
-      group('witch-and-wisp', [ICE_WISP, ICE_WITCH], 'elite'),
-      group('serpent-and-bubble', [BUBBLE_SLIME, ABYSS_SERPENT], 'elite'),
+      group('witch-and-siren', [MIST_SIREN, withHp(ICE_WITCH, 42)], 'elite'),
+      group('serpent-and-guard', [DROWNED_GUARD, withHp(ABYSS_SERPENT, 49)], 'elite'),
+      group('witch-and-serpent', [withHp(ICE_WITCH, 34), withHp(ABYSS_SERPENT, 36)], 'elite'),
     ],
-    boss: [group('empress-court', [ICE_WISP, FROZEN_EMPRESS, ICE_WISP], 'boss')],
+    boss: [group('empress-and-guard', [withHp(DROWNED_GUARD, 34), withHp(FROZEN_EMPRESS, 68)], 'boss')],
   },
   clockwork: {
     normal: [
@@ -131,9 +137,10 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('workshop', [TESLA_ORB, BOLT_BUG, COG_RAT, BOLT_BUG]),
     ],
     elite: [
-      group('knight-and-bug', [BOLT_BUG, CLOCKWORK_KNIGHT], 'elite'),
-      group('golem-and-rat', [COG_RAT, THUNDER_GOLEM], 'elite'),
+      group('knight-and-hound', [IRON_HOUND, withHp(CLOCKWORK_KNIGHT, 44)], 'elite'),
+      group('golem-and-soldier', [GEAR_SOLDIER, withHp(THUNDER_GOLEM, 51)], 'elite'),
+      group('knight-and-golem', [withHp(CLOCKWORK_KNIGHT, 34), withHp(THUNDER_GOLEM, 36)], 'elite'),
     ],
-    boss: [group('emperor-guard', [BOLT_BUG, GEAR_EMPEROR, BOLT_BUG], 'boss')],
+    boss: [group('emperor-and-soldier', [withHp(GEAR_SOLDIER, 34), withHp(GEAR_EMPEROR, 72)], 'boss')],
   },
 };

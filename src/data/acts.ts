@@ -32,22 +32,22 @@ const FLOOR_SCALING = { start: 0.8, perFloor: 0.02 };
 const CHAPTERS: ChapterDef[] = [
   {
     number: 1,
-    road: { hp: 1.25, power: 1.2 },
+    road: { hp: 1.2, power: 1.15 },
     boss: { hp: 1, power: 1 },
     greetingBefore: 'ようこそ、旅の人。',
     greetingAfter: '出発の前に、ひとつ贈り物を選んで。',
   },
   {
     number: 2,
-    road: { hp: 1.8, power: 1.5 },
-    boss: { hp: 1.5, power: 1.3 },
+    road: { hp: 1.7, power: 1.45 },
+    boss: { hp: 1.4, power: 1.25 },
     greetingBefore: '最初の地を抜けたのね。',
     greetingAfter: 'さあ、また選んで。',
   },
   {
     number: 3,
     road: { hp: 2.7, power: 2.1 },
-    boss: { hp: 1.9, power: 1.6 },
+    boss: { hp: 1.75, power: 1.5 },
     greetingBefore: 'ここが最後の道。',
     greetingAfter: 'この地の主の先で、星を喰らう魔皇が待っている。私の灯りを持っていって。',
   },
