@@ -15,7 +15,7 @@ import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
  * 報酬に出るカードは「共通の無属性カード」+「そのキャラのカード」。キャラのカードの枚数はどのキャラも同じにする
  * （カイル: 戦士の無属性 + 火属性、リーネ: 草属性。2026-10-07 時点で各 38 種、共通 8 種。
  * 2026-10-08 にカイルへブロック 4 種、リーネへ狩人のブロック 4 種を足した。リーネに出るのは蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ。
- * 2026-10-09 のリオは潮のカード 17 種。枚数はまだカイル・リーネより少ないので、リオの報酬では潮のカードが出やすい）。
+ * 2026-10-09 のノエルは潮のカード 17 種。枚数はまだカイル・リーネより少ないので、ノエルの報酬では潮のカードが出やすい）。
  * エージェントと違う属性のカードは報酬に出ず、ショップでだけ買える（`isDraftable`）ので、候補には入れておく。
  */
 const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS, ...RAIN_CARDS];
@@ -116,7 +116,7 @@ export const VERDANT_RUN: RunSetup = {
 };
 
 /**
- * リオのブロック軸。盾や蔦は出さず、水鏡・波・氷の帳・雨宿りだけ報酬とショップに出す。
+ * ノエルのブロック軸。盾や蔦は出さず、水鏡・波・氷の帳・雨宿りだけ報酬とショップに出す。
  * 火・草のブロックカードはショップの別属性枠に残す。
  */
 const RAIN_BLOCK_CARD_IDS: ReadonlySet<string> = new Set([
@@ -137,7 +137,7 @@ const RAIN_REWARD_CARDS = [
     (card.attribute !== undefined && card.attribute !== 'water'),
 );
 
-/** リオは HP が低め。初期レリックの潮 1 で、最初の敵の行動から乱せる。 */
+/** ノエルは HP が低め。初期レリックの潮 1 で、最初の敵の行動から削れる。 */
 export const RAIN_RUN: RunSetup = {
   ...STANDARD_RUN,
   agent: RAIN_MAGE,

@@ -211,7 +211,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
   sacrifice: SWORDSMAN_MOTIONS.sacrifice,
 };
 
-/** 蒼雨のリオ: その場で杖を突き出し、水を放つ。踏み込まず、杖を掲げて唱える。 */
+/** 蒼雨のノエル: その場で杖を突き出し、水を放つ。踏み込まず、杖を掲げて唱える。 */
 const MAGE_MOTIONS: Record<CardMotion, MotionPreset> = {
   strike: {
     action: 'cast',
