@@ -103,6 +103,8 @@ export function CardView({
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width, card.name) : null;
   const art = cardArt(card);
+  // 選択中は枠が太い。覆いはこの太さだけ外側へ伸ばすと、外枠と角がカードと重なる。
+  const frameWidth = selected ? SELECTED_BORDER : BORDER_WIDTH;
   return (
     <>
       <Pressable
@@ -170,15 +172,31 @@ export function CardView({
           </Text>
           <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
         </View>
+        {dimmed && (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.dim,
+              {
+                top: -frameWidth,
+                right: -frameWidth,
+                bottom: -frameWidth,
+                left: -frameWidth,
+              },
+            ]}
+          />
+        )}
+        {/* 宝石と枚数は覆いのあと。カードの覆いに埋もれず、自分の形だけを暗くする。 */}
         <View style={styles.costGem}>
           <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
+          {dimmed && <View pointerEvents="none" style={styles.gemDim} />}
         </View>
         {count !== undefined && count > 1 && (
           <View style={styles.countBadge}>
             <Text style={styles.countText}>×{count}</Text>
+            {dimmed && <View pointerEvents="none" style={styles.badgeDim} />}
           </View>
         )}
-        {dimmed && <View pointerEvents="none" style={styles.dim} />}
       </Pressable>
       {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
     </>
@@ -186,7 +204,9 @@ export function CardView({
 }
 
 const GEM_SIZE = 24;
+const GEM_BORDER = 1.5;
 const BADGE_SIZE = 20;
+const SELECTED_BORDER = 3;
 /** 左上のコストの宝石がカードの内側に食い込む幅。名前はその右から始める。 */
 const NAME_LEFT_INSET = GEM_SIZE - SPACING.sm - BORDER_WIDTH;
 const NAME_RIGHT_INSET = 2;
@@ -204,16 +224,33 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.sm,
   },
   wide: { width: WIDE_WIDTH, minHeight: 168 },
-  selected: { borderWidth: 3 },
-  /** はみ出すコストの宝石まで覆う。カードの不透明度は下げない。 */
+  selected: { borderWidth: SELECTED_BORDER },
+  /**
+   * 使えないカードの暗い覆い。位置は描画時に外枠の太さだけ外側へ出す。
+   * 宝石まで一気に伸ばすと、覆いの角がカードの角からずれて下の枠が明るく残る。
+   */
   dim: {
     position: 'absolute',
-    top: -SPACING.sm,
-    right: -SPACING.xs,
-    bottom: 0,
-    left: -SPACING.sm,
     backgroundColor: COLORS.cardDim,
     borderRadius: RADIUS.md,
+  },
+  gemDim: {
+    position: 'absolute',
+    top: -GEM_BORDER,
+    right: -GEM_BORDER,
+    bottom: -GEM_BORDER,
+    left: -GEM_BORDER,
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.cardDim,
+  },
+  badgeDim: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.cardDim,
   },
   pressed: { transform: [{ translateY: -8 }] },
   art: {
