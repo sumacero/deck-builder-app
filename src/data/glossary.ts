@@ -183,7 +183,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'sadistic',
     name: '弱点看破',
     icon: '👁️',
-    description: '敵に弱体・衰弱・宿り木を与えるたびに、その敵にその数値のダメージ（筋力や弱体の影響を受けない）。敵全体にかけると全員に当たる。',
+    description: '敵に弱体・衰弱・宿り木・潮を与えるたびに、その敵にその数値のダメージ（筋力や弱体の影響を受けない）。敵全体にかけると全員に当たる。',
   },
   rupture: {
     id: 'rupture',
@@ -204,6 +204,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     description:
       '敵のターンの始め（ブロックが消えたあと、行動する前）に、その数値と同じダメージを受ける（筋力や弱体の影響なし）。そのあと 1 減る。HP ゲージの右側の緑が、その分。緑が残り HP の全部なら、ターンを終えると行動する前に倒れる。',
   },
+  tide: {
+    id: 'tide',
+    name: '潮',
+    icon: '🌊',
+    description:
+      '敵の次の行動にかかる。攻撃は潮 1 につき威力が 3 下がる（インテントの数字が減る）。守り・強化・回復・妨害は流されて発動しない。行動したあとに消える。力を溜めるターンと、眠っている間は残る。ターンでは減らない。',
+  },
   thorns: {
     id: 'thorns',
     name: '茨の鎧',
@@ -215,6 +222,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '森の侵蝕',
     icon: '🌳',
     description: '自分のターンの始めに、敵全体にその数値の宿り木を与える。',
+  },
+  highTide: {
+    id: 'highTide',
+    name: '満潮',
+    icon: '🌊',
+    description: '自分のターンの始めに、敵全体にその数値の潮を与える。戦闘が続くほど、敵の行動を乱し続けられる。',
   },
   verdure: {
     id: 'verdure',

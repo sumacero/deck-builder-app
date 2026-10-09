@@ -7,8 +7,10 @@
  * - intangible（霊体化。敵だけ）: 攻撃 1 回で受けるダメージが最大 1
  * - seed（宿り木。敵だけに効く）: 敵のターンの始めに、残りターン数と同じダメージ（ブロック無視）を受ける。
  *   ターン数がそのまま威力なので、デバフを延ばす・数えるカードとも噛み合う。
+ * - tide（潮。敵だけに効く）: ターンでは減らない。次に意味のある行動をするとき、攻撃は潮 1 につき威力が 3 下がり、
+ *   攻撃以外（守り・強化・回復・妨害）は流される。その行動のあと潮は消える。力を溜める・眠りでは減らない。
  */
-export type DebuffId = 'vulnerable' | 'weak' | 'seed';
+export type DebuffId = 'vulnerable' | 'weak' | 'seed' | 'tide';
 export type BuffId = 'retainBlock' | 'blazing';
 export type EnemyStatusId = 'intangible';
 export type StatusId = DebuffId | BuffId | EnemyStatusId;
@@ -33,6 +35,7 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - arrowSpread（散り矢の構え）: 矢が敵全体に当たる
  * - arrowRetain（矢筒の備え）: ターン終了時、手札の矢を捨てずに残す
  * - arrowSupply（無限の矢筒）: ターンの始めに矢 N 本を手札に加える
+ * - highTide（満潮）: ターンの始めに、敵全体に潮 N
  */
 export type PowerId =
   | 'barricade'
@@ -50,6 +53,7 @@ export type PowerId =
   | 'arrowEdge'
   | 'arrowSpread'
   | 'arrowRetain'
-  | 'arrowSupply';
+  | 'arrowSupply'
+  | 'highTide';
 
 export type Powers = Partial<Record<PowerId, number>>;

@@ -528,7 +528,9 @@ function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns:
       ...e,
       statuses: addStatus(e.statuses, status, turns),
     })),
-    `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
+    status === 'tide'
+      ? `${enemy.name}に${STATUS_LABEL[status]} ${turns}`
+      : `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
   );
   const verdure = status === 'seed' ? powerOf(debuffed, 'verdure') : 0;
   const sprouted = verdure > 0 ? gainPlayerBlock(debuffed, verdure) : debuffed;
@@ -756,6 +758,15 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
           statuses: Object.fromEntries(Object.entries(e.statuses).filter(([id]) => id !== 'seed')),
         }));
         return callout(cleared, uid, `宿り木 ${seed}`);
+      }, state);
+    case 'crackTide':
+      return aimedUids(state, aim).reduce((current, uid) => {
+        const enemy = findEnemy(current, uid);
+        const tide = enemy ? statusTurns(enemy.statuses, 'tide') : 0;
+        if (tide === 0) return withLog(current, '割れる潮が無かった');
+        const hit = hitEnemy(current, uid, attackDamage(current, tide * effect.per), hitKind);
+        const cleared = clearTide(hit, uid);
+        return callout(cleared, uid, `潮 ${tide}`);
       }, state);
     case 'ifTargetHas': {
       const met = aimedUids(state, aim).some((uid) => {
@@ -1088,10 +1099,14 @@ export function previewCardDamage(
   });
 }
 
-/** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
+/** 潮 1 につき、敵の攻撃 1 発の基礎ダメージがこれだけ減る（筋力を足す前）。 */
+export const TIDE_ATTACK_CUT = 3;
+
+/** 敵の攻撃 1 回分のダメージ（潮・筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
 export function enemyAttackDamage(enemy: EnemyState, base: number, player: PlayerState): number {
   const affinity = ENEMY_AFFINITY_MULTIPLIER[enemyAffinity(enemy.attribute, player.attribute)];
-  return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses, affinity);
+  const softened = Math.max(0, base - statusTurns(enemy.statuses, 'tide') * TIDE_ATTACK_CUT);
+  return modifiedDamage(Math.max(0, softened + enemy.strength), enemy.statuses, player.statuses, affinity);
 }
 
 /**
@@ -1114,14 +1129,19 @@ function applyEnemyAction(
   if (!enemy) return state;
   const act = (current: CombatState): CombatState =>
     announce ? withEvent(current, { kind: 'enemyAct', target: uid, action: action.kind }) : current;
+  const tide = statusTurns(enemy.statuses, 'tide');
+  if (tide > 0 && action.kind !== 'attack' && !TIDE_WAITS.has(action.kind)) {
+    return callout(withLog(state, `${enemy.name}の行動は潮に流された`), uid, '流された！');
+  }
   switch (action.kind) {
     case 'attack': {
       const amount = enemyAttackDamage(enemy, action.damage, state.player);
+      const tideNote = statusTurns(enemy.statuses, 'tide') > 0;
       const affinity = enemyAffinity(enemy.attribute, state.player.attribute);
       const weak = affinity === 'weak';
       const note = weak ? '（弱点）' : affinity === 'resist' ? '（相性で軽減）' : '';
       const thorns = powerOf(state, 'thorns');
-      let next = state;
+      let next = tideNote ? withLog(state, `${enemy.name}の攻撃は潮で弱まった`) : state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
@@ -1217,6 +1237,24 @@ function applyEnemyAction(
   }
 }
 
+/** 潮が残ったまま次の本番を待つ行動。力を溜める・眠りでは潮を消費しない。 */
+const TIDE_WAITS: ReadonlySet<EnemyAction['kind']> = new Set(['idle', 'charge']);
+
+function clearTide(state: CombatState, uid: EnemyUid): CombatState {
+  return updateEnemy(state, uid, (enemy) => ({
+    ...enemy,
+    statuses: Object.fromEntries(Object.entries(enemy.statuses).filter(([id]) => id !== 'tide')),
+  }));
+}
+
+/** 意味のある行動をしたあと、潮を消す。溜めと眠りだけでは残す。 */
+function spendTide(state: CombatState, uid: EnemyUid, move: EnemyMove): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || statusTurns(enemy.statuses, 'tide') === 0) return state;
+  if (move.actions.every((action) => TIDE_WAITS.has(action.kind))) return state;
+  return withLog(clearTide(state, uid), `${enemy.name}の潮が引いた`);
+}
+
 const HINDRANCE_LOG = {
   paralyze: '次のターン、麻痺でエナジーが減る',
   chill: '次のターン、凍えで引く枚数が減る',
@@ -1276,6 +1314,7 @@ function runEnemyTurn(state: CombatState): CombatState {
         });
       }
     }
+    next = spendTide(next, uid, move);
     // 行動中に（茨の鎧などで）覚醒したら、第二形態の先頭の行動から始めるため順番を進めない。
     if (findEnemy(next, uid)?.moves === enemy.moves) next = advanceEnemy(next, uid);
     if (livingEnemies(next).length === 0) return finishIfWon(next);
@@ -1331,7 +1370,7 @@ export function endTurn(state: CombatState): CombatState {
   const afterEnemy = runEnemyTurn(discarded);
   if (afterEnemy.status !== 'playerTurn') return afterEnemy;
   const started = triggerRelics(startPlayerTurn(afterEnemy), 'turnStart');
-  return finishIfWon(spreadOvergrowth(supplyArrows(started)));
+  return finishIfWon(spreadHighTide(spreadOvergrowth(supplyArrows(started))));
 }
 
 /** 無限の矢筒: ターンの始めに矢を手札へ。 */
@@ -1369,6 +1408,16 @@ function reforgeArrows(state: CombatState): CombatState {
     drawPile: reforge(state.drawPile),
     discardPile: reforge(state.discardPile),
   };
+}
+
+/** 満潮: ターンの始めに敵全体へ潮。 */
+function spreadHighTide(state: CombatState): CombatState {
+  const amount = powerOf(state, 'highTide');
+  if (amount === 0) return state;
+  return livingEnemies(state).reduce(
+    (current, { uid }) => debuffEnemy(current, uid, 'tide', amount),
+    withLog(state, '満潮が押し寄せる'),
+  );
 }
 
 /** 森の侵蝕: ターンの始めに敵全体へ宿り木。 */
