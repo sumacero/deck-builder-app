@@ -1,6 +1,6 @@
 import type { Attribute } from '../domain/attribute';
 import type { BlessingDefinition } from '../domain/blessing';
-import type { Archetype, CardDefinition, CardGrowth, CardType } from '../domain/card';
+import type { Archetype, CardDefinition, CardGrowth, CardRarity, CardType } from '../domain/card';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
@@ -272,6 +272,12 @@ export function describeRelic(relic: RelicDefinition): string {
   const passive = (relic.onObtain ?? []).map((effect) => `${describeRunEffect(effect)}。`).join('');
   return triggered + passive;
 }
+
+export const CARD_RARITY_LABEL: Record<CardRarity, string> = {
+  common: 'コモン',
+  uncommon: 'アンコモン',
+  rare: 'レア',
+};
 
 export const RELIC_RARITY_LABEL: Record<RelicRarity, string> = {
   starter: '初期',

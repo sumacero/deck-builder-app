@@ -1,4 +1,4 @@
-import type { CardDefinition, CardType } from './card';
+import type { CardDefinition, CardRarity } from './card';
 import type { EnemyRank } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition, RelicTier } from './relic';
@@ -26,7 +26,10 @@ export type EconomyConfig = {
   encounterGold: Record<EnemyRank, { min: number; max: number }>;
   /** レリックの候補が尽きていたとき、代わりにもらえるゴールド。 */
   relicFallbackGold: number;
-  cardPrice: Record<CardType, number>;
+  /** カードの値段（レア度ごと）。 */
+  cardPrice: Record<CardRarity, number>;
+  /** カードのレア度の出現しやすさ（重み）。戦闘報酬・カード選択・ショップで共通。 */
+  cardTierWeight: Record<CardRarity, number>;
   /** レリックの値段（レア度ごと）。 */
   relicPrice: Record<RelicTier, number>;
   /** レリックのレア度の出現しやすさ（重み）。エリート・宝箱・ショップ・イベントで共通。 */

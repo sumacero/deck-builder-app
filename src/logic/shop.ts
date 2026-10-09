@@ -3,6 +3,7 @@ import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { EconomyConfig, ShopOffer, ShopStock } from '../domain/shop';
+import { pickWeightedCards } from './cardRarity';
 import { removeFromDeck } from './cards';
 import { nextRandom, pickUnique } from './random';
 import { isRelicTier, pickWeightedRelics } from './relics';
@@ -48,12 +49,17 @@ export function generateShopStock(
   removalCount: number,
   seed: number,
 ): { stock: ShopStock; seed: number } {
-  const exclusive = pickUnique(exclusivePool, 1, seed);
-  const regular = pickUnique(cardPool, economy.shopCardCount - exclusive.items.length, exclusive.seed);
+  const exclusive = pickWeightedCards(exclusivePool, 1, economy.cardTierWeight, seed);
+  const regular = pickWeightedCards(
+    cardPool,
+    economy.shopCardCount - exclusive.items.length,
+    economy.cardTierWeight,
+    exclusive.seed,
+  );
   const cards = toOffers(
     [...regular.items, ...exclusive.items],
     'card',
-    (card) => economy.cardPrice[card.type],
+    (card) => economy.cardPrice[card.rarity],
     economy.priceVariance,
     regular.seed,
   );

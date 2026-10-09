@@ -164,7 +164,13 @@ export function applyEffectsThenChoice(
 
 /** 3 枚から 1 枚選んでデッキに加える（ゴールド・レリック無しの報酬画面）。 */
 function offerCardPick(run: RunState): RunState {
-  const offered = pickRewardChoices(draftPool(run), run.deck, 3, run.rngSeed);
+  const offered = pickRewardChoices(
+    draftPool(run),
+    run.deck,
+    3,
+    run.rngSeed,
+    run.economy.cardTierWeight,
+  );
   return {
     ...run,
     rngSeed: offered.seed,
