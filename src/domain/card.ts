@@ -5,6 +5,12 @@ import type { Effect, EffectTarget } from './effect';
 export type CardType = 'attack' | 'skill' | 'power' | 'status';
 
 /**
+ * 報酬とショップでの出やすさ。強いカードほど rare。
+ * レリックの通常レア度（common / uncommon / rare）と同じ 3 段階。
+ */
+export type CardRarity = 'common' | 'uncommon' | 'rare';
+
+/**
  * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
  * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突く）/ 手数（軽いカードを次々使う）。
  */
@@ -52,6 +58,8 @@ export type CardDefinition = {
   id: string;
   name: string;
   type: CardType;
+  /** 報酬・ショップの出現率。初期カードやお邪魔カードも表示のために持つ。 */
+  rarity: CardRarity;
   cost: number;
   target: CardTarget;
   effects: Effect[];
