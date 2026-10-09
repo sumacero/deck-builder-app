@@ -10,6 +10,16 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
+/** リオの初期レリック。戦闘の最初から、敵の次の行動に潮がかかる。 */
+export const RAIN_HAT: RelicDefinition = {
+  id: 'rain-hat',
+  name: '雨帽子',
+  icon: '🎩',
+  rarity: 'starter',
+  trigger: 'combatStart',
+  effects: [{ kind: 'applyDebuff', status: 'tide', turns: 1 }],
+};
+
 /** リーネの初期レリック。 */
 export const WORLD_TREE_SPROUT: RelicDefinition = {
   id: 'world-tree-sprout',

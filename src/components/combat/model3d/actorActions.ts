@@ -51,10 +51,12 @@ export const NEUTRAL_POSE: BodyPose = {
  * - 剣: slash（振りかぶって斬る）/ combo（連続斬り）/ cleave（跳んで叩き斬る）/ spin（回転斬り）/ charge（構える）
  * - 弓: shoot（引き絞って放つ）/ rapid（連射）/ volley（空へ放つ大技）/ aim（引き絞ったまま狙う）
  * - ムチ: lash（振りかぶって打ち据える）/ whirlLash（回転して全体を薙ぐ）
+ * - 杖: cast（杖先を相手へ突き出す）
  * - 共通: guard（武器を横にして守る）/ hopBack（跳び退いて構える）/ raise（武器を掲げる）/ wince（自傷）
  */
 export type ActorAction =
   | 'slash'
+  | 'cast'
   | 'combo'
   | 'cleave'
   | 'spin'
@@ -88,6 +90,10 @@ const RELEASE: Partial<BodyPose> = { arm: 1.55, weapon: BOW, offArm: 0.3, offRea
 const WIND_UP: Partial<BodyPose> = { arm: 2.3, weapon: -1.3, armReach: -0.3, lean: -0.08 };
 const SWING: Partial<BodyPose> = { arm: 0.7, weapon: -2.4, armReach: -0.6, lean: 0.32, step: 0.22 };
 const GUARD: Partial<BodyPose> = { arm: 1.0, weapon: 0.6, armReach: -0.4 };
+
+/** 杖を軽く掲げてから、先を相手へ突き出す。 */
+const CAST_UP: Partial<BodyPose> = { arm: 1.7, weapon: -0.5, armReach: -0.15, lean: -0.06 };
+const CAST_OUT: Partial<BodyPose> = { arm: 0.85, weapon: -0.15, armReach: -0.9, lean: 0.22, step: 0.1 };
 
 const ACTION_TRACKS: Record<ActorAction, Track> = {
   slash: {
@@ -133,6 +139,16 @@ const ACTION_TRACKS: Record<ActorAction, Track> = {
       { at: 0.6, arm: 1.5, weapon: -3.0, spin: TURN, step: 0.15, lean: 0.1 },
       { at: 0.76, arm: 1.4, weapon: -2.9, spin: TURN, step: 0.1 },
       { at: 1, spin: TURN },
+    ],
+  },
+  cast: {
+    duration: 560,
+    frames: [
+      { at: 0 },
+      { at: 0.28, ...CAST_UP, crouch: 0.08 },
+      { at: 0.48, ...CAST_OUT },
+      { at: 0.72, ...CAST_OUT },
+      { at: 1 },
     ],
   },
   charge: {

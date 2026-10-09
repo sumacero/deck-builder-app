@@ -69,7 +69,9 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'doubleBlock':
       return '今のブロック値を 2 倍にする。';
     case 'applyDebuff':
-      return `${target === 'allEnemies' ? '敵全体に' : ''}${STATUS_LABEL[effect.status]} ${effect.turns} を与える。`;
+      return effect.status === 'tide'
+        ? `${target === 'allEnemies' ? '敵全体に' : ''}潮 ${effect.turns} を与える。`
+        : `${target === 'allEnemies' ? '敵全体に' : ''}${STATUS_LABEL[effect.status]} ${effect.turns} を与える。`;
     case 'gainBuff':
       return `${STATUS_LABEL[effect.status]} ${effect.turns} を得る。`;
     case 'extendDebuffs':
@@ -90,6 +92,8 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体に、' : ''}この戦闘で廃棄した矢の数だけ、矢 1 本分のダメージを与える。`;
     case 'detonateSeed':
       return `${target === 'allEnemies' ? '敵全体に、' : ''}宿り木 × ${effect.perTurn} のダメージを与え、宿り木を消す。`;
+    case 'crackTide':
+      return `${target === 'allEnemies' ? '敵全体に、' : ''}潮 × ${effect.per} のダメージを与え、潮を消す。`;
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -154,6 +158,7 @@ export const POWER_LABEL: Record<PowerId, string> = {
   arrowSpread: '散り矢の構え',
   arrowRetain: '矢筒の備え',
   arrowSupply: '無限の矢筒',
+  highTide: '満潮',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -191,6 +196,8 @@ export function describePower(power: PowerId, amount: number): string {
       return 'この戦闘中、ターン終了時に手札の矢を捨てずに残す。';
     case 'arrowSupply':
       return `この戦闘中、ターンの始めに矢 ${amount} 本を手札に加える。`;
+    case 'highTide':
+      return `この戦闘中、ターンの始めに敵全体に潮 ${amount} を与える。`;
   }
 }
 
@@ -206,6 +213,7 @@ export const STATUS_LABEL: Record<StatusId, string> = {
   vulnerable: '弱体',
   weak: '衰弱',
   seed: '宿り木',
+  tide: '潮',
   retainBlock: 'ブロック保持',
   blazing: '熱血',
   intangible: '霊体化',
@@ -216,6 +224,7 @@ export const DEBUFF_ICON: Record<DebuffId, string> = {
   vulnerable: '🎯',
   weak: '🥀',
   seed: '🌱',
+  tide: '🌊',
 };
 
 const describeEffects = (effects: Effect[], target: EffectTarget) =>
@@ -295,9 +304,16 @@ export type IntentView = {
 };
 
 /** damageOf は攻撃 1 回分の実ダメージ（筋力・衰弱・弱体込み）を求める関数。攻撃の数値は実ダメージで見せる。 */
-export function describeIntent(move: EnemyMove, damageOf: (base: number) => number): IntentView[] {
+export function describeIntent(
+  move: EnemyMove,
+  damageOf: (base: number) => number,
+  tide = 0,
+): IntentView[] {
   return move.actions.map((action, index) => {
     const key = `${move.id}-${index}`;
+    if (tide > 0 && action.kind !== 'attack' && action.kind !== 'idle' && action.kind !== 'charge') {
+      return { key, tone: action.kind, icon: '🌊', label: '流' };
+    }
     switch (action.kind) {
       case 'attack': {
         const damage = damageOf(action.damage);
