@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { cardAttributes } from '../../logic/attribute';
-import { ATTRIBUTE_ICON, CARD_TYPE_LABEL, describeAttributes, describeCard } from '../../logic/describe';
+import {
+  ATTRIBUTE_ICON,
+  CARD_RARITY_LABEL,
+  CARD_TYPE_LABEL,
+  describeAttributes,
+  describeCard,
+} from '../../logic/describe';
 import {
   ATTRIBUTE_COLORS,
   ATTRIBUTE_TINT_ALPHA,
@@ -11,6 +17,7 @@ import {
   COLORS,
   HAND_LAYOUT,
   RADIUS,
+  RELIC_RARITY_COLORS,
   SPACING,
 } from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
@@ -100,6 +107,8 @@ export function CardView({
   // 属性のカードは枠を属性の色に。無属性は種類の色のまま。
   const frameColor = attributeColor ?? typeColor;
   const narrow = width !== undefined && width < NARROW_WIDTH;
+  // 手札（幅を指定して並べる）では種類の行が足りないので出さない。報酬・ショップ・図鑑・詳細で見せる。
+  const showRarity = width === undefined && card.type !== 'status' && !card.arrow;
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width, card.name) : null;
   const art = cardArt(card);
@@ -168,6 +177,11 @@ export function CardView({
               </Text>
             )}
           </Text>
+          {showRarity && (
+            <Text style={[styles.rarity, { color: RELIC_RARITY_COLORS[card.rarity] }]}>
+              {CARD_RARITY_LABEL[card.rarity]}
+            </Text>
+          )}
           <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
         </View>
         <View style={styles.costGem}>
@@ -295,6 +309,7 @@ const styles = StyleSheet.create({
   },
   upgradedName: { color: COLORS.upgraded },
   type: { fontSize: 10, fontWeight: '600' },
+  rarity: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   attribute: { color: COLORS.text, fontWeight: '800' },
   description: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },
 });

@@ -14,6 +14,7 @@ export function forgeArrow(powers: Powers): CardDefinition {
     id: ARROW_ID,
     name: '矢',
     type: 'attack',
+    rarity: 'common',
     arrow: true,
     attribute: 'grass',
     cost: 0,

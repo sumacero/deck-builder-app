@@ -1,7 +1,7 @@
-import type { Archetype, CardDefinition } from '../domain/card';
+import type { Archetype, CardDefinition, CardRarity } from '../domain/card';
 import type { RunState } from '../domain/run';
 import { isDraftable } from './attribute';
-import { pickUnique } from './random';
+import { pickWeightedCards, shuffleCards } from './cardRarity';
 
 /** 戦闘報酬・カード選択イベントの候補（違う属性のカードはショップ限定なので除く）。 */
 export const draftPool = (run: RunState): CardDefinition[] =>
@@ -30,24 +30,26 @@ export function mainArchetype(deck: readonly CardDefinition[]): Archetype | null
 }
 
 /**
- * 報酬の候補。デッキの軸が決まっていれば、そのうち 1 枚は軸に合うカードにする
- * （軸がそろう瞬間を早めに来させるため）。残りは全体から重複なく選ぶ。
+ * 報酬の候補。レア度の重みで選ぶ（強いカードほど出にくい）。
+ * デッキの軸が決まっていれば、そのうち 1 枚は軸に合うカードにする
+ * （その 1 枚も、軸の中でレア度の重みに従う）。並びは混ぜて、軸のカードがいつも左に来ないようにする。
  */
 export function pickRewardChoices(
   pool: readonly CardDefinition[],
   deck: readonly CardDefinition[],
   count: number,
   seed: number,
+  weights: Record<CardRarity, number>,
 ): { items: CardDefinition[]; seed: number } {
   const archetype = mainArchetype(deck);
   const matching = archetype ? pool.filter((card) => card.archetypes?.includes(archetype)) : [];
-  if (matching.length === 0) return pickUnique(pool, count, seed);
-  const synergy = pickUnique(matching, 1, seed);
-  const rest = pickUnique(
+  if (matching.length === 0) return pickWeightedCards(pool, count, weights, seed);
+  const synergy = pickWeightedCards(matching, 1, weights, seed);
+  const rest = pickWeightedCards(
     pool.filter((card) => !synergy.items.includes(card)),
     count - synergy.items.length,
+    weights,
     synergy.seed,
   );
-  const merged = pickUnique([...synergy.items, ...rest.items], count, rest.seed);
-  return merged;
+  return shuffleCards([...synergy.items, ...rest.items], rest.seed);
 }

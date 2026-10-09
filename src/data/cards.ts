@@ -3,6 +3,7 @@ import type { CardDefinition } from '../domain/card';
 export const STRIKE: CardDefinition = {
   id: 'strike',
   name: 'ストライク',
+  rarity: 'common',
   type: 'attack',
   cost: 1,
   target: 'enemy',
@@ -14,6 +15,7 @@ export const STRIKE: CardDefinition = {
 export const DEFEND: CardDefinition = {
   id: 'defend',
   name: '防御',
+  rarity: 'common',
   type: 'skill',
   cost: 1,
   target: 'self',
@@ -24,6 +26,7 @@ export const DEFEND: CardDefinition = {
 export const BASH: CardDefinition = {
   id: 'bash',
   name: '強打',
+  rarity: 'common',
   type: 'attack',
   archetypes: ['debuff'],
   cost: 2,
@@ -44,6 +47,7 @@ export const BASH: CardDefinition = {
 export const ULTIMATE_STRIKE: CardDefinition = {
   id: 'ultimate-strike',
   name: '究極のストライク',
+  rarity: 'rare',
   type: 'attack',
   cost: 1,
   target: 'enemy',
@@ -56,6 +60,7 @@ export const ULTIMATE_STRIKE: CardDefinition = {
 export const ULTIMATE_DEFEND: CardDefinition = {
   id: 'ultimate-defend',
   name: '究極の防御',
+  rarity: 'rare',
   type: 'skill',
   cost: 1,
   target: 'self',
@@ -67,6 +72,7 @@ export const ULTIMATE_DEFEND: CardDefinition = {
 export const CRIMSON_PHOENIX: CardDefinition = {
   id: 'crimson-phoenix',
   name: '紅蓮鳳凰斬',
+  rarity: 'rare',
   type: 'attack',
   cost: 0,
   target: 'allEnemies',
@@ -90,6 +96,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'twin-strike',
     name: '双撃',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['strength', 'element'],
     cost: 1,
@@ -100,6 +107,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'pommel-strike',
     name: '柄撃',
+    rarity: 'common',
     type: 'attack',
     cost: 1,
     target: 'enemy',
@@ -117,6 +125,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'iron-wave',
     name: '鉄の波',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['block'],
     cost: 1,
@@ -135,6 +144,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'heavy-blade',
     name: '大剣',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'fire',
     archetypes: ['strength'],
@@ -146,6 +156,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'clothesline',
     name: '剛腕撃',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['debuff'],
     cost: 2,
@@ -164,6 +175,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'hemokinesis',
     name: '紅蓮の刃',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['sacrifice'],
     cost: 1,
@@ -183,6 +195,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'anger',
     name: '怒気',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['strength'],
     cost: 0,
@@ -195,6 +208,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'cleave',
     name: '薙ぎ払い',
+    rarity: 'common',
     type: 'attack',
     cost: 1,
     target: 'allEnemies',
@@ -204,6 +218,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'thunderclap',
     name: '雷鳴',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['debuff', 'element'],
     cost: 1,
@@ -224,6 +239,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'flurry-form',
     name: '連閃の型',
+    rarity: 'rare',
     type: 'power',
     archetypes: ['strength', 'tempo'],
     cost: 1,
@@ -235,6 +251,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'whirlwind',
     name: '旋風',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -247,6 +264,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'shrug-it-off',
     name: '肩をすくめる',
+    rarity: 'common',
     type: 'skill',
     archetypes: ['block'],
     cost: 1,
@@ -265,6 +283,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'seeing-red',
     name: '見切り',
+    rarity: 'uncommon',
     type: 'skill',
     archetypes: ['strength'],
     cost: 1,
@@ -276,6 +295,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'bloodletting',
     name: '生命転換',
+    rarity: 'uncommon',
     type: 'skill',
     archetypes: ['sacrifice'],
     cost: 0,
@@ -294,6 +314,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'battle-trance',
     name: '戦闘トランス',
+    rarity: 'uncommon',
     type: 'skill',
     archetypes: ['sacrifice'],
     cost: 0,
@@ -312,6 +333,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'offering',
     name: '捧げの儀',
+    rarity: 'rare',
     type: 'skill',
     archetypes: ['sacrifice'],
     cost: 0,
@@ -333,6 +355,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'flex',
     name: '力み',
+    rarity: 'common',
     type: 'skill',
     archetypes: ['strength'],
     cost: 0,
@@ -343,6 +366,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'inflame',
     name: '憤激',
+    rarity: 'uncommon',
     type: 'power',
     attribute: 'fire',
     archetypes: ['strength'],
@@ -355,6 +379,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'metallicize',
     name: '金属化',
+    rarity: 'uncommon',
     type: 'power',
     archetypes: ['block'],
     cost: 1,
@@ -366,6 +391,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'intimidate',
     name: '威圧の一喝',
+    rarity: 'common',
     type: 'skill',
     archetypes: ['debuff'],
     cost: 0,
@@ -377,6 +403,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'uppercut',
     name: '粉砕撃',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['debuff'],
     cost: 2,
@@ -397,6 +424,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'shockwave',
     name: '戦慄の咆哮',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'fire',
     archetypes: ['debuff'],
@@ -417,6 +445,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'body-slam',
     name: '盾撃ち',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['block'],
     cost: 1,
@@ -427,6 +456,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'steadfast-guard',
     name: '鉄壁の構え',
+    rarity: 'uncommon',
     type: 'skill',
     archetypes: ['block'],
     cost: 1,
@@ -445,6 +475,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'barricade',
     name: '不動の誓い',
+    rarity: 'rare',
     type: 'power',
     archetypes: ['block'],
     cost: 2,
@@ -456,6 +487,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'entrench',
     name: '倍返しの盾',
+    rarity: 'rare',
     type: 'skill',
     archetypes: ['block'],
     cost: 1,
@@ -466,6 +498,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'searing-decree',
     name: '灼熱の宣告',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'fire',
     archetypes: ['debuff'],
@@ -477,6 +510,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'heat-up',
     name: '燃え上がれ！',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'fire',
     archetypes: ['strength'],
@@ -488,6 +522,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'soul-flame',
     name: '魂の炎',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'fire',
     archetypes: ['strength'],
@@ -502,6 +537,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'frost-edge',
     name: '水刃',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['element', 'debuff'],
     cost: 1,
@@ -521,6 +557,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'ice-lances',
     name: '水槍乱舞',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['element'],
     cost: 2,
@@ -532,6 +569,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'leaf-flash',
     name: '若葉の一閃',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['element'],
     cost: 0,
@@ -543,6 +581,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'leaf-storm',
     name: '木の葉乱舞',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['element'],
     cost: 1,
@@ -554,6 +593,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'flame-slash',
     name: '火炎斬',
+    rarity: 'common',
     type: 'attack',
     archetypes: ['element', 'strength'],
     cost: 1,
@@ -573,6 +613,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'enchant-fire',
     name: '魔法剣・火',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'fire',
     archetypes: ['element'],
@@ -587,6 +628,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'enchant-water',
     name: '魔法剣・水',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'water',
     archetypes: ['element'],
@@ -601,6 +643,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'enchant-grass',
     name: '魔法剣・草',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['element'],
@@ -617,6 +660,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'trip',
     name: '足払い',
+    rarity: 'common',
     type: 'skill',
     archetypes: ['debuff'],
     cost: 0,
@@ -627,6 +671,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'exploit',
     name: 'つけ込む',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['debuff'],
     cost: 1,
@@ -637,6 +682,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'dropkick',
     name: '急所蹴り',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['debuff'],
     cost: 1,
@@ -669,6 +715,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'brand-burst',
     name: '烙印爆破',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['debuff'],
     cost: 2,
@@ -680,6 +727,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'weak-point',
     name: '弱点看破',
+    rarity: 'rare',
     type: 'power',
     archetypes: ['debuff'],
     cost: 1,
@@ -693,6 +741,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'impervious',
     name: '金剛の守り',
+    rarity: 'rare',
     type: 'skill',
     archetypes: ['block'],
     cost: 2,
@@ -704,6 +753,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'shield-shatter',
     name: '盾砕き',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['block'],
     cost: 1,
@@ -714,6 +764,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'juggernaut',
     name: '鉄壁の闘気',
+    rarity: 'rare',
     type: 'power',
     archetypes: ['block'],
     cost: 2,
@@ -725,6 +776,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'rise-from-ashes',
     name: '灰より立つ',
+    rarity: 'uncommon',
     type: 'power',
     archetypes: ['block'],
     cost: 1,
@@ -737,6 +789,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'blood-price',
     name: '血の代償',
+    rarity: 'rare',
     type: 'attack',
     archetypes: ['sacrifice'],
     cost: 1,
@@ -751,6 +804,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'crimson-avatar',
     name: '紅蓮の化身',
+    rarity: 'rare',
     type: 'power',
     attribute: 'fire',
     archetypes: ['strength'],
@@ -763,6 +817,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'burning-blood',
     name: '燃える血潮',
+    rarity: 'rare',
     type: 'power',
     attribute: 'fire',
     archetypes: ['sacrifice', 'strength'],
@@ -775,6 +830,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'rampage',
     name: '猛り狂う刃',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'fire',
     archetypes: ['growth'],
@@ -789,6 +845,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'devour',
     name: '命喰らい',
+    rarity: 'rare',
     type: 'attack',
     archetypes: ['growth'],
     cost: 1,
@@ -801,6 +858,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'honed-blade',
     name: '研ぎ澄ます剣',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['growth'],
     cost: 1,
@@ -815,6 +873,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'tempered-shield',
     name: '鍛え上げる盾',
+    rarity: 'uncommon',
     type: 'skill',
     archetypes: ['growth', 'block'],
     cost: 1,
@@ -829,6 +888,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'deflect',
     name: '流し受け',
+    rarity: 'common',
     type: 'skill',
     archetypes: ['block'],
     cost: 0,
@@ -839,6 +899,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'stacking-shield',
     name: '積み上げる盾',
+    rarity: 'uncommon',
     type: 'skill',
     archetypes: ['block', 'growth'],
     cost: 1,
@@ -853,6 +914,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'scorching-shield',
     name: '焦熱の盾',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'fire',
     archetypes: ['block', 'sacrifice'],
@@ -872,6 +934,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'glaring-wall',
     name: '睨みの壁',
+    rarity: 'common',
     type: 'skill',
     archetypes: ['block', 'debuff'],
     cost: 1,
