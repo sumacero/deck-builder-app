@@ -84,7 +84,6 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     drinkPotion,
     discardPotion,
     endTurn,
-    togglePin,
     isPlayable,
     isDrinkable,
     potionNeedsTarget,
@@ -238,7 +237,6 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       cards={state.hand}
       events={state.events}
       isPlayable={isPlayable}
-      onTogglePin={togglePin}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
       selectedId={pendingCardId}
       viewRef={bindHand}

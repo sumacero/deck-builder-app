@@ -2,7 +2,7 @@ import type { CardDefinition } from '../domain/card';
 import { DEFEND, STRIKE } from './cards';
 
 /**
- * 水鏡のノア（水属性）のカード。単体は弱く、手札の同じ印が残っているほど化ける。
+ * 水鏡のノア（水属性）のカード。単体は弱く、手札の同じ印を融合して消費すると化ける。
  * 雨はダメージ、波はブロック、氷は数値を増やさずエナジーとドロー。
  * 印の無いストライクと防御は倍率の対象にならない。絵は、消した潮のカードの絵を差し替えて使う。
  */
@@ -10,7 +10,7 @@ import { DEFEND, STRIKE } from './cards';
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
-/** 初期デッキの雨。もう一枚の雨が手札にあると 2 倍になる。 */
+/** 初期デッキの雨。もう一枚の雨を融合して消費すると 2 倍になる。 */
 export const RAIN_DROP: CardDefinition = {
   id: 'rain-drop',
   name: '雨粒',

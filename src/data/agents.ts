@@ -26,14 +26,14 @@ export const VERDANT_ARCHER: AgentDefinition = {
   mysticArte: THOUSAND_YEAR_TREE,
 };
 
-/** 水盤に透けた札を置く占い師。同じ印を手札に残すほど、弱い札が化ける。 */
+/** 水盤に透けた札を置く占い師。同じ印を手札で融合して消費すると、弱い札が化ける。 */
 export const MIRROR_SEER: AgentDefinition = {
   id: 'mirror-seer',
   name: '水鏡のノア',
   icon: '💧',
   title: '水面の占い師',
   playStyle:
-    '札には雨・波・氷の印がある。同じ印を手札に残すと、雨はダメージ、波はブロックが何倍にもなる。氷はエナジーとドローを足す。印を留め、ショップや出来事で印を書き換えて、揃う確率を自分で作る。',
+    '札には雨・波・氷の印がある。同じ印を融合して消費すると、雨はダメージ、波はブロックが何倍にもなる。氷はエナジーとドローを足す。消費した札はこの戦闘では戻らない。ショップや出来事で印を書き換えて、揃う確率を自分で作る。',
   attribute: 'water',
   mysticArte: MIRROR_TRIAD,
 };

@@ -32,8 +32,6 @@ type CardViewProps = {
   size?: 'sm' | 'md';
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
-  /** 印を留めて手札に残している。 */
-  pinned?: boolean;
   onPress?: () => void;
   /** 長押しで用語の解説を出す。解説の中の拡大表示では false。 */
   detailOnHold?: boolean;
@@ -100,7 +98,6 @@ export function CardView({
   selected = false,
   size = 'sm',
   width,
-  pinned = false,
   onPress,
   detailOnHold = true,
 }: CardViewProps) {
@@ -161,11 +158,6 @@ export function CardView({
           {card.mark && (
             <View style={styles.markBadge}>
               <Text style={[styles.markText, scaled?.emblemText]}>{MARK_NAME[card.mark]}</Text>
-            </View>
-          )}
-          {pinned && (
-            <View style={styles.pinnedBadge}>
-              <Text style={styles.pinnedText}>留</Text>
             </View>
           )}
           <View style={styles.emblem}>
@@ -263,15 +255,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   markText: { color: COLORS.gold, fontSize: 10, fontWeight: '800' },
-  pinnedBadge: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    backgroundColor: COLORS.gold,
-    borderRadius: RADIUS.round,
-    paddingHorizontal: 3,
-  },
-  pinnedText: { color: COLORS.onGold, fontSize: 10, fontWeight: '800' },
   emblem: {
     position: 'absolute',
     right: 1,

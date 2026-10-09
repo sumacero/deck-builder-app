@@ -107,8 +107,9 @@ export type CardDefinition = {
   mysticArte?: boolean;
   archetypes?: Archetype[];
   /**
-   * 手札で揃える印。同じ印がほかに残っているほど、雨はダメージ、波はブロックが増える。
-   * 氷は数値を増やさず、エナジーとドローが付く。省略すると印は無い。
+   * 手札で揃える印。使ったとき、同じ印のほかの札を融合して廃棄する。
+   * 雨は消費した枚数でダメージ、波はブロックが増える。氷は数値を増やさず、エナジーとドローが付く。
+   * 省略すると印は無い。
    */
   mark?: CardMark;
   /** ムチで打つアタック。「ムチで攻撃するたびに宿り木」（宿り木の蔓など）が乗る。 */
@@ -123,8 +124,6 @@ export type CardDefinition = {
 export type CardInstance = {
   instanceId: string;
   card: CardDefinition;
-  /** 印のあるカードを、ターンをまたいで手札に残す。プレイヤーが選んだときだけ true。 */
-  pinned?: boolean;
 };
 
 export type CardStack = {

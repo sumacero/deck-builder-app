@@ -11,8 +11,8 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
 };
 
 /**
- * ノアの初期レリック。留めた印は次のターンも手札に残るうえ、
- * その印を 1 枚多く数える（留めた札そのものとは別に足す）。
+ * ノアの初期レリック。このターン融合して消費した印を、次のターンは 1 枚多く数える。
+ * 消費した札そのものは戻らない。同じ印を何枚消費しても +1。
  */
 export const CRYSTAL_WEIGHT: RelicDefinition = {
   id: 'crystal-weight',
@@ -20,8 +20,8 @@ export const CRYSTAL_WEIGHT: RelicDefinition = {
   icon: '💎',
   rarity: 'starter',
   trigger: 'turnEnd',
-  condition: 'hasPinnedMark',
-  effects: [{ kind: 'noteRetainedMarks' }],
+  condition: 'hasFusedMark',
+  effects: [{ kind: 'noteFusedMarks' }],
 };
 
 /** リーネの初期レリック。 */

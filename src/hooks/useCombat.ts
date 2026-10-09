@@ -26,10 +26,6 @@ export function useCombat(setup: CombatSetup, seed: number) {
     [],
   );
   const endTurn = useCallback(() => dispatch({ type: 'endTurn' }), []);
-  const togglePin = useCallback(
-    (instanceId: string) => dispatch({ type: 'togglePin', instanceId }),
-    [],
-  );
   const isPlayable = useCallback((instanceId: string) => canPlayCard(state, instanceId), [state]);
   const isDrinkable = useCallback((slot: number) => canDrinkPotion(state, slot), [state]);
   /** ポーションを使う前に、敵を 1 体選ぶ必要があるか。 */
@@ -51,7 +47,6 @@ export function useCombat(setup: CombatSetup, seed: number) {
     drinkPotion,
     discardPotion,
     endTurn,
-    togglePin,
     isPlayable,
     isDrinkable,
     potionNeedsTarget,

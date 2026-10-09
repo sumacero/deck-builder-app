@@ -24,8 +24,6 @@ type DraggableCardProps = CardDragHandlers & {
   dragging: boolean;
   /** タップして、狙う敵を選んでいる最中のカード。 */
   selected: boolean;
-  /** 印を留めて、ターンをまたいで手札に残している。 */
-  pinned?: boolean;
 };
 
 /** 指を動かさずに押し続けてこの時間が経つと「長押し」。その場で詳細を開く。普通のタップ（0.1 秒前後）より少し長く。 */
@@ -54,7 +52,6 @@ export function DraggableCard({
   playable,
   dragging,
   selected,
-  pinned = false,
   ...handlers
 }: DraggableCardProps) {
   const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
@@ -141,7 +138,6 @@ export function DraggableCard({
           width={width}
           dimmed={!playable}
           selected={selected}
-          pinned={pinned}
           detailOnHold={false}
         />
       </View>

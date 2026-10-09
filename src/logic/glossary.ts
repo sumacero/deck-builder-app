@@ -50,9 +50,9 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'detonateSeed':
       return ['damage', 'seed'];
     case 'paintHand':
-      return [effect.mark, 'pin'];
-    case 'noteRetainedMarks':
-      return ['pin'];
+      return [effect.mark, 'fuse'];
+    case 'noteFusedMarks':
+      return ['fuse'];
     case 'ifTargetHas':
       return [effect.status, ...effect.effects.flatMap(keywordsForEffect)];
     case 'consumeBlock':
@@ -118,7 +118,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.ethereal ? (['ethereal'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
-    ...(card.mark ? ([card.mark, 'pin'] as const) : []),
+    ...(card.mark ? ([card.mark, 'fuse'] as const) : []),
     ...(card.mark === 'rain' || card.mark === 'wave' ? (['rainbow'] as const) : []),
   ]);
 }

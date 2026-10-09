@@ -125,7 +125,7 @@ const MIRROR_REWARD_CARDS = [
   ...MIRROR_CARDS,
 ].filter((card) => !isBlockAxis(card) || (card.attribute !== undefined && card.attribute !== 'water'));
 
-/** ノアは HP が低め。初期レリックは、留めた印を次のターン 1 枚多く数える。 */
+/** ノアは HP が低め。初期レリックは、融合して消費した印を次のターン 1 枚多く数える。 */
 export const MIRROR_RUN: RunSetup = {
   ...STANDARD_RUN,
   agent: MIRROR_SEER,

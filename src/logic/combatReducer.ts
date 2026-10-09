@@ -1,12 +1,11 @@
 import type { CombatState, EnemyUid } from '../domain/combat';
-import { clearEvents, discardPotion, drinkPotion, endTurn, playCard, togglePin } from './combat';
+import { clearEvents, discardPotion, drinkPotion, endTurn, playCard } from './combat';
 
 export type CombatAction =
   | { type: 'playCard'; instanceId: string; target?: EnemyUid }
   | { type: 'drinkPotion'; slot: number; target?: EnemyUid }
   | { type: 'discardPotion'; slot: number }
-  | { type: 'endTurn' }
-  | { type: 'togglePin'; instanceId: string };
+  | { type: 'endTurn' };
 
 export function combatReducer(state: CombatState, action: CombatAction): CombatState {
   switch (action.type) {
@@ -18,7 +17,5 @@ export function combatReducer(state: CombatState, action: CombatAction): CombatS
       return discardPotion(clearEvents(state), action.slot);
     case 'endTurn':
       return endTurn(clearEvents(state));
-    case 'togglePin':
-      return togglePin(clearEvents(state), action.instanceId);
   }
 }

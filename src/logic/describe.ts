@@ -96,8 +96,8 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体に、' : ''}宿り木 × ${effect.perTurn} のダメージを与え、宿り木を消す。`;
     case 'paintHand':
       return `手札の印を${MARK_NAME[effect.mark]}に塗り替える（印の無いカードはそのまま）。`;
-    case 'noteRetainedMarks':
-      return '留めた印を、次のターンは 1 枚多く数える。';
+    case 'noteFusedMarks':
+      return 'このターン融合して消費した印を、次のターンは 1 枚多く数える。';
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -255,11 +255,11 @@ export function describeCard(card: CardDefinition): string {
 function describeMark(mark: CardMark): string {
   switch (mark) {
     case 'rain':
-      return '雨の印。ほかの雨 1 枚でダメージ 2 倍、2 枚以上で 3 倍。';
+      return '雨の印。ほかの雨を融合して消費する。1 枚でダメージ 2 倍、2 枚以上で 3 倍。';
     case 'wave':
-      return '波の印。ほかの波 1 枚でブロック 2 倍、2 枚以上で 3 倍。';
+      return '波の印。ほかの波を融合して消費する。1 枚でブロック 2 倍、2 枚以上で 3 倍。';
     case 'ice':
-      return '氷の印。ほかの氷が 1 枚以上でエナジー +1、2 枚以上でさらに 1 枚引く。';
+      return '氷の印。ほかの氷を融合して消費する。1 枚以上でエナジー +1、2 枚以上でさらに 1 枚引く。';
   }
 }
 
@@ -272,7 +272,7 @@ const RELIC_CONDITION_TEXT: Record<RelicCondition, string> = {
   lowHp: 'HP が半分以下なら',
   eliteOrBoss: 'エリート・ボス戦なら',
   everyThirdTurn: '3 ターンごとに',
-  hasPinnedMark: '印を留めていれば',
+  hasFusedMark: '印を融合していれば',
 };
 
 function relicTiming(relic: RelicDefinition): string {

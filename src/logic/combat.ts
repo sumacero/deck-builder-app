@@ -31,7 +31,7 @@ import {
 import { arrowDamage, forgeArrow } from './arrows';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
-import { MARK_NAME, markPlay, scaledEffects } from './marks';
+import { MARK_NAME, fusionMaterials, markPlay, scaledEffects } from './marks';
 import { SLEEP_MOVE, traitOf } from './enemyTraits';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
@@ -285,7 +285,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
       pendingHindrance: NO_HINDRANCE,
-      retainedMarkBonus: {},
+      markMemory: {},
+      fusedMarks: {},
       statuses: {},
     },
     enemies: setup.enemies.map((enemy, index) => ({
@@ -761,8 +762,8 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       }, state);
     case 'paintHand':
       return paintMarkedHand(state, effect.mark);
-    case 'noteRetainedMarks':
-      return rememberPinnedMarks(state);
+    case 'noteFusedMarks':
+      return rememberFusedMarks(state);
     case 'ifTargetHas': {
       const met = aimedUids(state, aim).some((uid) => {
         const enemy = findEnemy(state, uid);
@@ -837,13 +838,9 @@ function paintMarkedHand(state: CombatState, mark: CardMark): CombatState {
   return withLog({ ...state, hand }, `手札の印を${MARK_NAME[mark]}に塗り替えた`);
 }
 
-/** 留めてある印を、次の自分のターンは 1 枚多く数える。同じ印を何枚留めても +1。 */
-function rememberPinnedMarks(state: CombatState): CombatState {
-  const bonus: PlayerState['retainedMarkBonus'] = {};
-  for (const instance of state.hand) {
-    if (instance.pinned && instance.card.mark) bonus[instance.card.mark] = 1;
-  }
-  return { ...state, player: { ...state.player, retainedMarkBonus: bonus } };
+/** このターン融合して消費した印を、次の自分のターンは 1 枚多く数える。同じ印を何枚消費しても +1。 */
+function rememberFusedMarks(state: CombatState): CombatState {
+  return { ...state, player: { ...state.player, markMemory: { ...state.player.fusedMarks } } };
 }
 
 /** 氷の印。数値は増やさず、ほかの氷の枚数でエナジーとドローを足す。エナジーは +1 まで。 */
@@ -890,8 +887,8 @@ function conditionMet(state: CombatState, condition: RelicCondition | undefined)
       return state.enemies.some((enemy) => enemy.rank !== 'normal');
     case 'everyThirdTurn':
       return state.turn % 3 === 0;
-    case 'hasPinnedMark':
-      return state.hand.some((card) => card.pinned === true && card.card.mark !== undefined);
+    case 'hasFusedMark':
+      return Object.keys(state.player.fusedMarks).length > 0;
   }
 }
 
@@ -956,16 +953,14 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
   );
 }
 
-/** 印のあるカードを、手札に残すか外す。印の無いカードは留められない。 */
-export function togglePin(state: CombatState, instanceId: string): CombatState {
-  if (state.status !== 'playerTurn') return state;
-  return {
-    ...state,
-    hand: state.hand.map((card) => {
-      if (card.instanceId !== instanceId || !card.card.mark) return card;
-      return { ...card, pinned: !card.pinned };
-    }),
-  };
+/** 融合した印を、このターンの覚えに足す。同じ印は何枚でも 1。 */
+function noteFusedMarks(player: PlayerState, materials: readonly CardInstance[]): PlayerState {
+  if (materials.length === 0) return player;
+  const fusedMarks = { ...player.fusedMarks };
+  for (const material of materials) {
+    if (material.card.mark) fusedMarks[material.card.mark] = 1;
+  }
+  return { ...player, fusedMarks };
 }
 
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
@@ -973,18 +968,18 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || !canPlayCard(state, instanceId)) return state;
   const { card } = instance;
-  // 手札から出す前に数える。虹は使うカード自身も含む。ほかの同じ印は、出したあとに残る枚数。
+  // 手札から出す前に数える。虹は使うカード自身も含む。同じ印は、融合して廃棄する枚数。
   const marks = markPlay(state.hand, instance, state.player);
+  const materials = fusionMaterials(state.hand, instance, state.player);
+  const materialIds = new Set(materials.map((material) => material.instanceId));
   const aim = resolveAim(state, card.target, target);
 
-  const spentInstance = { ...instance, pinned: false };
   const spent = {
     ...state,
-    hand: state.hand.filter((c) => c.instanceId !== instanceId),
-    player: { ...state.player, energy: state.player.energy - card.cost },
-    ...(card.exhaust
-      ? { exhaustPile: [...state.exhaustPile, spentInstance] }
-      : { discardPile: [...state.discardPile, spentInstance] }),
+    hand: state.hand.filter((c) => c.instanceId !== instanceId && !materialIds.has(c.instanceId)),
+    player: noteFusedMarks({ ...state.player, energy: state.player.energy - card.cost }, materials),
+    discardPile: card.exhaust ? state.discardPile : [...state.discardPile, instance],
+    exhaustPile: [...state.exhaustPile, ...materials, ...(card.exhaust ? [instance] : [])],
   };
   const copied = card.addCopyToDiscard
     ? {
@@ -1011,10 +1006,14 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     aim !== 'all' && chosen && isAlive(chosen) && chosen.uid !== aim
       ? callout(withLog(announced, `${findEnemy(state, aim)?.name ?? '敵'}がかばった！`), aim, 'かばう！')
       : announced;
+  const fused =
+    materials.length > 0
+      ? withLog(guarded, `${materials.map((material) => material.card.name).join('と')}を融合して消費`)
+      : guarded;
   const boosted =
     card.mark && card.mark !== 'ice' && marks.multiplier > 1
-      ? withLog(guarded, `${MARK_NAME[card.mark]}が重なり ${marks.multiplier} 倍`)
-      : guarded;
+      ? withLog(fused, `${MARK_NAME[card.mark]}が重なり ${marks.multiplier} 倍`)
+      : fused;
   const eventsBefore = boosted.events.length;
   const resolved = applyIceMark(
     applyEffects(boosted, scaledEffects(card, marks.multiplier), aim, {
@@ -1023,7 +1022,8 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     marks.iceEnergy,
     marks.iceDraw,
   );
-  const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
+  const exhaustCount = materials.length + (card.exhaust ? 1 : 0);
+  const exhausted = exhaustCount > 0 ? onExhausted(resolved, exhaustCount) : resolved;
   const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
   const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
   const shot = quickdrawShot(lashed, powerOf(state, 'quickdraw'));
@@ -1366,9 +1366,7 @@ function discardHand(state: CombatState): CombatState {
     return applyEffects(withLog(current, `手札の${card.name}`), card.turnEndInHand, 'all');
   }, state);
   const retainArrows = powerOf(afterEffects, 'arrowRetain') > 0;
-  const isRetained = (instance: CardInstance) =>
-    (retainArrows && instance.card.arrow === true) ||
-    (instance.pinned === true && instance.card.mark !== undefined);
+  const isRetained = (instance: CardInstance) => retainArrows && instance.card.arrow === true;
   const retained = afterEffects.hand.filter(isRetained);
   const rest = afterEffects.hand.filter((c) => !isRetained(c));
   const vanishing = rest.filter(({ card }) => card.ethereal);
@@ -1386,16 +1384,20 @@ function discardHand(state: CombatState): CombatState {
 
 export function endTurn(state: CombatState): CombatState {
   if (state.status !== 'playerTurn') return state;
-  // 前のターンの覚えはここで消す。このあと文鎮が、今留めてある印を次のターン分として書き直す。
+  // 前のターンの覚えはここで消す。このあと文鎮が、今ターン融合した印を次のターン分として書き直す。
   const forgotten: CombatState = {
     ...state,
-    player: { ...state.player, retainedMarkBonus: {} },
+    player: { ...state.player, markMemory: {} },
   };
   const afterRelics = triggerRelics(forgotten, 'turnEnd');
+  const spentFusion: CombatState = {
+    ...afterRelics,
+    player: { ...afterRelics.player, fusedMarks: {} },
+  };
   const afterMetal =
-    afterRelics.player.endTurnBlock > 0
-      ? applyEffect(afterRelics, { kind: 'block', amount: afterRelics.player.endTurnBlock }, 'all')
-      : afterRelics;
+    spentFusion.player.endTurnBlock > 0
+      ? applyEffect(spentFusion, { kind: 'block', amount: spentFusion.player.endTurnBlock }, 'all')
+      : spentFusion;
   const discarded = settle(withLog(discardHand(afterMetal), 'ターン終了'));
   if (discarded.status !== 'playerTurn') return discarded;
   const afterEnemy = runEnemyTurn(discarded);

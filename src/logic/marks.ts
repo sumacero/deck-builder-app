@@ -13,7 +13,7 @@ const MARK_MULTIPLIER_CAP = 4;
 
 /**
  * 使ったカードを除いた、同じ印の枚数。
- * 手札に残っている枚数に、文鎮が覚えている分と「水面」の分を足す。
+ * 手札にある枚数に、文鎮が覚えている分と「水面」の分を足す。
  */
 export function otherMarkCount(
   hand: readonly CardInstance[],
@@ -24,7 +24,34 @@ export function otherMarkCount(
   const inHand = hand.filter(
     (card) => card.instanceId !== instanceId && card.card.mark === mark,
   ).length;
-  return inHand + (player.retainedMarkBonus[mark] ?? 0) + (player.powers.markCount ?? 0);
+  return inHand + (player.markMemory[mark] ?? 0) + (player.powers.markCount ?? 0);
+}
+
+/**
+ * このプレイで融合して廃棄する手札。
+ * 同じ印がほかにあれば、その全部。無ければ、三印が揃っていて文鎮や水面で既に倍率が付いていないとき、
+ * ほかの印を 1 枚ずつ（三印の素材）。
+ */
+export function fusionMaterials(
+  hand: readonly CardInstance[],
+  instance: CardInstance,
+  player: PlayerState,
+): CardInstance[] {
+  const mark = instance.card.mark;
+  if (!mark) return [];
+  const same = hand.filter((card) => card.instanceId !== instance.instanceId && card.card.mark === mark);
+  if (same.length > 0) return same;
+  const virtual = (player.markMemory[mark] ?? 0) + (player.powers.markCount ?? 0);
+  if (virtual > 0 || !handHasRainbow(hand)) return [];
+  const taken = new Set<CardMark>();
+  const materials: CardInstance[] = [];
+  for (const card of hand) {
+    if (card.instanceId === instance.instanceId || !card.card.mark || card.card.mark === mark) continue;
+    if (taken.has(card.card.mark)) continue;
+    taken.add(card.card.mark);
+    materials.push(card);
+  }
+  return materials;
 }
 
 /** 使おうとしているカードも含めて、手札に三つの印が揃っている。 */

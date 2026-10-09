@@ -53,10 +53,15 @@ export type PlayerState = Fighter & {
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
   /**
-   * 前のターン終了時に留めてあった印。この自分のターン、その印を 1 枚多く数える。
-   * 手札に残っているカードとは別に足す。ターン終了の最初に空にし、文鎮が書き直す。
+   * 前のターンに融合して消費した印。この自分のターン、その印を 1 枚多く数える。
+   * 手札の札とは別に足す。ターン終了の最初に空にし、文鎮が今ターンの融合から書き直す。
    */
-  retainedMarkBonus: Partial<Record<CardMark, number>>;
+  markMemory: Partial<Record<CardMark, number>>;
+  /**
+   * このターン、融合して廃棄した印。ターン終了時に文鎮が markMemory へ写し、そのあと空にする。
+   * 同じ印を何枚消費しても 1。
+   */
+  fusedMarks: Partial<Record<CardMark, number>>;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */

@@ -35,7 +35,7 @@ export type KeywordId =
   | 'rain'
   | 'wave'
   | 'ice'
-  | 'pin'
+  | 'fuse'
   | 'rainbow'
   | 'markCount'
   | 'markDepth'
