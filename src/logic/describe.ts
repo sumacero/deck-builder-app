@@ -10,6 +10,7 @@ import type { RelicCondition, RelicDefinition, RelicRarity } from '../domain/rel
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
 import { ALL_ATTRIBUTES } from './attribute';
+import { tideSoftened, tideWashes } from './tide';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -311,7 +312,7 @@ export function describeIntent(
 ): IntentView[] {
   return move.actions.map((action, index) => {
     const key = `${move.id}-${index}`;
-    if (tide > 0 && action.kind !== 'attack' && action.kind !== 'idle' && action.kind !== 'charge') {
+    if (tideWashes(action, tide)) {
       return { key, tone: action.kind, icon: '🌊', label: '流' };
     }
     switch (action.kind) {
@@ -325,23 +326,23 @@ export function describeIntent(
         };
       }
       case 'block':
-        return { key, tone: action.kind, icon: '🛡️', label: `${action.amount}` };
+        return { key, tone: action.kind, icon: '🛡️', label: `${tideSoftened(action.amount, tide)}` };
       case 'buff':
-        return { key, tone: action.kind, icon: '💪', label: `+${action.strength}` };
+        return { key, tone: action.kind, icon: '💪', label: `+${tideSoftened(action.strength, tide)}` };
       case 'heal':
-        return { key, tone: action.kind, icon: action.allies ? '💞' : '💚', label: `+${action.amount}` };
+        return { key, tone: action.kind, icon: action.allies ? '💞' : '💚', label: `+${tideSoftened(action.amount, tide)}` };
       case 'paralyze':
-        return { key, tone: action.kind, icon: '💫', label: `${action.amount}` };
+        return { key, tone: action.kind, icon: '💫', label: `${tideSoftened(action.amount, tide)}` };
       case 'chill':
-        return { key, tone: action.kind, icon: '❄️', label: `${action.amount}` };
+        return { key, tone: action.kind, icon: '❄️', label: `${tideSoftened(action.amount, tide)}` };
       case 'seal':
         return { key, tone: action.kind, icon: '🔒', label: '' };
       case 'charge':
         return { key, tone: action.kind, icon: '🔋', label: '' };
       case 'debuff':
-        return { key, tone: action.kind, icon: DEBUFF_ICON[action.status], label: `${action.turns}` };
+        return { key, tone: action.kind, icon: DEBUFF_ICON[action.status], label: `${tideSoftened(action.turns, tide)}` };
       case 'addCard':
-        return { key, tone: action.kind, icon: '🃏', label: `${action.count}` };
+        return { key, tone: action.kind, icon: '🃏', label: `${tideSoftened(action.count, tide)}` };
       case 'intangible':
         return { key, tone: action.kind, icon: '👻', label: '' };
       case 'shiftAttribute':

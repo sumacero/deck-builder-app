@@ -2,12 +2,12 @@ import type { CardDefinition } from '../domain/card';
 import { DEFEND, STRIKE } from './cards';
 
 /**
- * 蒼雨のリオ（水属性）のためのカード。水属性なので、リオは戦闘報酬で、ほかのエージェントはショップでだけ手に入る。
- * 軸は潮: 敵の次の行動にかけ、攻撃は威力を削り、守り・強化・回復・妨害は流す。
- * 潮を割るカードは、乱すのをやめて今ダメージにする。ブロックは水鏡と氷で、盾や蔦は使わない。
+ * 蒼雨のノエル（水属性）のためのカード。水属性なので、ノエルは戦闘報酬で、ほかのエージェントはショップでだけ手に入る。
+ * 軸は潮: 敵の次の行動にかけ、攻撃と守り・強化・回復の数値を削る。0 になった行動と封印は流れる。
+ * 潮を割るカードは、弱めるのをやめて今ダメージにする。ブロックは水鏡と氷で、盾や蔦は使わない。
  */
 
-/** リオの初期カード。潮の入口。 */
+/** ノエルの初期カード。潮の入口。 */
 export const RAINDROP: CardDefinition = {
   id: 'raindrop',
   name: '雨粒',
@@ -21,7 +21,7 @@ export const RAINDROP: CardDefinition = {
   upgrade: { effects: [{ kind: 'applyDebuff', status: 'tide', turns: 3 }] },
 };
 
-/** 蒼雨のリオの秘奥義。ゲージが溜まると手札に来る。報酬には出ない。 */
+/** 蒼雨のノエルの秘奥義。ゲージが溜まると手札に来る。報酬には出ない。 */
 export const WHITE_WAVE: CardDefinition = {
   id: 'white-wave',
   name: '蒼雨・白波',
@@ -41,7 +41,7 @@ export const WHITE_WAVE: CardDefinition = {
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
-/** リオの初期デッキ。ストライクはラン開始時に水属性になる。絵は杖と水鏡。 */
+/** ノエルの初期デッキ。ストライクはラン開始時に水属性になる。絵は杖と水鏡。 */
 export const RAIN_STARTER_DECK: CardDefinition[] = [
   ...copies({ ...STRIKE, art: 'strike-azure' }, 4),
   ...copies({ ...DEFEND, art: 'defend-azure' }, 4),

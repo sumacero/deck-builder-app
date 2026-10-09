@@ -10,7 +10,7 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/** リオの初期レリック。戦闘の最初から、敵の次の行動に潮がかかる。 */
+/** ノエルの初期レリック。戦闘の最初から、敵の次の行動に潮がかかる。 */
 export const RAIN_HAT: RelicDefinition = {
   id: 'rain-hat',
   name: '雨帽子',

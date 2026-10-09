@@ -26,14 +26,14 @@ export const VERDANT_ARCHER: AgentDefinition = {
   mysticArte: THOUSAND_YEAR_TREE,
 };
 
-/** 雨宿りの少年魔法使い。敵の次の行動に潮をかけ、攻撃を弱め、守りや強化を流す。 */
+/** 雨宿りの少年魔法使い。敵の次の行動に潮をかけ、威力を削る。 */
 export const RAIN_MAGE: AgentDefinition = {
   id: 'rain-mage',
-  name: '蒼雨のリオ',
+  name: '蒼雨のノエル',
   icon: '💧',
   title: '雨宿りの魔法使い',
   playStyle:
-    '敵に潮をかけ、次の行動を乱す。攻撃は威力を削り、守りや強化は流す。潮を割れば、ためた分が水のダメージになる。',
+    '敵に潮をかけ、次の行動の威力を削る。攻撃・守り・強化・回復が弱まり、消えた行動と封印は流れる。潮を割れば、ためた分が水のダメージになる。',
   attribute: 'water',
   mysticArte: WHITE_WAVE,
 };
