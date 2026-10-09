@@ -170,15 +170,16 @@ export function CardView({
           </Text>
           <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
         </View>
+        {dimmed && <View pointerEvents="none" style={styles.dim} />}
         <View style={styles.costGem}>
           <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
         </View>
+        {dimmed && <View pointerEvents="none" style={styles.dimGem} />}
         {count !== undefined && count > 1 && (
           <View style={styles.countBadge}>
             <Text style={styles.countText}>×{count}</Text>
           </View>
         )}
-        {dimmed && <View pointerEvents="none" style={styles.dim} />}
       </Pressable>
       {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
     </>
@@ -205,15 +206,27 @@ const styles = StyleSheet.create({
   },
   wide: { width: WIDE_WIDTH, minHeight: 168 },
   selected: { borderWidth: 3 },
-  /** はみ出すコストの宝石まで覆う。カードの不透明度は下げない。 */
+  /**
+   * カードの外枠にぴったり重ねる。上と左だけ大きくはみ出すと、覆いが枠からずれて見える。
+   * コストの宝石は枠の外なので、別の丸い覆いを宝石の上に載せる（宝石は不透明なので、下の覆いと二重にならない）。
+   */
   dim: {
     position: 'absolute',
-    top: -SPACING.sm,
-    right: -SPACING.xs,
-    bottom: 0,
-    left: -SPACING.sm,
+    top: -BORDER_WIDTH,
+    right: -BORDER_WIDTH,
+    bottom: -BORDER_WIDTH,
+    left: -BORDER_WIDTH,
     backgroundColor: COLORS.cardDim,
     borderRadius: RADIUS.md,
+  },
+  dimGem: {
+    position: 'absolute',
+    top: -SPACING.sm,
+    left: -SPACING.sm,
+    width: GEM_SIZE,
+    height: GEM_SIZE,
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.cardDim,
   },
   pressed: { transform: [{ translateY: -8 }] },
   art: {
