@@ -1,6 +1,6 @@
 import type { AgentDefinition } from './agent';
 import type { Attribute } from './attribute';
-import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
+import type { CardDefinition, CardInstance, CardMark, CardMotion, CardType } from './card';
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
@@ -52,6 +52,11 @@ export type PlayerState = Fighter & {
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
+  /**
+   * 前のターン終了時に留めてあった印。この自分のターン、その印を 1 枚多く数える。
+   * 手札に残っているカードとは別に足す。ターン終了の最初に空にし、文鎮が書き直す。
+   */
+  retainedMarkBonus: Partial<Record<CardMark, number>>;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */

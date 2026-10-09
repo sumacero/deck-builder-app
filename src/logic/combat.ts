@@ -1,4 +1,4 @@
-import type { CardDefinition, CardInstance } from '../domain/card';
+import type { CardDefinition, CardInstance, CardMark } from '../domain/card';
 import type { Attribute } from '../domain/attribute';
 import type {
   ActorId,
@@ -31,7 +31,7 @@ import {
 import { arrowDamage, forgeArrow } from './arrows';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
-import { TIDE_ATTACK_CUT, tideSoftened, tideSpends, tideWashes } from './tide';
+import { MARK_NAME, markPlay, scaledEffects } from './marks';
 import { SLEEP_MOVE, traitOf } from './enemyTraits';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
@@ -285,6 +285,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
       pendingHindrance: NO_HINDRANCE,
+      retainedMarkBonus: {},
       statuses: {},
     },
     enemies: setup.enemies.map((enemy, index) => ({
@@ -529,9 +530,7 @@ function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns:
       ...e,
       statuses: addStatus(e.statuses, status, turns),
     })),
-    status === 'tide'
-      ? `${enemy.name}に${STATUS_LABEL[status]} ${turns}`
-      : `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
+    `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
   );
   const verdure = status === 'seed' ? powerOf(debuffed, 'verdure') : 0;
   const sprouted = verdure > 0 ? gainPlayerBlock(debuffed, verdure) : debuffed;
@@ -760,15 +759,10 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         }));
         return callout(cleared, uid, `宿り木 ${seed}`);
       }, state);
-    case 'crackTide':
-      return aimedUids(state, aim).reduce((current, uid) => {
-        const enemy = findEnemy(current, uid);
-        const tide = enemy ? statusTurns(enemy.statuses, 'tide') : 0;
-        if (tide === 0) return withLog(current, '割れる潮が無かった');
-        const hit = hitEnemy(current, uid, attackDamage(current, tide * effect.per), hitKind);
-        const cleared = clearTide(hit, uid);
-        return callout(cleared, uid, `潮 ${tide}`);
-      }, state);
+    case 'paintHand':
+      return paintMarkedHand(state, effect.mark);
+    case 'noteRetainedMarks':
+      return rememberPinnedMarks(state);
     case 'ifTargetHas': {
       const met = aimedUids(state, aim).some((uid) => {
         const enemy = findEnemy(state, uid);
@@ -831,6 +825,33 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
   }
 }
 
+/** すでに印がある手札だけ、別の印に塗り替える。ストライクのように印の無いカードは触らない。 */
+function paintMarkedHand(state: CombatState, mark: CardMark): CombatState {
+  let painted = 0;
+  const hand = state.hand.map((instance) => {
+    if (!instance.card.mark || instance.card.mark === mark) return instance;
+    painted += 1;
+    return { ...instance, card: { ...instance.card, mark } };
+  });
+  if (painted === 0) return state;
+  return withLog({ ...state, hand }, `手札の印を${MARK_NAME[mark]}に塗り替えた`);
+}
+
+/** 留めてある印を、次の自分のターンは 1 枚多く数える。同じ印を何枚留めても +1。 */
+function rememberPinnedMarks(state: CombatState): CombatState {
+  const bonus: PlayerState['retainedMarkBonus'] = {};
+  for (const instance of state.hand) {
+    if (instance.pinned && instance.card.mark) bonus[instance.card.mark] = 1;
+  }
+  return { ...state, player: { ...state.player, retainedMarkBonus: bonus } };
+}
+
+/** 氷の印。数値は増やさず、ほかの氷の枚数でエナジーとドローを足す。エナジーは +1 まで。 */
+function applyIceMark(state: CombatState, energy: number, draw: number): CombatState {
+  const withEnergy = energy > 0 ? applyEffect(state, { kind: 'gainEnergy', amount: energy }, 'all') : state;
+  return draw > 0 ? applyEffect(withEnergy, { kind: 'draw', amount: draw }, 'all') : withEnergy;
+}
+
 function gainPlayerBlock(state: CombatState, amount: number): CombatState {
   const player = gainBlock(state.player, amount);
   const gained = withEvent(withLog({ ...state, player }, `ブロック +${amount}`), {
@@ -869,6 +890,8 @@ function conditionMet(state: CombatState, condition: RelicCondition | undefined)
       return state.enemies.some((enemy) => enemy.rank !== 'normal');
     case 'everyThirdTurn':
       return state.turn % 3 === 0;
+    case 'hasPinnedMark':
+      return state.hand.some((card) => card.pinned === true && card.card.mark !== undefined);
   }
 }
 
@@ -933,20 +956,35 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
   );
 }
 
+/** 印のあるカードを、手札に残すか外す。印の無いカードは留められない。 */
+export function togglePin(state: CombatState, instanceId: string): CombatState {
+  if (state.status !== 'playerTurn') return state;
+  return {
+    ...state,
+    hand: state.hand.map((card) => {
+      if (card.instanceId !== instanceId || !card.card.mark) return card;
+      return { ...card, pinned: !card.pinned };
+    }),
+  };
+}
+
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
 export function playCard(state: CombatState, instanceId: string, target?: EnemyUid): CombatState {
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || !canPlayCard(state, instanceId)) return state;
   const { card } = instance;
+  // 手札から出す前に数える。虹は使うカード自身も含む。ほかの同じ印は、出したあとに残る枚数。
+  const marks = markPlay(state.hand, instance, state.player);
   const aim = resolveAim(state, card.target, target);
 
+  const spentInstance = { ...instance, pinned: false };
   const spent = {
     ...state,
     hand: state.hand.filter((c) => c.instanceId !== instanceId),
     player: { ...state.player, energy: state.player.energy - card.cost },
     ...(card.exhaust
-      ? { exhaustPile: [...state.exhaustPile, instance] }
-      : { discardPile: [...state.discardPile, instance] }),
+      ? { exhaustPile: [...state.exhaustPile, spentInstance] }
+      : { discardPile: [...state.discardPile, spentInstance] }),
   };
   const copied = card.addCopyToDiscard
     ? {
@@ -973,8 +1011,18 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     aim !== 'all' && chosen && isAlive(chosen) && chosen.uid !== aim
       ? callout(withLog(announced, `${findEnemy(state, aim)?.name ?? '敵'}がかばった！`), aim, 'かばう！')
       : announced;
-  const eventsBefore = guarded.events.length;
-  const resolved = applyEffects(guarded, card.effects, aim, { attributes: playedAttributes(state, card) });
+  const boosted =
+    card.mark && card.mark !== 'ice' && marks.multiplier > 1
+      ? withLog(guarded, `${MARK_NAME[card.mark]}が重なり ${marks.multiplier} 倍`)
+      : guarded;
+  const eventsBefore = boosted.events.length;
+  const resolved = applyIceMark(
+    applyEffects(boosted, scaledEffects(card, marks.multiplier), aim, {
+      attributes: playedAttributes(state, card),
+    }),
+    marks.iceEnergy,
+    marks.iceDraw,
+  );
   const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
   const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
   const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
@@ -1100,11 +1148,10 @@ export function previewCardDamage(
   });
 }
 
-/** 敵の攻撃 1 回分のダメージ（潮・筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
+/** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
 export function enemyAttackDamage(enemy: EnemyState, base: number, player: PlayerState): number {
   const affinity = ENEMY_AFFINITY_MULTIPLIER[enemyAffinity(enemy.attribute, player.attribute)];
-  const softened = Math.max(0, base - statusTurns(enemy.statuses, 'tide') * TIDE_ATTACK_CUT);
-  return modifiedDamage(Math.max(0, softened + enemy.strength), enemy.statuses, player.statuses, affinity);
+  return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses, affinity);
 }
 
 /**
@@ -1127,19 +1174,14 @@ function applyEnemyAction(
   if (!enemy) return state;
   const act = (current: CombatState): CombatState =>
     announce ? withEvent(current, { kind: 'enemyAct', target: uid, action: action.kind }) : current;
-  const tide = statusTurns(enemy.statuses, 'tide');
-  if (tideWashes(action, tide)) {
-    return callout(withLog(state, `${enemy.name}の行動は潮に流された`), uid, '流された！');
-  }
   switch (action.kind) {
     case 'attack': {
       const amount = enemyAttackDamage(enemy, action.damage, state.player);
-      const tideNote = statusTurns(enemy.statuses, 'tide') > 0;
       const affinity = enemyAffinity(enemy.attribute, state.player.attribute);
       const weak = affinity === 'weak';
       const note = weak ? '（弱点）' : affinity === 'resist' ? '（相性で軽減）' : '';
       const thorns = powerOf(state, 'thorns');
-      let next = tideNote ? withLog(state, `${enemy.name}の攻撃は潮で弱まった`) : state;
+      let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
@@ -1162,7 +1204,7 @@ function applyEnemyAction(
       return next;
     }
     case 'block': {
-      const amount = tideSoftened(action.amount, tide);
+      const amount = action.amount;
       const acted = act(state);
       const guarded = gainBlock(enemy, amount);
       return withEvent(
@@ -1171,7 +1213,7 @@ function applyEnemyAction(
       );
     }
     case 'buff': {
-      const strength = tideSoftened(action.strength, tide);
+      const strength = action.strength;
       const acted = act(state);
       return withLog(
         updateEnemy(acted, uid, (e) => ({ ...e, strength: e.strength + strength })),
@@ -1179,7 +1221,7 @@ function applyEnemyAction(
       );
     }
     case 'heal': {
-      const amount = tideSoftened(action.amount, tide);
+      const amount = action.amount;
       const acted = act(state);
       const targets = action.allies ? livingEnemies(acted).map((e) => e.uid) : [uid];
       return targets.reduce((current, targetUid) => healEnemy(current, targetUid, amount), acted);
@@ -1188,7 +1230,7 @@ function applyEnemyAction(
     case 'chill':
     case 'seal': {
       const acted = act(state);
-      const hindrance = action.kind === 'seal' ? action : { ...action, amount: tideSoftened(action.amount, tide) };
+      const hindrance = action;
       const pending = addHindrance(acted.player.pendingHindrance, hindrance);
       return withLog(
         { ...acted, player: { ...acted.player, pendingHindrance: pending } },
@@ -1198,7 +1240,7 @@ function applyEnemyAction(
     case 'charge':
       return withLog(act(state), `${enemy.name}は力を溜めている…`);
     case 'debuff': {
-      const turns = tideSoftened(action.turns, tide);
+      const turns = action.turns;
       const acted = act(state);
       const statuses = addStatus(acted.player.statuses, action.status, turns + ACROSS_TICK);
       return withLog(
@@ -1207,7 +1249,7 @@ function applyEnemyAction(
       );
     }
     case 'addCard': {
-      const count = tideSoftened(action.count, tide);
+      const count = action.count;
       const acted = act(state);
       const added: CardInstance[] = Array.from({ length: count }, (_, i) => ({
         instanceId: `junk-${acted.nextEventId}-${i}`,
@@ -1236,21 +1278,6 @@ function applyEnemyAction(
         `${enemy.name}は眠っている…`,
       );
   }
-}
-
-function clearTide(state: CombatState, uid: EnemyUid): CombatState {
-  return updateEnemy(state, uid, (enemy) => ({
-    ...enemy,
-    statuses: Object.fromEntries(Object.entries(enemy.statuses).filter(([id]) => id !== 'tide')),
-  }));
-}
-
-/** 潮が効く行動のあと、潮を消す。旗だけ・溜め・眠りでは残す。 */
-function spendTide(state: CombatState, uid: EnemyUid, move: EnemyMove): CombatState {
-  const enemy = findEnemy(state, uid);
-  if (!enemy || statusTurns(enemy.statuses, 'tide') === 0) return state;
-  if (!tideSpends(move.actions)) return state;
-  return withLog(clearTide(state, uid), `${enemy.name}の潮が引いた`);
 }
 
 const HINDRANCE_LOG = {
@@ -1312,7 +1339,6 @@ function runEnemyTurn(state: CombatState): CombatState {
         });
       }
     }
-    next = spendTide(next, uid, move);
     // 行動中に（茨の鎧などで）覚醒したら、第二形態の先頭の行動から始めるため順番を進めない。
     if (findEnemy(next, uid)?.moves === enemy.moves) next = advanceEnemy(next, uid);
     if (livingEnemies(next).length === 0) return finishIfWon(next);
@@ -1340,7 +1366,9 @@ function discardHand(state: CombatState): CombatState {
     return applyEffects(withLog(current, `手札の${card.name}`), card.turnEndInHand, 'all');
   }, state);
   const retainArrows = powerOf(afterEffects, 'arrowRetain') > 0;
-  const isRetained = ({ card }: CardInstance) => retainArrows && card.arrow === true;
+  const isRetained = (instance: CardInstance) =>
+    (retainArrows && instance.card.arrow === true) ||
+    (instance.pinned === true && instance.card.mark !== undefined);
   const retained = afterEffects.hand.filter(isRetained);
   const rest = afterEffects.hand.filter((c) => !isRetained(c));
   const vanishing = rest.filter(({ card }) => card.ethereal);
@@ -1358,7 +1386,12 @@ function discardHand(state: CombatState): CombatState {
 
 export function endTurn(state: CombatState): CombatState {
   if (state.status !== 'playerTurn') return state;
-  const afterRelics = triggerRelics(state, 'turnEnd');
+  // 前のターンの覚えはここで消す。このあと文鎮が、今留めてある印を次のターン分として書き直す。
+  const forgotten: CombatState = {
+    ...state,
+    player: { ...state.player, retainedMarkBonus: {} },
+  };
+  const afterRelics = triggerRelics(forgotten, 'turnEnd');
   const afterMetal =
     afterRelics.player.endTurnBlock > 0
       ? applyEffect(afterRelics, { kind: 'block', amount: afterRelics.player.endTurnBlock }, 'all')
@@ -1368,7 +1401,7 @@ export function endTurn(state: CombatState): CombatState {
   const afterEnemy = runEnemyTurn(discarded);
   if (afterEnemy.status !== 'playerTurn') return afterEnemy;
   const started = triggerRelics(startPlayerTurn(afterEnemy), 'turnStart');
-  return finishIfWon(spreadHighTide(spreadOvergrowth(supplyArrows(started))));
+  return finishIfWon(spreadOvergrowth(supplyArrows(started)));
 }
 
 /** 無限の矢筒: ターンの始めに矢を手札へ。 */
@@ -1406,16 +1439,6 @@ function reforgeArrows(state: CombatState): CombatState {
     drawPile: reforge(state.drawPile),
     discardPile: reforge(state.discardPile),
   };
-}
-
-/** 満潮: ターンの始めに敵全体へ潮。 */
-function spreadHighTide(state: CombatState): CombatState {
-  const amount = powerOf(state, 'highTide');
-  if (amount === 0) return state;
-  return livingEnemies(state).reduce(
-    (current, { uid }) => debuffEnemy(current, uid, 'tide', amount),
-    withLog(state, '満潮が押し寄せる'),
-  );
 }
 
 /** 森の侵蝕: ターンの始めに敵全体へ宿り木。 */

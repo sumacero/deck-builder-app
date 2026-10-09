@@ -12,9 +12,22 @@ export type CardRarity = 'common' | 'uncommon' | 'rare';
 
 /**
  * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
- * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突く）/ 手数（軽いカードを次々使う）。
+ * 雨・波・氷は水鏡のノアの印で、報酬の軸そのもの。それ以外はカイル・リーネの軸。
  */
-export type Archetype = 'debuff' | 'block' | 'strength' | 'sacrifice' | 'growth' | 'element' | 'tempo';
+export type Archetype =
+  | 'debuff'
+  | 'block'
+  | 'strength'
+  | 'sacrifice'
+  | 'growth'
+  | 'element'
+  | 'tempo'
+  | 'rain'
+  | 'wave'
+  | 'ice';
+
+/** 手札で揃える印。雨はダメージ、波はブロック、氷はエナジーとドロー。 */
+export type CardMark = 'rain' | 'wave' | 'ice';
 
 /** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
 export type CardTarget = EffectTarget;
@@ -93,6 +106,11 @@ export type CardDefinition = {
   /** 秘奥義（ゲージが溜まると手札に来る必殺技）。 */
   mysticArte?: boolean;
   archetypes?: Archetype[];
+  /**
+   * 手札で揃える印。同じ印がほかに残っているほど、雨はダメージ、波はブロックが増える。
+   * 氷は数値を増やさず、エナジーとドローが付く。省略すると印は無い。
+   */
+  mark?: CardMark;
   /** ムチで打つアタック。「ムチで攻撃するたびに宿り木」（宿り木の蔓など）が乗る。 */
   whip?: boolean;
   /** 弓の「矢」（0 コストで廃棄されるアタック）。戦闘中にカードの効果で作られ、矢のパワーで強くなる。 */
@@ -105,6 +123,8 @@ export type CardDefinition = {
 export type CardInstance = {
   instanceId: string;
   card: CardDefinition;
+  /** 印のあるカードを、ターンをまたいで手札に残す。プレイヤーが選んだときだけ true。 */
+  pinned?: boolean;
 };
 
 export type CardStack = {

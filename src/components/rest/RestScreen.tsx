@@ -56,7 +56,7 @@ export function RestScreen({ run, actions }: RestScreenProps) {
           stacks={stackCards(run.deck.filter(canUpgrade))}
           confirmLabel="強化する"
           preview={upgradeCard}
-          onConfirm={(card) => actions.smith(card.id)}
+          onConfirm={(card) => actions.smith(card)}
           onCancel={() => setPicking(false)}
         />
       )}

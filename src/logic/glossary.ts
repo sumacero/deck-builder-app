@@ -31,11 +31,11 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'gainEndTurnBlock':
       return ['endTurnBlock'];
     case 'applyDebuff':
-      return effect.status === 'tide' ? ['tide'] : [effect.status, 'statusTurns'];
+      return [effect.status, 'statusTurns'];
     case 'gainBuff':
       return [effect.status, 'statusTurns'];
     case 'extendDebuffs':
-      return ['vulnerable', 'weak', 'seed', 'tide', 'statusTurns'];
+      return ['vulnerable', 'weak', 'seed', 'statusTurns'];
     case 'extendBuffs':
       return ['retainBlock', 'blazing', 'statusTurns'];
     case 'gainPower':
@@ -49,8 +49,10 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['damage', 'vulnerable', 'weak', 'statusTurns'];
     case 'detonateSeed':
       return ['damage', 'seed'];
-    case 'crackTide':
-      return ['damage', 'tide'];
+    case 'paintHand':
+      return [effect.mark, 'pin'];
+    case 'noteRetainedMarks':
+      return ['pin'];
     case 'ifTargetHas':
       return [effect.status, ...effect.effects.flatMap(keywordsForEffect)];
     case 'consumeBlock':
@@ -79,8 +81,9 @@ const POWER_IDS: readonly PowerId[] = [
   'feelNoPain',
   'thorns',
   'overgrowth',
-  'highTide',
   'verdure',
+  'markCount',
+  'markDepth',
   'quickdraw',
   'flurry',
   'lashSeed',
@@ -115,6 +118,8 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.ethereal ? (['ethereal'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
+    ...(card.mark ? ([card.mark, 'pin'] as const) : []),
+    ...(card.mark === 'rain' || card.mark === 'wave' ? (['rainbow'] as const) : []),
   ]);
 }
 

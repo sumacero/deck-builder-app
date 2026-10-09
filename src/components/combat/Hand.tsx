@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CardInstance } from '../../domain/card';
 import type { CombatEvent } from '../../domain/combat';
 import { COLORS, HAND_LAYOUT, SPACING } from '../../theme';
@@ -12,6 +12,8 @@ type HandProps = CardDragHandlers & {
   /** 手札がいっぱいで引けなかった演出に使う。 */
   events: CombatEvent[];
   isPlayable: (instanceId: string) => boolean;
+  /** 印のあるカードを、ターンをまたいで残す。 */
+  onTogglePin: (instanceId: string) => void;
   /** 持ち上げている最中のカード。 */
   draggingId: string | null;
   /** タップして、狙う敵を選んでいる最中のカード。 */
@@ -33,6 +35,7 @@ export function Hand({
   cards,
   events,
   isPlayable,
+  onTogglePin,
   draggingId,
   selectedId,
   viewRef,
@@ -60,8 +63,17 @@ export function Hand({
         ) : (
           cardWidth > 0 && (
             <View style={styles.row}>
-              {cards.map(({ instanceId, card }, i) => (
-                <View key={instanceId} style={[i > 0 && { marginLeft: spacing }, { zIndex: i }]}>
+              {cards.map(({ instanceId, card, pinned }, i) => (
+                <View key={instanceId} style={[styles.slot, i > 0 && { marginLeft: spacing }, { zIndex: i }]}>
+                  {card.mark && (
+                    <Pressable
+                      onPress={() => onTogglePin(instanceId)}
+                      hitSlop={6}
+                      style={[styles.pin, pinned && styles.pinOn]}
+                    >
+                      <Text style={[styles.pinText, pinned && styles.pinTextOn]}>留</Text>
+                    </Pressable>
+                  )}
                   <DraggableCard
                     instanceId={instanceId}
                     card={card}
@@ -69,6 +81,7 @@ export function Hand({
                     playable={isPlayable(instanceId)}
                     dragging={draggingId === instanceId}
                     selected={selectedId === instanceId}
+                    pinned={pinned === true}
                     {...handlers}
                   />
                 </View>
@@ -91,4 +104,23 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xs,
   },
   emptyText: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center' },
+  slot: { position: 'relative' },
+  /** 次のカードは右から重なるので、留めは左上に置く。ドラッグの判定の外。 */
+  pin: {
+    position: 'absolute',
+    top: 0,
+    left: 2,
+    zIndex: 20,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: COLORS.gold,
+    backgroundColor: COLORS.panel,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pinOn: { backgroundColor: COLORS.gold },
+  pinText: { color: COLORS.gold, fontSize: 10, fontWeight: '800' },
+  pinTextOn: { color: COLORS.onGold },
 });

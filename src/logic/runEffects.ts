@@ -104,6 +104,8 @@ export function applyRunEffect(run: RunState, effect: RunEffect): RunState {
       const deck = fuseInDeck(run.deck, effect.from.id, effect.count, into);
       return deck ? { ...run, deck } : run;
     }
+    case 'lockMark':
+      return { ...run, markBias: effect.mark };
   }
 }
 
@@ -131,15 +133,10 @@ export function canApplyRunEffect(run: RunState, effect: RunEffect): boolean {
 }
 
 export function canMakeChoice(run: RunState, choice: RunChoice | undefined): boolean {
-  switch (choice) {
-    case 'upgradeCard':
-      return run.deck.some(canUpgrade);
-    case 'removeCard':
-      return run.deck.length > 1;
-    case 'pickCard':
-    case undefined:
-      return true;
-  }
+  if (choice === undefined || choice === 'pickCard') return true;
+  if (choice === 'upgradeCard') return run.deck.some(canUpgrade);
+  if (choice === 'removeCard') return run.deck.length > 1;
+  return run.deck.length > 0;
 }
 
 /** 効果をかけ、choice があればカードを選ぶ画面へ。無ければ after の画面へ。 */
@@ -150,16 +147,11 @@ export function applyEffectsThenChoice(
   after: RunState['phase'],
 ): RunState {
   const applied = effects.reduce(applyRunEffect, run);
-  switch (choice) {
-    case undefined:
-      return { ...applied, phase: after };
-    case 'upgradeCard':
-      return { ...applied, phase: { kind: 'deckEdit', mode: 'upgrade' } };
-    case 'removeCard':
-      return { ...applied, phase: { kind: 'deckEdit', mode: 'remove' } };
-    case 'pickCard':
-      return offerCardPick(applied);
-  }
+  if (choice === undefined) return { ...applied, phase: after };
+  if (choice === 'upgradeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'upgrade' } };
+  if (choice === 'removeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'remove' } };
+  if (choice === 'pickCard') return offerCardPick(applied);
+  return { ...applied, phase: { kind: 'deckEdit', mode: 'remark', mark: choice.mark } };
 }
 
 /** 3 枚から 1 枚選んでデッキに加える（ゴールド・レリック無しの報酬画面）。 */

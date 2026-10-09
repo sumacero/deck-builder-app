@@ -10,14 +10,18 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/** ノエルの初期レリック。戦闘の最初から、敵の次の行動に潮がかかる。 */
-export const RAIN_HAT: RelicDefinition = {
-  id: 'rain-hat',
-  name: '雨帽子',
-  icon: '🎩',
+/**
+ * ノアの初期レリック。留めた印は次のターンも手札に残るうえ、
+ * その印を 1 枚多く数える（留めた札そのものとは別に足す）。
+ */
+export const CRYSTAL_WEIGHT: RelicDefinition = {
+  id: 'crystal-weight',
+  name: '水晶の文鎮',
+  icon: '💎',
   rarity: 'starter',
-  trigger: 'combatStart',
-  effects: [{ kind: 'applyDebuff', status: 'tide', turns: 1 }],
+  trigger: 'turnEnd',
+  condition: 'hasPinnedMark',
+  effects: [{ kind: 'noteRetainedMarks' }],
 };
 
 /** リーネの初期レリック。 */

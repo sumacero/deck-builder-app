@@ -1,4 +1,5 @@
 import type { Attribute } from './attribute';
+import type { CardMark } from './card';
 import type { BuffId, DebuffId, PowerId } from './status';
 
 /**
@@ -53,12 +54,14 @@ export type Effect =
   | { kind: 'gainLashSeed'; amount: number }
   /** 狙った敵の宿り木 × perTurn のダメージを与え、その宿り木を消す。 */
   | { kind: 'detonateSeed'; perTurn: number }
-  /** 狙った敵の潮 × per のダメージを与え、その潮を消す（次の行動を乱す代わりに、今ダメージにする）。 */
-  | { kind: 'crackTide'; per: number }
   /** 矢を amount 本、手札に加える（手札がいっぱいなら捨て札へ）。 */
   | { kind: 'addArrows'; amount: number }
   /** この戦闘で廃棄した矢の本数だけ、矢 1 本分のダメージを与える。 */
-  | { kind: 'volleySpentArrows' };
+  | { kind: 'volleySpentArrows' }
+  /** 手札のうち、すでに印があるカードの印を塗り替える。印の無いカード（ストライクなど）は塗らない。この戦闘の間だけ。 */
+  | { kind: 'paintHand'; mark: CardMark }
+  /** 今留めてある印を、次の自分のターンは 1 枚多く数える。 */
+  | { kind: 'noteRetainedMarks' };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

@@ -19,6 +19,7 @@ export const STANDARD_ECONOMY: EconomyConfig = {
   priceVariance: 0.1,
   removalBasePrice: 75,
   removalPriceStep: 25,
+  remarkPrice: 80,
   shopCardCount: 5,
   shopRelicCount: 2,
   shopPotionCount: 2,

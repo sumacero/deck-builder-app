@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useReducer } from 'react';
-import type { CardDefinition } from '../domain/card';
+import type { CardDefinition, CardMark } from '../domain/card';
 import type { CombatResult, RunSetup } from '../domain/run';
 import { createRun } from '../logic/run';
 import { createRunStore, runStoreReducer } from '../logic/runEvents';
@@ -42,7 +42,7 @@ export function useRun(setup: RunSetup) {
   const blessingActions = useMemo(
     () => ({
       choose: (blessingId: string) => dispatch({ type: 'chooseBlessing', blessingId }),
-      finishDeckEdit: (cardId: string | null) => dispatch({ type: 'finishDeckEdit', cardId }),
+      finishDeckEdit: (card: CardDefinition | null) => dispatch({ type: 'finishDeckEdit', card }),
     }),
     [],
   );
@@ -50,7 +50,7 @@ export function useRun(setup: RunSetup) {
   const restActions = useMemo(
     () => ({
       rest: () => dispatch({ type: 'rest' }),
-      smith: (cardId: string) => dispatch({ type: 'smith', cardId }),
+      smith: (card: CardDefinition) => dispatch({ type: 'smith', card }),
     }),
     [],
   );
@@ -60,7 +60,8 @@ export function useRun(setup: RunSetup) {
       buyCard: (offerId: string) => dispatch({ type: 'buyCard', offerId }),
       buyRelic: (offerId: string) => dispatch({ type: 'buyRelic', offerId }),
       buyPotion: (offerId: string) => dispatch({ type: 'buyPotion', offerId }),
-      removeCard: (cardId: string) => dispatch({ type: 'removeCard', cardId }),
+      removeCard: (card: CardDefinition) => dispatch({ type: 'removeCard', card }),
+      remarkCard: (card: CardDefinition, mark: CardMark) => dispatch({ type: 'remarkCard', card, mark }),
       leave: () => dispatch({ type: 'leaveShop' }),
     }),
     [],
