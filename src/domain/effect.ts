@@ -53,6 +53,8 @@ export type Effect =
   | { kind: 'gainLashSeed'; amount: number }
   /** 狙った敵の宿り木 × perTurn のダメージを与え、その宿り木を消す。 */
   | { kind: 'detonateSeed'; perTurn: number }
+  /** 狙った敵の潮 × per のダメージを与え、その潮を消す（次の行動を乱す代わりに、今ダメージにする）。 */
+  | { kind: 'crackTide'; per: number }
   /** 矢を amount 本、手札に加える（手札がいっぱいなら捨て札へ）。 */
   | { kind: 'addArrows'; amount: number }
   /** この戦闘で廃棄した矢の本数だけ、矢 1 本分のダメージを与える。 */

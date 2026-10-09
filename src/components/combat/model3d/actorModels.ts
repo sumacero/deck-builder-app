@@ -191,10 +191,61 @@ export const AGENT_MODELS: Record<string, ActorModel> = {
             animation: 'orbit',
             phase,
           }),
+      ),
+    ],
+    },
+    { aura: 'grass' },
+  ),
+  // イラスト案 8（雨宿りの少年魔術師）: つばの広い紺の帽子、水色のリボン、短めの紺髪、
+  // 大きめのコートと水色の襟巻き、背より高い水晶の杖。顔は静か。まわりに水滴。
+  'rain-mage': humanoid(
+    {
+      skin: '#F3D2B0',
+      body: '#1E4F86',
+      legs: '#1A2458',
+      accent: '#1A2748',
+      emblem: '#7EF0FF',
+      headgear: 'wizardHat',
+      weapon: 'staff',
+      magic: '#7EF0FF',
+      cape: '#15224F',
+      hair: '#24345C',
+      boots: '#3A2E28',
+      extras: [
+        ...irises('#3AA0D8'),
+        box([0.05, 0.012, 0.02], '#6A5348', [0, 0.3, 0.23]),
+        // 帽子を一回り大きくし、水色のリボンと蝶結び。
+        cylinder(0.52, 0.035, '#1A2748', [0, 0.57, 0.02]),
+        torus(0.28, 0.028, '#3EC6E0', [0.04, 0.7, 0], { rotation: [1.2, 0.2, 0.4] }),
+        sphere(0.07, '#3EC6E0', [0.22, 0.62, 0.16]),
+        box([0.14, 0.05, 0.04], '#3EC6E0', [0.3, 0.58, 0.14], { rotation: [0, 0.4, 0.5] }),
+        box([0.12, 0.045, 0.035], '#3EC6E0', [0.16, 0.56, 0.18], { rotation: [0.2, -0.3, -0.4] }),
+        // 水色の襟巻きと、片方だけ垂れる端。
+        torus(0.15, 0.04, '#5ED0E8', [0, 0.12, 0.04], { rotation: [Math.PI / 2, 0, 0] }),
+        capsule(0.035, 0.28, '#5ED0E8', [0.16, -0.08, 0.12], { rotation: [0.4, 0, 0.5], animation: 'sway' }),
+        // コートの裾（ブーツが見える丈）と金の縁。
+        taper(0.28, 0.4, 0.42, '#1A2748', [0, -0.48, 0], { segments: 10 }),
+        torus(0.4, 0.014, GOLD, [0, -0.68, 0], { rotation: [Math.PI / 2, 0, 0] }),
+        box([0.1, 0.07, 0.03], GOLD, [0, -0.42, 0.18]),
+        ...tallBoots('#3A2E28', GOLD),
+        // 標準の杖より長く伸ばし、帽子の上まで水晶を出す。
+        ...onBone('weapon', [
+          cylinder(0.026, 0.7, '#5A3A22', [0.42, 0.9, 0.14]),
+          sphere(0.1, '#7EF0FF', [0.42, 1.22, 0.14], { glow: true }),
+          cone(0.045, 0.18, '#D8F7FF', [0.42, 1.4, 0.14], { glow: true, segments: 4 }),
+        ]),
+        // まわりを回る水滴。
+        ...[0, 0.33, 0.66].map((phase) =>
+          sphere(0.045, '#7EF0FF', [0.55, 0.05 + phase * 0.25, 0.1], {
+            glow: true,
+            opacity: 0.75,
+            animation: 'orbit',
+            phase,
+          }),
         ),
       ],
     },
-    { aura: 'grass' },
+    { aura: 'water', scale: 0.9 },
   ),
 };
 

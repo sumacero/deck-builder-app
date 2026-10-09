@@ -211,10 +211,95 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
   sacrifice: SWORDSMAN_MOTIONS.sacrifice,
 };
 
+/** 蒼雨のリオ: その場で杖を突き出し、水を放つ。踏み込まず、杖を掲げて唱える。 */
+const MAGE_MOTIONS: Record<CardMotion, MotionPreset> = {
+  strike: {
+    action: 'cast',
+    keyframes: [
+      { x: -6, duration: 90 },
+      { x: 16, rotate: 4, duration: 120 },
+      { x: 16, rotate: 4, duration: 70 },
+      { duration: 160 },
+    ],
+    burst: { emoji: '💧', on: 'opponent', delay: 200 },
+  },
+  flurry: {
+    action: 'cast',
+    keyframes: [
+      { x: -4, duration: 60 },
+      { x: 12, duration: 70 },
+      { x: 2, duration: 50 },
+      { x: 14, duration: 70 },
+      { x: 4, duration: 50 },
+      { x: 16, duration: 70 },
+      { duration: 140 },
+    ],
+    burst: { emoji: '💦', on: 'opponent', delay: 140 },
+  },
+  heavy: {
+    action: 'cleave',
+    keyframes: [
+      { y: -18, scale: 1.08, rotate: -8, duration: 220 },
+      { x: 22, scale: 1.12, rotate: 8, duration: 120 },
+      { x: 18, duration: 100 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '🌊', on: 'opponent', delay: 320 },
+  },
+  sweep: {
+    action: 'spin',
+    keyframes: [
+      { scale: 0.96, duration: 100 },
+      { x: 12, scale: 1.06, duration: 320 },
+      { duration: 180 },
+    ],
+    burst: { emoji: '🌊', on: 'opponent', delay: 280 },
+  },
+  lash: {
+    action: 'cast',
+    keyframes: [
+      { x: -6, duration: 90 },
+      { x: 16, duration: 120 },
+      { duration: 160 },
+    ],
+    burst: { emoji: '💧', on: 'opponent', delay: 180 },
+  },
+  guard: {
+    action: 'guard',
+    keyframes: [
+      { x: -8, scale: 0.94, duration: 120 },
+      { x: -8, scale: 0.94, duration: 150 },
+      { duration: 170 },
+    ],
+    burst: { emoji: '❄️', on: 'self', delay: 60 },
+  },
+  empower: {
+    action: 'raise',
+    keyframes: [
+      { y: -10, scale: 1.16, duration: 220 },
+      { y: -10, scale: 1.16, duration: 140 },
+      { duration: 200 },
+    ],
+    burst: { emoji: '🌊', on: 'self', delay: 120 },
+  },
+  focus: {
+    action: 'charge',
+    keyframes: [
+      { y: -8, duration: 150 },
+      { duration: 140 },
+      { y: -4, duration: 100 },
+      { duration: 100 },
+    ],
+    burst: { emoji: '💧', on: 'opponent', delay: 100 },
+  },
+  sacrifice: SWORDSMAN_MOTIONS.sacrifice,
+};
+
 /** エージェント id ごとの動き。未登録のエージェントは剣士の動きを使う。 */
 const AGENT_MOTIONS: Record<string, Record<CardMotion, MotionPreset>> = {
   'crimson-hero': SWORDSMAN_MOTIONS,
   'verdant-archer': ARCHER_MOTIONS,
+  'rain-mage': MAGE_MOTIONS,
 };
 
 /** 敵の動き。攻撃は 1 発ごとに体当たりする。 */
