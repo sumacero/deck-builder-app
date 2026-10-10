@@ -53,12 +53,12 @@ export type PlayerState = Fighter & {
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
   /**
-   * 前のターンに融合して消費した印。この自分のターン、その印を 1 枚多く数える。
+   * 前のターンに融合して捨てた印。この自分のターン、その印を 1 枚多く数える。
    * 手札の札とは別に足す。ターン終了の最初に空にし、文鎮が今ターンの融合から書き直す。
    */
   markMemory: Partial<Record<CardMark, number>>;
   /**
-   * このターン、融合して廃棄した印。ターン終了時に文鎮が markMemory へ写し、そのあと空にする。
+   * このターン、融合して捨てた印。ターン終了時に文鎮が markMemory へ写し、そのあと空にする。
    * 同じ印を何枚消費しても 1。
    */
   fusedMarks: Partial<Record<CardMark, number>>;
@@ -199,6 +199,8 @@ export type CombatState = {
   /** 直前の操作 1 回分のイベント。操作のたびに作り直す。 */
   events: CombatEvent[];
   nextEventId: number;
+  /** この敵のターンで、水分身がすでに 1 回身代わりになった。 */
+  cloneUsed: boolean;
 };
 
 /** カードを敵の上で離したときに、その敵が受ける実ダメージの予告。 */

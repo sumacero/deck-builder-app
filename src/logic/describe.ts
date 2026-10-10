@@ -97,7 +97,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'paintHand':
       return `手札の印を${MARK_NAME[effect.mark]}に塗り替える（印の無いカードはそのまま）。`;
     case 'noteFusedMarks':
-      return 'このターン融合して消費した印を、次のターンは 1 枚多く数える。';
+      return 'このターン融合して捨てた印を、次のターンは 1 枚多く数える。';
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -164,6 +164,7 @@ export const POWER_LABEL: Record<PowerId, string> = {
   arrowSupply: '無限の矢筒',
   markCount: '水面',
   markDepth: '深み',
+  waterClone: '水分身',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -205,6 +206,8 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、印を数えるとき同じ印が ${amount} 枚多くあるものとして扱う。`;
     case 'markDepth':
       return `この戦闘中、雨と波の倍率が ${amount} 段階上がる（最大 4 倍）。`;
+    case 'waterClone':
+      return `敵のターンの最初の攻撃で、水分身が ${amount >= 2 ? 12 : 6} ダメージまで代わりに受ける（今 ${amount}）。1 つ消える。超えた分は自分に届く。`;
   }
 }
 
@@ -255,11 +258,11 @@ export function describeCard(card: CardDefinition): string {
 function describeMark(mark: CardMark): string {
   switch (mark) {
     case 'rain':
-      return '雨の印。ほかの雨を融合して消費する。1 枚でダメージ 2 倍、2 枚以上で 3 倍。';
+      return '雨の印。ほかの雨を融合して捨てる。1 枚でダメージ 2 倍、2 枚以上で 3 倍。捨てた枚数だけ水分身。';
     case 'wave':
-      return '波の印。ほかの波を融合して消費する。1 枚でブロック 2 倍、2 枚以上で 3 倍。';
+      return '波の印。ほかの波を融合して捨てる。1 枚でブロック 2 倍、2 枚以上で 3 倍。捨てた枚数だけ水分身。';
     case 'ice':
-      return '氷の印。ほかの氷を融合して消費する。1 枚以上でエナジー +1、2 枚以上でさらに 1 枚引く。';
+      return '氷の印。ほかの氷を融合して捨てる。1 枚以上でエナジー +1、2 枚以上でさらに 1 枚引く。捨てた枚数だけ水分身。';
   }
 }
 

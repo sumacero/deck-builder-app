@@ -60,7 +60,7 @@ export type Effect =
   | { kind: 'volleySpentArrows' }
   /** 手札のうち、すでに印があるカードの印を塗り替える。印の無いカード（ストライクなど）は塗らない。この戦闘の間だけ。 */
   | { kind: 'paintHand'; mark: CardMark }
-  /** このターン融合して消費した印を、次の自分のターンは 1 枚多く数える。 */
+  /** このターン融合して捨てた印を、次の自分のターンは 1 枚多く数える。 */
   | { kind: 'noteFusedMarks' };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */

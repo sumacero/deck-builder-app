@@ -84,6 +84,7 @@ const POWER_IDS: readonly PowerId[] = [
   'verdure',
   'markCount',
   'markDepth',
+  'waterClone',
   'quickdraw',
   'flurry',
   'lashSeed',
@@ -118,7 +119,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.ethereal ? (['ethereal'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
-    ...(card.mark ? ([card.mark, 'fuse'] as const) : []),
+    ...(card.mark ? ([card.mark, 'fuse', 'waterClone'] as const) : []),
     ...(card.mark === 'rain' || card.mark === 'wave' ? (['rainbow'] as const) : []),
   ]);
 }

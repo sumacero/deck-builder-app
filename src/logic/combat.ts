@@ -323,6 +323,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
     log: [],
     events: [],
     nextEventId: 0,
+    cloneUsed: false,
   };
   const names = groupedNames(setup.enemies.map((enemy) => enemy.name));
   const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
@@ -838,7 +839,7 @@ function paintMarkedHand(state: CombatState, mark: CardMark): CombatState {
   return withLog({ ...state, hand }, `手札の印を${MARK_NAME[mark]}に塗り替えた`);
 }
 
-/** このターン融合して消費した印を、次の自分のターンは 1 枚多く数える。同じ印を何枚消費しても +1。 */
+/** このターン融合して捨てた印を、次の自分のターンは 1 枚多く数える。同じ印を何枚捨てても +1。 */
 function rememberFusedMarks(state: CombatState): CombatState {
   return { ...state, player: { ...state.player, markMemory: { ...state.player.fusedMarks } } };
 }
@@ -963,12 +964,51 @@ function noteFusedMarks(player: PlayerState, materials: readonly CardInstance[])
   return { ...player, fusedMarks };
 }
 
+/** 融合した枚数だけ水分身を足す。回数を重ねるほど、肩代わりできる攻撃が増える。 */
+function gainWaterClones(state: CombatState, amount: number): CombatState {
+  const next = powerOf(state, 'waterClone') + amount;
+  return callout(
+    withLog(
+      { ...state, player: { ...state.player, powers: { ...state.player.powers, waterClone: next } } },
+      `水分身 +${amount}（${next}）`,
+    ),
+    'player',
+    `分身 +${amount}`,
+  );
+}
+
+/** 水分身 1 つなら最初の攻撃から 6、2 つ以上なら 12 までを肩代わりする。 */
+const CLONE_SOAK = 6;
+const CLONE_SOAK_DEEP = 12;
+
+/**
+ * この敵ターンの最初の攻撃だけ、水分身がダメージの一部を受ける。1 つ消える。
+ * 1 つなら 6 まで、2 つ以上なら 12 まで。それ以上は自分に届く。数は次のターンに残る。
+ */
+function soakWithClone(state: CombatState, amount: number): { state: CombatState; amount: number } {
+  const clones = powerOf(state, 'waterClone');
+  if (clones <= 0 || state.cloneUsed || amount <= 0) return { state, amount };
+  const soak = Math.min(amount, clones >= 2 ? CLONE_SOAK_DEEP : CLONE_SOAK);
+  const powers = { ...state.player.powers };
+  if (clones === 1) delete powers.waterClone;
+  else powers.waterClone = clones - 1;
+  const spent = callout(
+    withLog(
+      { ...state, player: { ...state.player, powers } },
+      `水分身が ${soak} ダメージを代わりに受けた`,
+    ),
+    'player',
+    `身代わり ${soak}`,
+  );
+  return { state: { ...spent, cloneUsed: true }, amount: amount - soak };
+}
+
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
 export function playCard(state: CombatState, instanceId: string, target?: EnemyUid): CombatState {
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || !canPlayCard(state, instanceId)) return state;
   const { card } = instance;
-  // 手札から出す前に数える。虹は使うカード自身も含む。同じ印は、融合して廃棄する枚数。
+  // 手札から出す前に数える。虹は使うカード自身も含む。同じ印は、融合して捨てる枚数。
   const marks = markPlay(state.hand, instance, state.player);
   const materials = fusionMaterials(state.hand, instance, state.player);
   const materialIds = new Set(materials.map((material) => material.instanceId));
@@ -978,8 +1018,8 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     ...state,
     hand: state.hand.filter((c) => c.instanceId !== instanceId && !materialIds.has(c.instanceId)),
     player: noteFusedMarks({ ...state.player, energy: state.player.energy - card.cost }, materials),
-    discardPile: card.exhaust ? state.discardPile : [...state.discardPile, instance],
-    exhaustPile: [...state.exhaustPile, ...materials, ...(card.exhaust ? [instance] : [])],
+    discardPile: [...state.discardPile, ...materials, ...(card.exhaust ? [] : [instance])],
+    exhaustPile: card.exhaust ? [...state.exhaustPile, instance] : state.exhaustPile,
   };
   const copied = card.addCopyToDiscard
     ? {
@@ -1008,22 +1048,22 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
       : announced;
   const fused =
     materials.length > 0
-      ? withLog(guarded, `${materials.map((material) => material.card.name).join('と')}を融合して消費`)
+      ? withLog(guarded, `${materials.map((material) => material.card.name).join('と')}を融合して捨てた`)
       : guarded;
   const boosted =
     card.mark && card.mark !== 'ice' && marks.multiplier > 1
       ? withLog(fused, `${MARK_NAME[card.mark]}が重なり ${marks.multiplier} 倍`)
       : fused;
-  const eventsBefore = boosted.events.length;
+  const withClones = materials.length > 0 ? gainWaterClones(boosted, materials.length) : boosted;
+  const eventsBefore = withClones.events.length;
   const resolved = applyIceMark(
-    applyEffects(boosted, scaledEffects(card, marks.multiplier), aim, {
+    applyEffects(withClones, scaledEffects(card, marks.multiplier), aim, {
       attributes: playedAttributes(state, card),
     }),
     marks.iceEnergy,
     marks.iceDraw,
   );
-  const exhaustCount = materials.length + (card.exhaust ? 1 : 0);
-  const exhausted = exhaustCount > 0 ? onExhausted(resolved, exhaustCount) : resolved;
+  const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
   const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
   const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
   const shot = quickdrawShot(lashed, powerOf(state, 'quickdraw'));
@@ -1186,7 +1226,10 @@ function applyEnemyAction(
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
         next = act(next);
-        const result = applyDamage(next.player, amount);
+        const soaked = soakWithClone(next, amount);
+        next = soaked.state;
+        if (soaked.amount <= 0) continue;
+        const result = applyDamage(next.player, soaked.amount);
         next = withEvent(
           withLog({ ...next, player: result.target }, formatHit('あなた', result) + note),
           {
@@ -1321,6 +1364,7 @@ function healEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatSta
 function runEnemyTurn(state: CombatState): CombatState {
   const unblocked: CombatState = {
     ...state,
+    cloneUsed: false,
     enemies: state.enemies.map((enemy) => (isAlive(enemy) ? { ...enemy, block: 0 } : enemy)),
   };
   let next = livingEnemies(unblocked).reduce((current, { uid }) => bloomEnemySeed(current, uid), unblocked);
