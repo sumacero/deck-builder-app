@@ -29,6 +29,8 @@ type CardViewProps = {
   count?: number;
   dimmed?: boolean;
   selected?: boolean;
+  /** 融合で結ばれている印の色。枠をその色にする。 */
+  linkColor?: string;
   size?: 'sm' | 'md';
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
@@ -96,6 +98,7 @@ export function CardView({
   count,
   dimmed = false,
   selected = false,
+  linkColor,
   size = 'sm',
   width,
   onPress,
@@ -124,8 +127,8 @@ export function CardView({
           styles.card,
           wide && styles.wide,
           scaled?.card,
-          { borderColor: selected ? COLORS.gold : frameColor },
-          selected && styles.selected,
+          { borderColor: linkColor ?? (selected ? COLORS.gold : frameColor) },
+          (selected || linkColor !== undefined) && styles.selected,
           pressed && onPress && styles.pressed,
         ]}
       >

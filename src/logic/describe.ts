@@ -207,7 +207,7 @@ export function describePower(power: PowerId, amount: number): string {
     case 'markDepth':
       return `この戦闘中、雨と波の倍率が ${amount} 段階上がる（最大 4 倍）。`;
     case 'waterClone':
-      return `敵のターンの最初の攻撃で、水分身が ${amount >= 2 ? 12 : 6} ダメージまで代わりに受ける（今 ${amount}）。1 つ消える。超えた分は自分に届く。`;
+      return `敵のターンの最初の攻撃を 1 回受け流す（今 ${amount}）。1 つ消える。受け流した敵に弱体が残る。あとの攻撃は届く。`;
   }
 }
 

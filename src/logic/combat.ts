@@ -523,7 +523,13 @@ function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
   return applyEnemyAction(withLog(avenged, `${dead.name}の死に際の一撃！`), uid, throes.action, false);
 }
 
-function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns: number): CombatState {
+function debuffEnemy(
+  state: CombatState,
+  uid: EnemyUid,
+  status: DebuffId,
+  turns: number,
+  logTurns = turns,
+): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy) return state;
   if (enemy.artifact > 0) return consumeArtifact(state, enemy);
@@ -532,7 +538,7 @@ function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns:
       ...e,
       statuses: addStatus(e.statuses, status, turns),
     })),
-    `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
+    `${enemy.name}に${STATUS_LABEL[status]} ${logTurns} ターン`,
   );
   const verdure = status === 'seed' ? powerOf(debuffed, 'verdure') : 0;
   const sprouted = verdure > 0 ? gainPlayerBlock(debuffed, verdure) : debuffed;
@@ -964,7 +970,7 @@ function noteFusedMarks(player: PlayerState, materials: readonly CardInstance[])
   return { ...player, fusedMarks };
 }
 
-/** 融合した枚数だけ水分身を足す。回数を重ねるほど、肩代わりできる攻撃が増える。 */
+/** 融合した枚数だけ水分身を足す。1 つで敵の攻撃を 1 回受け流せる。数は次のターンに残る。 */
 function gainWaterClones(state: CombatState, amount: number): CombatState {
   const next = powerOf(state, 'waterClone') + amount;
   return callout(
@@ -975,32 +981,6 @@ function gainWaterClones(state: CombatState, amount: number): CombatState {
     'player',
     `分身 +${amount}`,
   );
-}
-
-/** 水分身 1 つなら最初の攻撃から 6、2 つ以上なら 12 までを肩代わりする。 */
-const CLONE_SOAK = 6;
-const CLONE_SOAK_DEEP = 12;
-
-/**
- * この敵ターンの最初の攻撃だけ、水分身がダメージの一部を受ける。1 つ消える。
- * 1 つなら 6 まで、2 つ以上なら 12 まで。それ以上は自分に届く。数は次のターンに残る。
- */
-function soakWithClone(state: CombatState, amount: number): { state: CombatState; amount: number } {
-  const clones = powerOf(state, 'waterClone');
-  if (clones <= 0 || state.cloneUsed || amount <= 0) return { state, amount };
-  const soak = Math.min(amount, clones >= 2 ? CLONE_SOAK_DEEP : CLONE_SOAK);
-  const powers = { ...state.player.powers };
-  if (clones === 1) delete powers.waterClone;
-  else powers.waterClone = clones - 1;
-  const spent = callout(
-    withLog(
-      { ...state, player: { ...state.player, powers } },
-      `水分身が ${soak} ダメージを代わりに受けた`,
-    ),
-    'player',
-    `身代わり ${soak}`,
-  );
-  return { state: { ...spent, cloneUsed: true }, amount: amount - soak };
 }
 
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
@@ -1048,7 +1028,12 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
       : announced;
   const fused =
     materials.length > 0
-      ? withLog(guarded, `${materials.map((material) => material.card.name).join('と')}を融合して捨てた`)
+      ? withEvent(withLog(guarded, `${materials.map((material) => material.card.name).join('と')}を融合して捨てた`), {
+          kind: 'marksFused',
+          target: 'player',
+          playedId: instanceId,
+          materialIds: materials.map((material) => material.instanceId),
+        })
       : guarded;
   const boosted =
     card.mark && card.mark !== 'ice' && marks.multiplier > 1
@@ -1200,6 +1185,33 @@ export function enemyAttackDamage(enemy: EnemyState, base: number, player: Playe
  */
 const ACROSS_TICK = 1;
 
+/** 水分身が、この攻撃を 1 回まるごと受け流せる。ダメージの無い攻撃では消費しない。 */
+function cloneWillNegate(state: CombatState, amount: number): boolean {
+  return amount > 0 && !state.cloneUsed && powerOf(state, 'waterClone') > 0;
+}
+
+/**
+ * 敵の攻撃 1 回（連撃も含む）を受け流し、水分身を 1 つ消す。
+ * 受け流した敵に弱体を残す。敵ターンの終わりに 1 減るので、次の自分のターンに 1 残る数でかける。
+ * 同じ敵ターンの 2 回目以降は、ここを通らない。
+ */
+function negateAttackWithClone(state: CombatState, uid: EnemyUid): CombatState {
+  const clones = powerOf(state, 'waterClone');
+  const powers = { ...state.player.powers };
+  if (clones <= 1) delete powers.waterClone;
+  else powers.waterClone = clones - 1;
+  const name = findEnemy(state, uid)?.name ?? '敵';
+  const spent = callout(
+    withLog(
+      { ...state, player: { ...state.player, powers }, cloneUsed: true },
+      `水分身が${name}の攻撃を受け流した`,
+    ),
+    'player',
+    '受け流し',
+  );
+  return debuffEnemy(spent, uid, 'vulnerable', 1 + ACROSS_TICK, 1);
+}
+
 /** 霊体化が続く、プレイヤーのターン数。 */
 const INTANGIBLE_TURNS = 1;
 
@@ -1209,6 +1221,7 @@ function applyEnemyAction(
   uid: EnemyUid,
   action: EnemyAction,
   announce = true,
+  mirror = false,
 ): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy) return state;
@@ -1221,15 +1234,13 @@ function applyEnemyAction(
       const weak = affinity === 'weak';
       const note = weak ? '（弱点）' : affinity === 'resist' ? '（相性で軽減）' : '';
       const thorns = powerOf(state, 'thorns');
+      if (mirror && cloneWillNegate(state, amount)) return negateAttackWithClone(act(state), uid);
       let next = state;
       for (let i = 0; i < action.hits && next.player.hp > 0; i++) {
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
         next = act(next);
-        const soaked = soakWithClone(next, amount);
-        next = soaked.state;
-        if (soaked.amount <= 0) continue;
-        const result = applyDamage(next.player, soaked.amount);
+        const result = applyDamage(next.player, amount);
         next = withEvent(
           withLog({ ...next, player: result.target }, formatHit('あなた', result) + note),
           {
@@ -1375,7 +1386,7 @@ function runEnemyTurn(state: CombatState): CombatState {
     const move = currentIntent(enemy);
     next = withLog(next, `${enemy.name}の「${move.name}」`);
     for (const action of move.actions) {
-      next = applyEnemyAction(next, uid, action);
+      next = applyEnemyAction(next, uid, action, true, true);
       if (next.player.hp <= 0) {
         return withEvent(withLog({ ...next, status: 'lost' }, 'あなたは力尽きた…'), {
           kind: 'defeated',

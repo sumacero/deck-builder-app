@@ -29,6 +29,8 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
       return 'victory';
     case 'handFull':
       return 'handFull';
+    case 'marksFused':
+      return null;
     case 'callout':
       return null;
     case 'mysticArte':

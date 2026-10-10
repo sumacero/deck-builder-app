@@ -140,6 +140,8 @@ export type CombatEventBody =
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
+  /** 印のあるカードを使い、手札の相手を融合して捨てた。波紋の演出に使う。 */
+  | { kind: 'marksFused'; target: 'player'; playedId: string; materialIds: string[] }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 
@@ -199,7 +201,7 @@ export type CombatState = {
   /** 直前の操作 1 回分のイベント。操作のたびに作り直す。 */
   events: CombatEvent[];
   nextEventId: number;
-  /** この敵のターンで、水分身がすでに 1 回身代わりになった。 */
+  /** この敵のターンで、水分身がすでに 1 回攻撃を受け流した。 */
   cloneUsed: boolean;
 };
 

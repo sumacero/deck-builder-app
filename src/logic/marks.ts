@@ -54,6 +54,46 @@ export function fusionMaterials(
   return materials;
 }
 
+export type MarkLink = {
+  fromId: string;
+  toId: string;
+  fromMark: CardMark;
+  toMark: CardMark;
+};
+
+/**
+ * 手札に波紋を引く組。
+ * focus が無いときは、どの札を出しても結ばれる組を全部（摘む前）。
+ * あるときは、その札が融合して捨てる相手だけ（摘んだとき）。
+ */
+export function markLinks(
+  hand: readonly CardInstance[],
+  player: PlayerState,
+  focusId: string | null,
+): MarkLink[] {
+  const sources = focusId ? hand.filter((card) => card.instanceId === focusId) : hand;
+  const seen = new Set<string>();
+  const links: MarkLink[] = [];
+  for (const source of sources) {
+    const mark = source.card.mark;
+    if (!mark) continue;
+    for (const material of fusionMaterials(hand, source, player)) {
+      const other = material.card.mark;
+      if (!other) continue;
+      const key = [source.instanceId, material.instanceId].sort().join('\0');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      links.push({
+        fromId: source.instanceId,
+        toId: material.instanceId,
+        fromMark: mark,
+        toMark: other,
+      });
+    }
+  }
+  return links;
+}
+
 /** 使おうとしているカードも含めて、手札に三つの印が揃っている。 */
 export function handHasRainbow(hand: readonly CardInstance[]): boolean {
   const marks = new Set<CardMark>();

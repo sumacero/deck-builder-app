@@ -35,7 +35,7 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - arrowSupply（無限の矢筒）: ターンの始めに矢 N 本を手札に加える
  * - markCount（水面）: 印を数えるとき、同じ印が N 枚多くあるものとして扱う
  * - markDepth（深み）: 雨と波の倍率を N 段階上げる（最大 4 倍）
- * - waterClone（水分身）: 敵の攻撃を 1 回、自分の代わりに受ける。受けると 1 つ消える
+ * - waterClone（水分身）: 敵の攻撃を 1 回受け流す。受け流すと 1 つ消え、その敵に弱体が残る
  */
 export type PowerId =
   | 'barricade'
