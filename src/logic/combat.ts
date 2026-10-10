@@ -1200,7 +1200,7 @@ export function enemyAttackDamage(enemy: EnemyState, base: number, player: Playe
 const ACROSS_TICK = 1;
 
 /**
- * ブロックが一部だけ残っているとき、そのヒットの HP ダメージを水分身が消す。
+ * 水分身が 2 つ以上あり、ブロックが一部だけ残っているとき、そのヒットの HP ダメージを消す。
  * ブロックが 0、またはブロックだけで足りるヒットでは消費しない。
  */
 function cloneWillCatch(state: CombatState, amount: number): boolean {
