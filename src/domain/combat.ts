@@ -92,6 +92,11 @@ export type EnemyState = Fighter & {
   artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
+  /**
+   * 水分身がこの敵の攻撃を受け流した。
+   * 次にこの敵へ当たる攻撃 1 回だけ弱体が乗り、そのあと弱体を 1 ターン分消す。
+   */
+  mirrorOpen?: boolean;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
