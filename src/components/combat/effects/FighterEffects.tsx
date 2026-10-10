@@ -103,6 +103,7 @@ export function FighterEffects({
       case 'defeated':
       case 'won':
       case 'handFull':
+      case 'marksFused':
       case 'mysticArte':
         return;
     }

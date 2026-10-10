@@ -10,8 +10,9 @@ export type RelicTrigger = 'combatStart' | 'turnStart' | 'turnEnd' | 'combatWon'
  * - lowHp: HP が最大 HP の半分以下
  * - eliteOrBoss: エリートかボスがいる戦闘
  * - everyThirdTurn: 3・6・9… ターン目
+ * - hasFusedMark: このターン、印のあるカードを融合して捨てた
  */
-export type RelicCondition = 'noBlock' | 'lowHp' | 'eliteOrBoss' | 'everyThirdTurn';
+export type RelicCondition = 'noBlock' | 'lowHp' | 'eliteOrBoss' | 'everyThirdTurn' | 'hasFusedMark';
 
 /** 通常のレリック（エリート・宝箱・ショップ・恩恵・イベント）のレア度。強いほど出にくい。 */
 export type RelicTier = 'common' | 'uncommon' | 'rare';

@@ -1,24 +1,24 @@
 import type { CardDefinition } from '../domain/card';
 import type { RunSetup } from '../domain/run';
 import { FINAL_BOSS, STANDARD_ACT_CHOICES } from './acts';
-import { CRIMSON_HERO, RAIN_MAGE, VERDANT_ARCHER } from './agents';
+import { CRIMSON_HERO, MIRROR_SEER, VERDANT_ARCHER } from './agents';
 import { LANTERN_SPIRIT, STANDARD_BLESSINGS } from './blessings';
 import { CRIMSON_STARTER_DECK, REWARD_CARDS } from './cards';
 import { STANDARD_ECONOMY } from './economy';
-import { STANDARD_EVENTS } from './events';
+import { BASIN_ORACLE, STANDARD_EVENTS } from './events';
 import { ALL_POTIONS, FIRE_POTION, IRON_POTION, SWIFT_POTION } from './potions';
-import { RAIN_CARDS, RAIN_STARTER_DECK } from './rainCards';
-import { BOSS_RELIC_POOL, FIGHTING_SPIRIT, RAIN_HAT, RELIC_POOL, WORLD_TREE_SPROUT } from './relics';
+import { MIRROR_CARDS, MIRROR_STARTER_DECK } from './mirrorCards';
+import { BOSS_RELIC_POOL, CRYSTAL_WEIGHT, FIGHTING_SPIRIT, RELIC_POOL, WORLD_TREE_SPROUT } from './relics';
 import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 
 /**
  * 報酬に出るカードは「共通の無属性カード」+「そのキャラのカード」。キャラのカードの枚数はどのキャラも同じにする
  * （カイル: 戦士の無属性 + 火属性、リーネ: 草属性。2026-10-07 時点で各 38 種、共通 8 種。
  * 2026-10-08 にカイルへブロック 4 種、リーネへ狩人のブロック 4 種を足した。リーネに出るのは蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ。
- * 2026-10-09 のノエルは潮のカード 17 種。枚数はまだカイル・リーネより少ないので、ノエルの報酬では潮のカードが出やすい）。
+ * 2026-10-10 のノアは印のカード。波はブロック軸ではなく波の印なので、盾のフィルタには掛からない）。
  * エージェントと違う属性のカードは報酬に出ず、ショップでだけ買える（`isDraftable`）ので、候補には入れておく。
  */
-const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS, ...RAIN_CARDS];
+const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS, ...MIRROR_CARDS];
 
 /**
  * どのキャラにも似合う無属性カード（連撃・薙ぎ払い・雷鳴・連閃・見切り・足払い・つけ込む・急所蹴り・弱点看破）。
@@ -77,7 +77,7 @@ const HUNTER_EXCLUDED_CARD_IDS: ReadonlySet<string> = new Set([
 const HUNTER_REWARD_CARDS = [
   ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),
   ...VERDANT_CARDS,
-  ...RAIN_CARDS,
+  ...MIRROR_CARDS,
 ].filter(
   (card) =>
     (!isBlockAxis(card) || HUNTER_BLOCK_CARD_IDS.has(card.id)) && !HUNTER_EXCLUDED_CARD_IDS.has(card.id),
@@ -116,36 +116,25 @@ export const VERDANT_RUN: RunSetup = {
 };
 
 /**
- * ノエルのブロック軸。盾や蔦は出さず、水鏡・波・氷の帳・雨宿りだけ報酬とショップに出す。
+ * ノアの候補。盾や蔦は出さない。波の印はブロック軸ではないので、ここには残る。
  * 火・草のブロックカードはショップの別属性枠に残す。
  */
-const RAIN_BLOCK_CARD_IDS: ReadonlySet<string> = new Set([
-  'water-mirror',
-  'shoreline',
-  'frost-veil',
-  'rain-shelter',
-]);
-
-const RAIN_REWARD_CARDS = [
+const MIRROR_REWARD_CARDS = [
   ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),
   ...VERDANT_CARDS,
-  ...RAIN_CARDS,
-].filter(
-  (card) =>
-    !isBlockAxis(card) ||
-    RAIN_BLOCK_CARD_IDS.has(card.id) ||
-    (card.attribute !== undefined && card.attribute !== 'water'),
-);
+  ...MIRROR_CARDS,
+].filter((card) => !isBlockAxis(card) || (card.attribute !== undefined && card.attribute !== 'water'));
 
-/** ノエルは HP が低め。初期レリックの潮 1 で、最初の敵の行動から削れる。 */
-export const RAIN_RUN: RunSetup = {
+/** ノアは HP が低め。初期レリックは、融合して捨てた印を次のターン 1 枚多く数える。 */
+export const MIRROR_RUN: RunSetup = {
   ...STANDARD_RUN,
-  agent: RAIN_MAGE,
-  deck: RAIN_STARTER_DECK,
+  agent: MIRROR_SEER,
+  deck: MIRROR_STARTER_DECK,
   playerMaxHp: 66,
-  relics: [RAIN_HAT],
-  rewardPool: RAIN_REWARD_CARDS,
+  relics: [CRYSTAL_WEIGHT],
+  rewardPool: MIRROR_REWARD_CARDS,
+  eventPool: [...STANDARD_EVENTS, BASIN_ORACLE],
 };
 
 /** タイトルで選べるエージェント。並び順がそのまま選択画面の並び順。 */
-export const AGENT_RUNS: readonly RunSetup[] = [STANDARD_RUN, VERDANT_RUN, RAIN_RUN];
+export const AGENT_RUNS: readonly RunSetup[] = [STANDARD_RUN, VERDANT_RUN, MIRROR_RUN];

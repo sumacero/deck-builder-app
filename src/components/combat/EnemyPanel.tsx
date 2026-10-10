@@ -12,7 +12,6 @@ import {
   ENEMY_RANK_LABEL,
 } from '../../logic/describe';
 import { enemyStatuses, keywordsForIntent } from '../../logic/glossary';
-import { statusTurns } from '../../logic/status';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { DamagePreviewBadge } from './DamagePreviewBadge';
 import { FighterEffects } from './effects/FighterEffects';
@@ -83,11 +82,7 @@ export function EnemyPanel({
             </Text>
           )}
           <View style={styles.badges}>
-            {describeIntent(
-              move,
-              (base) => enemyAttackDamage(attacker, base, player),
-              statusTurns(enemy.statuses, 'tide'),
-            ).map((intent) => (
+            {describeIntent(move, (base) => enemyAttackDamage(attacker, base, player)).map((intent) => (
               <IntentBadge key={intent.key} intent={intent} compact={compact} />
             ))}
           </View>

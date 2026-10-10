@@ -1,6 +1,6 @@
 import type { AgentDefinition } from './agent';
 import type { Attribute } from './attribute';
-import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
+import type { CardDefinition, CardInstance, CardMark, CardMotion, CardType } from './card';
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
@@ -52,6 +52,16 @@ export type PlayerState = Fighter & {
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
+  /**
+   * 前のターンに融合して捨てた印。この自分のターン、その印を 1 枚多く数える。
+   * 手札の札とは別に足す。ターン終了の最初に空にし、文鎮が今ターンの融合から書き直す。
+   */
+  markMemory: Partial<Record<CardMark, number>>;
+  /**
+   * このターン、融合して捨てた印。ターン終了時に文鎮が markMemory へ写し、そのあと空にする。
+   * 同じ印を何枚消費しても 1。
+   */
+  fusedMarks: Partial<Record<CardMark, number>>;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
@@ -82,6 +92,11 @@ export type EnemyState = Fighter & {
   artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
+  /**
+   * 水分身がこの敵の攻撃を受け流した。
+   * 次にこの敵へ当たる攻撃 1 回だけ弱体が乗り、そのあと弱体を 1 ターン分消す。
+   */
+  mirrorOpen?: boolean;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -130,6 +145,8 @@ export type CombatEventBody =
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
+  /** 印のあるカードを使い、手札の相手を融合して捨てた。波紋の演出に使う。 */
+  | { kind: 'marksFused'; target: 'player'; playedId: string; materialIds: string[] }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 
@@ -189,6 +206,8 @@ export type CombatState = {
   /** 直前の操作 1 回分のイベント。操作のたびに作り直す。 */
   events: CombatEvent[];
   nextEventId: number;
+  /** この敵のターンで、水分身がすでに 1 回攻撃を受け流した。 */
+  cloneUsed: boolean;
 };
 
 /** カードを敵の上で離したときに、その敵が受ける実ダメージの予告。 */

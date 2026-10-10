@@ -3,9 +3,15 @@ import type { RunState } from '../domain/run';
 import { isDraftable } from './attribute';
 import { pickWeightedCards, shuffleCards } from './cardRarity';
 
-/** 戦闘報酬・カード選択イベントの候補（違う属性のカードはショップ限定なので除く）。 */
-export const draftPool = (run: RunState): CardDefinition[] =>
-  run.rewardPool.filter((card) => isDraftable(card, run.agent));
+/**
+ * 戦闘報酬・カード選択イベントの候補（違う属性のカードはショップ限定なので除く）。
+ * 印を絞っているランは、その印か、印の無いカードだけ。効果の中身は書き換えない。
+ */
+export const draftPool = (run: RunState): CardDefinition[] => {
+  const cards = run.rewardPool.filter((card) => isDraftable(card, run.agent));
+  if (!run.markBias) return cards;
+  return cards.filter((card) => card.mark === undefined || card.mark === run.markBias);
+};
 
 export type ArchetypeCount = { archetype: Archetype; count: number };
 

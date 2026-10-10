@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { cardAttributes } from '../../logic/attribute';
+import { MARK_NAME } from '../../logic/marks';
 import {
   ATTRIBUTE_ICON,
   CARD_RARITY_LABEL,
@@ -28,6 +29,8 @@ type CardViewProps = {
   count?: number;
   dimmed?: boolean;
   selected?: boolean;
+  /** 融合で結ばれている印の色。枠をその色にする。 */
+  linkColor?: string;
   size?: 'sm' | 'md';
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
@@ -95,6 +98,7 @@ export function CardView({
   count,
   dimmed = false,
   selected = false,
+  linkColor,
   size = 'sm',
   width,
   onPress,
@@ -123,8 +127,8 @@ export function CardView({
           styles.card,
           wide && styles.wide,
           scaled?.card,
-          { borderColor: selected ? COLORS.gold : frameColor },
-          selected && styles.selected,
+          { borderColor: linkColor ?? (selected ? COLORS.gold : frameColor) },
+          (selected || linkColor !== undefined) && styles.selected,
           pressed && onPress && styles.pressed,
         ]}
       >
@@ -152,6 +156,11 @@ export function CardView({
               <Text style={[styles.attributeIcon, scaled?.attributeIcon]}>
                 {describeAttributes(attributes, true) || ATTRIBUTE_ICON[attributes[0]]}
               </Text>
+            </View>
+          )}
+          {card.mark && (
+            <View style={styles.markBadge}>
+              <Text style={[styles.markText, scaled?.emblemText]}>{MARK_NAME[card.mark]}</Text>
             </View>
           )}
           <View style={styles.emblem}>
@@ -240,6 +249,15 @@ const styles = StyleSheet.create({
   },
   wideArt: { height: artHeight(WIDE_WIDTH) },
   artImage: { width: '100%', height: '100%' },
+  markBadge: {
+    position: 'absolute',
+    left: 2,
+    bottom: 1,
+    backgroundColor: COLORS.panel,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 3,
+  },
+  markText: { color: COLORS.gold, fontSize: 10, fontWeight: '800' },
   emblem: {
     position: 'absolute',
     right: 1,

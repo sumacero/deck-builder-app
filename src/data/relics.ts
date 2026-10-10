@@ -10,14 +10,18 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/** ノエルの初期レリック。戦闘の最初から、敵の次の行動に潮がかかる。 */
-export const RAIN_HAT: RelicDefinition = {
-  id: 'rain-hat',
-  name: '雨帽子',
-  icon: '🎩',
+/**
+ * ノアの初期レリック。このターン融合して捨てた印を、次のターンは 1 枚多く数える。
+ * 捨てた札は山札が尽きれば戻る。同じ印を何枚融合しても、覚えは +1。
+ */
+export const CRYSTAL_WEIGHT: RelicDefinition = {
+  id: 'crystal-weight',
+  name: '水晶の文鎮',
+  icon: '💎',
   rarity: 'starter',
-  trigger: 'combatStart',
-  effects: [{ kind: 'applyDebuff', status: 'tide', turns: 1 }],
+  trigger: 'turnEnd',
+  condition: 'hasFusedMark',
+  effects: [{ kind: 'noteFusedMarks' }],
 };
 
 /** リーネの初期レリック。 */

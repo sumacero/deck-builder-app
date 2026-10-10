@@ -1,6 +1,7 @@
 import type { BlessingDefinition, BlessingGroup } from '../domain/blessing';
 import type { RunState } from '../domain/run';
-import { removeFromDeck, upgradeInDeck } from './cards';
+import type { CardDefinition } from '../domain/card';
+import { remarkInDeck, removeFromDeck, upgradeInDeck } from './cards';
 import { pickOne } from './random';
 import { applyEffectsThenChoice, canApplyRunEffect, canMakeChoice } from './runEffects';
 
@@ -37,11 +38,12 @@ export function chooseBlessing(run: RunState, blessingId: string): RunState {
   return applyEffectsThenChoice(run, blessing.effects, blessing.choice, { kind: 'map' });
 }
 
-/** 恩恵・イベントで選んだカードを強化・削除してマップへ。cardId が null ならやめる。 */
-export function finishDeckEdit(run: RunState, cardId: string | null): RunState {
+/** 恩恵・イベントで選んだカードを強化・削除・印の書き換えしてマップへ。card が null ならやめる。 */
+export function finishDeckEdit(run: RunState, card: CardDefinition | null): RunState {
   if (run.phase.kind !== 'deckEdit') return run;
-  if (cardId === null) return { ...run, phase: { kind: 'map' } };
-  const deck =
-    run.phase.mode === 'upgrade' ? upgradeInDeck(run.deck, cardId) : removeFromDeck(run.deck, cardId);
-  return { ...run, deck, phase: { kind: 'map' } };
+  if (card === null) return { ...run, phase: { kind: 'map' } };
+  const phase = run.phase;
+  if (phase.mode === 'upgrade') return { ...run, deck: upgradeInDeck(run.deck, card), phase: { kind: 'map' } };
+  if (phase.mode === 'remove') return { ...run, deck: removeFromDeck(run.deck, card), phase: { kind: 'map' } };
+  return { ...run, deck: remarkInDeck(run.deck, card, phase.mark), phase: { kind: 'map' } };
 }
