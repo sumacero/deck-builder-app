@@ -33,8 +33,8 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - arrowSpread（散り矢の構え）: 矢が敵全体に当たる
  * - arrowRetain（矢筒の備え）: ターン終了時、手札の矢を捨てずに残す
  * - arrowSupply（無限の矢筒）: ターンの始めに矢 N 本を手札に加える
- * - markCount（水面）: 印を数えるとき、同じ印が N 枚多くあるものとして扱う
- * - markDepth（深み）: 雨と波の倍率を N 段階上げる（最大 4 倍）
+ * - fuseEcho（水面）: 札を重ねた瞬間の効果が、N 回多く発動する
+ * - stackDepth（深み）: 重ねた札（2 段以上）を使ったときの倍率 +N
  */
 export type PowerId =
   | 'barricade'
@@ -53,7 +53,7 @@ export type PowerId =
   | 'arrowSpread'
   | 'arrowRetain'
   | 'arrowSupply'
-  | 'markCount'
-  | 'markDepth';
+  | 'fuseEcho'
+  | 'stackDepth';
 
 export type Powers = Partial<Record<PowerId, number>>;

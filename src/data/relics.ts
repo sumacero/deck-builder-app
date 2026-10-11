@@ -10,18 +10,14 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/**
- * ノアの初期レリック。このターン手札で重ねた印を、次のターンは 1 枚多く数える。
- * 重ねた札は山札が尽きれば戻る。同じ印を何枚重ねても、覚えは +1。
- */
+/** ノアの初期レリック。毎ターン最初に札を重ねたとき、1 枚引く。 */
 export const CRYSTAL_WEIGHT: RelicDefinition = {
   id: 'crystal-weight',
   name: '水晶の文鎮',
   icon: '💎',
   rarity: 'starter',
-  trigger: 'turnEnd',
-  condition: 'hasFusedMark',
-  effects: [{ kind: 'noteFusedMarks' }],
+  trigger: 'firstFuse',
+  effects: [{ kind: 'draw', amount: 1 }],
 };
 
 /** リーネの初期レリック。 */

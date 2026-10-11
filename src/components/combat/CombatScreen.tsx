@@ -21,7 +21,7 @@ import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
 import { deckAfterCombat, livingEnemies } from '../../logic/combat';
 import { describeHandCard } from '../../logic/describe';
-import { fusedCount } from '../../logic/marks';
+import { stackOf } from '../../logic/marks';
 import { COLORS, COMBAT_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
@@ -336,7 +336,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
                 width={cardWidth}
                 selected={hover !== null || stackHover !== null}
                 description={heldCard ? describeHandCard(heldCard, state.player) : undefined}
-                fusedCount={heldCard ? fusedCount(heldCard) : 0}
+                stack={heldCard ? stackOf(heldCard) : 1}
                 detailOnHold={false}
               />
             ) : (

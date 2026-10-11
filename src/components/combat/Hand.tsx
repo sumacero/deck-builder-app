@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-na
 import type { CardInstance } from '../../domain/card';
 import type { CombatEvent, PlayerState } from '../../domain/combat';
 import { describeHandCard } from '../../logic/describe';
-import { fusedCount, markLinks } from '../../logic/marks';
+import { markLinks, stackOf } from '../../logic/marks';
 import { COLORS, HAND_LAYOUT, MARK_COLORS, SPACING } from '../../theme';
 import { type CardDragHandlers, DraggableCard } from './DraggableCard';
 import { HandFullEffect } from './effects/HandFullEffect';
@@ -88,7 +88,7 @@ export function Hand({
                     }
                     {...handlers}
                     description={describeHandCard(instance, player)}
-                    fusedCount={fusedCount(instance)}
+                    stack={stackOf(instance)}
                   />
                 </View>
               ))}

@@ -12,7 +12,7 @@ type ArchetypeChipsProps = {
 };
 
 const isMark = (archetype: Archetype): boolean =>
-  archetype === 'rain' || archetype === 'wave' || archetype === 'ice';
+  archetype === 'ice' || archetype === 'drop' || archetype === 'mist';
 
 export function ArchetypeChips({ archetypes, highlight = null, onSelect }: ArchetypeChipsProps) {
   if (archetypes.length === 0) return null;

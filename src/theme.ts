@@ -181,9 +181,9 @@ export const ATTRIBUTE_COLORS: Record<Attribute, string> = {
 
 /** 印の波紋。雨は明るい雫、波は深い海、氷は白い氷。水属性の枠より明るく、または深くして見分ける。 */
 export const MARK_COLORS: Record<CardMark, string> = {
-  rain: '#8EE4FF',
-  wave: '#3D6DDB',
-  ice: '#F4FBFF',
+  ice: '#DFF6FF',
+  drop: '#3D8BFF',
+  mist: '#C9B8F0',
 };
 
 /** 属性カードの本文の背景にうっすら敷く色の不透明度（16 進 2 桁）。 */

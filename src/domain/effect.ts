@@ -1,5 +1,4 @@
 import type { Attribute } from './attribute';
-import type { CardMark } from './card';
 import type { BuffId, DebuffId, PowerId } from './status';
 
 /**
@@ -8,7 +7,8 @@ import type { BuffId, DebuffId, PowerId } from './status';
  */
 export type Effect =
   /** strengthMultiplier: 筋力が N 倍で乗る（筋力を貯めるほど伸びる大技）。 */
-  | { kind: 'damage'; amount: number; hits?: number; strengthMultiplier?: number }
+  /** pierce: 敵のブロックを無視して HP に当たる（ブロックは減らない）。 */
+  | { kind: 'damage'; amount: number; hits?: number; strengthMultiplier?: number; pierce?: boolean }
   /** base + この戦闘でカードの効果で自分が失った HP × perHp のダメージ（敵の攻撃で減った分は数えない）。 */
   | { kind: 'damagePerSelfHpLost'; base: number; perHp: number }
   /** 今のブロック値と同じダメージを与える（筋力などの補正も乗る）。 */
@@ -58,10 +58,14 @@ export type Effect =
   | { kind: 'addArrows'; amount: number }
   /** この戦闘で廃棄した矢の本数だけ、矢 1 本分のダメージを与える。 */
   | { kind: 'volleySpentArrows' }
-  /** 手札のうち、すでに印があるカードの印を塗り替える。印の無いカード（ストライクなど）は塗らない。この戦闘の間だけ。 */
-  | { kind: 'paintHand'; mark: CardMark }
-  /** このターン手札で重ねた印を、次の自分のターンは 1 枚多く数える。 */
-  | { kind: 'noteFusedMarks' };
+  /** 狙った敵に霜。その敵の次の攻撃は、1 ヒットごとに amount 下がる。 */
+  | { kind: 'applyFrost'; amount: number }
+  /** かわす: 次の自分のターンが始まるまで、敵のヒットを amount 回無効にする。 */
+  | { kind: 'gainEvade'; amount: number }
+  /** 狙った敵の筋力を amount まで消す（0 より下にはしない）。 */
+  | { kind: 'stripStrength'; amount: number }
+  /** 自分にかかっている悪い効果を count 個消す。 */
+  | { kind: 'cleanse'; count: number };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

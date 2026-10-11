@@ -12,7 +12,7 @@ export type CardRarity = 'common' | 'uncommon' | 'rare';
 
 /**
  * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
- * 雨・波・氷は水鏡のノアの印で、報酬の軸そのもの。それ以外はカイル・リーネの軸。
+ * 氷・雫・霞は水鏡のノアの印で、報酬の軸そのもの。それ以外はカイル・リーネの軸。
  */
 export type Archetype =
   | 'debuff'
@@ -22,12 +22,12 @@ export type Archetype =
   | 'growth'
   | 'element'
   | 'tempo'
-  | 'rain'
-  | 'wave'
-  | 'ice';
+  | 'ice'
+  | 'drop'
+  | 'mist';
 
-/** 手札で揃える印。雨はダメージ、波はブロック、氷はエナジーとドロー。 */
-export type CardMark = 'rain' | 'wave' | 'ice';
+/** 手札で重ねる札の印。氷は単体の高火力と大きなブロック、雫は全体攻撃とドロー、霞はすり抜けとデバフ。 */
+export type CardMark = 'ice' | 'drop' | 'mist';
 
 /** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
 export type CardTarget = EffectTarget;
@@ -107,8 +107,8 @@ export type CardDefinition = {
   mysticArte?: boolean;
   archetypes?: Archetype[];
   /**
-   * 手札で揃える印。同じ印の札の上に重ねると、残った札のダメージやブロックが増える。
-   * 氷は数値を増やさず、エナジーとドローが付く。省略すると印は無い。
+   * 手札で重ねる印。同じ種類・同じ段の札どうしを重ねると段が上がり、残った札の数値が増える。
+   * 重ねて消える札の印で、重ねた瞬間の効果が決まる。省略すると印は無い（重ねられない）。
    */
   mark?: CardMark;
   /** ムチで打つアタック。「ムチで攻撃するたびに宿り木」（宿り木の蔓など）が乗る。 */
@@ -124,22 +124,17 @@ export type CardInstance = {
   instanceId: string;
   card: CardDefinition;
   /**
-   * 手札でこの札に重ねた、同じ印の枚数。使ったときの倍率になる。
+   * 段（この札にまとまっている枚数）。省略は 1。重ねるたびに倍になり、2・4 と上がる。
    * 捨て札・山札・廃棄に移っても、その戦闘のあいだは残る。
    */
-  sameFused?: number;
-  /**
-   * 手札でこの札に重ねた、ほかの印の枚数。三つの印が揃っているときだけ重ねられる。
-   * 雨と波は 1 枚でも 2 倍。氷のエナジーにはならない。
-   */
-  rainbowFused?: number;
+  stack?: number;
 };
 
 export type CardStack = {
   card: CardDefinition;
   count: number;
-  /** 戦闘中の山で、この札に重ねた枚数。重ねた枚数が違えば別の山にする。 */
-  fusedCount?: number;
+  /** 戦闘中の山で、この札の段。段が違えば別の山にする。 */
+  stack?: number;
   /** 重ねたあとの数字。省略すると、カードに書かれた効果。 */
   description?: string;
 };

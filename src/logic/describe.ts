@@ -11,7 +11,7 @@ import type { RelicCondition, RelicDefinition, RelicRarity } from '../domain/rel
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
 import { ALL_ATTRIBUTES } from './attribute';
-import { MARK_NAME, scaledEffects, stackedMarkPlay } from './marks';
+import { type FuseAim, MARK_NAME, MAX_STACK, fuseBurst, handMultiplier, scaledEffects, stackMultiplier } from './marks';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -31,9 +31,9 @@ export const ARCHETYPE_LABEL: Record<Archetype, string> = {
   growth: '成長軸',
   element: '属性軸',
   tempo: '手数軸',
-  rain: '雨の印',
-  wave: '波の印',
   ice: '氷の印',
+  drop: '雫の印',
+  mist: '霞の印',
 };
 
 export const CARD_TYPE_LABEL: Record<CardType, string> = {
@@ -46,7 +46,7 @@ export const CARD_TYPE_LABEL: Record<CardType, string> = {
 function describeEffect(effect: Effect, target: EffectTarget): string {
   switch (effect.kind) {
     case 'damage': {
-      const whom = target === 'allEnemies' ? '敵全体に' : '';
+      const whom = (target === 'allEnemies' ? '敵全体に' : '') + (effect.pierce ? 'ブロック無視で ' : '');
       const scaling =
         effect.strengthMultiplier && effect.strengthMultiplier > 1 ? `筋力が ${effect.strengthMultiplier} 倍で乗る。` : '';
       return effect.hits && effect.hits > 1
@@ -95,10 +95,14 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体に、' : ''}この戦闘で廃棄した矢の数だけ、矢 1 本分のダメージを与える。`;
     case 'detonateSeed':
       return `${target === 'allEnemies' ? '敵全体に、' : ''}宿り木 × ${effect.perTurn} のダメージを与え、宿り木を消す。`;
-    case 'paintHand':
-      return `手札の印を${MARK_NAME[effect.mark]}に塗り替える（印の無いカードはそのまま）。`;
-    case 'noteFusedMarks':
-      return 'このターン手札で重ねた印を、次のターンは 1 枚多く数える。';
+    case 'applyFrost':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}次の攻撃を 1 ヒットにつき ${effect.amount} 減らす（霜）。`;
+    case 'gainEvade':
+      return `このターン、敵の攻撃を ${effect.amount} 回かわす。`;
+    case 'stripStrength':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}筋力を ${effect.amount} 消す。`;
+    case 'cleanse':
+      return `自分の悪い効果を ${effect.count} つ消す。`;
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -163,8 +167,8 @@ export const POWER_LABEL: Record<PowerId, string> = {
   arrowSpread: '散り矢の構え',
   arrowRetain: '矢筒の備え',
   arrowSupply: '無限の矢筒',
-  markCount: '水面',
-  markDepth: '深み',
+  fuseEcho: '水面',
+  stackDepth: '深み',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -202,10 +206,10 @@ export function describePower(power: PowerId, amount: number): string {
       return 'この戦闘中、ターン終了時に手札の矢を捨てずに残す。';
     case 'arrowSupply':
       return `この戦闘中、ターンの始めに矢 ${amount} 本を手札に加える。`;
-    case 'markCount':
-      return `この戦闘中、印を数えるとき同じ印が ${amount} 枚多くあるものとして扱う。手札の札に、その数字が出る。`;
-    case 'markDepth':
-      return `この戦闘中、雨と波の倍率が ${amount} 段階上がる（最大 4 倍）。`;
+    case 'fuseEcho':
+      return `この戦闘中、札を重ねたときの効果がもう ${amount} 回発動する。`;
+    case 'stackDepth':
+      return `この戦闘中、重ねた札の倍率が +${amount} される。`;
   }
 }
 
@@ -251,40 +255,42 @@ export function describeCard(card: CardDefinition): string {
   return (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
 }
 
-/** 手札の札。重ねた枚数と文鎮の覚えが入った、いま使うと出る数字。 */
+/** 手札の札。段と深みが入った、いま使うと出る数字。 */
 export function describeHandCard(instance: CardInstance, player: PlayerState): string {
-  const play = stackedMarkPlay(instance, player);
-  if (play.multiplier === 1 && play.iceEnergy === 0 && play.iceDraw === 0) {
-    return describeCard(instance.card);
-  }
-  const scaled = describeCard({ ...instance.card, effects: scaledEffects(instance.card, play.multiplier) });
-  const extra = [
-    play.iceEnergy > 0 ? 'エナジー +1。' : '',
-    play.iceDraw > 0 ? 'カードを 1 枚引く。' : '',
-  ].join('');
-  return scaled + extra;
+  const multiplier = handMultiplier(instance, player);
+  if (multiplier === 1) return describeCard(instance.card);
+  return describeCard({ ...instance.card, effects: scaledEffects(instance.card, multiplier) });
+}
+
+const FUSE_AIM_TEXT: Record<FuseAim, string> = {
+  threat: '一番強い攻撃をしてくる敵の',
+  strongest: '筋力が一番高い敵の',
+  self: '',
+};
+
+/** この札（stack 段）を別の札に重ねて消すときに起きること。 */
+export function describeFuseBurst(card: CardDefinition, stack: number): string {
+  const burst = fuseBurst(card, stack);
+  if (!burst) return '';
+  return burst.effects
+    .map((effect) => FUSE_AIM_TEXT[burst.aim] + describeEffect(effect, 'self').replace(/^敵の/, ''))
+    .join('');
 }
 
 export type MarkPreviewLine = { label: string; text: string };
 
-/** 報酬の印チップ。この札を重ねたときの数字。深みや文鎮の覚えは、戦闘に入る前なので含めない。 */
+/** 報酬の印チップ。この札の段ごとの数字と、重ねて消えるときの効果。深みは戦闘に入る前なので含めない。 */
 export function markPreviewLines(card: CardDefinition): MarkPreviewLine[] {
   if (!card.mark) return [];
-  const withBonus = (multiplier: number, bonus: string) =>
-    describeCard({ ...card, effects: scaledEffects(card, multiplier) }) + bonus;
-  if (card.mark === 'ice') {
-    return [
-      { label: 'そのまま', text: describeCard(card) },
-      { label: '氷を 1 枚重ねる', text: withBonus(1, 'エナジー +1。') },
-      { label: '氷を 2 枚重ねる', text: withBonus(1, 'エナジー +1。カードを 1 枚引く。') },
-    ];
-  }
-  const name = MARK_NAME[card.mark];
+  const atStack = (stack: number) => {
+    const multiplier = stackMultiplier(stack, 0);
+    return { label: `${stack} 段（×${multiplier}）`, text: describeCard({ ...card, effects: scaledEffects(card, multiplier) }) };
+  };
   return [
     { label: 'そのまま', text: describeCard(card) },
-    { label: `${name}を 1 枚重ねる`, text: withBonus(2, '') },
-    { label: `${name}を 2 枚重ねる`, text: withBonus(3, '') },
-    { label: 'ほかの印を 1 枚重ねる', text: withBonus(2, '') },
+    atStack(2),
+    atStack(MAX_STACK),
+    { label: `重ねて消えるとき（${MARK_NAME[card.mark]}）`, text: describeFuseBurst(card, 1) },
   ];
 }
 
@@ -297,7 +303,6 @@ const RELIC_CONDITION_TEXT: Record<RelicCondition, string> = {
   lowHp: 'HP が半分以下なら',
   eliteOrBoss: 'エリート・ボス戦なら',
   everyThirdTurn: '3 ターンごとに',
-  hasFusedMark: '印を重ねていれば',
 };
 
 function relicTiming(relic: RelicDefinition): string {
@@ -312,6 +317,8 @@ function relicTiming(relic: RelicDefinition): string {
       return condition ? `ターン終了時に${condition}、` : 'ターン終了時、';
     case 'combatWon':
       return '戦闘に勝利したとき、';
+    case 'firstFuse':
+      return '毎ターン最初に札を重ねたとき、';
     case undefined:
       return '';
   }

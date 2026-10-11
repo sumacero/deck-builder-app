@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 
 type FusedBadgeProps = {
-  /** この札に重ねた枚数。 */
+  /** 札の段。 */
   count: number;
   /** 印の色。札の小さな絵と縁をこの色にする。 */
   color: string;
@@ -12,7 +12,7 @@ const MINI_CARD_WIDTH = 7;
 const MINI_CARD_HEIGHT = 9;
 const MINI_CARD_OFFSET = 3;
 
-/** 手札の札に重ねた枚数。2 枚の札が重なった絵と、その数。 */
+/** 札の段。2 枚の札が重なった絵と、その数。 */
 export function FusedBadge({ count, color }: FusedBadgeProps) {
   return (
     <View style={[styles.badge, { borderColor: color }]}>

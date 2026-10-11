@@ -30,10 +30,10 @@ export function CardPileModal({ title, note, stacks, onClose }: CardPileModalPro
           ) : (
             stacks.map((stack) => (
               <CardView
-                key={`${cardStackKey(stack.card)}#${stack.fusedCount ?? 0}#${stack.description ?? ''}`}
+                key={`${cardStackKey(stack.card)}#${stack.stack ?? 1}#${stack.description ?? ''}`}
                 card={stack.card}
                 count={stack.count}
-                fusedCount={stack.fusedCount}
+                stack={stack.stack}
                 description={stack.description}
                 onPress={() => setDetail(stack)}
                 detailOnHold={false}
@@ -52,7 +52,7 @@ export function CardPileModal({ title, note, stacks, onClose }: CardPileModalPro
         <CardDetailSheet
           card={detail.card}
           description={detail.description}
-          fusedCount={detail.fusedCount}
+          stack={detail.stack}
           visible
           onClose={() => setDetail(null)}
         />

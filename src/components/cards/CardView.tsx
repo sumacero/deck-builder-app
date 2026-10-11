@@ -35,8 +35,8 @@ type CardViewProps = {
   linkColor?: string;
   /** 手札で重ねたあとの数字。省略すると、カードに書かれた効果。 */
   description?: string;
-  /** 手札でこの札に重ねた枚数。1 枚以上で右上に出す。 */
-  fusedCount?: number;
+  /** 札の段。2 段以上で右上に出す。 */
+  stack?: number;
   size?: 'sm' | 'md';
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
@@ -108,7 +108,7 @@ export function CardView({
   selected = false,
   linkColor,
   description,
-  fusedCount = 0,
+  stack = 1,
   size = 'sm',
   width,
   onPress,
@@ -215,9 +215,9 @@ export function CardView({
           <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
         </View>
         {dimmed && <View pointerEvents="none" style={styles.dimGem} />}
-        {fusedCount > 0 && card.mark && (
+        {stack > 1 && card.mark && (
           <View pointerEvents="none" style={styles.fusedBadge}>
-            <FusedBadge count={fusedCount} color={MARK_COLORS[card.mark]} />
+            <FusedBadge count={stack} color={MARK_COLORS[card.mark]} />
           </View>
         )}
         {count !== undefined && count > 1 && (

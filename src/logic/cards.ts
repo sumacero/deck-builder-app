@@ -35,26 +35,24 @@ export function stackInstances(
 ): CardStack[] {
   const stacks = new Map<string, CardStack>();
   for (const instance of cards) {
-    const same = instance.sameFused ?? 0;
-    const rainbow = instance.rainbowFused ?? 0;
-    const key = `${cardStackKey(instance.card)}#${same}#${rainbow}`;
+    const stack = instance.stack ?? 1;
+    const key = `${cardStackKey(instance.card)}#${stack}`;
     const existing = stacks.get(key);
     if (existing) {
       existing.count += 1;
       continue;
     }
-    const fusedCount = same + rainbow;
     stacks.set(key, {
       card: instance.card,
       count: 1,
-      ...(fusedCount > 0 ? { fusedCount, ...(describe ? { description: describe(instance) } : {}) } : {}),
+      ...(stack > 1 ? { stack, ...(describe ? { description: describe(instance) } : {}) } : {}),
     });
   }
   return [...stacks.values()].sort(
     (a, b) =>
       a.card.cost - b.card.cost ||
       a.card.name.localeCompare(b.card.name, 'ja') ||
-      (a.fusedCount ?? 0) - (b.fusedCount ?? 0),
+      (a.stack ?? 1) - (b.stack ?? 1),
   );
 }
 

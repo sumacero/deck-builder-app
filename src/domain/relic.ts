@@ -1,8 +1,8 @@
 import type { Effect } from './effect';
 import type { RunEffect } from './runEffect';
 
-/** combatStart は戦闘の最初に 1 回、turnStart は毎ターンの始め（1 ターン目も含む）。 */
-export type RelicTrigger = 'combatStart' | 'turnStart' | 'turnEnd' | 'combatWon';
+/** combatStart は戦闘の最初に 1 回、turnStart は毎ターンの始め（1 ターン目も含む）。firstFuse は毎ターン最初に札を重ねたとき。 */
+export type RelicTrigger = 'combatStart' | 'turnStart' | 'turnEnd' | 'combatWon' | 'firstFuse';
 
 /**
  * 発動の条件。
@@ -10,9 +10,8 @@ export type RelicTrigger = 'combatStart' | 'turnStart' | 'turnEnd' | 'combatWon'
  * - lowHp: HP が最大 HP の半分以下
  * - eliteOrBoss: エリートかボスがいる戦闘
  * - everyThirdTurn: 3・6・9… ターン目
- * - hasFusedMark: このターン、手札で印を重ねた
  */
-export type RelicCondition = 'noBlock' | 'lowHp' | 'eliteOrBoss' | 'everyThirdTurn' | 'hasFusedMark';
+export type RelicCondition = 'noBlock' | 'lowHp' | 'eliteOrBoss' | 'everyThirdTurn';
 
 /** 通常のレリック（エリート・宝箱・ショップ・恩恵・イベント）のレア度。強いほど出にくい。 */
 export type RelicTier = 'common' | 'uncommon' | 'rare';

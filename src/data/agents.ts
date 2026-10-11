@@ -26,14 +26,14 @@ export const VERDANT_ARCHER: AgentDefinition = {
   mysticArte: THOUSAND_YEAR_TREE,
 };
 
-/** 水盤に透けた札を置く占い師。同じ印を手札で重ねると、残った札に数字が出る。 */
+/** 水盤に透けた札を置く占い師。同じ種類・同じ段の札を手札で重ねて段を上げる。 */
 export const MIRROR_SEER: AgentDefinition = {
   id: 'mirror-seer',
   name: '水鏡のノア',
   icon: '💧',
   title: '水面の占い師',
   playStyle:
-    '札には雨・波・氷の印がある。同じ印を手札で重ねると、残った札にダメージやブロックの数字が出る。氷はエナジーとドローを足す。1 枚の札に重ねられるのは 2 枚まで。重ねた札は山札が尽きれば戻る。',
+    '札には氷・雫・霞の印がある。アタックどうし・スキルどうしで同じ段の札を重ねると段が上がり（1→2→4）、数値が 2 倍・3 倍になる。重ねて消えた札の印で、霜・ドロー・筋力消し・悪い効果消しが起きる。',
   attribute: 'water',
   mysticArte: MIRROR_TRIAD,
 };

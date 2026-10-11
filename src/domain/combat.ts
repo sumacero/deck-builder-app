@@ -1,6 +1,6 @@
 import type { AgentDefinition } from './agent';
 import type { Attribute } from './attribute';
-import type { CardDefinition, CardInstance, CardMark, CardMotion, CardType } from './card';
+import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
@@ -52,16 +52,10 @@ export type PlayerState = Fighter & {
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
-  /**
-   * 前のターンに手札で重ねた印。この自分のターン、その印を 1 枚多く数える。
-   * 手札の札とは別に足す。ターン終了の最初に空にし、文鎮が今ターンの融合から書き直す。
-   */
-  markMemory: Partial<Record<CardMark, number>>;
-  /**
-   * このターン、手札で重ねた印。ターン終了時に文鎮が markMemory へ写し、そのあと空にする。
-   * 同じ印を何枚重ねても 1。
-   */
-  fusedMarks: Partial<Record<CardMark, number>>;
+  /** かわす: 敵のヒットを無効にできる残り回数。次の自分のターンの始めに消える。 */
+  evade: number;
+  /** このターン、手札で札を重ねた回数（水晶の文鎮は最初の 1 回で発動）。 */
+  fusesThisTurn: number;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
@@ -92,6 +86,8 @@ export type EnemyState = Fighter & {
   artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
+  /** 霜。次の攻撃のダメージが、1 ヒットごとにこの分下がる。攻撃を終えると消える。 */
+  frost: number;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';

@@ -1,51 +1,50 @@
 import type { CardDefinition, CardInstance, CardMark } from '../domain/card';
 import type { Effect } from '../domain/effect';
 import type { PlayerState } from '../domain/combat';
+
 /** 画面とログで出す印の名前。説明文（describe）からも使う。 */
 export const MARK_NAME: Record<CardMark, string> = {
-  rain: '雨',
-  wave: '波',
   ice: '氷',
+  drop: '雫',
+  mist: '霞',
 };
 
-/** 深みを足したあとの上限。通常は 3 倍、深み 1 で 4 倍まで。 */
-const MARK_MULTIPLIER_CAP = 4;
+/** 段の上限。1 + 1 で 2、2 + 2 で 4。 */
+export const MAX_STACK = 4;
 
-/** 1 枚の札に重ねられる枚数。2 枚で雨・波は 3 倍、氷はエナジーとドローが揃い、それ以上は増えない。 */
-export const MAX_FUSED = 2;
+/** 重ねた瞬間の効果の、消える札 1 段あたりの量。 */
+export const FUSE_FROST_PER_STACK = 2;
+export const FUSE_STRIP_PER_STACK = 3;
 
-/** この札に重ねた枚数。文鎮の覚えは含まない。 */
-export function fusedCount(instance: CardInstance): number {
-  return (instance.sameFused ?? 0) + (instance.rainbowFused ?? 0);
+/** この札の段（まとまっている枚数）。 */
+export function stackOf(instance: CardInstance): number {
+  return instance.stack ?? 1;
 }
 
-/** 重ねて消える側の札。枚数は相手に移したので、捨て札では 1 枚の札に戻す。 */
+/** 重ねて消える側の札。段は相手に移したので、捨て札では 1 段の札に戻す。 */
 export function releaseFusion(instance: CardInstance): CardInstance {
-  if (instance.sameFused === undefined && instance.rainbowFused === undefined) return instance;
+  if (instance.stack === undefined) return instance;
   return { instanceId: instance.instanceId, card: instance.card };
 }
 
+/** 重ねられる札。印があり、アタックかスキル。 */
+const isStackable = (card: CardDefinition) =>
+  card.mark !== undefined && (card.type === 'attack' || card.type === 'skill');
+
 /**
- * この札を重ねられる手札の相手。
- * 同じ印がほかにあれば、その全部。無ければ、この札が同じ印をまだ重ねておらず、
- * 手札に三つの印が揃っているときだけ、ほかの印の札。その相手も、手札に同じ印がほかに無く、
- * まだ何も重ねていないものに限る（同じ印同士で重ねられる札には、別の印は重ねない）。
- * どちらも、重ねたあとの枚数が MAX_FUSED を超える相手は除く。
+ * この札を重ねられる手札の相手。印があり、種類（アタック・スキル）と段が同じ札。印は違ってよい。
+ * 重ねたあとの段が MAX_STACK を超える相手は除く。
  */
 export function stackPartners(hand: readonly CardInstance[], instance: CardInstance): CardInstance[] {
-  const mark = instance.card.mark;
-  if (!mark) return [];
-  const others = hand.filter((card) => card.instanceId !== instance.instanceId && card.card.mark !== undefined);
-  const same = others.filter((card) => card.card.mark === mark);
-  const carried = 1 + fusedCount(instance);
-  const roomy = (card: CardInstance) => fusedCount(card) + carried <= MAX_FUSED;
-  if (same.length > 0) return same.filter(roomy);
-  if ((instance.sameFused ?? 0) > 0 || !handHasRainbow(hand)) return [];
-  return others.filter(
+  if (!isStackable(instance.card)) return [];
+  const stack = stackOf(instance);
+  if (stack * 2 > MAX_STACK) return [];
+  return hand.filter(
     (card) =>
-      fusedCount(card) === 0 &&
-      roomy(card) &&
-      !others.some((other) => other.instanceId !== card.instanceId && other.card.mark === card.card.mark),
+      card.instanceId !== instance.instanceId &&
+      isStackable(card.card) &&
+      card.card.type === instance.card.type &&
+      stackOf(card) === stack,
   );
 }
 
@@ -83,121 +82,74 @@ export function markLinks(hand: readonly CardInstance[], focusId: string | null)
       const key = [source.instanceId, partner.instanceId].sort().join('\0');
       if (seen.has(key)) continue;
       seen.add(key);
-      links.push({
-        fromId: source.instanceId,
-        toId: partner.instanceId,
-        fromMark: mark,
-        toMark: other,
-      });
+      links.push({ fromId: source.instanceId, toId: partner.instanceId, fromMark: mark, toMark: other });
     }
   }
   return links;
 }
 
-/** 使おうとしているカードも含めて、手札に三つの印が揃っている。 */
-export function handHasRainbow(hand: readonly CardInstance[]): boolean {
-  const marks = new Set<CardMark>();
-  for (const card of hand) {
-    if (card.card.mark) marks.add(card.card.mark);
-  }
-  return marks.has('rain') && marks.has('wave') && marks.has('ice');
+/** 段の倍率。1 段は 1 倍、2 段は 2 倍、4 段は 3 倍。深みは重ねた札（2 段以上）にだけ足す。 */
+export function stackMultiplier(stack: number, depth: number): number {
+  if (stack <= 1) return 1;
+  return (stack >= MAX_STACK ? 3 : 2) + depth;
 }
 
-/**
- * 雨・波の倍率。ほかが 0 枚なら 1、1 枚なら 2、2 枚以上なら 3。深みで 1 段階上がり、4 で頭打ち。
- * まだ 1 倍のときだけ、三印が揃っていれば 2 倍にする（専門の倍率とは重ねない）。
- */
-export function markMultiplier(others: number, depth: number, rainbow: boolean): number {
-  const base = others <= 0 ? 1 : others === 1 ? 2 : 3;
-  const raised = Math.min(MARK_MULTIPLIER_CAP, base + depth);
-  if (raised === 1 && rainbow) return Math.min(MARK_MULTIPLIER_CAP, 2 + depth);
-  return raised;
-}
-
-export type MarkPlay = {
-  /** 雨のダメージ、波のブロックにかける数。氷と印の無いカードは 1。 */
-  multiplier: number;
-  /** 氷だけ。ほかの氷が 1 枚以上なら 1。それ以上は増えない。 */
-  iceEnergy: number;
-  /** 氷だけ。ほかの氷が 2 枚以上なら 1。 */
-  iceDraw: number;
-};
-
-/**
- * 手札に重ねた枚数と、文鎮の覚え・水面から、使うときの倍率を決める。
- */
-export function stackedMarkPlay(instance: CardInstance, player: PlayerState): MarkPlay {
-  const mark = instance.card.mark;
-  if (!mark) return { multiplier: 1, iceEnergy: 0, iceDraw: 0 };
-  const same = instance.sameFused ?? 0;
-  const memory = (player.markMemory[mark] ?? 0) + (player.powers.markCount ?? 0);
-  const others = same + memory;
-  const rainbow = (instance.rainbowFused ?? 0) > 0 && others === 0;
-  const depth = player.powers.markDepth ?? 0;
-  if (mark === 'ice') {
-    return {
-      multiplier: 1,
-      iceEnergy: others >= 1 ? 1 : 0,
-      iceDraw: others >= 2 ? 1 : 0,
-    };
-  }
-  return {
-    multiplier: markMultiplier(others, depth, rainbow),
-    iceEnergy: 0,
-    iceDraw: 0,
-  };
+/** 手札のこの札を、いま使ったときの倍率。 */
+export function handMultiplier(instance: CardInstance, player: PlayerState): number {
+  return stackMultiplier(stackOf(instance), player.powers.stackDepth ?? 0);
 }
 
 const scale = (amount: number, multiplier: number) => amount * multiplier;
 
-/** 雨はダメージの数値だけ、波はブロックの数値だけを倍率する。氷の数値はそのまま。 */
+/**
+ * 段の倍率をかけた効果。ダメージ・ブロック・デバフのターン数・霜・かわす・筋力を消す量・悪い効果を消す数。
+ * ドローとエナジーは増やさない。印の無いカードはそのまま。
+ */
 export function scaledEffects(card: CardDefinition, multiplier: number): Effect[] {
-  if (multiplier === 1 || card.mark === undefined || card.mark === 'ice') return card.effects;
-  return card.effects.map((effect) => scaleEffect(effect, card.mark, multiplier));
+  if (multiplier === 1 || card.mark === undefined) return card.effects;
+  return card.effects.map((effect) => scaleEffect(effect, multiplier));
 }
 
-function scaleEffect(effect: Effect, mark: CardMark | undefined, multiplier: number): Effect {
-  if (mark === 'rain') {
-    switch (effect.kind) {
-      case 'damage':
-        return { ...effect, amount: scale(effect.amount, multiplier) };
-      case 'damagePerSelfHpLost':
-        return {
-          ...effect,
-          base: scale(effect.base, multiplier),
-          perHp: scale(effect.perHp, multiplier),
-        };
-      case 'damagePerDebuff':
-        return {
-          ...effect,
-          base: scale(effect.base, multiplier),
-          perTurn: scale(effect.perTurn, multiplier),
-        };
-      case 'detonateDebuffs':
-      case 'detonateSeed':
-        return { ...effect, perTurn: scale(effect.perTurn, multiplier) };
-      case 'feed':
-        return { ...effect, damage: scale(effect.damage, multiplier) };
-      case 'consumeBlock':
-        return { ...effect, multiplier: scale(effect.multiplier, multiplier) };
-      case 'damagePerCardPlayed':
-        return {
-          ...effect,
-          base: scale(effect.base, multiplier),
-          perCard: scale(effect.perCard, multiplier),
-        };
-      default:
-        return effect;
-    }
+function scaleEffect(effect: Effect, multiplier: number): Effect {
+  switch (effect.kind) {
+    case 'damage':
+    case 'block':
+    case 'gainEndTurnBlock':
+    case 'applyFrost':
+    case 'gainEvade':
+    case 'stripStrength':
+      return { ...effect, amount: scale(effect.amount, multiplier) };
+    case 'applyDebuff':
+      return { ...effect, turns: scale(effect.turns, multiplier) };
+    case 'cleanse':
+      return { ...effect, count: scale(effect.count, multiplier) };
+    case 'ifTargetHas':
+      return { ...effect, effects: effect.effects.map((inner) => scaleEffect(inner, multiplier)) };
+    default:
+      return effect;
   }
-  if (mark === 'wave') {
-    switch (effect.kind) {
-      case 'block':
-      case 'gainEndTurnBlock':
-        return { ...effect, amount: scale(effect.amount, multiplier) };
-      default:
-        return effect;
-    }
+}
+
+/**
+ * 重ねた瞬間の効果の狙い。threat = 予告の攻撃が一番大きい敵、strongest = 筋力が一番高い敵、self = 自分。
+ * 札を重ねるドラッグの先は札なので、敵は指で選ばない。
+ */
+export type FuseAim = 'threat' | 'strongest' | 'self';
+
+export type FuseBurst = { effects: Effect[]; aim: FuseAim };
+
+/** 重ねて消える札の印と種類で決まる、重ねた瞬間の効果。量は消える札の段に比例する。 */
+export function fuseBurst(card: CardDefinition, stack: number): FuseBurst | null {
+  switch (card.mark) {
+    case 'ice':
+      return { effects: [{ kind: 'applyFrost', amount: FUSE_FROST_PER_STACK * stack }], aim: 'threat' };
+    case 'drop':
+      return { effects: [{ kind: 'draw', amount: stack }], aim: 'self' };
+    case 'mist':
+      return card.type === 'attack'
+        ? { effects: [{ kind: 'stripStrength', amount: FUSE_STRIP_PER_STACK * stack }], aim: 'strongest' }
+        : { effects: [{ kind: 'cleanse', count: stack }], aim: 'self' };
+    case undefined:
+      return null;
   }
-  return effect;
 }

@@ -259,7 +259,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   }
 }
 
-const MARKS: readonly CardMark[] = ['rain', 'wave', 'ice'];
+const MARKS: readonly CardMark[] = ['ice', 'drop', 'mist'];
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
