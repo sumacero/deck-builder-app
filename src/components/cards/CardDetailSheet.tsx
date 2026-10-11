@@ -7,12 +7,14 @@ import { CardView } from './CardView';
 
 type CardDetailSheetProps = {
   card: CardDefinition;
+  /** 手札で重ねたあとの数字。拡大した札にも同じ文を出す。 */
+  description?: string;
   visible: boolean;
   onClose: () => void;
 };
 
 /** カードを長押ししたときの、拡大表示と用語解説。 */
-export function CardDetailSheet({ card, visible, onClose }: CardDetailSheetProps) {
+export function CardDetailSheet({ card, description, visible, onClose }: CardDetailSheetProps) {
   return (
     <InfoSheet
       visible={visible}
@@ -20,7 +22,7 @@ export function CardDetailSheet({ card, visible, onClose }: CardDetailSheetProps
       onClose={onClose}
       aside={
         <View style={styles.preview}>
-          <CardView card={card} size="md" detailOnHold={false} />
+          <CardView card={card} description={description} size="md" detailOnHold={false} />
         </View>
       }
     >

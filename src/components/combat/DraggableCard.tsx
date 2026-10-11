@@ -24,7 +24,14 @@ type DraggableCardProps = CardDragHandlers & {
   dragging: boolean;
   /** タップして、狙う敵を選んでいる最中のカード。 */
   selected: boolean;
+  /** この札が融合の相手になっているとき、印の色で枠を光らせる。 */
+  linkColor?: string;
+  /** 重ねたあとの数字。省略すると、カードに書かれた効果。 */
+  description?: string;
 };
+
+/** 敵を選んでいる最中のカードを浮かべる量。波紋の起点も同じだけ上げる。 */
+export const CARD_SELECT_LIFT = -6;
 
 /** 指を動かさずに押し続けてこの時間が経つと「長押し」。その場で詳細を開く。普通のタップ（0.1 秒前後）より少し長く。 */
 const LONG_PRESS_MS = 200;
@@ -52,6 +59,8 @@ export function DraggableCard({
   playable,
   dragging,
   selected,
+  linkColor,
+  description,
   ...handlers
 }: DraggableCardProps) {
   const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
@@ -131,21 +140,22 @@ export function DraggableCard({
     <>
       <View
         {...responder.panHandlers}
-        style={{ opacity: dragging ? 0 : 1, transform: [{ translateY: selected ? LIFT : 0 }] }}
+        style={{ opacity: dragging ? 0 : 1, transform: [{ translateY: selected ? CARD_SELECT_LIFT : 0 }] }}
       >
         <CardView
           card={card}
           width={width}
           dimmed={!playable}
           selected={selected}
+          linkColor={linkColor}
+          description={description}
           detailOnHold={false}
         />
       </View>
       {/* Modal 内のタッチも React の親へ伝わるので、ジェスチャーを受ける View の外に置く。 */}
-      {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
+      {detailOpen && (
+        <CardDetailSheet card={card} description={description} visible onClose={() => setDetailOpen(false)} />
+      )}
     </>
   );
 }
-
-/** 敵を選んでいる最中のカードは少し浮かせる。 */
-const LIFT = -6;

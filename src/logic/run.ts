@@ -84,6 +84,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     economy: setup.economy,
     restHealRatio: setup.restHealRatio,
     removalCount: 0,
+    markBias: null,
     stats: EMPTY_RUN_STATS,
     rngSeed: afterActs,
   };

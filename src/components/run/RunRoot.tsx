@@ -86,7 +86,7 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
       screen = <BlessingScreen run={visible} options={visible.phase.options} actions={blessingActions} />;
       break;
     case 'deckEdit':
-      screen = <DeckEditScreen run={visible} mode={visible.phase.mode} actions={blessingActions} />;
+      screen = <DeckEditScreen run={visible} phase={visible.phase} actions={blessingActions} />;
       break;
     case 'reward':
       screen = (

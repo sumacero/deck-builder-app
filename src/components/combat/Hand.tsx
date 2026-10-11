@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CardInstance } from '../../domain/card';
-import type { CombatEvent } from '../../domain/combat';
-import { COLORS, HAND_LAYOUT, SPACING } from '../../theme';
+import type { CombatEvent, PlayerState } from '../../domain/combat';
+import { describeHandCard } from '../../logic/describe';
+import { markLinks } from '../../logic/marks';
+import { COLORS, HAND_LAYOUT, MARK_COLORS, SPACING } from '../../theme';
 import { type CardDragHandlers, DraggableCard } from './DraggableCard';
 import { HandFullEffect } from './effects/HandFullEffect';
+import { MarkLinkOverlay } from './effects/MarkLinkOverlay';
 import { handCardSpacing, handCardWidth } from './handLayout';
 
 type HandProps = CardDragHandlers & {
   cards: CardInstance[];
-  /** 手札がいっぱいで引けなかった演出に使う。 */
+  /** 文鎮の覚えと水面。手札の数字に、いま使うと出る効果を出す。 */
+  player: PlayerState;
+  /** 手札がいっぱいで引けなかった演出と、融合の波紋に使う。 */
   events: CombatEvent[];
   isPlayable: (instanceId: string) => boolean;
   /** 持ち上げている最中のカード。 */
@@ -31,6 +36,7 @@ type HandProps = CardDragHandlers & {
  */
 export function Hand({
   cards,
+  player,
   events,
   isPlayable,
   draggingId,
@@ -44,6 +50,9 @@ export function Hand({
   const [width, setWidth] = useState(0);
   const cardWidth = handCardWidth(width, maxCardHeight);
   const spacing = handCardSpacing(width, cardWidth, cards.length);
+  const focusId = draggingId ?? selectedId;
+  const links = markLinks(cards, focusId);
+  const linkedIds = new Set(links.flatMap((link) => [link.fromId, link.toId]));
   useEffect(() => {
     onCardWidth(cardWidth);
   }, [cardWidth, onCardWidth]);
@@ -60,16 +69,25 @@ export function Hand({
         ) : (
           cardWidth > 0 && (
             <View style={styles.row}>
-              {cards.map(({ instanceId, card }, i) => (
-                <View key={instanceId} style={[i > 0 && { marginLeft: spacing }, { zIndex: i }]}>
+              {cards.map((instance, i) => (
+                <View
+                  key={instance.instanceId}
+                  style={[styles.slot, i > 0 && { marginLeft: spacing }, { zIndex: i }]}
+                >
                   <DraggableCard
-                    instanceId={instanceId}
-                    card={card}
+                    instanceId={instance.instanceId}
+                    card={instance.card}
                     width={cardWidth}
-                    playable={isPlayable(instanceId)}
-                    dragging={draggingId === instanceId}
-                    selected={selectedId === instanceId}
+                    playable={isPlayable(instance.instanceId)}
+                    dragging={draggingId === instance.instanceId}
+                    selected={selectedId === instance.instanceId}
+                    linkColor={
+                      instance.card.mark && linkedIds.has(instance.instanceId)
+                        ? MARK_COLORS[instance.card.mark]
+                        : undefined
+                    }
                     {...handlers}
+                    description={describeHandCard(instance, player)}
                   />
                 </View>
               ))}
@@ -77,6 +95,18 @@ export function Hand({
           )
         )}
       </HandFullEffect>
+      {cardWidth > 0 && (
+        <MarkLinkOverlay
+          cards={cards}
+          links={links}
+          events={events}
+          containerWidth={width}
+          cardWidth={cardWidth}
+          spacing={spacing}
+          focusId={focusId}
+          liftedId={draggingId ? null : selectedId}
+        />
+      )}
     </View>
   );
 }
@@ -91,4 +121,5 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xs,
   },
   emptyText: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center' },
+  slot: { position: 'relative' },
 });

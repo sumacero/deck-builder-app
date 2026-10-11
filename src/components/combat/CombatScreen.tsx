@@ -20,6 +20,7 @@ import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
 import { deckAfterCombat, livingEnemies } from '../../logic/combat';
+import { describeHandCard } from '../../logic/describe';
 import { COLORS, COMBAT_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
@@ -81,6 +82,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const {
     state,
     playCard,
+    fuseInHand,
     drinkPotion,
     discardPotion,
     endTurn,
@@ -105,6 +107,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const {
     drag,
     hover,
+    stackHover,
     lifted,
     ghost,
     cardHandlers,
@@ -119,6 +122,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     potions: state.potions,
     cardWidth,
     onPlayCard: playCard,
+    onFuse: fuseInHand,
     onDrinkPotion: drinkPotion,
   });
 
@@ -168,7 +172,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     if (activePending.kind === 'card') playCard(activePending.instanceId, uid);
     else drinkPotion(activePending.slot, uid);
   };
-  const hint = drag && lifted ? dragHint(drag.kind, hover) : null;
+  const hint = drag && lifted ? dragHint(drag.kind, hover, stackHover !== null) : null;
+  const heldCard =
+    drag?.kind === 'card' ? state.hand.find((card) => card.instanceId === drag.instanceId) : undefined;
 
   const itemBar = (
     <ItemBar
@@ -235,6 +241,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const hand = (
     <Hand
       cards={state.hand}
+      player={state.player}
       events={state.events}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
@@ -326,7 +333,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
               <CardView
                 card={drag.card}
                 width={cardWidth}
-                selected={hover !== null}
+                selected={hover !== null || stackHover !== null}
+                description={heldCard ? describeHandCard(heldCard, state.player) : undefined}
                 detailOnHold={false}
               />
             ) : (
@@ -379,7 +387,8 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
   }
 }
 
-function dragHint(kind: 'card' | 'potion', hover: DropTarget | null): string {
+function dragHint(kind: 'card' | 'potion', hover: DropTarget | null, stacking: boolean): string {
+  if (stacking) return '離して重ねる';
   if (hover) return '離して使う';
   return kind === 'card' ? 'もっと上まで持ち上げて離す' : '使う相手のほうへ動かして離す';
 }

@@ -1,6 +1,6 @@
 import type { AgentDefinition } from '../domain/agent';
 import { CRIMSON_PHOENIX } from './cards';
-import { WHITE_WAVE } from './rainCards';
+import { MIRROR_TRIAD } from './mirrorCards';
 import { THOUSAND_YEAR_TREE } from './verdantCards';
 
 /** 赤髪の熱血剣士。HP を燃やす力押しと、弱体・衰弱で敵を崩す戦い方が得意。 */
@@ -26,16 +26,16 @@ export const VERDANT_ARCHER: AgentDefinition = {
   mysticArte: THOUSAND_YEAR_TREE,
 };
 
-/** 雨宿りの少年魔法使い。敵の次の行動に潮をかけ、攻撃を弱め、守りや強化を流す。 */
-export const RAIN_MAGE: AgentDefinition = {
-  id: 'rain-mage',
-  name: '蒼雨のリオ',
+/** 水盤に透けた札を置く占い師。同じ印を手札で重ねると、残った札に数字が出て、水分身が立つ。 */
+export const MIRROR_SEER: AgentDefinition = {
+  id: 'mirror-seer',
+  name: '水鏡のノア',
   icon: '💧',
-  title: '雨宿りの魔法使い',
+  title: '水面の占い師',
   playStyle:
-    '敵に潮をかけ、次の行動を乱す。攻撃は威力を削り、守りや強化は流す。潮を割れば、ためた分が水のダメージになる。',
+    '札には雨・波・氷の印がある。同じ印を手札で重ねると、残った札にダメージやブロックの数字が出る。氷はエナジーとドローを足す。使ったとき、重ねた枚数だけ水分身が増え、2 つ以上あるとブロックを超えた 1 ヒットの HP を消して、その敵の次の一撃を弱体にする。重ねた札は山札が尽きれば戻る。',
   attribute: 'water',
-  mysticArte: WHITE_WAVE,
+  mysticArte: MIRROR_TRIAD,
 };
 
-export const ALL_AGENTS: readonly AgentDefinition[] = [CRIMSON_HERO, VERDANT_ARCHER, RAIN_MAGE];
+export const ALL_AGENTS: readonly AgentDefinition[] = [CRIMSON_HERO, VERDANT_ARCHER, MIRROR_SEER];

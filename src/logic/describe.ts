@@ -1,6 +1,7 @@
 import type { Attribute } from '../domain/attribute';
 import type { BlessingDefinition } from '../domain/blessing';
-import type { Archetype, CardDefinition, CardGrowth, CardRarity, CardType } from '../domain/card';
+import type { Archetype, CardDefinition, CardGrowth, CardInstance, CardRarity, CardType } from '../domain/card';
+import type { PlayerState } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
@@ -10,6 +11,7 @@ import type { RelicCondition, RelicDefinition, RelicRarity } from '../domain/rel
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
 import { ALL_ATTRIBUTES } from './attribute';
+import { cloneCount, MARK_NAME, scaledEffects, stackedMarkPlay } from './marks';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -29,6 +31,9 @@ export const ARCHETYPE_LABEL: Record<Archetype, string> = {
   growth: '成長軸',
   element: '属性軸',
   tempo: '手数軸',
+  rain: '雨の印',
+  wave: '波の印',
+  ice: '氷の印',
 };
 
 export const CARD_TYPE_LABEL: Record<CardType, string> = {
@@ -69,9 +74,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'doubleBlock':
       return '今のブロック値を 2 倍にする。';
     case 'applyDebuff':
-      return effect.status === 'tide'
-        ? `${target === 'allEnemies' ? '敵全体に' : ''}潮 ${effect.turns} を与える。`
-        : `${target === 'allEnemies' ? '敵全体に' : ''}${STATUS_LABEL[effect.status]} ${effect.turns} を与える。`;
+      return `${target === 'allEnemies' ? '敵全体に' : ''}${STATUS_LABEL[effect.status]} ${effect.turns} を与える。`;
     case 'gainBuff':
       return `${STATUS_LABEL[effect.status]} ${effect.turns} を得る。`;
     case 'extendDebuffs':
@@ -92,8 +95,10 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体に、' : ''}この戦闘で廃棄した矢の数だけ、矢 1 本分のダメージを与える。`;
     case 'detonateSeed':
       return `${target === 'allEnemies' ? '敵全体に、' : ''}宿り木 × ${effect.perTurn} のダメージを与え、宿り木を消す。`;
-    case 'crackTide':
-      return `${target === 'allEnemies' ? '敵全体に、' : ''}潮 × ${effect.per} のダメージを与え、潮を消す。`;
+    case 'paintHand':
+      return `手札の印を${MARK_NAME[effect.mark]}に塗り替える（印の無いカードはそのまま）。`;
+    case 'noteFusedMarks':
+      return 'このターン手札で重ねた印を、次のターンは 1 枚多く数える。';
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -158,7 +163,9 @@ export const POWER_LABEL: Record<PowerId, string> = {
   arrowSpread: '散り矢の構え',
   arrowRetain: '矢筒の備え',
   arrowSupply: '無限の矢筒',
-  highTide: '満潮',
+  markCount: '水面',
+  markDepth: '深み',
+  waterClone: '水分身',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -196,8 +203,12 @@ export function describePower(power: PowerId, amount: number): string {
       return 'この戦闘中、ターン終了時に手札の矢を捨てずに残す。';
     case 'arrowSupply':
       return `この戦闘中、ターンの始めに矢 ${amount} 本を手札に加える。`;
-    case 'highTide':
-      return `この戦闘中、ターンの始めに敵全体に潮 ${amount} を与える。`;
+    case 'markCount':
+      return `この戦闘中、印を数えるとき同じ印が ${amount} 枚多くあるものとして扱う。手札の札に、その数字が出る。`;
+    case 'markDepth':
+      return `この戦闘中、雨と波の倍率が ${amount} 段階上がる（最大 4 倍）。`;
+    case 'waterClone':
+      return `水分身が 2 つ以上のとき、ブロックを超える 1 ヒットの HP ダメージを消す（今 ${amount}）。1 つ消える。その敵への次の攻撃 1 回は弱体。ブロックは減る。`;
   }
 }
 
@@ -213,7 +224,6 @@ export const STATUS_LABEL: Record<StatusId, string> = {
   vulnerable: '弱体',
   weak: '衰弱',
   seed: '宿り木',
-  tide: '潮',
   retainBlock: 'ブロック保持',
   blazing: '熱血',
   intangible: '霊体化',
@@ -224,7 +234,6 @@ export const DEBUFF_ICON: Record<DebuffId, string> = {
   vulnerable: '🎯',
   weak: '🥀',
   seed: '🌱',
-  tide: '🌊',
 };
 
 const describeEffects = (effects: Effect[], target: EffectTarget) =>
@@ -245,6 +254,45 @@ export function describeCard(card: CardDefinition): string {
   return (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
 }
 
+/** 手札の札。重ねた枚数と文鎮の覚えが入った、いま使うと出る数字。 */
+export function describeHandCard(instance: CardInstance, player: PlayerState): string {
+  const play = stackedMarkPlay(instance, player);
+  const clones = cloneCount(instance);
+  if (play.multiplier === 1 && play.iceEnergy === 0 && play.iceDraw === 0 && clones === 0) {
+    return describeCard(instance.card);
+  }
+  const scaled = describeCard({ ...instance.card, effects: scaledEffects(instance.card, play.multiplier) });
+  const extra = [
+    play.iceEnergy > 0 ? 'エナジー +1。' : '',
+    play.iceDraw > 0 ? 'カードを 1 枚引く。' : '',
+    clones > 0 ? `水分身 +${clones}。` : '',
+  ].join('');
+  return scaled + extra;
+}
+
+export type MarkPreviewLine = { label: string; text: string };
+
+/** 報酬の印チップ。この札を重ねたときの数字。深みや文鎮の覚えは、戦闘に入る前なので含めない。 */
+export function markPreviewLines(card: CardDefinition): MarkPreviewLine[] {
+  if (!card.mark) return [];
+  const withBonus = (multiplier: number, bonus: string) =>
+    describeCard({ ...card, effects: scaledEffects(card, multiplier) }) + bonus;
+  if (card.mark === 'ice') {
+    return [
+      { label: 'そのまま', text: describeCard(card) },
+      { label: '氷を 1 枚重ねる', text: withBonus(1, 'エナジー +1。水分身 +1。') },
+      { label: '氷を 2 枚重ねる', text: withBonus(1, 'エナジー +1。カードを 1 枚引く。水分身 +2。') },
+    ];
+  }
+  const name = MARK_NAME[card.mark];
+  return [
+    { label: 'そのまま', text: describeCard(card) },
+    { label: `${name}を 1 枚重ねる`, text: withBonus(2, '水分身 +1。') },
+    { label: `${name}を 2 枚重ねる`, text: withBonus(3, '水分身 +2。') },
+    { label: 'ほかの印を 1 枚重ねる', text: withBonus(2, '水分身 +1。') },
+  ];
+}
+
 export function describePotion(potion: PotionDefinition): string {
   return describeEffects(potion.effects, potion.target);
 }
@@ -254,6 +302,7 @@ const RELIC_CONDITION_TEXT: Record<RelicCondition, string> = {
   lowHp: 'HP が半分以下なら',
   eliteOrBoss: 'エリート・ボス戦なら',
   everyThirdTurn: '3 ターンごとに',
+  hasFusedMark: '印を重ねていれば',
 };
 
 function relicTiming(relic: RelicDefinition): string {
@@ -304,16 +353,9 @@ export type IntentView = {
 };
 
 /** damageOf は攻撃 1 回分の実ダメージ（筋力・衰弱・弱体込み）を求める関数。攻撃の数値は実ダメージで見せる。 */
-export function describeIntent(
-  move: EnemyMove,
-  damageOf: (base: number) => number,
-  tide = 0,
-): IntentView[] {
+export function describeIntent(move: EnemyMove, damageOf: (base: number) => number): IntentView[] {
   return move.actions.map((action, index) => {
     const key = `${move.id}-${index}`;
-    if (tide > 0 && action.kind !== 'attack' && action.kind !== 'idle' && action.kind !== 'charge') {
-      return { key, tone: action.kind, icon: '🌊', label: '流' };
-    }
     switch (action.kind) {
       case 'attack': {
         const damage = damageOf(action.damage);
@@ -443,6 +485,8 @@ export function describeRunEffect(effect: RunEffect): string {
       return `毎ターン引く枚数 ${signed(effect.amount)}`;
     case 'fuseCards':
       return `${effect.from.name} ${effect.count} 枚を融合し「${effect.into.name}」にする（コスト ${effect.into.cost}：${describeCard(effect.into)}）`;
+    case 'lockMark':
+      return `これからの報酬を${MARK_NAME[effect.mark]}の印か、印の無いカードに絞る`;
   }
 }
 
@@ -462,11 +506,12 @@ function isNegative(effect: RunEffect): boolean {
   }
 }
 
-const RUN_CHOICE_TEXT: Record<RunChoice, string> = {
-  upgradeCard: 'カードを 1 枚選んで強化',
-  removeCard: 'カードを 1 枚選んで削除',
-  pickCard: '3 枚から 1 枚を選んでデッキに加える',
-};
+function describeRunChoice(choice: RunChoice): string {
+  if (choice === 'upgradeCard') return 'カードを 1 枚選んで強化';
+  if (choice === 'removeCard') return 'カードを 1 枚選んで削除';
+  if (choice === 'pickCard') return '3 枚から 1 枚を選んでデッキに加える';
+  return `カードを 1 枚選んで${MARK_NAME[choice.mark]}の印にする`;
+}
 
 export type EffectLine = { text: string; negative: boolean };
 
@@ -486,7 +531,7 @@ export function describeRunEffects(
     text: count > 1 ? `${text} ×${count}` : text,
     negative,
   }));
-  return choice ? [...lines, { text: RUN_CHOICE_TEXT[choice], negative: false }] : lines;
+  return choice ? [...lines, { text: describeRunChoice(choice), negative: false }] : lines;
 }
 
 export const describeBlessing = (blessing: BlessingDefinition): EffectLine[] =>
