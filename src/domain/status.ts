@@ -35,7 +35,6 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - arrowSupply（無限の矢筒）: ターンの始めに矢 N 本を手札に加える
  * - markCount（水面）: 印を数えるとき、同じ印が N 枚多くあるものとして扱う
  * - markDepth（深み）: 雨と波の倍率を N 段階上げる（最大 4 倍）
- * - waterClone（水分身）: 2 つ以上あると、ブロックを超えた 1 ヒットの HP を消す。1 つ消え、その敵の次の攻撃 1 回が弱体になる
  */
 export type PowerId =
   | 'barricade'
@@ -55,7 +54,6 @@ export type PowerId =
   | 'arrowRetain'
   | 'arrowSupply'
   | 'markCount'
-  | 'markDepth'
-  | 'waterClone';
+  | 'markDepth';
 
 export type Powers = Partial<Record<PowerId, number>>;

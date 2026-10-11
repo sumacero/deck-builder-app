@@ -39,7 +39,6 @@ export type KeywordId =
   | 'rainbow'
   | 'markCount'
   | 'markDepth'
-  | 'waterClone'
   | 'verdure'
   | 'quickdraw'
   | 'flurry'

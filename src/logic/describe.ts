@@ -11,7 +11,7 @@ import type { RelicCondition, RelicDefinition, RelicRarity } from '../domain/rel
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
 import { ALL_ATTRIBUTES } from './attribute';
-import { cloneCount, MARK_NAME, scaledEffects, stackedMarkPlay } from './marks';
+import { MARK_NAME, scaledEffects, stackedMarkPlay } from './marks';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -165,7 +165,6 @@ export const POWER_LABEL: Record<PowerId, string> = {
   arrowSupply: '無限の矢筒',
   markCount: '水面',
   markDepth: '深み',
-  waterClone: '水分身',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -207,8 +206,6 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、印を数えるとき同じ印が ${amount} 枚多くあるものとして扱う。手札の札に、その数字が出る。`;
     case 'markDepth':
       return `この戦闘中、雨と波の倍率が ${amount} 段階上がる（最大 4 倍）。`;
-    case 'waterClone':
-      return `水分身が 2 つ以上のとき、ブロックを超える 1 ヒットの HP ダメージを消す（今 ${amount}）。1 つ消える。その敵への次の攻撃 1 回は弱体。ブロックは減る。`;
   }
 }
 
@@ -257,15 +254,13 @@ export function describeCard(card: CardDefinition): string {
 /** 手札の札。重ねた枚数と文鎮の覚えが入った、いま使うと出る数字。 */
 export function describeHandCard(instance: CardInstance, player: PlayerState): string {
   const play = stackedMarkPlay(instance, player);
-  const clones = cloneCount(instance);
-  if (play.multiplier === 1 && play.iceEnergy === 0 && play.iceDraw === 0 && clones === 0) {
+  if (play.multiplier === 1 && play.iceEnergy === 0 && play.iceDraw === 0) {
     return describeCard(instance.card);
   }
   const scaled = describeCard({ ...instance.card, effects: scaledEffects(instance.card, play.multiplier) });
   const extra = [
     play.iceEnergy > 0 ? 'エナジー +1。' : '',
     play.iceDraw > 0 ? 'カードを 1 枚引く。' : '',
-    clones > 0 ? `水分身 +${clones}。` : '',
   ].join('');
   return scaled + extra;
 }
@@ -280,16 +275,16 @@ export function markPreviewLines(card: CardDefinition): MarkPreviewLine[] {
   if (card.mark === 'ice') {
     return [
       { label: 'そのまま', text: describeCard(card) },
-      { label: '氷を 1 枚重ねる', text: withBonus(1, 'エナジー +1。水分身 +1。') },
-      { label: '氷を 2 枚重ねる', text: withBonus(1, 'エナジー +1。カードを 1 枚引く。水分身 +2。') },
+      { label: '氷を 1 枚重ねる', text: withBonus(1, 'エナジー +1。') },
+      { label: '氷を 2 枚重ねる', text: withBonus(1, 'エナジー +1。カードを 1 枚引く。') },
     ];
   }
   const name = MARK_NAME[card.mark];
   return [
     { label: 'そのまま', text: describeCard(card) },
-    { label: `${name}を 1 枚重ねる`, text: withBonus(2, '水分身 +1。') },
-    { label: `${name}を 2 枚重ねる`, text: withBonus(3, '水分身 +2。') },
-    { label: 'ほかの印を 1 枚重ねる', text: withBonus(2, '水分身 +1。') },
+    { label: `${name}を 1 枚重ねる`, text: withBonus(2, '') },
+    { label: `${name}を 2 枚重ねる`, text: withBonus(3, '') },
+    { label: 'ほかの印を 1 枚重ねる', text: withBonus(2, '') },
   ];
 }
 

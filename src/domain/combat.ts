@@ -92,11 +92,6 @@ export type EnemyState = Fighter & {
   artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
-  /**
-   * 水分身がこの敵の攻撃を受け流した。
-   * 次にこの敵へ当たる攻撃 1 回だけ弱体が乗り、そのあと弱体を 1 ターン分消す。
-   */
-  mirrorOpen?: boolean;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -206,8 +201,6 @@ export type CombatState = {
   /** 直前の操作 1 回分のイベント。操作のたびに作り直す。 */
   events: CombatEvent[];
   nextEventId: number;
-  /** この敵のターンで、水分身がすでに 1 回攻撃を受け流した。 */
-  cloneUsed: boolean;
 };
 
 /** カードを敵の上で離したときに、その敵が受ける実ダメージの予告。 */

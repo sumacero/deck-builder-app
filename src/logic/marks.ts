@@ -11,8 +11,11 @@ export const MARK_NAME: Record<CardMark, string> = {
 /** 深みを足したあとの上限。通常は 3 倍、深み 1 で 4 倍まで。 */
 const MARK_MULTIPLIER_CAP = 4;
 
-/** 手札でこの札に重ねた枚数。使ったとき、この数だけ水分身が増える。文鎮の覚えは含まない。 */
-export function cloneCount(instance: CardInstance): number {
+/** 1 枚の札に重ねられる枚数。2 枚で雨・波は 3 倍、氷はエナジーとドローが揃い、それ以上は増えない。 */
+export const MAX_FUSED = 2;
+
+/** この札に重ねた枚数。文鎮の覚えは含まない。 */
+export function fusedCount(instance: CardInstance): number {
   return (instance.sameFused ?? 0) + (instance.rainbowFused ?? 0);
 }
 
@@ -27,17 +30,21 @@ export function releaseFusion(instance: CardInstance): CardInstance {
  * 同じ印がほかにあれば、その全部。無ければ、この札が同じ印をまだ重ねておらず、
  * 手札に三つの印が揃っているときだけ、ほかの印の札。その相手も、手札に同じ印がほかに無く、
  * まだ何も重ねていないものに限る（同じ印同士で重ねられる札には、別の印は重ねない）。
+ * どちらも、重ねたあとの枚数が MAX_FUSED を超える相手は除く。
  */
 export function stackPartners(hand: readonly CardInstance[], instance: CardInstance): CardInstance[] {
   const mark = instance.card.mark;
   if (!mark) return [];
   const others = hand.filter((card) => card.instanceId !== instance.instanceId && card.card.mark !== undefined);
   const same = others.filter((card) => card.card.mark === mark);
-  if (same.length > 0) return same;
+  const carried = 1 + fusedCount(instance);
+  const roomy = (card: CardInstance) => fusedCount(card) + carried <= MAX_FUSED;
+  if (same.length > 0) return same.filter(roomy);
   if ((instance.sameFused ?? 0) > 0 || !handHasRainbow(hand)) return [];
   return others.filter(
     (card) =>
-      cloneCount(card) === 0 &&
+      fusedCount(card) === 0 &&
+      roomy(card) &&
       !others.some((other) => other.instanceId !== card.instanceId && other.card.mark === card.card.mark),
   );
 }
@@ -118,7 +125,6 @@ export type MarkPlay = {
 
 /**
  * 手札に重ねた枚数と、文鎮の覚え・水面から、使うときの倍率を決める。
- * 水分身は cloneCount。覚えだけでは水分身は増えない。
  */
 export function stackedMarkPlay(instance: CardInstance, player: PlayerState): MarkPlay {
   const mark = instance.card.mark;

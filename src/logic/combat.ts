@@ -34,7 +34,6 @@ import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import {
   MARK_NAME,
   canStackOnto,
-  cloneCount,
   releaseFusion,
   scaledEffects,
   stackedMarkPlay,
@@ -330,7 +329,6 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
     log: [],
     events: [],
     nextEventId: 0,
-    cloneUsed: false,
   };
   const names = groupedNames(setup.enemies.map((enemy) => enemy.name));
   const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
@@ -391,19 +389,6 @@ const FIXED_HIT: HitKind = { attributes: [], fixed: true };
 /** レリック・ポーションなど、属性の無い攻撃。 */
 const NO_ATTRIBUTE: HitKind = { attributes: [] };
 
-/**
- * 水分身が開けた弱体は、次の攻撃 1 回だけ乗せる。固定ダメージ（茨の鎧など）では消費しない。
- * もともと弱体が長ければ、その 1 回分だけ短くする。
- */
-function consumeMirrorOpening(before: EnemyState, after: EnemyState, fixed: boolean): EnemyState {
-  if (fixed || !before.mirrorOpen) return after;
-  const turns = statusTurns(after.statuses, 'vulnerable');
-  const statuses = { ...after.statuses };
-  if (turns <= 1) delete statuses.vulnerable;
-  else statuses.vulnerable = turns - 1;
-  return { ...after, mirrorOpen: false, statuses };
-}
-
 /** base は筋力込みの値。熱血・衰弱・弱体・相性の倍率は敵ごとにここでかける。 */
 function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind): CombatState {
   const enemy = findEnemy(state, uid);
@@ -419,9 +404,8 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
   const scaled = cap !== undefined && raw > cap;
   const amount = cap === undefined ? raw : Math.min(raw, cap);
   const result = holdUntilAwakened(enemy, applyDamage(enemy, amount));
-  const target = consumeMirrorOpening(enemy, result.target, kind.fixed === true);
   const recorded: CombatState = {
-    ...updateEnemy(state, uid, () => target),
+    ...updateEnemy(state, uid, () => result.target),
     stats: {
       ...state.stats,
       maxHit: Math.max(state.stats.maxHit, Math.min(result.hpLoss, enemy.hp)),
@@ -437,7 +421,7 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
       hpLoss: result.hpLoss,
       blocked: result.blocked,
       before: vitalsOf(enemy),
-      after: vitalsOf(target),
+      after: vitalsOf(result.target),
       weak,
     },
   );
@@ -993,7 +977,7 @@ function noteFusedMarks(player: PlayerState, materials: readonly CardInstance[])
 
 /**
  * 手札の印を、もう一枚の上に重ねる。エナジーは要らない。
- * 重ねた札は捨て札に戻り、残った札に枚数が乗る。水分身は、残った札を使ったときに増える。
+ * 重ねた札は捨て札に戻り、残った札に枚数が乗る。
  * 文鎮が覚えるのは、重ねた瞬間。
  */
 export function fuseInHand(state: CombatState, sourceId: string, targetId: string): CombatState {
@@ -1032,19 +1016,6 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
   });
 }
 
-/** 使った札に乗っていた枚数だけ水分身を足す。2 つ以上で、ブロックを超えた 1 ヒットの HP を受け流せる。数は次のターンに残る。 */
-function gainWaterClones(state: CombatState, amount: number): CombatState {
-  const next = powerOf(state, 'waterClone') + amount;
-  return callout(
-    withLog(
-      { ...state, player: { ...state.player, powers: { ...state.player.powers, waterClone: next } } },
-      `水分身 +${amount}（${next}）`,
-    ),
-    'player',
-    `分身 +${amount}`,
-  );
-}
-
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
 export function playCard(state: CombatState, instanceId: string, target?: EnemyUid): CombatState {
   const instance = state.hand.find((c) => c.instanceId === instanceId);
@@ -1053,7 +1024,6 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   // 倍率は、手札で重ねた枚数と文鎮の覚え。使った瞬間にほかの札は消えない。
   // 重ねた枚数は、捨て札・廃棄・山札に移っても札に残る。
   const marks = stackedMarkPlay(instance, state.player);
-  const clones = cloneCount(instance);
   const aim = resolveAim(state, card.target, target);
 
   const spent = {
@@ -1092,10 +1062,9 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     card.mark && card.mark !== 'ice' && marks.multiplier > 1
       ? withLog(guarded, `${MARK_NAME[card.mark]}が重なり ${marks.multiplier} 倍`)
       : guarded;
-  const withClones = clones > 0 ? gainWaterClones(boosted, clones) : boosted;
-  const eventsBefore = withClones.events.length;
+  const eventsBefore = boosted.events.length;
   const resolved = applyIceMark(
-    applyEffects(withClones, scaledEffects(card, marks.multiplier), aim, {
+    applyEffects(boosted, scaledEffects(card, marks.multiplier), aim, {
       attributes: playedAttributes(state, card),
     }),
     marks.iceEnergy,
@@ -1238,36 +1207,6 @@ export function enemyAttackDamage(enemy: EnemyState, base: number, player: Playe
  */
 const ACROSS_TICK = 1;
 
-/**
- * 水分身が 2 つ以上あり、ブロックが一部だけ残っているとき、そのヒットの HP ダメージを消す。
- * ブロックが 0、またはブロックだけで足りるヒットでは消費しない。
- */
-function cloneWillCatch(state: CombatState, amount: number): boolean {
-  const block = state.player.block;
-  return amount > block && block > 0 && !state.cloneUsed && powerOf(state, 'waterClone') >= 2;
-}
-
-/** 水分身を 1 つ消し、この敵ターンでもう受け流さない。 */
-function spendWaterClone(state: CombatState, uid: EnemyUid): CombatState {
-  const clones = powerOf(state, 'waterClone');
-  const powers = { ...state.player.powers };
-  if (clones <= 1) delete powers.waterClone;
-  else powers.waterClone = clones - 1;
-  const name = findEnemy(state, uid)?.name ?? '敵';
-  const spent = callout(
-    withLog(
-      { ...state, player: { ...state.player, powers }, cloneUsed: true },
-      `水分身が${name}の傷を受け流した`,
-    ),
-    'player',
-    '受け流し',
-  );
-  const debuffed = debuffEnemy(spent, uid, 'vulnerable', 1 + ACROSS_TICK, 1);
-  const enemy = findEnemy(debuffed, uid);
-  if (!enemy || !hasStatus(enemy.statuses, 'vulnerable')) return debuffed;
-  return updateEnemy(debuffed, uid, (e) => ({ ...e, mirrorOpen: true }));
-}
-
 /** 霊体化が続く、プレイヤーのターン数。 */
 const INTANGIBLE_TURNS = 1;
 
@@ -1277,7 +1216,6 @@ function applyEnemyAction(
   uid: EnemyUid,
   action: EnemyAction,
   announce = true,
-  mirror = false,
 ): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy) return state;
@@ -1295,22 +1233,17 @@ function applyEnemyAction(
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
         next = act(next);
-        const caught = mirror && cloneWillCatch(next, amount);
         const result = applyDamage(next.player, amount);
-        const target = caught ? { ...result.target, hp: next.player.hp } : result.target;
-        const hpLoss = caught ? 0 : result.hpLoss;
-        const harmed = { ...next, player: target };
-        const logged = caught ? harmed : withLog(harmed, formatHit('あなた', result) + note);
-        next = withEvent(logged, {
+        const harmed = { ...next, player: result.target };
+        next = withEvent(withLog(harmed, formatHit('あなた', result) + note), {
           kind: 'hit',
           target: 'player',
-          hpLoss,
+          hpLoss: result.hpLoss,
           blocked: result.blocked,
           before: vitalsOf(next.player),
-          after: vitalsOf(target),
+          after: vitalsOf(result.target),
           weak,
         });
-        if (caught) next = spendWaterClone(next, uid);
         if (thorns > 0 && next.player.hp > 0) next = hitEnemy(next, uid, thorns, FIXED_HIT);
       }
       return next;
@@ -1433,7 +1366,6 @@ function healEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatSta
 function runEnemyTurn(state: CombatState): CombatState {
   const unblocked: CombatState = {
     ...state,
-    cloneUsed: false,
     enemies: state.enemies.map((enemy) => (isAlive(enemy) ? { ...enemy, block: 0 } : enemy)),
   };
   let next = livingEnemies(unblocked).reduce((current, { uid }) => bloomEnemySeed(current, uid), unblocked);
@@ -1444,7 +1376,7 @@ function runEnemyTurn(state: CombatState): CombatState {
     const move = currentIntent(enemy);
     next = withLog(next, `${enemy.name}の「${move.name}」`);
     for (const action of move.actions) {
-      next = applyEnemyAction(next, uid, action, true, true);
+      next = applyEnemyAction(next, uid, action);
       if (next.player.hp <= 0) {
         return withEvent(withLog({ ...next, status: 'lost' }, 'あなたは力尽きた…'), {
           kind: 'defeated',

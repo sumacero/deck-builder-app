@@ -10,7 +10,7 @@ import { DEFEND, STRIKE } from './cards';
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
-/** 初期デッキの雨。もう一枚の雨を重ねると 2 倍になり、使ったとき水分身が 1 つ立つ。 */
+/** 初期デッキの雨。もう一枚の雨を重ねると 2 倍になる。 */
 export const RAIN_DROP: CardDefinition = {
   id: 'rain-drop',
   name: '雨粒',
