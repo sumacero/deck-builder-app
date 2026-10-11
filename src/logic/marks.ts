@@ -16,7 +16,7 @@ export function cloneCount(instance: CardInstance): number {
   return (instance.sameFused ?? 0) + (instance.rainbowFused ?? 0);
 }
 
-/** 手札を離れるとき、重ねた枚数を消す。山札に戻った札は、また 1 枚の札として引ける。 */
+/** 重ねて消える側の札。枚数は相手に移したので、捨て札では 1 枚の札に戻す。 */
 export function releaseFusion(instance: CardInstance): CardInstance {
   if (instance.sameFused === undefined && instance.rainbowFused === undefined) return instance;
   return { instanceId: instance.instanceId, card: instance.card };

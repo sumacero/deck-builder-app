@@ -125,7 +125,7 @@ export type CardInstance = {
   card: CardDefinition;
   /**
    * 手札でこの札に重ねた、同じ印の枚数。使ったときに倍率と水分身になる。
-   * 手札を離れたら消す。山札に戻っても、重なったままにはしない。
+   * 捨て札・山札・廃棄に移っても、その戦闘のあいだは残る。
    */
   sameFused?: number;
   /**
@@ -138,4 +138,8 @@ export type CardInstance = {
 export type CardStack = {
   card: CardDefinition;
   count: number;
+  /** 戦闘中の山で、この札に重ねた枚数。重ねた枚数が違えば別の山にする。 */
+  fusedCount?: number;
+  /** 重ねたあとの数字。省略すると、カードに書かれた効果。 */
+  description?: string;
 };

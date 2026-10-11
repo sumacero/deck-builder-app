@@ -158,7 +158,13 @@ export function DraggableCard({
       </View>
       {/* Modal 内のタッチも React の親へ伝わるので、ジェスチャーを受ける View の外に置く。 */}
       {detailOpen && (
-        <CardDetailSheet card={card} description={description} visible onClose={() => setDetailOpen(false)} />
+        <CardDetailSheet
+          card={card}
+          description={description}
+          fusedCount={fusedCount}
+          visible
+          onClose={() => setDetailOpen(false)}
+        />
       )}
     </>
   );

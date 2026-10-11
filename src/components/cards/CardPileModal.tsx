@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { CardDefinition, CardStack } from '../../domain/card';
+import type { CardStack } from '../../domain/card';
+import { cardStackKey } from '../../logic/cards';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
 import { CardView } from './CardView';
@@ -14,7 +15,7 @@ type CardPileModalProps = {
 
 /** 山札・捨て札・デッキ全体の中身を見るオーバーレイ。カードをタップすると詳細（拡大と用語解説）を開く。 */
 export function CardPileModal({ title, note, stacks, onClose }: CardPileModalProps) {
-  const [detail, setDetail] = useState<CardDefinition | null>(null);
+  const [detail, setDetail] = useState<CardStack | null>(null);
   const total = stacks.reduce((sum, stack) => sum + stack.count, 0);
   return (
     <View style={styles.overlay}>
@@ -29,10 +30,12 @@ export function CardPileModal({ title, note, stacks, onClose }: CardPileModalPro
           ) : (
             stacks.map((stack) => (
               <CardView
-                key={stack.card.id}
+                key={`${cardStackKey(stack.card)}#${stack.fusedCount ?? 0}#${stack.description ?? ''}`}
                 card={stack.card}
                 count={stack.count}
-                onPress={() => setDetail(stack.card)}
+                fusedCount={stack.fusedCount}
+                description={stack.description}
+                onPress={() => setDetail(stack)}
                 detailOnHold={false}
               />
             ))
@@ -45,7 +48,15 @@ export function CardPileModal({ title, note, stacks, onClose }: CardPileModalPro
           <Text style={styles.closeText}>閉じる</Text>
         </Pressable>
       </View>
-      {detail && <CardDetailSheet card={detail} visible onClose={() => setDetail(null)} />}
+      {detail && (
+        <CardDetailSheet
+          card={detail.card}
+          description={detail.description}
+          fusedCount={detail.fusedCount}
+          visible
+          onClose={() => setDetail(null)}
+        />
+      )}
     </View>
   );
 }

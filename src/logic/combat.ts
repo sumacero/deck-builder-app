@@ -158,7 +158,7 @@ export function drawCards(state: CombatState, count: number): CombatState {
       reshuffled = true;
     }
     const [top, ...rest] = drawPile;
-    drawn.push(releaseFusion(top));
+    drawn.push(top);
     drawPile = rest;
   }
 
@@ -1051,17 +1051,17 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   if (!instance || !canPlayCard(state, instanceId)) return state;
   const { card } = instance;
   // 倍率は、手札で重ねた枚数と文鎮の覚え。使った瞬間にほかの札は消えない。
+  // 重ねた枚数は、捨て札・廃棄・山札に移っても札に残る。
   const marks = stackedMarkPlay(instance, state.player);
   const clones = cloneCount(instance);
-  const released = releaseFusion(instance);
   const aim = resolveAim(state, card.target, target);
 
   const spent = {
     ...state,
     hand: state.hand.filter((c) => c.instanceId !== instanceId),
     player: { ...state.player, energy: state.player.energy - card.cost },
-    discardPile: [...state.discardPile, ...(card.exhaust ? [] : [released])],
-    exhaustPile: card.exhaust ? [...state.exhaustPile, released] : state.exhaustPile,
+    discardPile: [...state.discardPile, ...(card.exhaust ? [] : [instance])],
+    exhaustPile: card.exhaust ? [...state.exhaustPile, instance] : state.exhaustPile,
   };
   const copied = card.addCopyToDiscard
     ? {
@@ -1488,8 +1488,8 @@ function discardHand(state: CombatState): CombatState {
     {
       ...afterEffects,
       hand: retained,
-      discardPile: [...afterEffects.discardPile, ...kept.map(releaseFusion)],
-      exhaustPile: [...afterEffects.exhaustPile, ...vanishing.map(releaseFusion)],
+      discardPile: [...afterEffects.discardPile, ...kept],
+      exhaustPile: [...afterEffects.exhaustPile, ...vanishing],
     },
     vanishing.length,
   );

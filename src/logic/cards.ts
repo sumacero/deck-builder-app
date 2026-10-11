@@ -25,8 +25,37 @@ export function stackCards(cards: readonly CardDefinition[]): CardStack[] {
   );
 }
 
-export function stackInstances(cards: readonly CardInstance[]): CardStack[] {
-  return stackCards(cards.map((c) => c.card));
+/**
+ * 戦闘中の山を、枚数付きでまとめる。手札で重ねた札は、重ね方が同じものだけを同じ山にする。
+ * describe を渡すと、重ねた札にその数字を載せる。
+ */
+export function stackInstances(
+  cards: readonly CardInstance[],
+  describe?: (instance: CardInstance) => string,
+): CardStack[] {
+  const stacks = new Map<string, CardStack>();
+  for (const instance of cards) {
+    const same = instance.sameFused ?? 0;
+    const rainbow = instance.rainbowFused ?? 0;
+    const key = `${cardStackKey(instance.card)}#${same}#${rainbow}`;
+    const existing = stacks.get(key);
+    if (existing) {
+      existing.count += 1;
+      continue;
+    }
+    const fusedCount = same + rainbow;
+    stacks.set(key, {
+      card: instance.card,
+      count: 1,
+      ...(fusedCount > 0 ? { fusedCount, ...(describe ? { description: describe(instance) } : {}) } : {}),
+    });
+  }
+  return [...stacks.values()].sort(
+    (a, b) =>
+      a.card.cost - b.card.cost ||
+      a.card.name.localeCompare(b.card.name, 'ja') ||
+      (a.fusedCount ?? 0) - (b.fusedCount ?? 0),
+  );
 }
 
 export function canUpgrade(card: CardDefinition): boolean {

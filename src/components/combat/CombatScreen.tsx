@@ -350,7 +350,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
           <CardPileModal
             title={PILE_VIEW[openPile].title}
             note={PILE_VIEW[openPile].note}
-            stacks={stackInstances(pileCards(state, openPile))}
+            stacks={stackInstances(pileCards(state, openPile), (instance) =>
+              describeHandCard(instance, state.player),
+            )}
             onClose={() => setOpenPile(null)}
           />
         )}
