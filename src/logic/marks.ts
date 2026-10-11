@@ -11,47 +11,39 @@ export const MARK_NAME: Record<CardMark, string> = {
 /** 深みを足したあとの上限。通常は 3 倍、深み 1 で 4 倍まで。 */
 const MARK_MULTIPLIER_CAP = 4;
 
-/**
- * 使ったカードを除いた、同じ印の枚数。
- * 手札にある枚数に、文鎮が覚えている分と「水面」の分を足す。
- */
-export function otherMarkCount(
-  hand: readonly CardInstance[],
-  instanceId: string,
-  mark: CardMark,
-  player: PlayerState,
-): number {
-  const inHand = hand.filter(
-    (card) => card.instanceId !== instanceId && card.card.mark === mark,
-  ).length;
-  return inHand + (player.markMemory[mark] ?? 0) + (player.powers.markCount ?? 0);
+/** 手札でこの札に重ねた枚数。使ったとき、この数だけ水分身が増える。文鎮の覚えは含まない。 */
+export function cloneCount(instance: CardInstance): number {
+  return (instance.sameFused ?? 0) + (instance.rainbowFused ?? 0);
+}
+
+/** 手札を離れるとき、重ねた枚数を消す。山札に戻った札は、また 1 枚の札として引ける。 */
+export function releaseFusion(instance: CardInstance): CardInstance {
+  if (instance.sameFused === undefined && instance.rainbowFused === undefined) return instance;
+  return { instanceId: instance.instanceId, card: instance.card };
 }
 
 /**
- * このプレイで融合して捨て札にする手札。
- * 同じ印がほかにあれば、その全部。無ければ、三印が揃っていて文鎮や水面で既に倍率が付いていないとき、
- * ほかの印を 1 枚ずつ（三印の素材）。
+ * この札の上に重ねられる手札。
+ * 同じ印がほかにあれば、その全部。無ければ、この札が同じ印をまだ重ねておらず、
+ * 手札に三つの印が揃っているとき、ほかの印で同じ印を重ねていない札。
  */
-export function fusionMaterials(
-  hand: readonly CardInstance[],
-  instance: CardInstance,
-  player: PlayerState,
-): CardInstance[] {
+export function stackPartners(hand: readonly CardInstance[], instance: CardInstance): CardInstance[] {
   const mark = instance.card.mark;
   if (!mark) return [];
-  const same = hand.filter((card) => card.instanceId !== instance.instanceId && card.card.mark === mark);
+  const others = hand.filter((card) => card.instanceId !== instance.instanceId && card.card.mark !== undefined);
+  const same = others.filter((card) => card.card.mark === mark);
   if (same.length > 0) return same;
-  const virtual = (player.markMemory[mark] ?? 0) + (player.powers.markCount ?? 0);
-  if (virtual > 0 || !handHasRainbow(hand)) return [];
-  const taken = new Set<CardMark>();
-  const materials: CardInstance[] = [];
-  for (const card of hand) {
-    if (card.instanceId === instance.instanceId || !card.card.mark || card.card.mark === mark) continue;
-    if (taken.has(card.card.mark)) continue;
-    taken.add(card.card.mark);
-    materials.push(card);
-  }
-  return materials;
+  if ((instance.sameFused ?? 0) > 0 || !handHasRainbow(hand)) return [];
+  return others.filter((card) => card.card.mark !== mark && (card.sameFused ?? 0) === 0);
+}
+
+/** ドラッグした札を、相手の上に重ねられるか。相手が stackPartners に入っているときだけ。 */
+export function canStackOnto(
+  hand: readonly CardInstance[],
+  source: CardInstance,
+  target: CardInstance,
+): boolean {
+  return stackPartners(hand, source).some((card) => card.instanceId === target.instanceId);
 }
 
 export type MarkLink = {
@@ -63,29 +55,25 @@ export type MarkLink = {
 
 /**
  * 手札に波紋を引く組。
- * focus が無いときは、どの札を出しても結ばれる組を全部（摘む前）。
- * あるときは、その札が融合して捨てる相手だけ（摘んだとき）。
+ * focus が無いときは、どの札を重ねても結ばれる組を全部（摘む前）。
+ * あるときは、その札を重ねられる相手だけ（摘んだとき）。
  */
-export function markLinks(
-  hand: readonly CardInstance[],
-  player: PlayerState,
-  focusId: string | null,
-): MarkLink[] {
+export function markLinks(hand: readonly CardInstance[], focusId: string | null): MarkLink[] {
   const sources = focusId ? hand.filter((card) => card.instanceId === focusId) : hand;
   const seen = new Set<string>();
   const links: MarkLink[] = [];
   for (const source of sources) {
     const mark = source.card.mark;
     if (!mark) continue;
-    for (const material of fusionMaterials(hand, source, player)) {
-      const other = material.card.mark;
+    for (const partner of stackPartners(hand, source)) {
+      const other = partner.card.mark;
       if (!other) continue;
-      const key = [source.instanceId, material.instanceId].sort().join('\0');
+      const key = [source.instanceId, partner.instanceId].sort().join('\0');
       if (seen.has(key)) continue;
       seen.add(key);
       links.push({
         fromId: source.instanceId,
-        toId: material.instanceId,
+        toId: partner.instanceId,
         fromMark: mark,
         toMark: other,
       });
@@ -123,11 +111,17 @@ export type MarkPlay = {
   iceDraw: number;
 };
 
-/** カードを手札から出す前に呼ぶ。虹の判定は、使うカード自身も含む。 */
-export function markPlay(hand: readonly CardInstance[], instance: CardInstance, player: PlayerState): MarkPlay {
+/**
+ * 手札に重ねた枚数と、文鎮の覚え・水面から、使うときの倍率を決める。
+ * 水分身は cloneCount。覚えだけでは水分身は増えない。
+ */
+export function stackedMarkPlay(instance: CardInstance, player: PlayerState): MarkPlay {
   const mark = instance.card.mark;
   if (!mark) return { multiplier: 1, iceEnergy: 0, iceDraw: 0 };
-  const others = otherMarkCount(hand, instance.instanceId, mark, player);
+  const same = instance.sameFused ?? 0;
+  const memory = (player.markMemory[mark] ?? 0) + (player.powers.markCount ?? 0);
+  const others = same + memory;
+  const rainbow = (instance.rainbowFused ?? 0) > 0 && others === 0;
   const depth = player.powers.markDepth ?? 0;
   if (mark === 'ice') {
     return {
@@ -137,7 +131,7 @@ export function markPlay(hand: readonly CardInstance[], instance: CardInstance, 
     };
   }
   return {
-    multiplier: markMultiplier(others, depth, handHasRainbow(hand)),
+    multiplier: markMultiplier(others, depth, rainbow),
     iceEnergy: 0,
     iceDraw: 0,
   };

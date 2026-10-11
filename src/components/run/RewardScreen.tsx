@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import type { RelicDefinition } from '../../domain/relic';
@@ -6,6 +7,7 @@ import { ARCHETYPE_LABEL } from '../../logic/describe';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { ArchetypeChips } from '../cards/ArchetypeChips';
 import { CardView } from '../cards/CardView';
+import { MarkPreviewSheet } from '../cards/MarkPreviewSheet';
 import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { RelicCard } from '../items/RelicCard';
@@ -33,6 +35,7 @@ export function RewardScreen({
   onPick,
 }: RewardScreenProps) {
   const archetype = mainArchetype(deck);
+  const [preview, setPreview] = useState<CardDefinition | null>(null);
   return (
     <ScreenScroll contentStyle={styles.root}>
       <View style={styles.corner}>
@@ -50,7 +53,13 @@ export function RewardScreen({
         {choices.map((card) => (
           <View key={card.id} style={styles.choice}>
             <CardView card={card} size="md" onPress={() => onPick(card)} />
-            <ArchetypeChips archetypes={card.archetypes ?? []} highlight={archetype} />
+            <ArchetypeChips
+              archetypes={card.archetypes ?? []}
+              highlight={archetype}
+              onSelect={(selected) => {
+                if (card.mark === selected) setPreview(card);
+              }}
+            />
           </View>
         ))}
       </View>
@@ -61,6 +70,7 @@ export function RewardScreen({
         <Text style={styles.skipText}>スキップ</Text>
       </Pressable>
       {toBossRelic && <Text style={styles.note}>このあとボスの宝箱からレリックを選べる</Text>}
+      <MarkPreviewSheet card={preview} onClose={() => setPreview(null)} />
     </ScreenScroll>
   );
 }

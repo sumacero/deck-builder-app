@@ -11,8 +11,8 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
 };
 
 /**
- * ノアの初期レリック。このターン融合して捨てた印を、次のターンは 1 枚多く数える。
- * 捨てた札は山札が尽きれば戻る。同じ印を何枚融合しても、覚えは +1。
+ * ノアの初期レリック。このターン手札で重ねた印を、次のターンは 1 枚多く数える。
+ * 重ねた札は山札が尽きれば戻る。同じ印を何枚重ねても、覚えは +1。
  */
 export const CRYSTAL_WEIGHT: RelicDefinition = {
   id: 'crystal-weight',

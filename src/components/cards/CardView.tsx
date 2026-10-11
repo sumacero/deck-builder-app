@@ -31,6 +31,8 @@ type CardViewProps = {
   selected?: boolean;
   /** 融合で結ばれている印の色。枠をその色にする。 */
   linkColor?: string;
+  /** 手札で重ねたあとの数字。省略すると、カードに書かれた効果。 */
+  description?: string;
   size?: 'sm' | 'md';
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
@@ -99,6 +101,7 @@ export function CardView({
   dimmed = false,
   selected = false,
   linkColor,
+  description,
   size = 'sm',
   width,
   onPress,
@@ -191,7 +194,7 @@ export function CardView({
               {CARD_RARITY_LABEL[card.rarity]}
             </Text>
           )}
-          <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
+          <Text style={[styles.description, scaled?.description]}>{description ?? describeCard(card)}</Text>
         </View>
         <View style={styles.costGem}>
           <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
@@ -203,7 +206,9 @@ export function CardView({
         )}
         {dimmed && <View pointerEvents="none" style={styles.dim} />}
       </Pressable>
-      {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
+      {detailOpen && (
+        <CardDetailSheet card={card} description={description} visible onClose={() => setDetailOpen(false)} />
+      )}
     </>
   );
 }

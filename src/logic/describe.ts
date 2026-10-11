@@ -1,6 +1,7 @@
 import type { Attribute } from '../domain/attribute';
 import type { BlessingDefinition } from '../domain/blessing';
-import type { Archetype, CardDefinition, CardGrowth, CardMark, CardRarity, CardType } from '../domain/card';
+import type { Archetype, CardDefinition, CardGrowth, CardInstance, CardRarity, CardType } from '../domain/card';
+import type { PlayerState } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
@@ -10,7 +11,7 @@ import type { RelicCondition, RelicDefinition, RelicRarity } from '../domain/rel
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
 import { ALL_ATTRIBUTES } from './attribute';
-import { MARK_NAME } from './marks';
+import { cloneCount, MARK_NAME, scaledEffects, stackedMarkPlay } from './marks';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -97,7 +98,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'paintHand':
       return `手札の印を${MARK_NAME[effect.mark]}に塗り替える（印の無いカードはそのまま）。`;
     case 'noteFusedMarks':
-      return 'このターン融合して捨てた印を、次のターンは 1 枚多く数える。';
+      return 'このターン手札で重ねた印を、次のターンは 1 枚多く数える。';
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -203,7 +204,7 @@ export function describePower(power: PowerId, amount: number): string {
     case 'arrowSupply':
       return `この戦闘中、ターンの始めに矢 ${amount} 本を手札に加える。`;
     case 'markCount':
-      return `この戦闘中、印を数えるとき同じ印が ${amount} 枚多くあるものとして扱う。`;
+      return `この戦闘中、印を数えるとき同じ印が ${amount} 枚多くあるものとして扱う。手札の札に、その数字が出る。`;
     case 'markDepth':
       return `この戦闘中、雨と波の倍率が ${amount} 段階上がる（最大 4 倍）。`;
     case 'waterClone':
@@ -249,21 +250,47 @@ export function describeCard(card: CardDefinition): string {
     card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
     card.exhaust ? '廃棄。' : '',
-    card.mark ? describeMark(card.mark) : '',
   ].join('');
   return (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
 }
 
-/** カード本文に添える、印の短い説明。詳しくは用語。 */
-function describeMark(mark: CardMark): string {
-  switch (mark) {
-    case 'rain':
-      return '雨の印。ほかの雨を融合して捨てる。1 枚でダメージ 2 倍、2 枚以上で 3 倍。捨てた枚数だけ水分身。';
-    case 'wave':
-      return '波の印。ほかの波を融合して捨てる。1 枚でブロック 2 倍、2 枚以上で 3 倍。捨てた枚数だけ水分身。';
-    case 'ice':
-      return '氷の印。ほかの氷を融合して捨てる。1 枚以上でエナジー +1、2 枚以上でさらに 1 枚引く。捨てた枚数だけ水分身。';
+/** 手札の札。重ねた枚数と文鎮の覚えが入った、いま使うと出る数字。 */
+export function describeHandCard(instance: CardInstance, player: PlayerState): string {
+  const play = stackedMarkPlay(instance, player);
+  const clones = cloneCount(instance);
+  if (play.multiplier === 1 && play.iceEnergy === 0 && play.iceDraw === 0 && clones === 0) {
+    return describeCard(instance.card);
   }
+  const scaled = describeCard({ ...instance.card, effects: scaledEffects(instance.card, play.multiplier) });
+  const extra = [
+    play.iceEnergy > 0 ? 'エナジー +1。' : '',
+    play.iceDraw > 0 ? 'カードを 1 枚引く。' : '',
+    clones > 0 ? `水分身 +${clones}。` : '',
+  ].join('');
+  return scaled + extra;
+}
+
+export type MarkPreviewLine = { label: string; text: string };
+
+/** 報酬の印チップ。この札を重ねたときの数字。深みや文鎮の覚えは、戦闘に入る前なので含めない。 */
+export function markPreviewLines(card: CardDefinition): MarkPreviewLine[] {
+  if (!card.mark) return [];
+  const withBonus = (multiplier: number, bonus: string) =>
+    describeCard({ ...card, effects: scaledEffects(card, multiplier) }) + bonus;
+  if (card.mark === 'ice') {
+    return [
+      { label: 'そのまま', text: describeCard(card) },
+      { label: '氷を 1 枚重ねる', text: withBonus(1, 'エナジー +1。水分身 +1。') },
+      { label: '氷を 2 枚重ねる', text: withBonus(1, 'エナジー +1。カードを 1 枚引く。水分身 +2。') },
+    ];
+  }
+  const name = MARK_NAME[card.mark];
+  return [
+    { label: 'そのまま', text: describeCard(card) },
+    { label: `${name}を 1 枚重ねる`, text: withBonus(2, '水分身 +1。') },
+    { label: `${name}を 2 枚重ねる`, text: withBonus(3, '水分身 +2。') },
+    { label: 'ほかの印を 1 枚重ねる', text: withBonus(2, '水分身 +1。') },
+  ];
 }
 
 export function describePotion(potion: PotionDefinition): string {
@@ -275,7 +302,7 @@ const RELIC_CONDITION_TEXT: Record<RelicCondition, string> = {
   lowHp: 'HP が半分以下なら',
   eliteOrBoss: 'エリート・ボス戦なら',
   everyThirdTurn: '3 ターンごとに',
-  hasFusedMark: '印を融合していれば',
+  hasFusedMark: '印を重ねていれば',
 };
 
 function relicTiming(relic: RelicDefinition): string {

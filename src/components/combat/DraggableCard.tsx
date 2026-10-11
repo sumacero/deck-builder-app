@@ -26,6 +26,8 @@ type DraggableCardProps = CardDragHandlers & {
   selected: boolean;
   /** この札が融合の相手になっているとき、印の色で枠を光らせる。 */
   linkColor?: string;
+  /** 重ねたあとの数字。省略すると、カードに書かれた効果。 */
+  description?: string;
 };
 
 /** 敵を選んでいる最中のカードを浮かべる量。波紋の起点も同じだけ上げる。 */
@@ -58,6 +60,7 @@ export function DraggableCard({
   dragging,
   selected,
   linkColor,
+  description,
   ...handlers
 }: DraggableCardProps) {
   const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
@@ -145,11 +148,14 @@ export function DraggableCard({
           dimmed={!playable}
           selected={selected}
           linkColor={linkColor}
+          description={description}
           detailOnHold={false}
         />
       </View>
       {/* Modal 内のタッチも React の親へ伝わるので、ジェスチャーを受ける View の外に置く。 */}
-      {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
+      {detailOpen && (
+        <CardDetailSheet card={card} description={description} visible onClose={() => setDetailOpen(false)} />
+      )}
     </>
   );
 }

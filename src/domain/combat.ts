@@ -53,13 +53,13 @@ export type PlayerState = Fighter & {
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
   /**
-   * 前のターンに融合して捨てた印。この自分のターン、その印を 1 枚多く数える。
+   * 前のターンに手札で重ねた印。この自分のターン、その印を 1 枚多く数える。
    * 手札の札とは別に足す。ターン終了の最初に空にし、文鎮が今ターンの融合から書き直す。
    */
   markMemory: Partial<Record<CardMark, number>>;
   /**
-   * このターン、融合して捨てた印。ターン終了時に文鎮が markMemory へ写し、そのあと空にする。
-   * 同じ印を何枚消費しても 1。
+   * このターン、手札で重ねた印。ターン終了時に文鎮が markMemory へ写し、そのあと空にする。
+   * 同じ印を何枚重ねても 1。
    */
   fusedMarks: Partial<Record<CardMark, number>>;
 };
@@ -145,7 +145,7 @@ export type CombatEventBody =
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
-  /** 印のあるカードを使い、手札の相手を融合して捨てた。波紋の演出に使う。 */
+  /** 手札で印を重ねた。波紋の演出に使う。playedId は残った札、materialIds は捨て札にした札。 */
   | { kind: 'marksFused'; target: 'player'; playedId: string; materialIds: string[] }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };

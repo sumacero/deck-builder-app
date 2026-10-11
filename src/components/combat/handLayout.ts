@@ -28,6 +28,35 @@ export function handCardSpacing(containerWidth: number, cardWidth: number, count
 export type HandPoint = { x: number; y: number };
 
 /**
+ * 画面上の点に重なっている手札の番号。右の札が手前なので、重なりは右から調べる。
+ * skipIndex は、いま持ち上げている札。origin は手札の枠の画面座標。
+ */
+export function handCardAtPoint(
+  point: HandPoint,
+  origin: HandPoint,
+  containerWidth: number,
+  cardWidth: number,
+  count: number,
+  skipIndex: number,
+): number | null {
+  if (count <= 0 || cardWidth <= 0 || containerWidth <= 0) return null;
+  const spacing = handCardSpacing(containerWidth, cardWidth, count);
+  const centers = handCardCenters(containerWidth, cardWidth, spacing, count);
+  const height = cardWidth * HAND_LAYOUT.aspectRatio;
+  const localX = point.x - origin.x;
+  const localY = point.y - origin.y;
+  for (let index = count - 1; index >= 0; index -= 1) {
+    if (index === skipIndex) continue;
+    const center = centers[index];
+    if (!center) continue;
+    const left = center.x - cardWidth / 2;
+    const top = center.y - height / 2;
+    if (localX >= left && localX <= left + cardWidth && localY >= top && localY <= top + height) return index;
+  }
+  return null;
+}
+
+/**
  * 手札の各カードの中心。行は余白の内側で中央寄せなので、波紋の位置も同じ式で出す。
  */
 export function handCardCenters(

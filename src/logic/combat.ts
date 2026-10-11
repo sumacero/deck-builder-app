@@ -31,7 +31,14 @@ import {
 import { arrowDamage, forgeArrow } from './arrows';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
-import { MARK_NAME, fusionMaterials, markPlay, scaledEffects } from './marks';
+import {
+  MARK_NAME,
+  canStackOnto,
+  cloneCount,
+  releaseFusion,
+  scaledEffects,
+  stackedMarkPlay,
+} from './marks';
 import { SLEEP_MOVE, traitOf } from './enemyTraits';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
@@ -151,7 +158,7 @@ export function drawCards(state: CombatState, count: number): CombatState {
       reshuffled = true;
     }
     const [top, ...rest] = drawPile;
-    drawn.push(top);
+    drawn.push(releaseFusion(top));
     drawPile = rest;
   }
 
@@ -859,12 +866,12 @@ function paintMarkedHand(state: CombatState, mark: CardMark): CombatState {
   return withLog({ ...state, hand }, `手札の印を${MARK_NAME[mark]}に塗り替えた`);
 }
 
-/** このターン融合して捨てた印を、次の自分のターンは 1 枚多く数える。同じ印を何枚捨てても +1。 */
+/** このターン手札で重ねた印を、次の自分のターンは 1 枚多く数える。同じ印を何枚重ねても +1。 */
 function rememberFusedMarks(state: CombatState): CombatState {
   return { ...state, player: { ...state.player, markMemory: { ...state.player.fusedMarks } } };
 }
 
-/** 氷の印。数値は増やさず、ほかの氷の枚数でエナジーとドローを足す。エナジーは +1 まで。 */
+/** 氷の印。数値は増やさず、重ねた氷と文鎮の覚えでエナジーとドローを足す。エナジーは +1 まで。 */
 function applyIceMark(state: CombatState, energy: number, draw: number): CombatState {
   const withEnergy = energy > 0 ? applyEffect(state, { kind: 'gainEnergy', amount: energy }, 'all') : state;
   return draw > 0 ? applyEffect(withEnergy, { kind: 'draw', amount: draw }, 'all') : withEnergy;
@@ -974,7 +981,7 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
   );
 }
 
-/** 融合した印を、このターンの覚えに足す。同じ印は何枚でも 1。 */
+/** 手札で重ねた印を、このターンの覚えに足す。同じ印は何枚でも 1。 */
 function noteFusedMarks(player: PlayerState, materials: readonly CardInstance[]): PlayerState {
   if (materials.length === 0) return player;
   const fusedMarks = { ...player.fusedMarks };
@@ -984,7 +991,48 @@ function noteFusedMarks(player: PlayerState, materials: readonly CardInstance[])
   return { ...player, fusedMarks };
 }
 
-/** 融合した枚数だけ水分身を足す。2 つ以上で、ブロックを超えた 1 ヒットの HP を受け流せる。数は次のターンに残る。 */
+/**
+ * 手札の印を、もう一枚の上に重ねる。エナジーは要らない。
+ * 重ねた札は捨て札に戻り、残った札に枚数が乗る。水分身は、残った札を使ったときに増える。
+ * 文鎮が覚えるのは、重ねた瞬間。
+ */
+export function fuseInHand(state: CombatState, sourceId: string, targetId: string): CombatState {
+  if (state.status !== 'playerTurn' || sourceId === targetId) return state;
+  const source = state.hand.find((card) => card.instanceId === sourceId);
+  const target = state.hand.find((card) => card.instanceId === targetId);
+  if (!source || !target || !canStackOnto(state.hand, source, target)) return state;
+
+  const sameMark = source.card.mark === target.card.mark;
+  const sameFused = (target.sameFused ?? 0) + (sameMark ? 1 + (source.sameFused ?? 0) : 0);
+  const rainbowFused =
+    (target.rainbowFused ?? 0) +
+    (sameMark ? (source.rainbowFused ?? 0) : 1 + (source.rainbowFused ?? 0) + (source.sameFused ?? 0));
+  const stacked: CardInstance = {
+    instanceId: target.instanceId,
+    card: target.card,
+    ...(sameFused > 0 ? { sameFused } : {}),
+    ...(rainbowFused > 0 ? { rainbowFused } : {}),
+  };
+  const hand = state.hand.flatMap((card) => {
+    if (card.instanceId === sourceId) return [];
+    if (card.instanceId === targetId) return [stacked];
+    return [card];
+  });
+  const fused = {
+    ...state,
+    hand,
+    discardPile: [...state.discardPile, releaseFusion(source)],
+    player: noteFusedMarks(state.player, [source]),
+  };
+  return withEvent(withLog(fused, `${source.card.name}を${target.card.name}に重ねた`), {
+    kind: 'marksFused',
+    target: 'player',
+    playedId: targetId,
+    materialIds: [sourceId],
+  });
+}
+
+/** 使った札に乗っていた枚数だけ水分身を足す。2 つ以上で、ブロックを超えた 1 ヒットの HP を受け流せる。数は次のターンに残る。 */
 function gainWaterClones(state: CombatState, amount: number): CombatState {
   const next = powerOf(state, 'waterClone') + amount;
   return callout(
@@ -1002,18 +1050,18 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || !canPlayCard(state, instanceId)) return state;
   const { card } = instance;
-  // 手札から出す前に数える。虹は使うカード自身も含む。同じ印は、融合して捨てる枚数。
-  const marks = markPlay(state.hand, instance, state.player);
-  const materials = fusionMaterials(state.hand, instance, state.player);
-  const materialIds = new Set(materials.map((material) => material.instanceId));
+  // 倍率は、手札で重ねた枚数と文鎮の覚え。使った瞬間にほかの札は消えない。
+  const marks = stackedMarkPlay(instance, state.player);
+  const clones = cloneCount(instance);
+  const released = releaseFusion(instance);
   const aim = resolveAim(state, card.target, target);
 
   const spent = {
     ...state,
-    hand: state.hand.filter((c) => c.instanceId !== instanceId && !materialIds.has(c.instanceId)),
-    player: noteFusedMarks({ ...state.player, energy: state.player.energy - card.cost }, materials),
-    discardPile: [...state.discardPile, ...materials, ...(card.exhaust ? [] : [instance])],
-    exhaustPile: card.exhaust ? [...state.exhaustPile, instance] : state.exhaustPile,
+    hand: state.hand.filter((c) => c.instanceId !== instanceId),
+    player: { ...state.player, energy: state.player.energy - card.cost },
+    discardPile: [...state.discardPile, ...(card.exhaust ? [] : [released])],
+    exhaustPile: card.exhaust ? [...state.exhaustPile, released] : state.exhaustPile,
   };
   const copied = card.addCopyToDiscard
     ? {
@@ -1040,20 +1088,11 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     aim !== 'all' && chosen && isAlive(chosen) && chosen.uid !== aim
       ? callout(withLog(announced, `${findEnemy(state, aim)?.name ?? '敵'}がかばった！`), aim, 'かばう！')
       : announced;
-  const fused =
-    materials.length > 0
-      ? withEvent(withLog(guarded, `${materials.map((material) => material.card.name).join('と')}を融合して捨てた`), {
-          kind: 'marksFused',
-          target: 'player',
-          playedId: instanceId,
-          materialIds: materials.map((material) => material.instanceId),
-        })
-      : guarded;
   const boosted =
     card.mark && card.mark !== 'ice' && marks.multiplier > 1
-      ? withLog(fused, `${MARK_NAME[card.mark]}が重なり ${marks.multiplier} 倍`)
-      : fused;
-  const withClones = materials.length > 0 ? gainWaterClones(boosted, materials.length) : boosted;
+      ? withLog(guarded, `${MARK_NAME[card.mark]}が重なり ${marks.multiplier} 倍`)
+      : guarded;
+  const withClones = clones > 0 ? gainWaterClones(boosted, clones) : boosted;
   const eventsBefore = withClones.events.length;
   const resolved = applyIceMark(
     applyEffects(withClones, scaledEffects(card, marks.multiplier), aim, {
@@ -1449,8 +1488,8 @@ function discardHand(state: CombatState): CombatState {
     {
       ...afterEffects,
       hand: retained,
-      discardPile: [...afterEffects.discardPile, ...kept],
-      exhaustPile: [...afterEffects.exhaustPile, ...vanishing],
+      discardPile: [...afterEffects.discardPile, ...kept.map(releaseFusion)],
+      exhaustPile: [...afterEffects.exhaustPile, ...vanishing.map(releaseFusion)],
     },
     vanishing.length,
   );
