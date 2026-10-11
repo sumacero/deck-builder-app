@@ -28,6 +28,8 @@ type DraggableCardProps = CardDragHandlers & {
   linkColor?: string;
   /** 重ねたあとの数字。省略すると、カードに書かれた効果。 */
   description?: string;
+  /** この札に重ねた枚数。 */
+  fusedCount?: number;
 };
 
 /** 敵を選んでいる最中のカードを浮かべる量。波紋の起点も同じだけ上げる。 */
@@ -61,6 +63,7 @@ export function DraggableCard({
   selected,
   linkColor,
   description,
+  fusedCount,
   ...handlers
 }: DraggableCardProps) {
   const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
@@ -149,6 +152,7 @@ export function DraggableCard({
           selected={selected}
           linkColor={linkColor}
           description={description}
+          fusedCount={fusedCount}
           detailOnHold={false}
         />
       </View>

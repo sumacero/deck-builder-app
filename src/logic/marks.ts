@@ -23,9 +23,10 @@ export function releaseFusion(instance: CardInstance): CardInstance {
 }
 
 /**
- * この札の上に重ねられる手札。
+ * この札を重ねられる手札の相手。
  * 同じ印がほかにあれば、その全部。無ければ、この札が同じ印をまだ重ねておらず、
- * 手札に三つの印が揃っているとき、ほかの印で同じ印を重ねていない札。
+ * 手札に三つの印が揃っているときだけ、ほかの印の札。その相手も、手札に同じ印がほかに無く、
+ * まだ何も重ねていないものに限る（同じ印同士で重ねられる札には、別の印は重ねない）。
  */
 export function stackPartners(hand: readonly CardInstance[], instance: CardInstance): CardInstance[] {
   const mark = instance.card.mark;
@@ -34,7 +35,11 @@ export function stackPartners(hand: readonly CardInstance[], instance: CardInsta
   const same = others.filter((card) => card.card.mark === mark);
   if (same.length > 0) return same;
   if ((instance.sameFused ?? 0) > 0 || !handHasRainbow(hand)) return [];
-  return others.filter((card) => card.card.mark !== mark && (card.sameFused ?? 0) === 0);
+  return others.filter(
+    (card) =>
+      cloneCount(card) === 0 &&
+      !others.some((other) => other.instanceId !== card.instanceId && other.card.mark === card.card.mark),
+  );
 }
 
 /** ドラッグした札を、相手の上に重ねられるか。相手が stackPartners に入っているときだけ。 */

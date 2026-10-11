@@ -17,12 +17,14 @@ import {
   CARD_TYPE_COLORS,
   COLORS,
   HAND_LAYOUT,
+  MARK_COLORS,
   RADIUS,
   RELIC_RARITY_COLORS,
   SPACING,
 } from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
 import { CARD_TYPE_EMBLEM, cardArt } from './cardArt';
+import { FusedBadge } from './FusedBadge';
 
 type CardViewProps = {
   card: CardDefinition;
@@ -33,6 +35,8 @@ type CardViewProps = {
   linkColor?: string;
   /** 手札で重ねたあとの数字。省略すると、カードに書かれた効果。 */
   description?: string;
+  /** 手札でこの札に重ねた枚数。1 枚以上で右上に出す。 */
+  fusedCount?: number;
   size?: 'sm' | 'md';
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
@@ -48,6 +52,8 @@ const BASE_WIDTH = 96;
 const NARROW_WIDTH = 90;
 const WIDE_WIDTH = 108;
 const BORDER_WIDTH = 2;
+/** 選択中・融合の相手のときの枠。 */
+const EMPHASIZED_BORDER_WIDTH = 3;
 const ART_INSET = 3;
 
 const artHeight = (width: number) => Math.round(width * CARD_ART.heightRatio);
@@ -102,6 +108,7 @@ export function CardView({
   selected = false,
   linkColor,
   description,
+  fusedCount = 0,
   size = 'sm',
   width,
   onPress,
@@ -119,6 +126,8 @@ export function CardView({
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width, card.name) : null;
   const art = cardArt(card);
+  const emphasized = selected || linkColor !== undefined;
+  const borderWidth = emphasized ? EMPHASIZED_BORDER_WIDTH : BORDER_WIDTH;
   return (
     <>
       <Pressable
@@ -131,7 +140,7 @@ export function CardView({
           wide && styles.wide,
           scaled?.card,
           { borderColor: linkColor ?? (selected ? COLORS.gold : frameColor) },
-          (selected || linkColor !== undefined) && styles.selected,
+          { borderWidth },
           pressed && onPress && styles.pressed,
         ]}
       >
@@ -196,11 +205,21 @@ export function CardView({
           )}
           <Text style={[styles.description, scaled?.description]}>{description ?? describeCard(card)}</Text>
         </View>
-        {dimmed && <View pointerEvents="none" style={styles.dim} />}
+        {dimmed && (
+          <View
+            pointerEvents="none"
+            style={[styles.dim, { top: -borderWidth, right: -borderWidth, bottom: -borderWidth, left: -borderWidth }]}
+          />
+        )}
         <View style={styles.costGem}>
           <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
         </View>
         {dimmed && <View pointerEvents="none" style={styles.dimGem} />}
+        {fusedCount > 0 && card.mark && (
+          <View pointerEvents="none" style={styles.fusedBadge}>
+            <FusedBadge count={fusedCount} color={MARK_COLORS[card.mark]} />
+          </View>
+        )}
         {count !== undefined && count > 1 && (
           <View style={styles.countBadge}>
             <Text style={styles.countText}>×{count}</Text>
@@ -233,17 +252,12 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.sm,
   },
   wide: { width: WIDE_WIDTH, minHeight: 168 },
-  selected: { borderWidth: 3 },
   /**
-   * カードの外枠にぴったり重ねる。上と左だけ大きくはみ出すと、覆いが枠からずれて見える。
+   * カードの外枠にぴったり重ねる。位置は枠の太さだけ外へ広げる（太さは選択中に変わる）。
    * コストの宝石は枠の外なので、別の丸い覆いを宝石の上に載せる（宝石は不透明なので、下の覆いと二重にならない）。
    */
   dim: {
     position: 'absolute',
-    top: -BORDER_WIDTH,
-    right: -BORDER_WIDTH,
-    bottom: -BORDER_WIDTH,
-    left: -BORDER_WIDTH,
     backgroundColor: COLORS.cardDim,
     borderRadius: RADIUS.md,
   },
@@ -333,6 +347,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
+  fusedBadge: { position: 'absolute', top: -SPACING.sm, right: -SPACING.xs },
   countText: { color: COLORS.onGold, fontSize: 11, fontWeight: '800' },
   name: {
     color: COLORS.text,
