@@ -1,6 +1,6 @@
 import type { BuffId, DebuffId, EnemyStatusId, StatusId, Statuses } from '../domain/status';
 
-export const DEBUFF_IDS: readonly DebuffId[] = ['vulnerable', 'weak', 'seed', 'tide'];
+export const DEBUFF_IDS: readonly DebuffId[] = ['vulnerable', 'weak', 'seed'];
 export const BUFF_IDS: readonly BuffId[] = ['retainBlock', 'blazing'];
 export const ENEMY_STATUS_IDS: readonly EnemyStatusId[] = ['intangible'];
 
@@ -26,17 +26,10 @@ export function extendStatuses(statuses: Statuses, ids: readonly StatusId[], tur
   );
 }
 
-/**
- * 1 ターン経過。0 になったものは消す。
- * 潮は「次の行動まで残る」ので、ここでは減らさない（行動したときに消える）。
- */
+/** 1 ターン経過。0 になったものは消す。 */
 export function tickStatuses(statuses: Statuses): Statuses {
   const next: Statuses = {};
   for (const [id, turns] of Object.entries(statuses) as [StatusId, number][]) {
-    if (id === 'tide') {
-      if (turns > 0) next[id] = turns;
-      continue;
-    }
     if (turns > 1) next[id] = turns - 1;
   }
   return next;

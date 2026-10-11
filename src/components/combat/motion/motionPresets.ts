@@ -211,7 +211,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
   sacrifice: SWORDSMAN_MOTIONS.sacrifice,
 };
 
-/** 蒼雨のノエル: その場で杖を突き出し、水を放つ。踏み込まず、杖を掲げて唱える。 */
+/** 水鏡のノア: その場で札を払う。杖は持たず、唱える動きは占いの手つきとして使う。 */
 const MAGE_MOTIONS: Record<CardMotion, MotionPreset> = {
   strike: {
     action: 'cast',
@@ -299,7 +299,7 @@ const MAGE_MOTIONS: Record<CardMotion, MotionPreset> = {
 const AGENT_MOTIONS: Record<string, Record<CardMotion, MotionPreset>> = {
   'crimson-hero': SWORDSMAN_MOTIONS,
   'verdant-archer': ARCHER_MOTIONS,
-  'rain-mage': MAGE_MOTIONS,
+  'mirror-seer': MAGE_MOTIONS,
 };
 
 /** 敵の動き。攻撃は 1 発ごとに体当たりする。 */

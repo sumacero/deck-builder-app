@@ -17,6 +17,11 @@ export type ShopStock = {
   potions: ShopOffer<PotionDefinition>[];
   /** カード削除サービス。1 店につき 1 回。 */
   removal: { price: number; used: boolean };
+  /**
+   * 印を 1 枚書き換えるサービス。1 店につき 1 回。
+   * 在庫にはいつも載せるが、画面に出すのは水鏡のノアの店だけ。
+   */
+  remark: { price: number; used: boolean };
 };
 
 /** ゴールドの入手量と値段の設定。 */
@@ -40,6 +45,8 @@ export type EconomyConfig = {
   /** カード削除は使うたびに removalPriceStep ずつ値上がりする（ランを通して）。 */
   removalBasePrice: number;
   removalPriceStep: number;
+  /** 印を 1 枚書き換える値段（水鏡のノアの店だけ画面に出す）。 */
+  remarkPrice: number;
   shopCardCount: number;
   shopRelicCount: number;
   shopPotionCount: number;

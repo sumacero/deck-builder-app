@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { CardDefinition, CardMark } from '../../domain/card';
 import type { RunState } from '../../domain/run';
 import type { ShopStock } from '../../domain/shop';
 import { useMusic } from '../../hooks/useMusic';
@@ -7,6 +8,7 @@ import type { ShopActions } from '../../hooks/useRun';
 import { isDraftable } from '../../logic/attribute';
 import { stackCards } from '../../logic/cards';
 import { describeCard, describePotion, describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
+import { MARK_NAME } from '../../logic/marks';
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardPickerModal } from '../cards/CardPickerModal';
@@ -31,6 +33,9 @@ type Purchase = { name: string; detail: string; price: number; blocked: string |
 export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [remarking, setRemarking] = useState(false);
+  const [stamp, setStamp] = useState<CardDefinition | null>(null);
+  const offersRemark = run.agent.id === 'mirror-seer';
   useMusic('shop');
   const purchase = selection ? describePurchase(selection) : null;
 
@@ -114,6 +119,20 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
             if (canAfford(run, stock.removal.price)) setRemoving(true);
           }}
         />
+        {offersRemark && (
+          <ShopRow
+            icon="🖋️"
+            name="印を書く"
+            description="カード 1 枚の印を、雨・波・氷のどれかに書き換える。印の無いカードにも押せる。"
+            price={stock.remark.price}
+            affordable={canAfford(run, stock.remark.price)}
+            sold={stock.remark.used}
+            onPress={() => {
+              setSelection(null);
+              if (canAfford(run, stock.remark.price) && !stock.remark.used) setRemarking(true);
+            }}
+          />
+        )}
       </ScrollView>
 
       <View style={styles.bar}>
@@ -152,11 +171,58 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
           stacks={stackCards(run.deck)}
           confirmLabel="削除する"
           onConfirm={(card) => {
-            actions.removeCard(card.id);
+            actions.removeCard(card);
             setRemoving(false);
           }}
           onCancel={() => setRemoving(false)}
         />
+      )}
+
+      {remarking && !stamp && (
+        <CardPickerModal
+          title={`印を書くカードを選ぶ（🪙${stock.remark.price}）`}
+          note="印の無いカードにも押せる。雨はダメージ、波はブロック、氷はエナジー。"
+          stacks={stackCards(run.deck)}
+          confirmLabel="このカード"
+          onConfirm={setStamp}
+          onCancel={() => setRemarking(false)}
+        />
+      )}
+      {stamp && (
+        <View style={styles.overlay}>
+          <View style={styles.markSheet}>
+            <Text style={styles.markTitle}>「{stamp.name}」の印</Text>
+            <View style={styles.markRow}>
+              {MARKS.map((mark) => (
+                <Pressable
+                  key={mark}
+                  disabled={stamp.mark === mark}
+                  onPress={() => {
+                    actions.remarkCard(stamp, mark);
+                    setStamp(null);
+                    setRemarking(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.markButton,
+                    stamp.mark === mark && styles.disabled,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.markButtonText}>{MARK_NAME[mark]}にする</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Pressable
+              onPress={() => {
+                setStamp(null);
+                setRemarking(false);
+              }}
+              style={({ pressed }) => [styles.leave, pressed && styles.pressed]}
+            >
+              <Text style={styles.leaveText}>やめる</Text>
+            </Pressable>
+          </View>
+        </View>
       )}
     </View>
   );
@@ -192,6 +258,8 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
     return { name: offer.item.name, detail: describePotion(offer.item), price: offer.price, blocked };
   }
 }
+
+const MARKS: readonly CardMark[] = ['rain', 'wave', 'ice'];
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
@@ -236,4 +304,31 @@ const styles = StyleSheet.create({
   leaveText: { color: COLORS.textMuted, fontSize: 15, fontWeight: '700' },
   disabled: { opacity: 0.4 },
   pressed: { opacity: 0.7 },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: COLORS.overlay,
+    justifyContent: 'center',
+    padding: SPACING.lg,
+  },
+  markSheet: {
+    backgroundColor: COLORS.panel,
+    borderColor: COLORS.gold,
+    borderWidth: 1,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    gap: SPACING.md,
+  },
+  markTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '800', textAlign: 'center' },
+  markRow: { gap: SPACING.sm },
+  markButton: {
+    backgroundColor: COLORS.gold,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+  },
+  markButtonText: { color: COLORS.onGold, fontSize: 15, fontWeight: '800' },
 });
