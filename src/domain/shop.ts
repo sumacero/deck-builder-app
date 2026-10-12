@@ -1,4 +1,4 @@
-import type { CardDefinition, CardType } from './card';
+import type { CardDefinition, CardRarity } from './card';
 import type { EnemyRank } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition, RelicTier } from './relic';
@@ -17,6 +17,11 @@ export type ShopStock = {
   potions: ShopOffer<PotionDefinition>[];
   /** カード削除サービス。1 店につき 1 回。 */
   removal: { price: number; used: boolean };
+  /**
+   * 印を 1 枚書き換えるサービス。1 店につき 1 回。
+   * 在庫にはいつも載せるが、画面に出すのは水鏡のノアの店だけ。
+   */
+  remark: { price: number; used: boolean };
 };
 
 /** ゴールドの入手量と値段の設定。 */
@@ -26,7 +31,10 @@ export type EconomyConfig = {
   encounterGold: Record<EnemyRank, { min: number; max: number }>;
   /** レリックの候補が尽きていたとき、代わりにもらえるゴールド。 */
   relicFallbackGold: number;
-  cardPrice: Record<CardType, number>;
+  /** カードの値段（レア度ごと）。 */
+  cardPrice: Record<CardRarity, number>;
+  /** カードのレア度の出現しやすさ（重み）。戦闘報酬・カード選択・ショップで共通。 */
+  cardTierWeight: Record<CardRarity, number>;
   /** レリックの値段（レア度ごと）。 */
   relicPrice: Record<RelicTier, number>;
   /** レリックのレア度の出現しやすさ（重み）。エリート・宝箱・ショップ・イベントで共通。 */
@@ -37,6 +45,8 @@ export type EconomyConfig = {
   /** カード削除は使うたびに removalPriceStep ずつ値上がりする（ランを通して）。 */
   removalBasePrice: number;
   removalPriceStep: number;
+  /** 印を 1 枚書き換える値段（水鏡のノアの店だけ画面に出す）。 */
+  remarkPrice: number;
   shopCardCount: number;
   shopRelicCount: number;
   shopPotionCount: number;

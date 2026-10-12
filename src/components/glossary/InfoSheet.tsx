@@ -3,7 +3,6 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { MODAL_ORIENTATIONS } from '../layout/modalOrientations';
-import { AbandonRunConfirm, AbandonRunPressable, useAbandonPrompt } from '../run/AbandonRun';
 
 type InfoSheetProps = {
   visible: boolean;
@@ -20,7 +19,6 @@ type InfoSheetProps = {
  */
 export function InfoSheet({ visible, title, onClose, aside, children }: InfoSheetProps) {
   const landscape = useIsLandscape();
-  const abandon = useAbandonPrompt();
   return (
     <Modal
       visible={visible}
@@ -50,19 +48,13 @@ export function InfoSheet({ visible, title, onClose, aside, children }: InfoShee
               {children}
             </ScrollView>
           )}
-          <View style={styles.footer}>
-            <View style={styles.footerSide}>
-              {abandon.available && <AbandonRunPressable onPress={abandon.ask} />}
-            </View>
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [styles.close, pressed && styles.pressed]}
-            >
-              <Text style={styles.closeText}>閉じる</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={onClose}
+            style={({ pressed }) => [styles.close, pressed && styles.pressed]}
+          >
+            <Text style={styles.closeText}>閉じる</Text>
+          </Pressable>
         </View>
-        {abandon.asking && <AbandonRunConfirm onStay={abandon.stay} onLeave={abandon.leave} />}
       </View>
     </Modal>
   );
@@ -99,9 +91,8 @@ const styles = StyleSheet.create({
   columns: { flexDirection: 'row', gap: SPACING.md, flexShrink: 1 },
   aside: { justifyContent: 'center' },
   body: { gap: SPACING.md, alignItems: 'stretch' },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.md },
-  footerSide: { flexShrink: 1 },
   close: {
+    alignSelf: 'center',
     borderWidth: 1,
     borderColor: COLORS.panelBorder,
     borderRadius: RADIUS.sm,

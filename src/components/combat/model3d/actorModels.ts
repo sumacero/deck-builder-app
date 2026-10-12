@@ -191,10 +191,66 @@ export const AGENT_MODELS: Record<string, ActorModel> = {
             animation: 'orbit',
             phase,
           }),
-        ),
-      ],
+      ),
+    ],
     },
     { aura: 'grass' },
+  ),
+  // イラスト 1（水面の占い師）: 広い袖の藍の上着、水色の裏地、金のカフス。
+  // 杖も大きな帽子も持たず、水盤の前で三枚の透けた札と雫の水晶を浮かべる。
+  'mirror-seer': humanoid(
+    {
+      skin: '#F3D2B0',
+      body: '#1B2A6B',
+      legs: '#141A3A',
+      accent: GOLD,
+      emblem: '#7EF0FF',
+      headgear: 'longHair',
+      weapon: 'none',
+      magic: '#7EF0FF',
+      cape: '#D7F6FF',
+      hair: '#24345C',
+      boots: '#2A241C',
+      extras: [
+        ...irises('#7EC8E8'),
+        box([0.07, 0.012, 0.02], '#E8D7C4', [0, 0.3, 0.23]),
+        // 広い袖と、袖口の金。
+        ...onBone('arm', [
+          capsule(0.11, 0.32, '#1B2A6B', [0.4, -0.28, 0.02]),
+          torus(0.09, 0.016, GOLD, [0.4, -0.42, 0.02], { rotation: [Math.PI / 2, 0, 0] }),
+        ]),
+        ...onBone('offArm', [
+          capsule(0.11, 0.32, '#1B2A6B', [-0.4, -0.28, 0.02]),
+          torus(0.09, 0.016, GOLD, [-0.4, -0.42, 0.02], { rotation: [Math.PI / 2, 0, 0] }),
+        ]),
+        // 上着の裾と、水色の裏地が見える縁。
+        taper(0.26, 0.42, 0.55, '#1B2A6B', [0, -0.42, 0], { segments: 10 }),
+        torus(0.4, 0.016, '#D7F6FF', [0, -0.66, 0.02], { rotation: [Math.PI / 2, 0, 0] }),
+        torus(0.38, 0.01, GOLD, [0, -0.7, 0], { rotation: [Math.PI / 2, 0, 0] }),
+        ...tallBoots('#2A241C', GOLD),
+        // 胸の前で札を押さえる、雫の水晶。
+        cone(0.055, 0.16, '#9EF6FF', [0, 0.02, 0.32], { glow: true, rotation: [Math.PI, 0, 0], segments: 6 }),
+        sphere(0.04, '#E8FBFF', [0, 0.1, 0.3], { glow: true }),
+        // 水盤の上に浮かぶ三枚。文字は描かない。
+        box([0.14, 0.2, 0.015], '#E8FBFF', [0.42, 0.22, 0.28], {
+          opacity: 0.72,
+          rotation: [0.2, 0.4, 0.15],
+          animation: 'sway',
+        }),
+        box([0.14, 0.2, 0.015], '#D7F6FF', [0, 0.28, 0.36], {
+          opacity: 0.8,
+          animation: 'sway',
+          phase: 0.3,
+        }),
+        box([0.14, 0.2, 0.015], '#B7E4FF', [-0.4, 0.2, 0.26], {
+          opacity: 0.72,
+          rotation: [0.15, -0.4, -0.12],
+          animation: 'sway',
+          phase: 0.6,
+        }),
+      ],
+    },
+    { aura: 'water' },
   ),
 };
 

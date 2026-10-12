@@ -5,10 +5,29 @@ import type { Effect, EffectTarget } from './effect';
 export type CardType = 'attack' | 'skill' | 'power' | 'status';
 
 /**
- * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
- * デバフ / ブロック / 筋力（火力の底上げ）/ 自傷（HP を払う）/ 成長 / 属性（弱点を突く）/ 手数（軽いカードを次々使う）。
+ * 報酬とショップでの出やすさ。強いカードほど rare。
+ * レリックの通常レア度（common / uncommon / rare）と同じ 3 段階。
  */
-export type Archetype = 'debuff' | 'block' | 'strength' | 'sacrifice' | 'growth' | 'element' | 'tempo';
+export type CardRarity = 'common' | 'uncommon' | 'rare';
+
+/**
+ * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
+ * 氷・雫・霞は水鏡のノアの印で、報酬の軸そのもの。それ以外はカイル・リーネの軸。
+ */
+export type Archetype =
+  | 'debuff'
+  | 'block'
+  | 'strength'
+  | 'sacrifice'
+  | 'growth'
+  | 'element'
+  | 'tempo'
+  | 'ice'
+  | 'drop'
+  | 'mist';
+
+/** 手札で重ねる札の印。氷は単体の高火力と大きなブロック、雫は全体攻撃とドロー、霞はすり抜けとデバフ。 */
+export type CardMark = 'ice' | 'drop' | 'mist';
 
 /** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
 export type CardTarget = EffectTarget;
@@ -52,6 +71,8 @@ export type CardDefinition = {
   id: string;
   name: string;
   type: CardType;
+  /** 報酬・ショップの出現率。初期カードやお邪魔カードも表示のために持つ。 */
+  rarity: CardRarity;
   cost: number;
   target: CardTarget;
   effects: Effect[];
@@ -85,6 +106,11 @@ export type CardDefinition = {
   /** 秘奥義（ゲージが溜まると手札に来る必殺技）。 */
   mysticArte?: boolean;
   archetypes?: Archetype[];
+  /**
+   * 手札で重ねる印。同じ種類・同じ段の札どうしを重ねると段が上がり、残った札の数値が増える。
+   * 重ねて消える札の印で、重ねた瞬間の効果が決まる。省略すると印は無い（重ねられない）。
+   */
+  mark?: CardMark;
   /** ムチで打つアタック。「ムチで攻撃するたびに宿り木」（宿り木の蔓など）が乗る。 */
   whip?: boolean;
   /** 弓の「矢」（0 コストで廃棄されるアタック）。戦闘中にカードの効果で作られ、矢のパワーで強くなる。 */
@@ -97,9 +123,18 @@ export type CardDefinition = {
 export type CardInstance = {
   instanceId: string;
   card: CardDefinition;
+  /**
+   * 段（この札にまとまっている枚数）。省略は 1。重ねるたびに倍になり、2・4 と上がる。
+   * 捨て札・山札・廃棄に移っても、その戦闘のあいだは残る。
+   */
+  stack?: number;
 };
 
 export type CardStack = {
   card: CardDefinition;
   count: number;
+  /** 戦闘中の山で、この札の段。段が違えば別の山にする。 */
+  stack?: number;
+  /** 重ねたあとの数字。省略すると、カードに書かれた効果。 */
+  description?: string;
 };

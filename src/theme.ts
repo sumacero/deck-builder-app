@@ -1,5 +1,5 @@
 import type { Attribute } from './domain/attribute';
-import type { CardType } from './domain/card';
+import type { CardMark, CardType } from './domain/card';
 import type { MapNodeType } from './domain/map';
 import type { RelicRarity } from './domain/relic';
 
@@ -158,6 +158,11 @@ export const MOTION = {
   goldDelta: 1100,
   /** 秘奥義のカットインを見せる時間（この間、後続の演出は待つ）。 */
   arteCutIn: 1400,
+  /** 手札の印が、結ばれる相手へ波紋を送る周期。摘んでいる間は短くする。 */
+  ripplePulse: 1500,
+  ripplePulseHot: 780,
+  /** 融合した瞬間に、消えた札の位置から波紋が広がる時間。 */
+  rippleBurst: 720,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {
@@ -172,6 +177,13 @@ export const ATTRIBUTE_COLORS: Record<Attribute, string> = {
   grass: '#4CC96A',
   fire: '#FF7A2B',
   water: '#2FB8E8',
+};
+
+/** 印の波紋。雨は明るい雫、波は深い海、氷は白い氷。水属性の枠より明るく、または深くして見分ける。 */
+export const MARK_COLORS: Record<CardMark, string> = {
+  ice: '#DFF6FF',
+  drop: '#3D8BFF',
+  mist: '#C9B8F0',
 };
 
 /** 属性カードの本文の背景にうっすら敷く色の不透明度（16 進 2 桁）。 */
@@ -195,7 +207,7 @@ export const RADIUS = {
 
 /** 戦闘画面のキャラクター（3D 表示）。size は描画領域の一辺、duration はミリ秒。 */
 export const ACTOR_FIGURE = {
-  size: 128,
+  size: 160,
   /** エージェント選択画面の 3D の一辺。 */
   selectSize: 112,
   /** ラスボス戦の前の画面に立つ、ラスボスの 3D の一辺。 */
