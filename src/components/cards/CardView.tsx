@@ -313,7 +313,10 @@ const styles = StyleSheet.create({
   },
   attributeIcon: { fontSize: 12 },
   body: {
-    flex: 1,
+    // flex:1（基準 0）だと、本文がカードの最低の高さに押し込まれて説明が切れる。
+    // 文章の高さは残し、余白があるときだけカードいっぱいに広げる。
+    flexGrow: 1,
+    flexShrink: 0,
     alignItems: 'center',
     gap: SPACING.xs / 2,
     paddingTop: SPACING.xs / 2,

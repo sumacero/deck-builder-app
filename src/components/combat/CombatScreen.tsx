@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import type { Region } from '../../domain/act';
 import type { CardInstance } from '../../domain/card';
-import type { CombatSetup, CombatState, DamagePreview, EnemyUid } from '../../domain/combat';
+import type { CombatSetup, CombatState, DamagePreview, EnemyUid, PlayerState } from '../../domain/combat';
 import type { CombatResult } from '../../domain/run';
 import { battleMusicFor } from '../../audio/music';
 import { useMusic } from '../../hooks/useMusic';
@@ -22,7 +22,7 @@ import { stackInstances } from '../../logic/cards';
 import { deckAfterCombat, livingEnemies } from '../../logic/combat';
 import { describeHandCard } from '../../logic/describe';
 import { stackOf } from '../../logic/marks';
-import { COLORS, COMBAT_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
+import { COLORS, COMBAT_LAYOUT, HAND_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
 import { CardView } from '../cards/CardView';
@@ -176,6 +176,10 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const hint = drag && lifted ? dragHint(drag.kind, hover, stackHover !== null) : null;
   const heldCard =
     drag?.kind === 'card' ? state.hand.find((card) => card.instanceId === drag.instanceId) : undefined;
+  const stackTarget = stackHover
+    ? state.hand.find((card) => card.instanceId === stackHover)
+    : undefined;
+  const stackForecast = heldCard && stackTarget ? forecastStack(stackTarget, state.player) : null;
 
   const itemBar = (
     <ItemBar
@@ -331,14 +335,30 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
         {drag && (
           <Animated.View style={[styles.ghost, { transform: ghost.getTranslateTransform() }]}>
             {drag.kind === 'card' ? (
-              <CardView
-                card={drag.card}
-                width={cardWidth}
-                selected={hover !== null || stackHover !== null}
-                description={heldCard ? describeHandCard(heldCard, state.player) : undefined}
-                stack={heldCard ? stackOf(heldCard) : 1}
-                detailOnHold={false}
-              />
+              <>
+                {stackForecast && (
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      styles.stackForecast,
+                      { marginLeft: (cardWidth - HAND_LAYOUT.stackForecastWidth) / 2 },
+                    ]}
+                  >
+                    <Text style={styles.stackForecastLabel}>
+                      {stackForecast.name}（{stackForecast.stack} 段）
+                    </Text>
+                    <Text style={styles.stackForecastText}>{stackForecast.description}</Text>
+                  </View>
+                )}
+                <CardView
+                  card={drag.card}
+                  width={cardWidth}
+                  selected={hover !== null || stackHover !== null}
+                  description={heldCard ? describeHandCard(heldCard, state.player) : undefined}
+                  stack={heldCard ? stackOf(heldCard) : 1}
+                  detailOnHold={false}
+                />
+              </>
             ) : (
               <View style={[styles.potionGhost, hover !== null && styles.potionGhostAimed]}>
                 <Text style={styles.potionGhostIcon}>{drag.potion.icon}</Text>
@@ -389,6 +409,16 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
     default:
       return [];
   }
+}
+
+/** 重ねたあとに残る札（下の札）の、段が倍になった説明。 */
+function forecastStack(target: CardInstance, player: PlayerState): { name: string; stack: number; description: string } {
+  const stack = stackOf(target) * 2;
+  return {
+    name: target.card.name,
+    stack,
+    description: describeHandCard({ ...target, stack }, player),
+  };
 }
 
 function dragHint(kind: 'card' | 'potion', hover: DropTarget | null, stacking: boolean): string {
@@ -468,6 +498,21 @@ const styles = StyleSheet.create({
   cancelText: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.7 },
   ghost: { position: 'absolute', left: 0, top: 0, pointerEvents: 'none' },
+  /** 持ち上げたカードの上。指はカードの下寄りにあるので、説明はここなら隠れない。 */
+  stackForecast: {
+    position: 'absolute',
+    bottom: '100%',
+    width: HAND_LAYOUT.stackForecastWidth,
+    marginBottom: SPACING.xs,
+    backgroundColor: COLORS.overlay,
+    borderColor: COLORS.gold,
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  stackForecastLabel: { color: COLORS.gold, fontSize: 13, fontWeight: '800', textAlign: 'center' },
+  stackForecastText: { color: COLORS.text, fontSize: 13, lineHeight: 18, textAlign: 'center' },
   potionGhost: {
     width: ITEM_BAR.potionGhostSize,
     height: ITEM_BAR.potionGhostSize,

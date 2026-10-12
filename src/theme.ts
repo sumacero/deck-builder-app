@@ -277,6 +277,8 @@ export const HAND_LAYOUT = {
   topPadding: SPACING.sm,
   /** カードの縦横比（高さ / 幅）。 */
   aspectRatio: 1.375,
+  /** 重ねるあいだ、持ち上げたカードの上に出す説明の幅。指で隠れないよう、カードより広くする。 */
+  stackForecastWidth: 220,
 } as const;
 
 /** カードの上半分に置くイラスト枠。 */
