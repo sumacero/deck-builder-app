@@ -94,6 +94,7 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
           choices={visible.phase.choices}
           gold={visible.phase.gold}
           relic={visible.phase.relic}
+          potion={visible.phase.potion}
           toBossRelic={visible.phase.next === 'bossRelic'}
           deck={visible.deck}
           onPick={resolveReward}

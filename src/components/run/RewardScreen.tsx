@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
+import type { PotionDefinition } from '../../domain/potion';
 import type { RelicDefinition } from '../../domain/relic';
 import { mainArchetype } from '../../logic/archetype';
-import { ARCHETYPE_LABEL } from '../../logic/describe';
+import { ARCHETYPE_LABEL, describePotion } from '../../logic/describe';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { ArchetypeChips } from '../cards/ArchetypeChips';
 import { CardView } from '../cards/CardView';
@@ -19,6 +20,8 @@ type RewardScreenProps = {
   gold: number;
   /** 手に入れたレリック（もう所持品に入っている）。 */
   relic: RelicDefinition | null;
+  /** この戦闘でもらったポーション（もう空き枠に入っている）。 */
+  potion: PotionDefinition | null;
   /** ボス撃破後は、選んだあとボスレリックの 3 択へ進む。 */
   toBossRelic: boolean;
   /** 今のデッキ。選ぶ前に見比べられるように。 */
@@ -30,6 +33,7 @@ export function RewardScreen({
   choices,
   gold,
   relic,
+  potion,
   toBossRelic,
   deck,
   onPick,
@@ -44,6 +48,15 @@ export function RewardScreen({
       </View>
       {gold > 0 && <Text style={styles.gold}>🪙 +{gold} ゴールド</Text>}
       {relic && <RelicCard relic={relic} caption="レリック獲得" />}
+      {potion && (
+        <View style={styles.potion}>
+          <Text style={styles.potionIcon}>{potion.icon}</Text>
+          <View style={styles.potionBody}>
+            <Text style={styles.potionName}>ポーション獲得: {potion.name}</Text>
+            <Text style={styles.potionText}>{describePotion(potion)}</Text>
+          </View>
+        </View>
+      )}
       <Text style={styles.title}>カード報酬</Text>
       <Text style={styles.subtitle}>1 枚選んでデッキに加える</Text>
       {archetype && (
@@ -91,6 +104,21 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   gold: { color: COLORS.gold, fontSize: 18, fontWeight: '800' },
+  potion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    alignSelf: 'stretch',
+    backgroundColor: COLORS.panel,
+    borderWidth: 1.5,
+    borderColor: COLORS.gold,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+  },
+  potionIcon: { fontSize: 30 },
+  potionBody: { flex: 1, gap: 2 },
+  potionName: { color: COLORS.gold, fontSize: 14, fontWeight: '800' },
+  potionText: { color: COLORS.textMuted, fontSize: 12 },
   title: { color: COLORS.gold, fontSize: 26, fontWeight: '800', letterSpacing: 4 },
   subtitle: { color: COLORS.textMuted, fontSize: 14 },
   archetype: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },

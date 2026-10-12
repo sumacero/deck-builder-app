@@ -24,7 +24,7 @@ export type RunSetup = {
   /** 最後の章のボスを倒したあとに戦うラスボス（強さの倍率はかけ済み）。倒したらクリア。 */
   finalBoss: EnemyDefinition;
   rewardPool: CardDefinition[];
-  /** ショップ・恩恵で手に入るポーションの候補。 */
+  /** 戦闘報酬・ショップ・恩恵・イベントで手に入るポーションの候補。 */
   potionPool: PotionDefinition[];
   /** エリート・宝箱・ショップ・恩恵で手に入るレリックの候補。持っているものは出ない。 */
   relicPool: RelicDefinition[];
@@ -54,6 +54,8 @@ export type RunPhase =
       gold: number;
       /** すでに所持品に入っている。 */
       relic: RelicDefinition | null;
+      /** この戦闘でもらったポーション。すでに空き枠へ入っている。枠が埋まっていると null。 */
+      potion: PotionDefinition | null;
       /** 報酬のあとに進む先。ボス撃破後はボスレリックの 3 択へ。 */
       next: 'map' | 'bossRelic';
     }

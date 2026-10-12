@@ -2,6 +2,7 @@ import type { ActConfig } from '../domain/act';
 import type { CardDefinition } from '../domain/card';
 import type { CombatSetup } from '../domain/combat';
 import type { Encounter } from '../domain/enemy';
+import type { PotionDefinition } from '../domain/potion';
 import type { GameMap, MapNode } from '../domain/map';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { generateBlessingOptions } from './blessing';
@@ -151,9 +152,27 @@ export function moveTo(run: RunState, nodeId: string): RunState {
 }
 
 /**
- * 勝てばゴールドとカード 3 択。エリートはレリックも、ボスはそのあとボスレリックの 3 択。
- * ラスボスを倒したらクリア。
+ * 勝てばゴールドとカード 3 択。空きのポーション枠があれば 1 個入る。
+ * エリートはレリックも、ボスはそのあとボスレリックの 3 択。ラスボスを倒したらクリア。
  */
+
+/** 最初の空き枠へ、候補から 1 個入れる。空きが無ければ出さない。 */
+function grantRewardPotion(run: RunState): { run: RunState; potion: PotionDefinition | null } {
+  const slot = run.potions.findIndex((held) => held === null);
+  if (slot < 0) return { run, potion: null };
+  const picked = pickOne(run.potionPool, run.rngSeed);
+  const potion = picked.item;
+  if (!potion) return { run: { ...run, rngSeed: picked.seed }, potion: null };
+  return {
+    run: {
+      ...run,
+      rngSeed: picked.seed,
+      potions: run.potions.map((held, index) => (index === slot ? potion : held)),
+    },
+    potion,
+  };
+}
+
 export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (run.phase.kind !== 'combat') return run;
   const stats = mergeStats(run.stats, result.stats, result.status === 'won');
@@ -179,21 +198,23 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
+  const dropped = grantRewardPotion(looted.run);
   const offered = pickRewardChoices(
-    draftPool(looted.run),
-    looted.run.deck,
+    draftPool(dropped.run),
+    dropped.run.deck,
     3,
-    looted.run.rngSeed,
-    looted.run.economy.cardTierWeight,
+    dropped.run.rngSeed,
+    dropped.run.economy.cardTierWeight,
   );
   return {
-    ...looted.run,
+    ...dropped.run,
     rngSeed: offered.seed,
     phase: {
       kind: 'reward',
       choices: offered.items,
       gold: gold.value,
       relic: looted.relic,
+      potion: dropped.potion,
       next: rank === 'boss' ? 'bossRelic' : 'map',
     },
   };
