@@ -216,6 +216,76 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '🌳',
     description: '自分のターンの始めに、敵全体にその数値の宿り木を与える。',
   },
+  ice: {
+    id: 'ice',
+    name: '氷の印',
+    icon: '❄️',
+    description:
+      '単体への大きなダメージと、大きなブロックの印。氷の札を重ねて消すと、一番強い攻撃をしてくる敵に霜（1 ヒットにつき 2 × 消えた札の段）を与える。',
+  },
+  drop: {
+    id: 'drop',
+    name: '雫の印',
+    icon: '💧',
+    description: '敵全体への攻撃と、ブロック＋ドローの印。雫の札を重ねて消すと、消えた札の段の数だけカードを引く。',
+  },
+  mist: {
+    id: 'mist',
+    name: '霞の印',
+    icon: '🌫️',
+    description:
+      'ブロック無視・かわす・デバフ・悪い効果を消す印。霞のアタックを重ねて消すと筋力が一番高い敵の筋力を 3 × 段だけ消し、霞のスキルを重ねて消すと自分の悪い効果を段の数だけ消す。',
+  },
+  fuse: {
+    id: 'fuse',
+    name: '重ねる',
+    icon: '🔮',
+    description:
+      '印のある札を、手札の同じ種類（アタックどうし・スキルどうし）で同じ段の札の上にドラッグして重ねる。印は違ってもよく、エナジーは要らない。上の札は消え、その印の効果がすぐ起きる。下の札は段が上がって残る。',
+  },
+  stack: {
+    id: 'stack',
+    name: '段',
+    icon: '🃏',
+    description:
+      '札を重ねた深さ。1 段どうしで 2 段、2 段どうしで 4 段（最大）。2 段の札は数値が 2 倍、4 段は 3 倍。段は捨て札や山札に移っても戦闘のあいだ残り、重ねて消えた札は捨て札に戻る。',
+  },
+  fuseEcho: {
+    id: 'fuseEcho',
+    name: '水面',
+    icon: '🪞',
+    description: '札を重ねたときの印の効果が、その数値の回数だけ多く起きる。',
+  },
+  stackDepth: {
+    id: 'stackDepth',
+    name: '深み',
+    icon: '🔷',
+    description: '2 段以上の札の倍率が、その数値だけ上がる（2 段で 3 倍、4 段で 4 倍など）。',
+  },
+  pierce: {
+    id: 'pierce',
+    name: 'ブロック無視',
+    icon: '🌫️',
+    description: '敵のブロックを素通りして、HP に直接ダメージを与える。',
+  },
+  evade: {
+    id: 'evade',
+    name: 'かわす',
+    icon: '💨',
+    description: 'このターン、敵の攻撃をその回数だけ受け流す（1 ヒットにつき 1 回）。ターンの始めに消える。',
+  },
+  frost: {
+    id: 'frost',
+    name: '霜',
+    icon: '🧊',
+    description: 'その敵の次の攻撃が、1 ヒットにつき数値の分だけ弱くなる。攻撃したら消える。',
+  },
+  cleanse: {
+    id: 'cleanse',
+    name: '悪い効果を消す',
+    icon: '✨',
+    description: '封印・弱体・衰弱・麻痺・凍えなど、自分にかかった悪い効果を消す。',
+  },
   verdure: {
     id: 'verdure',
     name: '命の芽吹き',

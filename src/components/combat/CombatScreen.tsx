@@ -20,6 +20,8 @@ import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
 import { deckAfterCombat, livingEnemies } from '../../logic/combat';
+import { describeHandCard } from '../../logic/describe';
+import { stackOf } from '../../logic/marks';
 import { COLORS, COMBAT_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
@@ -81,6 +83,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const {
     state,
     playCard,
+    fuseInHand,
     drinkPotion,
     discardPotion,
     endTurn,
@@ -105,6 +108,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const {
     drag,
     hover,
+    stackHover,
     lifted,
     ghost,
     cardHandlers,
@@ -119,6 +123,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     potions: state.potions,
     cardWidth,
     onPlayCard: playCard,
+    onFuse: fuseInHand,
     onDrinkPotion: drinkPotion,
   });
 
@@ -168,7 +173,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     if (activePending.kind === 'card') playCard(activePending.instanceId, uid);
     else drinkPotion(activePending.slot, uid);
   };
-  const hint = drag && lifted ? dragHint(drag.kind, hover) : null;
+  const hint = drag && lifted ? dragHint(drag.kind, hover, stackHover !== null) : null;
+  const heldCard =
+    drag?.kind === 'card' ? state.hand.find((card) => card.instanceId === drag.instanceId) : undefined;
 
   const itemBar = (
     <ItemBar
@@ -235,6 +242,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const hand = (
     <Hand
       cards={state.hand}
+      player={state.player}
       events={state.events}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
@@ -297,11 +305,11 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
           <>
             {itemBar}
             <View style={styles.turnRow}>
-              <View style={styles.settings}>
+              <View style={styles.turnRowSide}>
                 <SettingsButton />
               </View>
               {turnLabel}
-              <View style={styles.deck}>
+              <View style={[styles.turnRowSide, styles.turnRowEnd]}>
                 <DeckButton deck={setup.deck} />
               </View>
             </View>
@@ -326,7 +334,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
               <CardView
                 card={drag.card}
                 width={cardWidth}
-                selected={hover !== null}
+                selected={hover !== null || stackHover !== null}
+                description={heldCard ? describeHandCard(heldCard, state.player) : undefined}
+                stack={heldCard ? stackOf(heldCard) : 1}
                 detailOnHold={false}
               />
             ) : (
@@ -340,7 +350,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
           <CardPileModal
             title={PILE_VIEW[openPile].title}
             note={PILE_VIEW[openPile].note}
-            stacks={stackInstances(pileCards(state, openPile))}
+            stacks={stackInstances(pileCards(state, openPile), (instance) =>
+              describeHandCard(instance, state.player),
+            )}
             onClose={() => setOpenPile(null)}
           />
         )}
@@ -379,7 +391,8 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
   }
 }
 
-function dragHint(kind: 'card' | 'potion', hover: DropTarget | null): string {
+function dragHint(kind: 'card' | 'potion', hover: DropTarget | null, stacking: boolean): string {
+  if (stacking) return '離して重ねる';
   if (hover) return '離して使う';
   return kind === 'card' ? 'もっと上まで持ち上げて離す' : '使う相手のほうへ動かして離す';
 }
@@ -401,13 +414,14 @@ const styles = StyleSheet.create({
   /** 縦向きの手札は画面の左右いっぱいまで使う。 */
   portraitHand: { marginHorizontal: -SPACING.lg },
   landscapeHand: { flex: 1 },
-  turnRow: { justifyContent: 'center' },
-  settings: { position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'center' },
+  /** 左右の列を同じ幅にして、TURN を真ん中に置く。行の高さはボタンに合わせる。 */
+  turnRow: { flexDirection: 'row', alignItems: 'center' },
+  turnRowSide: { flex: 1, alignItems: 'flex-start' },
+  turnRowEnd: { alignItems: 'flex-end' },
   /** 上に敵、左下にエージェント。斜めに向かい合って画面を広く使う。 */
   portraitStage: { flex: 1, justifyContent: 'space-between', paddingBottom: SPACING.sm },
   playerSlot: { alignSelf: 'flex-start', width: `${COMBAT_LAYOUT.playerWidthRatio * 100}%` },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 64 },
-  deck: { position: 'absolute', right: 0 },
   /** 所持品の説明欄が右の舞台の上に重なって見えるよう、右の列より手前に置く。 */
   side: {
     width: `${COMBAT_LAYOUT.landscapeSideRatio * 100}%`,

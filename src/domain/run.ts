@@ -1,7 +1,7 @@
 import type { ActConfig } from './act';
 import type { AgentDefinition } from './agent';
 import type { BlessingDefinition, GuideCharacter } from './blessing';
-import type { CardDefinition } from './card';
+import type { CardDefinition, CardMark } from './card';
 import type { CombatStats, PotionSlot } from './combat';
 import type { EnemyDefinition, Encounter } from './enemy';
 import type { EventDefinition } from './event';
@@ -24,7 +24,7 @@ export type RunSetup = {
   /** 最後の章のボスを倒したあとに戦うラスボス（強さの倍率はかけ済み）。倒したらクリア。 */
   finalBoss: EnemyDefinition;
   rewardPool: CardDefinition[];
-  /** ショップ・恩恵で手に入るポーションの候補。 */
+  /** 戦闘報酬・ショップ・恩恵・イベントで手に入るポーションの候補。 */
   potionPool: PotionDefinition[];
   /** エリート・宝箱・ショップ・恩恵で手に入るレリックの候補。持っているものは出ない。 */
   relicPool: RelicDefinition[];
@@ -39,13 +39,13 @@ export type RunSetup = {
   restHealRatio: number;
 };
 
-/** 恩恵・イベントのあとのデッキ操作。 */
-export type DeckEditMode = 'upgrade' | 'remove';
-
 /** ラン全体が今どの画面にいるか。 */
 export type RunPhase =
   | { kind: 'blessing'; options: BlessingDefinition[] }
-  | { kind: 'deckEdit'; mode: DeckEditMode }
+  | { kind: 'deckEdit'; mode: 'upgrade' }
+  | { kind: 'deckEdit'; mode: 'remove' }
+  /** 選んだカード 1 枚の印を mark にする（印の無いカードにも押せる）。 */
+  | { kind: 'deckEdit'; mode: 'remark'; mark: CardMark }
   | { kind: 'map' }
   | { kind: 'combat'; nodeId: string; encounter: Encounter; seed: number }
   | {
@@ -54,6 +54,13 @@ export type RunPhase =
       gold: number;
       /** すでに所持品に入っている。 */
       relic: RelicDefinition | null;
+      /**
+       * この戦闘のポーション。空き枠があればもう入っている。
+       * potionPending のときは枠が埋まっていて、まだ所持品に入っていない。
+       */
+      potion: PotionDefinition | null;
+      /** true なら、使う・入れ替える・置いていくを選ぶまでカード報酬には進まない。 */
+      potionPending: boolean;
       /** 報酬のあとに進む先。ボス撃破後はボスレリックの 3 択へ。 */
       next: 'map' | 'bossRelic';
     }
@@ -117,6 +124,11 @@ export type RunState = {
   restHealRatio: number;
   /** このランでカード削除を使った回数。削除の値段に影響する。 */
   removalCount: number;
+  /**
+   * これからの報酬を、この印か印の無いカードに絞る。
+   * 効果そのものは書き換えない（ブロックのカードを雨のカードにはしない）。
+   */
+  markBias: CardMark | null;
   stats: RunStats;
   rngSeed: number;
 };

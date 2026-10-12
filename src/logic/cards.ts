@@ -1,11 +1,21 @@
-import type { CardDefinition, CardGrowth, CardInstance, CardStack, CardUpgrade } from '../domain/card';
+import type { CardDefinition, CardGrowth, CardInstance, CardMark, CardStack, CardUpgrade } from '../domain/card';
 import type { Effect } from '../domain/effect';
 
-/** 同じ id のカードを枚数付きでまとめる（成長量が違えば別扱い）。コスト順。 */
+/** 同じカードでも印が違えば別の山。削除・印の書き換えで、どれを選んだか分かるようにする。 */
+export function cardStackKey(card: CardDefinition): string {
+  return `${card.id}#${card.mark ?? '-'}#${card.timesGrown ?? 0}`;
+}
+
+/** 同じ id・印・成長回数の 1 枚。強化の有無は id の末尾で分かれる。 */
+export function cardsMatch(a: CardDefinition, b: CardDefinition): boolean {
+  return a.id === b.id && a.mark === b.mark && (a.timesGrown ?? 0) === (b.timesGrown ?? 0);
+}
+
+/** 同じ id のカードを枚数付きでまとめる（印か成長量が違えば別扱い）。コスト順。 */
 export function stackCards(cards: readonly CardDefinition[]): CardStack[] {
   const stacks = new Map<string, CardStack>();
   for (const card of cards) {
-    const key = `${card.id}#${card.timesGrown ?? 0}`;
+    const key = cardStackKey(card);
     const existing = stacks.get(key);
     if (existing) existing.count += 1;
     else stacks.set(key, { card, count: 1 });
@@ -15,8 +25,35 @@ export function stackCards(cards: readonly CardDefinition[]): CardStack[] {
   );
 }
 
-export function stackInstances(cards: readonly CardInstance[]): CardStack[] {
-  return stackCards(cards.map((c) => c.card));
+/**
+ * 戦闘中の山を、枚数付きでまとめる。手札で重ねた札は、重ね方が同じものだけを同じ山にする。
+ * describe を渡すと、重ねた札にその数字を載せる。
+ */
+export function stackInstances(
+  cards: readonly CardInstance[],
+  describe?: (instance: CardInstance) => string,
+): CardStack[] {
+  const stacks = new Map<string, CardStack>();
+  for (const instance of cards) {
+    const stack = instance.stack ?? 1;
+    const key = `${cardStackKey(instance.card)}#${stack}`;
+    const existing = stacks.get(key);
+    if (existing) {
+      existing.count += 1;
+      continue;
+    }
+    stacks.set(key, {
+      card: instance.card,
+      count: 1,
+      ...(stack > 1 ? { stack, ...(describe ? { description: describe(instance) } : {}) } : {}),
+    });
+  }
+  return [...stacks.values()].sort(
+    (a, b) =>
+      a.card.cost - b.card.cost ||
+      a.card.name.localeCompare(b.card.name, 'ja') ||
+      (a.stack ?? 1) - (b.stack ?? 1),
+  );
 }
 
 export function canUpgrade(card: CardDefinition): boolean {
@@ -42,9 +79,9 @@ export function upgradeCard(card: CardDefinition): CardDefinition {
   };
 }
 
-/** 指定 id の最初の 1 枚を強化したデッキ。見つからない・強化できないなら元のまま。 */
-export function upgradeInDeck(deck: readonly CardDefinition[], cardId: string): CardDefinition[] {
-  const index = deck.findIndex((card) => card.id === cardId && canUpgrade(card));
+/** 選んだ 1 枚を強化したデッキ。見つからない・強化できないなら元のまま。 */
+export function upgradeInDeck(deck: readonly CardDefinition[], target: CardDefinition): CardDefinition[] {
+  const index = deck.findIndex((card) => cardsMatch(card, target) && canUpgrade(card));
   if (index < 0) return [...deck];
   return deck.map((card, i) => (i === index ? upgradeCard(card) : card));
 }
@@ -105,9 +142,20 @@ export function growCard(card: CardDefinition): CardDefinition {
   };
 }
 
-/** 指定 id の最初の 1 枚を取り除いたデッキ。 */
-export function removeFromDeck(deck: readonly CardDefinition[], cardId: string): CardDefinition[] {
-  const index = deck.findIndex((card) => card.id === cardId);
+/** 選んだ 1 枚を取り除いたデッキ。 */
+export function removeFromDeck(deck: readonly CardDefinition[], target: CardDefinition): CardDefinition[] {
+  const index = deck.findIndex((card) => cardsMatch(card, target));
   if (index < 0) return [...deck];
   return deck.filter((_, i) => i !== index);
+}
+
+/** 選んだ 1 枚の印を書き換える。印の無いカードにも押せる。 */
+export function remarkInDeck(
+  deck: readonly CardDefinition[],
+  target: CardDefinition,
+  mark: CardMark,
+): CardDefinition[] {
+  const index = deck.findIndex((card) => cardsMatch(card, target));
+  if (index < 0) return [...deck];
+  return deck.map((card, i) => (i === index ? { ...card, mark } : card));
 }

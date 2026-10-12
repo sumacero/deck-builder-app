@@ -5,7 +5,7 @@ import { prepareSounds } from '../../audio/soundPlayer';
 import { useMusic } from '../../hooks/useMusic';
 import type { RunSetup } from '../../domain/run';
 import { useRun } from '../../hooks/useRun';
-import { buildCombatSetup, currentAct } from '../../logic/run';
+import { buildCombatSetup, currentAct, rewardPotionHeal } from '../../logic/run';
 import { BlessingScreen } from '../blessing/BlessingScreen';
 import { DeckEditScreen } from '../blessing/DeckEditScreen';
 import { CombatScreen } from '../combat/CombatScreen';
@@ -33,16 +33,21 @@ type RunRootProps = {
 /**
  * ラン全体の画面切り替え。マップから各マスの画面へ。
  * 画面が変わるたびに暗転から明け、回復・強化などの演出はどの画面の上にも重ねて出す。
+ * 演出と画面の切り替わりが重なるときは、演出が終わってから次の画面と BGM に進む。
  */
 export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
   const {
     run,
     events,
+    shown,
     dismissEvent,
     discardPotion,
     moveTo,
     finishCombat,
     resolveReward,
+    drinkRewardPotion,
+    swapRewardPotion,
+    declineRewardPotion,
     chooseBossRelic,
     startFinalBattle,
     newRun,
@@ -66,65 +71,77 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
     void prepareSounds();
   }, []);
 
+  // 演出が残っているあいだは、切り替わる前の画面と曲を保つ。ロジック上の run は先に進んでいる。
+  const visible = shown ?? run;
+
   // 戦闘とショップは自分の画面で曲を流す。ラスボス戦の前は静かにする。
   // それ以外（マップ・休憩所・イベントなど）は地域のフィールド曲。
-  const kind = run.phase.kind;
+  const kind = visible.phase.kind;
   // 踏破・敗北は、振り返り画面に「タイトルへ」がある。上端のボタンはそこに被せない。
   const ended = kind === 'gameOver' || kind === 'cleared';
   const ownMusic =
     kind === 'combat' || kind === 'shop' || kind === 'gameOver' || kind === 'cleared' || kind === 'finale';
-  useMusic(ownMusic ? null : fieldMusicFor(currentAct(run).region));
+  useMusic(ownMusic ? null : fieldMusicFor(currentAct(visible).region));
 
   let screen: ReactNode;
-  switch (run.phase.kind) {
+  switch (visible.phase.kind) {
     case 'blessing':
-      screen = <BlessingScreen run={run} options={run.phase.options} actions={blessingActions} />;
+      screen = <BlessingScreen run={visible} options={visible.phase.options} actions={blessingActions} />;
       break;
     case 'deckEdit':
-      screen = <DeckEditScreen run={run} mode={run.phase.mode} actions={blessingActions} />;
+      screen = <DeckEditScreen run={visible} phase={visible.phase} actions={blessingActions} />;
       break;
     case 'reward':
       screen = (
         <RewardScreen
-          choices={run.phase.choices}
-          gold={run.phase.gold}
-          relic={run.phase.relic}
-          toBossRelic={run.phase.next === 'bossRelic'}
-          deck={run.deck}
+          choices={visible.phase.choices}
+          gold={visible.phase.gold}
+          relic={visible.phase.relic}
+          potion={visible.phase.potion}
+          potionPending={visible.phase.potionPending}
+          potions={visible.potions}
+          potionHeal={
+            visible.phase.potion ? rewardPotionHeal(visible.player, visible.phase.potion) : null
+          }
+          onUsePotion={drinkRewardPotion}
+          onSwapPotion={swapRewardPotion}
+          onDeclinePotion={declineRewardPotion}
+          toBossRelic={visible.phase.next === 'bossRelic'}
+          deck={visible.deck}
           onPick={resolveReward}
         />
       );
       break;
     case 'bossRelic':
-      screen = <BossRelicScreen run={run} choices={run.phase.choices} onChoose={chooseBossRelic} />;
+      screen = <BossRelicScreen run={visible} choices={visible.phase.choices} onChoose={chooseBossRelic} />;
       break;
     case 'finale':
-      screen = <FinaleScreen run={run} onStart={startFinalBattle} />;
+      screen = <FinaleScreen run={visible} onStart={startFinalBattle} />;
       break;
     case 'combat':
       screen = (
         <CombatScreen
-          key={`${run.actIndex}-${run.phase.nodeId}-${run.phase.seed}`}
-          setup={buildCombatSetup(run, run.phase.encounter)}
-          seed={run.phase.seed}
-          region={currentAct(run).region}
+          key={`${visible.actIndex}-${visible.phase.nodeId}-${visible.phase.seed}`}
+          setup={buildCombatSetup(visible, visible.phase.encounter)}
+          seed={visible.phase.seed}
+          region={currentAct(visible).region}
           onFinish={finishCombat}
         />
       );
       break;
     case 'rest':
-      screen = <RestScreen run={run} actions={restActions} />;
+      screen = <RestScreen run={visible} actions={restActions} />;
       break;
     case 'shop':
-      screen = <ShopScreen run={run} stock={run.phase.stock} actions={shopActions} />;
+      screen = <ShopScreen run={visible} stock={visible.phase.stock} actions={shopActions} />;
       break;
     case 'event':
       screen = (
         <EventScreen
-          key={run.phase.event.id}
-          run={run}
-          event={run.phase.event}
-          outcome={run.phase.outcome}
+          key={visible.phase.event.id}
+          run={visible}
+          event={visible.phase.event}
+          outcome={visible.phase.outcome}
           actions={eventActions}
         />
       );
@@ -132,10 +149,10 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
     case 'treasure':
       screen = (
         <TreasureScreen
-          run={run}
-          opened={run.phase.opened}
-          relic={run.phase.relic}
-          gold={run.phase.gold}
+          run={visible}
+          opened={visible.phase.opened}
+          relic={visible.phase.relic}
+          gold={visible.phase.gold}
           actions={treasureActions}
         />
       );
@@ -145,8 +162,8 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
     case 'cleared':
       screen = (
         <MapScreen
-          key={run.actIndex}
-          run={run}
+          key={visible.actIndex}
+          run={visible}
           onMove={moveTo}
           onNewRun={startNewRun}
           onExitToTitle={onExitToTitle}
@@ -160,9 +177,12 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
       <AcquireProvider key={runCount} queued={events} discardPotion={discardPotion}>
         <View style={styles.root}>
           {!ended && <AbandonRunBar onPress={() => setAskingToAbandon(true)} />}
-          <View style={styles.play}>{screen}</View>
+          <View style={styles.play}>
+            {screen}
+            {shown && <View style={styles.hold} />}
+          </View>
           <FadeOverlay
-            key={`${run.actIndex}-${run.phase.kind}`}
+            key={`${visible.actIndex}-${visible.phase.kind}`}
             from={1}
             to={0}
             duration={MOTION.phaseFadeIn}
@@ -183,4 +203,6 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   play: { flex: 1 },
+  /** 演出が終わるまで、切り替わる前の画面のボタンを押せないようにする。演出自体は上に重ねる。 */
+  hold: { ...StyleSheet.absoluteFill },
 });

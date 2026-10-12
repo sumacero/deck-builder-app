@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useReducer } from 'react';
-import type { CardDefinition } from '../domain/card';
+import type { CardDefinition, CardMark } from '../domain/card';
 import type { CombatResult, RunSetup } from '../domain/run';
 import { createRun } from '../logic/run';
 import { createRunStore, runStoreReducer } from '../logic/runEvents';
@@ -9,9 +9,10 @@ const createSeed = () => Math.floor(Math.random() * 2 ** 31);
 /**
  * ラン全体（マップ・現在地・HP・所持品・今の画面）を管理する。
  * 回復・強化などの出来事は events に順番に積まれ、演出が終わったら dismissEvent で消す。
+ * その出来事が画面の切り替わりと重なるときは、shown に前の画面を残す。
  */
 export function useRun(setup: RunSetup) {
-  const [{ run, events }, dispatch] = useReducer(runStoreReducer, setup, (s) =>
+  const [{ run, events, shown }, dispatch] = useReducer(runStoreReducer, setup, (s) =>
     createRunStore(createRun(s, createSeed())),
   );
 
@@ -25,6 +26,12 @@ export function useRun(setup: RunSetup) {
     (card: CardDefinition | null) => dispatch({ type: 'resolveReward', card }),
     [],
   );
+  const drinkRewardPotion = useCallback(() => dispatch({ type: 'drinkRewardPotion' }), []);
+  const swapRewardPotion = useCallback(
+    (slot: number) => dispatch({ type: 'swapRewardPotion', slot }),
+    [],
+  );
+  const declineRewardPotion = useCallback(() => dispatch({ type: 'declineRewardPotion' }), []);
   const chooseBossRelic = useCallback(
     (relicId: string | null) => dispatch({ type: 'chooseBossRelic', relicId }),
     [],
@@ -42,7 +49,7 @@ export function useRun(setup: RunSetup) {
   const blessingActions = useMemo(
     () => ({
       choose: (blessingId: string) => dispatch({ type: 'chooseBlessing', blessingId }),
-      finishDeckEdit: (cardId: string | null) => dispatch({ type: 'finishDeckEdit', cardId }),
+      finishDeckEdit: (card: CardDefinition | null) => dispatch({ type: 'finishDeckEdit', card }),
     }),
     [],
   );
@@ -50,7 +57,7 @@ export function useRun(setup: RunSetup) {
   const restActions = useMemo(
     () => ({
       rest: () => dispatch({ type: 'rest' }),
-      smith: (cardId: string) => dispatch({ type: 'smith', cardId }),
+      smith: (card: CardDefinition) => dispatch({ type: 'smith', card }),
     }),
     [],
   );
@@ -60,7 +67,8 @@ export function useRun(setup: RunSetup) {
       buyCard: (offerId: string) => dispatch({ type: 'buyCard', offerId }),
       buyRelic: (offerId: string) => dispatch({ type: 'buyRelic', offerId }),
       buyPotion: (offerId: string) => dispatch({ type: 'buyPotion', offerId }),
-      removeCard: (cardId: string) => dispatch({ type: 'removeCard', cardId }),
+      removeCard: (card: CardDefinition) => dispatch({ type: 'removeCard', card }),
+      remarkCard: (card: CardDefinition, mark: CardMark) => dispatch({ type: 'remarkCard', card, mark }),
       leave: () => dispatch({ type: 'leaveShop' }),
     }),
     [],
@@ -86,10 +94,15 @@ export function useRun(setup: RunSetup) {
     run,
     /** まだ見せていない出来事。先頭から順に見せる。 */
     events,
+    /** 演出が終わるまで出す画面。null なら run を出す。 */
+    shown,
     dismissEvent,
     moveTo,
     finishCombat,
     resolveReward,
+    drinkRewardPotion,
+    swapRewardPotion,
+    declineRewardPotion,
     chooseBossRelic,
     startFinalBattle,
     newRun,

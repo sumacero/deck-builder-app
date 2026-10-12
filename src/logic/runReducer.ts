@@ -1,4 +1,4 @@
-import type { CardDefinition } from '../domain/card';
+import type { CardDefinition, CardMark } from '../domain/card';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { chooseBlessing, finishDeckEdit } from './blessing';
 import { chooseEventOption, leaveEvent } from './event';
@@ -6,29 +6,36 @@ import { rest, smith } from './rest';
 import {
   chooseBossRelic,
   createRun,
+  declineRewardPotion,
   discardPotion,
+  drinkRewardPotion,
   finishCombat,
   moveTo,
   resolveReward,
   startFinalBattle,
+  swapRewardPotion,
 } from './run';
-import { buyCard, buyPotion, buyRelic, leaveShop, removeCard } from './shop';
+import { buyCard, buyPotion, buyRelic, leaveShop, remarkCard, removeCard } from './shop';
 import { leaveTreasure, openTreasure } from './treasure';
 
 export type RunAction =
   | { type: 'chooseBlessing'; blessingId: string }
-  | { type: 'finishDeckEdit'; cardId: string | null }
+  | { type: 'finishDeckEdit'; card: CardDefinition | null }
   | { type: 'moveTo'; nodeId: string }
   | { type: 'finishCombat'; result: CombatResult }
   | { type: 'resolveReward'; card: CardDefinition | null }
+  | { type: 'drinkRewardPotion' }
+  | { type: 'swapRewardPotion'; slot: number }
+  | { type: 'declineRewardPotion' }
   | { type: 'chooseBossRelic'; relicId: string | null }
   | { type: 'startFinalBattle' }
   | { type: 'rest' }
-  | { type: 'smith'; cardId: string }
+  | { type: 'smith'; card: CardDefinition }
   | { type: 'buyCard'; offerId: string }
   | { type: 'buyRelic'; offerId: string }
   | { type: 'buyPotion'; offerId: string }
-  | { type: 'removeCard'; cardId: string }
+  | { type: 'removeCard'; card: CardDefinition }
+  | { type: 'remarkCard'; card: CardDefinition; mark: CardMark }
   | { type: 'leaveShop' }
   | { type: 'chooseEventOption'; optionId: string }
   | { type: 'leaveEvent' }
@@ -42,13 +49,19 @@ export function runReducer(run: RunState, action: RunAction): RunState {
     case 'chooseBlessing':
       return chooseBlessing(run, action.blessingId);
     case 'finishDeckEdit':
-      return finishDeckEdit(run, action.cardId);
+      return finishDeckEdit(run, action.card);
     case 'moveTo':
       return moveTo(run, action.nodeId);
     case 'finishCombat':
       return finishCombat(run, action.result);
     case 'resolveReward':
       return resolveReward(run, action.card);
+    case 'drinkRewardPotion':
+      return drinkRewardPotion(run);
+    case 'swapRewardPotion':
+      return swapRewardPotion(run, action.slot);
+    case 'declineRewardPotion':
+      return declineRewardPotion(run);
     case 'chooseBossRelic':
       return chooseBossRelic(run, action.relicId);
     case 'startFinalBattle':
@@ -56,7 +69,7 @@ export function runReducer(run: RunState, action: RunAction): RunState {
     case 'rest':
       return rest(run);
     case 'smith':
-      return smith(run, action.cardId);
+      return smith(run, action.card);
     case 'buyCard':
       return buyCard(run, action.offerId);
     case 'buyRelic':
@@ -64,7 +77,9 @@ export function runReducer(run: RunState, action: RunAction): RunState {
     case 'buyPotion':
       return buyPotion(run, action.offerId);
     case 'removeCard':
-      return removeCard(run, action.cardId);
+      return removeCard(run, action.card);
+    case 'remarkCard':
+      return remarkCard(run, action.card, action.mark);
     case 'leaveShop':
       return leaveShop(run);
     case 'chooseEventOption':
