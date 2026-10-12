@@ -15,7 +15,7 @@ type CardDetailSheetProps = {
   onClose: () => void;
 };
 
-/** カードを長押ししたときの、拡大表示と用語解説。 */
+/** カードをタップしたときの、拡大表示と用語解説。 */
 export function CardDetailSheet({ card, description, stack, visible, onClose }: CardDetailSheetProps) {
   return (
     <InfoSheet
