@@ -31,6 +31,16 @@ import {
 import { arrowDamage, forgeArrow } from './arrows';
 import { baseCardId, growCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
+import {
+  type FuseAim,
+  MARK_NAME,
+  canStackOnto,
+  fuseBurst,
+  handMultiplier,
+  releaseFusion,
+  scaledEffects,
+  stackOf,
+} from './marks';
 import { SLEEP_MOVE, traitOf } from './enemyTraits';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
@@ -210,6 +220,8 @@ export function startPlayerTurn(state: CombatState): CombatState {
       enchant: [],
       cardsThisTurn: 0,
       lashSeedThisTurn: 0,
+      evade: 0,
+      fusesThisTurn: 0,
       hindrance,
       pendingHindrance: NO_HINDRANCE,
       statuses: turn > 1 ? tickStatuses(state.player.statuses) : state.player.statuses,
@@ -284,6 +296,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       arteGauge: 0,
       hindrance: NO_HINDRANCE,
       pendingHindrance: NO_HINDRANCE,
+      evade: 0,
+      fusesThisTurn: 0,
       statuses: {},
     },
     enemies: setup.enemies.map((enemy, index) => ({
@@ -306,6 +320,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       weaknesses: weaknessesOf(enemy.attribute),
       artifact: traitOf(enemy, 'artifact')?.charges ?? 0,
       awakened: false,
+      frost: 0,
     })),
     drawPerTurn: setup.drawPerTurn,
     mysticArte: setup.agent.mysticArte,
@@ -374,7 +389,7 @@ function attackDamage(state: CombatState, base: number, strengthMultiplier = 1):
  * 攻撃の種類。attributes は相性の判定に使う属性（敵の弱点を突くとダメージ ×1.25）。
  * fixed（パワーの追加ダメージ）は倍率をかけず、霊体化の上限だけ効く。
  */
-type HitKind = { attributes: readonly Attribute[]; fixed?: boolean };
+type HitKind = { attributes: readonly Attribute[]; fixed?: boolean; pierce?: boolean };
 
 const FIXED_HIT: HitKind = { attributes: [], fixed: true };
 /** レリック・ポーションなど、属性の無い攻撃。 */
@@ -394,7 +409,7 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
   const cap = kind.fixed ? undefined : traitOf(enemy, 'hitCap')?.amount;
   const scaled = cap !== undefined && raw > cap;
   const amount = cap === undefined ? raw : Math.min(raw, cap);
-  const result = holdUntilAwakened(enemy, applyDamage(enemy, amount));
+  const result = holdUntilAwakened(enemy, kind.pierce ? pierceDamage(enemy, amount) : applyDamage(enemy, amount));
   const recorded: CombatState = {
     ...updateEnemy(state, uid, () => result.target),
     stats: {
@@ -423,6 +438,12 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
   }
   const defeated = withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
   return onEnemyDefeated(defeated, uid);
+}
+
+/** ブロックを無視して HP に当てる。ブロックはそのまま残る。 */
+function pierceDamage(enemy: EnemyState, amount: number): DamageResult<EnemyState> {
+  const result = applyDamage({ ...enemy, block: 0 }, amount);
+  return { ...result, target: { ...result.target, block: enemy.block } };
 }
 
 function callout(state: CombatState, target: ActorId, text: string): CombatState {
@@ -519,7 +540,13 @@ function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
   return applyEnemyAction(withLog(avenged, `${dead.name}の死に際の一撃！`), uid, throes.action, false);
 }
 
-function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns: number): CombatState {
+function debuffEnemy(
+  state: CombatState,
+  uid: EnemyUid,
+  status: DebuffId,
+  turns: number,
+  logTurns = turns,
+): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy) return state;
   if (enemy.artifact > 0) return consumeArtifact(state, enemy);
@@ -528,7 +555,7 @@ function debuffEnemy(state: CombatState, uid: EnemyUid, status: DebuffId, turns:
       ...e,
       statuses: addStatus(e.statuses, status, turns),
     })),
-    `${enemy.name}に${STATUS_LABEL[status]} ${turns} ターン`,
+    `${enemy.name}に${STATUS_LABEL[status]} ${logTurns} ターン`,
   );
   const verdure = status === 'seed' ? powerOf(debuffed, 'verdure') : 0;
   const sprouted = verdure > 0 ? gainPlayerBlock(debuffed, verdure) : debuffed;
@@ -666,9 +693,10 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       const flurry = powerOf(state, 'flurry');
       let next = state;
       const hits = effect.hits ?? 1;
+      const kind = effect.pierce ? { ...hitKind, pierce: true } : hitKind;
       for (let i = 0; i < hits; i++) {
         const hitAmount = amount + (i > 0 ? flurry : 0);
-        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, hitAmount, hitKind), next);
+        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, hitAmount, kind), next);
       }
       return next;
     }
@@ -757,6 +785,21 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         }));
         return callout(cleared, uid, `宿り木 ${seed}`);
       }, state);
+    case 'applyFrost':
+      return aimedUids(state, aim).reduce((current, uid) => frostEnemy(current, uid, effect.amount), state);
+    case 'gainEvade':
+      return callout(
+        withLog(
+          { ...state, player: { ...state.player, evade: state.player.evade + effect.amount } },
+          `かわす +${effect.amount}`,
+        ),
+        'player',
+        `かわす ${state.player.evade + effect.amount}`,
+      );
+    case 'stripStrength':
+      return aimedUids(state, aim).reduce((current, uid) => stripEnemyStrength(current, uid, effect.amount), state);
+    case 'cleanse':
+      return cleansePlayer(state, effect.count);
     case 'ifTargetHas': {
       const met = aimedUids(state, aim).some((uid) => {
         const enemy = findEnemy(state, uid);
@@ -817,6 +860,104 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         `このターン、ムチの攻撃に宿り木 ${effect.amount}`,
       );
   }
+}
+
+/** 霜: その敵の次の攻撃を、1 ヒットごとに amount 下げる。重ねると足す。アーティファクトでは防がれない。 */
+function frostEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || !isAlive(enemy) || amount <= 0) return state;
+  const frost = enemy.frost + amount;
+  return callout(
+    withLog(updateEnemy(state, uid, (e) => ({ ...e, frost })), `${enemy.name}に霜 ${amount}（次の攻撃 -${frost}）`),
+    uid,
+    `霜 ${frost}`,
+  );
+}
+
+/** 敵の筋力を amount まで消す。0 より下にはしない。 */
+function stripEnemyStrength(state: CombatState, uid: EnemyUid, amount: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  const removed = enemy && isAlive(enemy) ? Math.min(Math.max(0, enemy.strength), amount) : 0;
+  if (!enemy || removed === 0) return state;
+  return callout(
+    withLog(
+      updateEnemy(state, uid, (e) => ({ ...e, strength: e.strength - removed })),
+      `${enemy.name}の筋力を ${removed} 消した`,
+    ),
+    uid,
+    `筋力 -${removed}`,
+  );
+}
+
+type Affliction = { label: string; present: (player: PlayerState) => boolean; clear: (player: PlayerState) => PlayerState };
+
+const withoutStatus = (player: PlayerState, id: DebuffId): PlayerState => ({
+  ...player,
+  statuses: Object.fromEntries(Object.entries(player.statuses).filter(([key]) => key !== id)),
+});
+
+/** 消す順。いま効いている封印、弱体・衰弱、次のターンに効く妨害。 */
+const AFFLICTIONS: readonly Affliction[] = [
+  {
+    label: '封印',
+    present: (p) => p.hindrance.seal,
+    clear: (p) => ({ ...p, hindrance: { ...p.hindrance, seal: false } }),
+  },
+  { label: '弱体', present: (p) => hasStatus(p.statuses, 'vulnerable'), clear: (p) => withoutStatus(p, 'vulnerable') },
+  { label: '衰弱', present: (p) => hasStatus(p.statuses, 'weak'), clear: (p) => withoutStatus(p, 'weak') },
+  {
+    label: '次のターンの封印',
+    present: (p) => p.pendingHindrance.seal,
+    clear: (p) => ({ ...p, pendingHindrance: { ...p.pendingHindrance, seal: false } }),
+  },
+  {
+    label: '次のターンの麻痺',
+    present: (p) => p.pendingHindrance.paralysis > 0,
+    clear: (p) => ({ ...p, pendingHindrance: { ...p.pendingHindrance, paralysis: 0 } }),
+  },
+  {
+    label: '次のターンの凍え',
+    present: (p) => p.pendingHindrance.chill > 0,
+    clear: (p) => ({ ...p, pendingHindrance: { ...p.pendingHindrance, chill: 0 } }),
+  },
+];
+
+/** 自分にかかっている悪い効果を、決まった順に count 個消す。 */
+function cleansePlayer(state: CombatState, count: number): CombatState {
+  let player = state.player;
+  const cleared: string[] = [];
+  for (const affliction of AFFLICTIONS) {
+    if (cleared.length >= count) break;
+    if (!affliction.present(player)) continue;
+    player = affliction.clear(player);
+    cleared.push(affliction.label);
+  }
+  if (cleared.length === 0) return state;
+  return callout(withLog({ ...state, player }, `${cleared.join('・')}を消した`), 'player', '浄化');
+}
+
+/** 予告の攻撃の合計ダメージ。攻撃しない行動なら 0。 */
+function intentDamage(enemy: EnemyState, player: PlayerState): number {
+  const move = currentIntent(enemy);
+  const attacker = attackerFor(enemy, move);
+  return move.actions.reduce(
+    (sum, action) =>
+      action.kind === 'attack' ? sum + enemyAttackDamage(attacker, action.damage, player) * action.hits : sum,
+    0,
+  );
+}
+
+/** 重ねた瞬間の効果の的。threat は予告の攻撃が一番大きい敵、strongest は筋力が一番高い敵（同じなら左）。 */
+function fuseTarget(state: CombatState, aim: FuseAim): Aim | null {
+  if (aim === 'self') return 'all';
+  const living = livingEnemies(state);
+  const score = (enemy: EnemyState) => (aim === 'threat' ? intentDamage(enemy, state.player) : enemy.strength);
+  const best = living.reduce<EnemyState | undefined>(
+    (top, enemy) => (!top || score(enemy) > score(top) ? enemy : top),
+    undefined,
+  );
+  if (!best || (aim === 'strongest' && best.strength <= 0)) return null;
+  return best.uid;
 }
 
 function gainPlayerBlock(state: CombatState, amount: number): CombatState {
@@ -921,20 +1062,62 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
   );
 }
 
+/**
+ * 手札の札を、種類と段が同じもう一枚の上に重ねる。エナジーは要らない。
+ * 上に置いた札（ドラッグした札）が残って段が倍になり、その札の数値が増える。
+ * 下の札は 1 段に戻って捨て札へ。消える下の札の印で、重ねた瞬間の効果が出る（水面の分だけ繰り返す）。
+ * 毎ターン最初の 1 回で水晶の文鎮が発動する。
+ */
+export function fuseInHand(state: CombatState, sourceId: string, targetId: string): CombatState {
+  if (state.status !== 'playerTurn' || sourceId === targetId) return state;
+  const source = state.hand.find((card) => card.instanceId === sourceId);
+  const target = state.hand.find((card) => card.instanceId === targetId);
+  if (!source || !target || !canStackOnto(state.hand, source, target)) return state;
+
+  const stack = stackOf(source) * 2;
+  const stacked: CardInstance = { instanceId: source.instanceId, card: source.card, stack };
+  const hand = state.hand.map((card) => (card.instanceId === sourceId ? stacked : card));
+  const fused: CombatState = {
+    ...state,
+    hand: hand.filter((card) => card.instanceId !== targetId),
+    discardPile: [...state.discardPile, releaseFusion(target)],
+    player: { ...state.player, fusesThisTurn: state.player.fusesThisTurn + 1 },
+  };
+  const announced = withEvent(
+    withLog(fused, `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段）`),
+    {
+      kind: 'marksFused',
+      target: 'player',
+      playedId: sourceId,
+      materialIds: [targetId],
+    },
+  );
+  const burst = fuseBurst(target.card, stackOf(target));
+  const repeats = 1 + powerOf(state, 'fuseEcho');
+  let next = announced;
+  for (let i = 0; i < repeats && burst; i++) {
+    const aim = fuseTarget(next, burst.aim);
+    if (aim !== null) next = applyEffects(next, burst.effects, aim);
+  }
+  const relics = next.player.fusesThisTurn === 1 ? triggerRelics(next, 'firstFuse') : next;
+  return settle(relics);
+}
+
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */
 export function playCard(state: CombatState, instanceId: string, target?: EnemyUid): CombatState {
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || !canPlayCard(state, instanceId)) return state;
   const { card } = instance;
+  // 段は、捨て札・廃棄・山札に移っても札に残る。
+  const multiplier = handMultiplier(instance, state.player);
   const aim = resolveAim(state, card.target, target);
 
   const spent = {
     ...state,
     hand: state.hand.filter((c) => c.instanceId !== instanceId),
     player: { ...state.player, energy: state.player.energy - card.cost },
-    ...(card.exhaust
-      ? { exhaustPile: [...state.exhaustPile, instance] }
-      : { discardPile: [...state.discardPile, instance] }),
+    discardPile: [...state.discardPile, ...(card.exhaust ? [] : [instance])],
+    exhaustPile: card.exhaust ? [...state.exhaustPile, instance] : state.exhaustPile,
   };
   const copied = card.addCopyToDiscard
     ? {
@@ -961,8 +1144,14 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
     aim !== 'all' && chosen && isAlive(chosen) && chosen.uid !== aim
       ? callout(withLog(announced, `${findEnemy(state, aim)?.name ?? '敵'}がかばった！`), aim, 'かばう！')
       : announced;
-  const eventsBefore = guarded.events.length;
-  const resolved = applyEffects(guarded, card.effects, aim, { attributes: playedAttributes(state, card) });
+  const boosted =
+    card.mark && multiplier > 1
+      ? withLog(guarded, `${MARK_NAME[card.mark]}の ${stackOf(instance)} 段で ${multiplier} 倍`)
+      : guarded;
+  const eventsBefore = boosted.events.length;
+  const resolved = applyEffects(boosted, scaledEffects(card, multiplier), aim, {
+    attributes: playedAttributes(state, card),
+  });
   const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
   const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
   const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
@@ -1091,7 +1280,7 @@ export function previewCardDamage(
 /** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
 export function enemyAttackDamage(enemy: EnemyState, base: number, player: PlayerState): number {
   const affinity = ENEMY_AFFINITY_MULTIPLIER[enemyAffinity(enemy.attribute, player.attribute)];
-  return modifiedDamage(Math.max(0, base + enemy.strength), enemy.statuses, player.statuses, affinity);
+  return modifiedDamage(Math.max(0, base + enemy.strength - enemy.frost), enemy.statuses, player.statuses, affinity);
 }
 
 /**
@@ -1126,51 +1315,61 @@ function applyEnemyAction(
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
         next = act(next);
+        if (next.player.evade > 0) {
+          const evade = next.player.evade - 1;
+          next = callout(
+            withLog({ ...next, player: { ...next.player, evade } }, `${enemy.name}の攻撃をかわした`),
+            'player',
+            'かわした！',
+          );
+          if (thorns > 0) next = hitEnemy(next, uid, thorns, FIXED_HIT);
+          continue;
+        }
         const result = applyDamage(next.player, amount);
-        next = withEvent(
-          withLog({ ...next, player: result.target }, formatHit('あなた', result) + note),
-          {
-            kind: 'hit',
-            target: 'player',
-            hpLoss: result.hpLoss,
-            blocked: result.blocked,
-            before: vitalsOf(next.player),
-            after: vitalsOf(result.target),
-            weak,
-          },
-        );
+        const harmed = { ...next, player: result.target };
+        next = withEvent(withLog(harmed, formatHit('あなた', result) + note), {
+          kind: 'hit',
+          target: 'player',
+          hpLoss: result.hpLoss,
+          blocked: result.blocked,
+          before: vitalsOf(next.player),
+          after: vitalsOf(result.target),
+          weak,
+        });
         if (thorns > 0 && next.player.hp > 0) next = hitEnemy(next, uid, thorns, FIXED_HIT);
       }
-      return next;
+      const thawed = findEnemy(next, uid);
+      return thawed && thawed.frost > 0 ? updateEnemy(next, uid, (e) => ({ ...e, frost: 0 })) : next;
     }
     case 'block': {
+      const amount = action.amount;
       const acted = act(state);
-      const guarded = gainBlock(enemy, action.amount);
+      const guarded = gainBlock(enemy, amount);
       return withEvent(
-        withLog(
-          updateEnemy(acted, uid, () => guarded),
-          `${enemy.name}はブロック +${action.amount}`,
-        ),
-        { kind: 'blockGain', target: uid, amount: action.amount, after: vitalsOf(guarded) },
+        withLog(updateEnemy(acted, uid, () => guarded), `${enemy.name}はブロック +${amount}`),
+        { kind: 'blockGain', target: uid, amount, after: vitalsOf(guarded) },
       );
     }
     case 'buff': {
+      const strength = action.strength;
       const acted = act(state);
       return withLog(
-        updateEnemy(acted, uid, (e) => ({ ...e, strength: e.strength + action.strength })),
-        `${enemy.name}の筋力 +${action.strength}`,
+        updateEnemy(acted, uid, (e) => ({ ...e, strength: e.strength + strength })),
+        `${enemy.name}の筋力 +${strength}`,
       );
     }
     case 'heal': {
+      const amount = action.amount;
       const acted = act(state);
       const targets = action.allies ? livingEnemies(acted).map((e) => e.uid) : [uid];
-      return targets.reduce((current, targetUid) => healEnemy(current, targetUid, action.amount), acted);
+      return targets.reduce((current, targetUid) => healEnemy(current, targetUid, amount), acted);
     }
     case 'paralyze':
     case 'chill':
     case 'seal': {
       const acted = act(state);
-      const pending = addHindrance(acted.player.pendingHindrance, action);
+      const hindrance = action;
+      const pending = addHindrance(acted.player.pendingHindrance, hindrance);
       return withLog(
         { ...acted, player: { ...acted.player, pendingHindrance: pending } },
         `${enemy.name}の妨害: ${HINDRANCE_LOG[action.kind]}`,
@@ -1179,22 +1378,24 @@ function applyEnemyAction(
     case 'charge':
       return withLog(act(state), `${enemy.name}は力を溜めている…`);
     case 'debuff': {
+      const turns = action.turns;
       const acted = act(state);
-      const statuses = addStatus(acted.player.statuses, action.status, action.turns + ACROSS_TICK);
+      const statuses = addStatus(acted.player.statuses, action.status, turns + ACROSS_TICK);
       return withLog(
         { ...acted, player: { ...acted.player, statuses } },
-        `${enemy.name}があなたに${STATUS_LABEL[action.status]} ${action.turns} ターン`,
+        `${enemy.name}があなたに${STATUS_LABEL[action.status]} ${turns} ターン`,
       );
     }
     case 'addCard': {
+      const count = action.count;
       const acted = act(state);
-      const added: CardInstance[] = Array.from({ length: action.count }, (_, i) => ({
+      const added: CardInstance[] = Array.from({ length: count }, (_, i) => ({
         instanceId: `junk-${acted.nextEventId}-${i}`,
         card: action.card,
       }));
       return withLog(
         { ...acted, discardPile: [...acted.discardPile, ...added] },
-        `${enemy.name}が捨て札に「${action.card.name}」を ${action.count} 枚混ぜた`,
+        `${enemy.name}が捨て札に「${action.card.name}」を ${count} 枚混ぜた`,
       );
     }
     case 'intangible': {
@@ -1303,7 +1504,7 @@ function discardHand(state: CombatState): CombatState {
     return applyEffects(withLog(current, `手札の${card.name}`), card.turnEndInHand, 'all');
   }, state);
   const retainArrows = powerOf(afterEffects, 'arrowRetain') > 0;
-  const isRetained = ({ card }: CardInstance) => retainArrows && card.arrow === true;
+  const isRetained = (instance: CardInstance) => retainArrows && instance.card.arrow === true;
   const retained = afterEffects.hand.filter(isRetained);
   const rest = afterEffects.hand.filter((c) => !isRetained(c));
   const vanishing = rest.filter(({ card }) => card.ethereal);

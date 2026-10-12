@@ -7,8 +7,6 @@ import { DRAG_LIFT_DISTANCE, type DragMoveHandlers, type Point } from './cardDro
 
 export type CardDragHandlers = DragMoveHandlers & {
   onDragStart: (instanceId: string, point: Point) => void;
-  /** スワイプせずにタップした。 */
-  onTap: (instanceId: string) => void;
 };
 
 type DraggableCardProps = CardDragHandlers & {
@@ -24,26 +22,29 @@ type DraggableCardProps = CardDragHandlers & {
   dragging: boolean;
   /** タップして、狙う敵を選んでいる最中のカード。 */
   selected: boolean;
+  /** この札が融合の相手になっているとき、印の色で枠を光らせる。 */
+  linkColor?: string;
+  /** 重ねたあとの数字。省略すると、カードに書かれた効果。 */
+  description?: string;
+  /** 札の段。 */
+  stack?: number;
 };
 
-/** 指を動かさずに押し続けてこの時間が経つと「長押し」。その場で詳細を開く。普通のタップ（0.1 秒前後）より少し長く。 */
-const LONG_PRESS_MS = 200;
+/** 敵を選んでいる最中のカードを浮かべる量。波紋の起点も同じだけ上げる。 */
+export const CARD_SELECT_LIFT = -6;
 
 type Gesture = {
   dragging: boolean;
-  /** 長押しで詳細を開いた。指を離すまで、タップにもドラッグにもしない。 */
-  shown: boolean;
-  /** 指がつまんだ位置から DRAG_LIFT_DISTANCE より動いた（タップでも長押しでもない）。 */
+  /** 指がつまんだ位置から DRAG_LIFT_DISTANCE より動いた。 */
   moved: boolean;
-  timer: ReturnType<typeof setTimeout> | null;
+  origin: Point;
 };
 
 /**
- * 手札の 1 枚。触れた瞬間につまみ、そのまま指についてくる。
- * - 動かして離す: 離した場所で使う（使えない場所なら手札に戻る）。
- * - 動かさずに離す: タップ（タップで使えるかは親が決める）。
- * - 動かさずに押し続ける: カードを手札に戻し、その場で詳細を開く。
- * 使えないカードはつままず、タップと長押しだけ。
+ * 手札の 1 枚。動かしたときだけつまみ、指についてくる。
+ * - 動かして離す: 離した場所で使うか、もう一枚の上に重ねる。
+ * - 動かさずに離す: 詳細を開く。タップでは使わない。
+ * 使えないカードはつままず、タップで詳細だけ開く。
  */
 export function DraggableCard({
   instanceId,
@@ -52,29 +53,26 @@ export function DraggableCard({
   playable,
   dragging,
   selected,
+  linkColor,
+  description,
+  stack,
   ...handlers
 }: DraggableCardProps) {
-  const { onDragStart, onDragMove, onDragEnd, onDragCancel, onTap } = handlers;
+  const { onPressIn, onDragStart, onDragMove, onDragEnd, onDragCancel } = handlers;
   const [detailOpen, setDetailOpen] = useState(false);
 
   // PanResponder は指の動きの途中経過を内部に持つ。ドラッグ中に作り直すと途切れるので、
   // 渡す関数は親で同じものを使い続けてもらう（作り直しは使えるかどうかが変わったときだけ）。
   const { responder, cancel } = useMemo(() => {
-    const gesture: Gesture = { dragging: false, shown: false, moved: false, timer: null };
-    const clearTimer = () => {
-      if (gesture.timer !== null) clearTimeout(gesture.timer);
-      gesture.timer = null;
-    };
+    const gesture: Gesture = { dragging: false, moved: false, origin: { x: 0, y: 0 } };
     /** つまんでいたカードを手札に戻す。 */
     const drop = () => {
       if (gesture.dragging) onDragCancel();
       gesture.dragging = false;
     };
     const reset = () => {
-      clearTimer();
       drop();
       gesture.moved = false;
-      gesture.shown = false;
     };
     return {
       cancel: reset,
@@ -82,48 +80,37 @@ export function DraggableCard({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: (_, g) => {
           reset();
-          if (playable) {
-            gesture.dragging = true;
-            onDragStart(instanceId, { x: g.x0, y: g.y0 });
-          }
-          gesture.timer = setTimeout(() => {
-            gesture.timer = null;
-            if (gesture.moved) return;
-            // 詳細を見ようとしている。つまんだカードは手札に戻して詳細を開く。
-            drop();
-            gesture.shown = true;
-            setDetailOpen(true);
-          }, LONG_PRESS_MS);
+          gesture.origin = { x: g.x0, y: g.y0 };
+          onPressIn();
         },
         onPanResponderMove: (_, g) => {
-          if (gesture.shown) return;
           if (!gesture.moved && Math.hypot(g.dx, g.dy) > DRAG_LIFT_DISTANCE) {
             gesture.moved = true;
-            clearTimer();
+            if (playable) {
+              gesture.dragging = true;
+              onDragStart(instanceId, gesture.origin);
+            }
           }
           if (gesture.dragging) onDragMove({ x: g.moveX, y: g.moveY });
         },
         onPanResponderRelease: (_, g) => {
-          const { shown, dragging: wasDragging } = gesture;
           const moved = gesture.moved || Math.hypot(g.dx, g.dy) > DRAG_LIFT_DISTANCE;
-          clearTimer();
+          const wasDragging = gesture.dragging;
           gesture.moved = false;
-          gesture.shown = false;
-          if (shown) return;
           if (moved && wasDragging) {
             gesture.dragging = false;
             onDragEnd({ x: g.moveX, y: g.moveY }, { x: g.vx, y: g.vy });
             return;
           }
           drop();
-          if (!moved) onTap(instanceId);
+          if (!moved) setDetailOpen(true);
         },
         // つまんでいる間は、ほかに指を奪わせない。
         onPanResponderTerminationRequest: () => !gesture.dragging,
         onPanResponderTerminate: reset,
       }),
     };
-  }, [playable, instanceId, onDragStart, onDragMove, onDragEnd, onDragCancel, onTap]);
+  }, [playable, instanceId, onPressIn, onDragStart, onDragMove, onDragEnd, onDragCancel]);
 
   useEffect(() => cancel, [cancel]);
 
@@ -131,21 +118,29 @@ export function DraggableCard({
     <>
       <View
         {...responder.panHandlers}
-        style={{ opacity: dragging ? 0 : 1, transform: [{ translateY: selected ? LIFT : 0 }] }}
+        style={{ opacity: dragging ? 0 : 1, transform: [{ translateY: selected ? CARD_SELECT_LIFT : 0 }] }}
       >
         <CardView
           card={card}
           width={width}
           dimmed={!playable}
           selected={selected}
+          linkColor={linkColor}
+          description={description}
+          stack={stack}
           detailOnHold={false}
         />
       </View>
       {/* Modal 内のタッチも React の親へ伝わるので、ジェスチャーを受ける View の外に置く。 */}
-      {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
+      {detailOpen && (
+        <CardDetailSheet
+          card={card}
+          description={description}
+          stack={stack}
+          visible
+          onClose={() => setDetailOpen(false)}
+        />
+      )}
     </>
   );
 }
-
-/** 敵を選んでいる最中のカードは少し浮かせる。 */
-const LIFT = -6;

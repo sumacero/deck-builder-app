@@ -4,12 +4,14 @@ import { DEFEND, STRIKE } from './cards';
 /**
  * 翠風のリーネ（草属性）のためのカード。草属性なので、リーネは戦闘報酬で、ほかのエージェントはショップでだけ手に入る。
  * リーネの軸は 3 つ: 弓（軽いカードを次々使う手数）/ 宿り木（毎ターン削る）/ ムチ（敵全体と連打）。
- * 茨と守りのカードはリーネの報酬・ショップには出さない（守りで勝つキャラにしない）。ほかのエージェントがショップで買える。
+ * 以前の茨と守りのカード（茨の鎧・茨の垣根など）はリーネに出さない。
+ * 2026-10-08 に足した蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ、リーネのブロック軸として報酬に出る。
  */
 
 export const SEED_ARROW: CardDefinition = {
   id: 'seed-arrow',
   name: '宿り木の矢',
+  rarity: 'common',
   type: 'attack',
   attribute: 'grass',
   archetypes: ['debuff'],
@@ -31,6 +33,7 @@ export const SEED_ARROW: CardDefinition = {
 export const THOUSAND_YEAR_TREE: CardDefinition = {
   id: 'thousand-year-tree',
   name: '翠嵐・千年樹',
+  rarity: 'rare',
   type: 'attack',
   cost: 0,
   target: 'allEnemies',
@@ -48,8 +51,8 @@ const copies = (card: CardDefinition, count: number): CardDefinition[] =>
 
 /** リーネの初期デッキ。ストライクはラン開始時に草属性になる。ストライク・防御は効果はそのままで、絵だけ弓とムチの狩人用。 */
 export const VERDANT_STARTER_DECK: CardDefinition[] = [
-  ...copies({ ...STRIKE, art: 'strike-verdant' }, 3),
-  ...copies({ ...DEFEND, art: 'defend-verdant' }, 2),
+  ...copies({ ...STRIKE, art: 'strike-verdant' }, 4),
+  ...copies({ ...DEFEND, art: 'defend-verdant' }, 4),
   SEED_ARROW,
 ];
 
@@ -60,6 +63,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'seed-scatter',
     name: '種子散布',
+    rarity: 'common',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -71,6 +75,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'vine-bind',
     name: '蔦縛り',
+    rarity: 'common',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -90,6 +95,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'full-bloom',
     name: '開花',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -101,6 +107,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'rampant-growth',
     name: '芽吹きの呪',
+    rarity: 'rare',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -113,6 +120,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'forest-wrath',
     name: '森羅の怒り',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['debuff', 'element'],
@@ -132,6 +140,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'overgrowth',
     name: '森の侵蝕',
+    rarity: 'rare',
     type: 'power',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -146,6 +155,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'thorn-armor',
     name: '茨の鎧',
+    rarity: 'uncommon',
     type: 'power',
     attribute: 'grass',
     archetypes: ['block'],
@@ -158,6 +168,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'thorn-wall',
     name: '茨の垣根',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['block'],
@@ -177,6 +188,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'verdure',
     name: '命の芽吹き',
+    rarity: 'uncommon',
     type: 'power',
     attribute: 'grass',
     archetypes: ['debuff', 'block'],
@@ -189,6 +201,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'great-tree-blessing',
     name: '大樹の加護',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['block'],
@@ -208,6 +221,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'sunbeam',
     name: '木漏れ日',
+    rarity: 'common',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -229,6 +243,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'gale-arrows',
     name: '疾風の連矢',
+    rarity: 'common',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['tempo', 'strength'],
@@ -240,6 +255,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'world-tree-seed',
     name: '世界樹の種',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['growth', 'block'],
@@ -258,6 +274,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'quick-shot',
     name: '速射',
+    rarity: 'common',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -277,6 +294,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'nocking-rhythm',
     name: '矢継ぎ早',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -297,6 +315,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'quickdraw-stance',
     name: '速射の構え',
+    rarity: 'uncommon',
     type: 'power',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -309,6 +328,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'thousand-arrows',
     name: '千本矢',
+    rarity: 'rare',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -323,6 +343,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'vine-lash',
     name: '蔓ムチの薙ぎ払い',
+    rarity: 'common',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -343,6 +364,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'thorn-whip',
     name: '茨鞭の種撒き',
+    rarity: 'common',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -363,6 +385,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'whip-flurry',
     name: '鞭の乱れ打ち',
+    rarity: 'common',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -376,6 +399,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'vital-shot',
     name: '急所射ち',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -395,6 +419,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'aimed-shot',
     name: '狙い澄ました一矢',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['strength'],
@@ -407,6 +432,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'whip-storm',
     name: '鞭嵐',
+    rarity: 'common',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -420,6 +446,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'hunters-focus',
     name: '狩人の集中',
+    rarity: 'uncommon',
     type: 'power',
     attribute: 'grass',
     archetypes: ['strength'],
@@ -432,6 +459,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'hunting-instinct',
     name: '狩猟本能',
+    rarity: 'rare',
     type: 'power',
     attribute: 'grass',
     archetypes: ['strength'],
@@ -446,6 +474,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'wind-read',
     name: '風読み',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -459,6 +488,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'arrow-rain',
     name: '矢の雨',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -471,6 +501,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'double-shot',
     name: '二連射',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -491,6 +522,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'focused-breath',
     name: '狙撃の呼吸',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo', 'strength'],
@@ -511,6 +543,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'tailwind',
     name: '追い風',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -524,6 +557,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'deep-roots',
     name: '根を張る',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -543,6 +577,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'spore-cloud',
     name: '胞子の霧',
+    rarity: 'common',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -562,6 +597,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'mistletoe-harvest',
     name: '宿り木の刈り取り',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -581,6 +617,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'withering-touch',
     name: '枯らしの手',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -592,6 +629,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'whip-crack',
     name: '鞭の一閃',
+    rarity: 'common',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -604,6 +642,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'lash-chain',
     name: '連鎖の鞭',
+    rarity: 'common',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -617,6 +656,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'snare-whip',
     name: '絡め取る鞭',
+    rarity: 'common',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -638,6 +678,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'hunters-mark',
     name: '狩人の印',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -658,6 +699,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'vine-stance',
     name: '蔓の構え',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -678,6 +720,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'mistletoe-lash',
     name: '宿り木の蔓',
+    rarity: 'rare',
     type: 'power',
     attribute: 'grass',
     archetypes: ['debuff'],
@@ -690,6 +733,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'strangling-vine',
     name: '絞め上げる蔓',
+    rarity: 'uncommon',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -711,6 +755,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'jade-serpent-lash',
     name: '翠蛇の鞭',
+    rarity: 'rare',
     type: 'attack',
     whip: true,
     attribute: 'grass',
@@ -725,6 +770,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'arrow-dance',
     name: '矢の舞',
+    rarity: 'uncommon',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -737,6 +783,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'quick-nock',
     name: '早番え',
+    rarity: 'common',
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -757,6 +804,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'nock-and-loose',
     name: '番え撃ち',
+    rarity: 'common',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -776,6 +824,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'spent-volley',
     name: '千射の報い',
+    rarity: 'uncommon',
     type: 'attack',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -788,6 +837,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'keen-arrowheads',
     name: '鋭き鏃',
+    rarity: 'uncommon',
     type: 'power',
     attribute: 'grass',
     archetypes: ['tempo', 'strength'],
@@ -800,6 +850,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'scatter-stance',
     name: '散り矢の構え',
+    rarity: 'rare',
     type: 'power',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -812,6 +863,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'quiver-keep',
     name: '矢筒の備え',
+    rarity: 'uncommon',
     type: 'power',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -824,6 +876,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
   {
     id: 'endless-quiver',
     name: '無限の矢筒',
+    rarity: 'rare',
     type: 'power',
     attribute: 'grass',
     archetypes: ['tempo'],
@@ -832,5 +885,79 @@ export const VERDANT_CARDS: CardDefinition[] = [
     effects: [{ kind: 'gainPower', power: 'arrowSupply', amount: 1 }],
     exhaust: true,
     upgrade: { cost: 1 },
+  },
+
+  // --- ブロックの取り方（2026-10-08）。盾ではなく、蔦・年輪・葉・鞭で受ける ---
+  {
+    id: 'vine-parry',
+    name: '蔦の受け',
+    rarity: 'common',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block'],
+    cost: 0,
+    target: 'self',
+    effects: [{ kind: 'block', amount: 3 }],
+    upgrade: { effects: [{ kind: 'block', amount: 4 }] },
+    motion: 'guard',
+  },
+  {
+    id: 'ring-shield',
+    name: '年輪の盾',
+    rarity: 'uncommon',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block', 'growth'],
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'block', amount: 4 }],
+    growth: { stat: 'block', amount: 3, when: 'play', scope: 'combat' },
+    upgrade: {
+      effects: [{ kind: 'block', amount: 5 }],
+      growth: { stat: 'block', amount: 4, when: 'play', scope: 'combat' },
+    },
+    motion: 'guard',
+  },
+  {
+    id: 'leaf-nock',
+    name: '葉の番え',
+    rarity: 'uncommon',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block', 'tempo'],
+    cost: 1,
+    target: 'self',
+    effects: [
+      { kind: 'block', amount: 6 },
+      { kind: 'addArrows', amount: 1 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'block', amount: 8 },
+        { kind: 'addArrows', amount: 1 },
+      ],
+    },
+    motion: 'guard',
+  },
+  {
+    id: 'whip-check',
+    name: '鞭の牽制',
+    rarity: 'uncommon',
+    type: 'skill',
+    attribute: 'grass',
+    archetypes: ['block', 'debuff'],
+    cost: 1,
+    target: 'self',
+    effects: [
+      { kind: 'block', amount: 5 },
+      { kind: 'gainLashSeed', amount: 2 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'block', amount: 8 },
+        { kind: 'gainLashSeed', amount: 2 },
+      ],
+    },
+    motion: 'guard',
   },
 ];

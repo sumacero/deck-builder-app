@@ -6,6 +6,7 @@ import type { CardDefinition } from '../domain/card';
 export const BURN: CardDefinition = {
   id: 'burn',
   name: '火傷',
+  rarity: 'common',
   type: 'status',
   cost: 0,
   target: 'self',
@@ -18,6 +19,7 @@ export const BURN: CardDefinition = {
 export const TANGLING_VINE: CardDefinition = {
   id: 'tangling-vine',
   name: '絡みつく蔦',
+  rarity: 'common',
   type: 'status',
   cost: 1,
   target: 'self',
@@ -29,6 +31,7 @@ export const TANGLING_VINE: CardDefinition = {
 export const ICE_SHARD: CardDefinition = {
   id: 'ice-shard',
   name: '氷のかけら',
+  rarity: 'common',
   type: 'status',
   cost: 0,
   target: 'self',
@@ -41,6 +44,7 @@ export const ICE_SHARD: CardDefinition = {
 export const SCRAP: CardDefinition = {
   id: 'scrap',
   name: 'ガラクタ',
+  rarity: 'common',
   type: 'status',
   cost: 0,
   target: 'self',

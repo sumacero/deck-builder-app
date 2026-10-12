@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import {
   Animated,
   type LayoutChangeEvent,
@@ -20,6 +20,8 @@ import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
 import { deckAfterCombat, livingEnemies } from '../../logic/combat';
+import { describeFuseBurst, describeHandCard } from '../../logic/describe';
+import { stackOf } from '../../logic/marks';
 import { COLORS, COMBAT_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { CardPileModal } from '../cards/CardPileModal';
@@ -27,7 +29,7 @@ import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
-import { canPlayByTap, type DropTarget } from './cardDrop';
+import { type DropTarget } from './cardDrop';
 import { CombatFooter } from './CombatFooter';
 import { CombatLog } from './CombatLog';
 import { CombatResultOverlay } from './CombatResultOverlay';
@@ -56,7 +58,7 @@ const pileCards = (state: CombatState, pile: Pile): CardInstance[] => {
 };
 
 /** タップしたあと、使う相手の敵をタップで選んでいる最中のもの。 */
-type Pending = { kind: 'card'; instanceId: string } | { kind: 'potion'; slot: number };
+type Pending = { kind: 'potion'; slot: number };
 
 type CombatScreenProps = {
   setup: CombatSetup;
@@ -81,6 +83,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const {
     state,
     playCard,
+    fuseInHand,
     drinkPotion,
     discardPotion,
     endTurn,
@@ -105,6 +108,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const {
     drag,
     hover,
+    stackHover,
     lifted,
     ghost,
     cardHandlers,
@@ -119,6 +123,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     potions: state.potions,
     cardWidth,
     onPlayCard: playCard,
+    onFuse: fuseInHand,
     onDrinkPotion: drinkPotion,
   });
 
@@ -128,47 +133,31 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     : portraitFigures(stageSize, enemyCount);
 
   const living = livingEnemies(state).map((enemy) => enemy.uid);
-  // 選んでいる最中に、そのカードが使えなくなった（ターン終了など）・ポーションが無くなったら取り消し扱い。
-  const activePending = isPendingValid(pending, state.hand, isPlayable, isDrinkable) ? pending : null;
-  const pendingCardId = activePending?.kind === 'card' ? activePending.instanceId : null;
+  // ポーションの狙いを選んでいる最中に、そのポーションが無くなったら取り消し扱い。
+  const activePending = pending && isDrinkable(pending.slot) ? pending : null;
 
   let previews: DamagePreview[] = [];
   if (drag?.kind === 'card' && hover && hover.kind !== 'self') {
     previews = previewDamage(drag.instanceId, hover.kind === 'enemy' ? hover.uid : undefined);
-  } else if (!drag && pendingCardId) {
-    previews = living.flatMap((uid) =>
-      previewDamage(pendingCardId, uid).filter((preview) => preview.uid === uid),
-    );
   }
 
   const onDrink = (slot: number) => {
     if (potionNeedsTarget(slot)) setPending({ kind: 'potion', slot });
     else drinkPotion(slot);
   };
-  // 手札のジェスチャーはこの関数ごと作られるので、戦闘の状態が変わらない間は同じ関数を渡す。
-  const onTapCard = useCallback(
-    (instanceId: string) => {
-      const instance = state.hand.find((c) => c.instanceId === instanceId);
-      if (!instance || !isPlayable(instanceId)) return;
-      if (canPlayByTap(instance.card.target, livingEnemies(state).length)) {
-        setPending(null);
-        playCard(instanceId);
-        return;
-      }
-      // もう一度タップしたら取りやめ。別のカードをタップしたら、そちらに持ち替える。
-      setPending((prev) =>
-        prev?.kind === 'card' && prev.instanceId === instanceId ? null : { kind: 'card', instanceId },
-      );
-    },
-    [state, isPlayable, playCard],
-  );
   const onSelectEnemy = (uid: EnemyUid) => {
     if (!activePending) return;
     setPending(null);
-    if (activePending.kind === 'card') playCard(activePending.instanceId, uid);
-    else drinkPotion(activePending.slot, uid);
+    drinkPotion(activePending.slot, uid);
   };
-  const hint = drag && lifted ? dragHint(drag.kind, hover) : null;
+  const hint = drag && lifted ? dragHint(drag.kind, hover, stackHover !== null) : null;
+  const heldCard =
+    drag?.kind === 'card' ? state.hand.find((card) => card.instanceId === drag.instanceId) : undefined;
+  const underCard = stackHover ? state.hand.find((card) => card.instanceId === stackHover) : undefined;
+  const stackPreview =
+    heldCard && underCard
+      ? previewStackedCard(heldCard, underCard, state.player)
+      : null;
 
   const itemBar = (
     <ItemBar
@@ -213,9 +202,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const hintRow =
     activePending && !drag ? (
       <View style={styles.hintRow}>
-        <Text style={styles.hint}>
-          {activePending.kind === 'card' ? 'カードを使う敵をタップ' : 'ポーションを使う敵をタップ'}
-        </Text>
+        <Text style={styles.hint}>ポーションを使う敵をタップ</Text>
         <Pressable
           onPress={() => setPending(null)}
           style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
@@ -235,15 +222,15 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const hand = (
     <Hand
       cards={state.hand}
+      player={state.player}
       events={state.events}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
-      selectedId={pendingCardId}
+      selectedId={null}
       viewRef={bindHand}
       onCardWidth={setCardWidth}
       maxCardHeight={landscape ? windowHeight * COMBAT_LAYOUT.landscapeCardHeightRatio : undefined}
       {...cardHandlers}
-      onTap={onTapCard}
       style={landscape ? styles.landscapeHand : styles.portraitHand}
     />
   );
@@ -297,11 +284,11 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
           <>
             {itemBar}
             <View style={styles.turnRow}>
-              <View style={styles.settings}>
+              <View style={styles.turnRowSide}>
                 <SettingsButton />
               </View>
               {turnLabel}
-              <View style={styles.deck}>
+              <View style={[styles.turnRowSide, styles.turnRowEnd]}>
                 <DeckButton deck={setup.deck} />
               </View>
             </View>
@@ -324,9 +311,14 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
           <Animated.View style={[styles.ghost, { transform: ghost.getTranslateTransform() }]}>
             {drag.kind === 'card' ? (
               <CardView
-                card={drag.card}
+                card={stackPreview?.card ?? drag.card}
                 width={cardWidth}
-                selected={hover !== null}
+                selected={hover !== null || stackHover !== null}
+                description={
+                  stackPreview?.description ??
+                  (heldCard ? describeHandCard(heldCard, state.player) : undefined)
+                }
+                stack={stackPreview?.stack ?? (heldCard ? stackOf(heldCard) : 1)}
                 detailOnHold={false}
               />
             ) : (
@@ -336,11 +328,30 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
             )}
           </Animated.View>
         )}
+        {stackPreview && (
+          <View pointerEvents="none" style={styles.stackPreview}>
+            <Text style={styles.stackPreviewLabel}>こうなる</Text>
+            <CardView
+              card={stackPreview.card}
+              description={stackPreview.description}
+              stack={stackPreview.stack}
+              size="md"
+              detailOnHold={false}
+            />
+            {stackPreview.burst !== '' && (
+              <Text style={styles.stackPreviewNote}>
+                {stackPreview.consumed}は消える。{stackPreview.burst}
+              </Text>
+            )}
+          </View>
+        )}
         {openPile && (
           <CardPileModal
             title={PILE_VIEW[openPile].title}
             note={PILE_VIEW[openPile].note}
-            stacks={stackInstances(pileCards(state, openPile))}
+            stacks={stackInstances(pileCards(state, openPile), (instance) =>
+              describeHandCard(instance, state.player),
+            )}
             onClose={() => setOpenPile(null)}
           />
         )}
@@ -379,20 +390,35 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
   }
 }
 
-function dragHint(kind: 'card' | 'potion', hover: DropTarget | null): string {
+function dragHint(kind: 'card' | 'potion', hover: DropTarget | null, stacking: boolean): string {
+  if (stacking) return '離して重ねる';
   if (hover) return '離して使う';
   return kind === 'card' ? 'もっと上まで持ち上げて離す' : '使う相手のほうへ動かして離す';
 }
 
-function isPendingValid(
-  pending: Pending | null,
-  hand: readonly { instanceId: string }[],
-  isPlayable: (instanceId: string) => boolean,
-  isDrinkable: (slot: number) => boolean,
-): boolean {
-  if (!pending) return false;
-  if (pending.kind === 'potion') return isDrinkable(pending.slot);
-  return hand.some((c) => c.instanceId === pending.instanceId) && isPlayable(pending.instanceId);
+type StackPreview = {
+  card: CardInstance['card'];
+  stack: number;
+  description: string;
+  consumed: string;
+  burst: string;
+};
+
+/** 上に置こうとしている札が、重ねたあとにどうなるか。下の札は消えて、その印の効果が出る。 */
+function previewStackedCard(
+  top: CardInstance,
+  under: CardInstance,
+  player: CombatState['player'],
+): StackPreview {
+  const stack = stackOf(top) * 2;
+  const next: CardInstance = { ...top, stack };
+  return {
+    card: top.card,
+    stack,
+    description: describeHandCard(next, player),
+    consumed: under.card.name,
+    burst: describeFuseBurst(under.card, stackOf(under)),
+  };
 }
 
 const styles = StyleSheet.create({
@@ -401,13 +427,14 @@ const styles = StyleSheet.create({
   /** 縦向きの手札は画面の左右いっぱいまで使う。 */
   portraitHand: { marginHorizontal: -SPACING.lg },
   landscapeHand: { flex: 1 },
-  turnRow: { justifyContent: 'center' },
-  settings: { position: 'absolute', left: 0, top: 0, bottom: 0, justifyContent: 'center' },
+  /** 左右の列を同じ幅にして、TURN を真ん中に置く。行の高さはボタンに合わせる。 */
+  turnRow: { flexDirection: 'row', alignItems: 'center' },
+  turnRowSide: { flex: 1, alignItems: 'flex-start' },
+  turnRowEnd: { alignItems: 'flex-end' },
   /** 上に敵、左下にエージェント。斜めに向かい合って画面を広く使う。 */
   portraitStage: { flex: 1, justifyContent: 'space-between', paddingBottom: SPACING.sm },
   playerSlot: { alignSelf: 'flex-start', width: `${COMBAT_LAYOUT.playerWidthRatio * 100}%` },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 64 },
-  deck: { position: 'absolute', right: 0 },
   /** 所持品の説明欄が右の舞台の上に重なって見えるよう、右の列より手前に置く。 */
   side: {
     width: `${COMBAT_LAYOUT.landscapeSideRatio * 100}%`,
@@ -454,6 +481,37 @@ const styles = StyleSheet.create({
   cancelText: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
   pressed: { opacity: 0.7 },
   ghost: { position: 'absolute', left: 0, top: 0, pointerEvents: 'none' },
+  stackPreview: {
+    position: 'absolute',
+    top: '18%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    gap: SPACING.xs,
+    zIndex: 30,
+  },
+  stackPreviewLabel: {
+    color: COLORS.gold,
+    fontSize: 13,
+    fontWeight: '800',
+    backgroundColor: COLORS.overlay,
+    borderRadius: RADIUS.round,
+    overflow: 'hidden',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  stackPreviewNote: {
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    backgroundColor: COLORS.overlay,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    maxWidth: 280,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
   potionGhost: {
     width: ITEM_BAR.potionGhostSize,
     height: ITEM_BAR.potionGhostSize,

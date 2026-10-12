@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition, CardStack } from '../../domain/card';
+import { cardStackKey } from '../../logic/cards';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardView } from './CardView';
 
@@ -27,8 +28,8 @@ export function CardPickerModal({
   onConfirm,
   onCancel,
 }: CardPickerModalProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = stacks.find((stack) => stack.card.id === selectedId)?.card;
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const selected = stacks.find((stack) => cardStackKey(stack.card) === selectedKey)?.card;
 
   return (
     <View style={styles.overlay}>
@@ -41,11 +42,11 @@ export function CardPickerModal({
           ) : (
             stacks.map((stack) => (
               <CardView
-                key={stack.card.id}
+                key={cardStackKey(stack.card)}
                 card={stack.card}
                 count={stack.count}
-                selected={stack.card.id === selectedId}
-                onPress={() => setSelectedId(stack.card.id)}
+                selected={cardStackKey(stack.card) === selectedKey}
+                onPress={() => setSelectedKey(cardStackKey(stack.card))}
               />
             ))
           )}

@@ -3,8 +3,12 @@ import type { CombatEvent } from '../domain/combat';
 import { MOTION } from '../theme';
 
 /** そのイベントのあと、次のイベントまで空ける時間。秘奥義はカットインを見せる分だけ長い。 */
-const gapAfter = (event: CombatEvent) =>
-  event.kind === 'mysticArte' ? MOTION.eventStagger + MOTION.arteCutIn : MOTION.eventStagger;
+const gapAfter = (event: CombatEvent) => {
+  if (event.kind === 'mysticArte') return MOTION.eventStagger + MOTION.arteCutIn;
+  // 手札の波紋はカードが消える瞬間に出す。打撃の演出を遅らせない。
+  if (event.kind === 'marksFused') return 0;
+  return MOTION.eventStagger;
+};
 
 /** 各イベントを再生し始める時刻（最初のイベントが 0）。 */
 function eventStartTimes(events: CombatEvent[]): number[] {

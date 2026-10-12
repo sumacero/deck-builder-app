@@ -52,6 +52,10 @@ export type PlayerState = Fighter & {
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
+  /** かわす: 敵のヒットを無効にできる残り回数。次の自分のターンの始めに消える。 */
+  evade: number;
+  /** このターン、手札で札を重ねた回数（水晶の文鎮は最初の 1 回で発動）。 */
+  fusesThisTurn: number;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
@@ -82,6 +86,8 @@ export type EnemyState = Fighter & {
   artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
+  /** 霜。次の攻撃のダメージが、1 ヒットごとにこの分下がる。攻撃を終えると消える。 */
+  frost: number;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -130,6 +136,8 @@ export type CombatEventBody =
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
+  /** 手札で印を重ねた。波紋の演出に使う。playedId は残った札、materialIds は捨て札にした札。 */
+  | { kind: 'marksFused'; target: 'player'; playedId: string; materialIds: string[] }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 

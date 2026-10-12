@@ -41,7 +41,7 @@ export function DeckButton({ deck }: DeckButtonProps) {
         onRequestClose={close}
         supportedOrientations={MODAL_ORIENTATIONS}
       >
-        <CardPileModal title="デッキ" stacks={stackCards(deck)} onClose={close} offerAbandon />
+        <CardPileModal title="デッキ" stacks={stackCards(deck)} onClose={close} />
       </Modal>
     </>
   );

@@ -10,6 +10,16 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
+/** ノアの初期レリック。毎ターン最初に札を重ねたとき、1 枚引く。 */
+export const CRYSTAL_WEIGHT: RelicDefinition = {
+  id: 'crystal-weight',
+  name: '水晶の文鎮',
+  icon: '💎',
+  rarity: 'starter',
+  trigger: 'firstFuse',
+  effects: [{ kind: 'draw', amount: 1 }],
+};
+
 /** リーネの初期レリック。 */
 export const WORLD_TREE_SPROUT: RelicDefinition = {
   id: 'world-tree-sprout',

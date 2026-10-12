@@ -436,3 +436,65 @@ export const STANDARD_EVENTS: EventDefinition[] = [
     ],
   },
 ];
+
+/**
+ * 水鏡のノアの出来事だけ。カイルとリーネの候補（STANDARD_EVENTS）には入れない。
+ * 一枚の印を書き換え、これからの報酬を一つの印に絞れる。
+ */
+export const BASIN_ORACLE: EventDefinition = {
+  id: 'basin-oracle',
+  title: '水面の籤',
+  icon: '🔮',
+  text: '浅い水盤に、透けた札が三枚浮かんでいる。水晶の文鎮が、真ん中の札を押さえている。一枚の印を書き換えるか、これから引く札の印を一つに絞れる。',
+  options: [
+    {
+      id: 'remark-drop',
+      label: 'HP を 8 払い、一枚を雫の印にする',
+      effects: [{ kind: 'loseHp', amount: 8 }],
+      choice: { kind: 'remarkCard', mark: 'drop' },
+      outcome: '札の端に、雫がひとつ静かに浮かんだ。',
+    },
+    {
+      id: 'remark-mist',
+      label: '金貨 40 を払い、一枚を霞の印にする',
+      effects: [{ kind: 'loseGold', amount: 40 }],
+      choice: { kind: 'remarkCard', mark: 'mist' },
+      outcome: '水面に霞が立ち、札の印が淡くぼやけた。',
+    },
+    {
+      id: 'remark-ice',
+      label: 'HP を 6 払い、一枚を氷の印にする',
+      effects: [{ kind: 'loseHp', amount: 6 }],
+      choice: { kind: 'remarkCard', mark: 'ice' },
+      outcome: '指先が冷えて、札に氷の結晶が残った。',
+    },
+    {
+      id: 'lock-drop',
+      label: '金貨 15 を払い、これからの報酬を雫に絞る',
+      effects: [
+        { kind: 'loseGold', amount: 15 },
+        { kind: 'lockMark', mark: 'drop' },
+      ],
+      outcome: '水盤は雫の粒だけを映すようになった。印の無い札は、今までどおり浮かぶ。',
+    },
+    {
+      id: 'lock-mist',
+      label: '金貨 15 を払い、これからの報酬を霞に絞る',
+      effects: [
+        { kind: 'loseGold', amount: 15 },
+        { kind: 'lockMark', mark: 'mist' },
+      ],
+      outcome: '水盤は霞のゆらぎだけを映すようになった。印の無い札は、今までどおり浮かぶ。',
+    },
+    {
+      id: 'lock-ice',
+      label: '金貨 15 を払い、これからの報酬を氷に絞る',
+      effects: [
+        { kind: 'loseGold', amount: 15 },
+        { kind: 'lockMark', mark: 'ice' },
+      ],
+      outcome: '水盤は氷の結晶だけを映すようになった。印の無い札は、今までどおり浮かぶ。',
+    },
+    LEAVE,
+  ],
+};

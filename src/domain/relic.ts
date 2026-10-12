@@ -1,8 +1,8 @@
 import type { Effect } from './effect';
 import type { RunEffect } from './runEffect';
 
-/** combatStart は戦闘の最初に 1 回、turnStart は毎ターンの始め（1 ターン目も含む）。 */
-export type RelicTrigger = 'combatStart' | 'turnStart' | 'turnEnd' | 'combatWon';
+/** combatStart は戦闘の最初に 1 回、turnStart は毎ターンの始め（1 ターン目も含む）。firstFuse は毎ターン最初に札を重ねたとき。 */
+export type RelicTrigger = 'combatStart' | 'turnStart' | 'turnEnd' | 'combatWon' | 'firstFuse';
 
 /**
  * 発動の条件。
