@@ -5,7 +5,7 @@ import { prepareSounds } from '../../audio/soundPlayer';
 import { useMusic } from '../../hooks/useMusic';
 import type { RunSetup } from '../../domain/run';
 import { useRun } from '../../hooks/useRun';
-import { buildCombatSetup, currentAct } from '../../logic/run';
+import { buildCombatSetup, currentAct, rewardPotionHeal } from '../../logic/run';
 import { BlessingScreen } from '../blessing/BlessingScreen';
 import { DeckEditScreen } from '../blessing/DeckEditScreen';
 import { CombatScreen } from '../combat/CombatScreen';
@@ -45,6 +45,9 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
     moveTo,
     finishCombat,
     resolveReward,
+    drinkRewardPotion,
+    swapRewardPotion,
+    declineRewardPotion,
     chooseBossRelic,
     startFinalBattle,
     newRun,
@@ -95,6 +98,14 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
           gold={visible.phase.gold}
           relic={visible.phase.relic}
           potion={visible.phase.potion}
+          potionPending={visible.phase.potionPending}
+          potions={visible.potions}
+          potionHeal={
+            visible.phase.potion ? rewardPotionHeal(visible.player, visible.phase.potion) : null
+          }
+          onUsePotion={drinkRewardPotion}
+          onSwapPotion={swapRewardPotion}
+          onDeclinePotion={declineRewardPotion}
           toBossRelic={visible.phase.next === 'bossRelic'}
           deck={visible.deck}
           onPick={resolveReward}

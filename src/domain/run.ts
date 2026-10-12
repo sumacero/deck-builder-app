@@ -54,8 +54,13 @@ export type RunPhase =
       gold: number;
       /** すでに所持品に入っている。 */
       relic: RelicDefinition | null;
-      /** この戦闘でもらったポーション。すでに空き枠へ入っている。枠が埋まっていると null。 */
+      /**
+       * この戦闘のポーション。空き枠があればもう入っている。
+       * potionPending のときは枠が埋まっていて、まだ所持品に入っていない。
+       */
       potion: PotionDefinition | null;
+      /** true なら、使う・入れ替える・置いていくを選ぶまでカード報酬には進まない。 */
+      potionPending: boolean;
       /** 報酬のあとに進む先。ボス撃破後はボスレリックの 3 択へ。 */
       next: 'map' | 'bossRelic';
     }

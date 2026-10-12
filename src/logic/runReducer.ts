@@ -6,11 +6,14 @@ import { rest, smith } from './rest';
 import {
   chooseBossRelic,
   createRun,
+  declineRewardPotion,
   discardPotion,
+  drinkRewardPotion,
   finishCombat,
   moveTo,
   resolveReward,
   startFinalBattle,
+  swapRewardPotion,
 } from './run';
 import { buyCard, buyPotion, buyRelic, leaveShop, remarkCard, removeCard } from './shop';
 import { leaveTreasure, openTreasure } from './treasure';
@@ -21,6 +24,9 @@ export type RunAction =
   | { type: 'moveTo'; nodeId: string }
   | { type: 'finishCombat'; result: CombatResult }
   | { type: 'resolveReward'; card: CardDefinition | null }
+  | { type: 'drinkRewardPotion' }
+  | { type: 'swapRewardPotion'; slot: number }
+  | { type: 'declineRewardPotion' }
   | { type: 'chooseBossRelic'; relicId: string | null }
   | { type: 'startFinalBattle' }
   | { type: 'rest' }
@@ -50,6 +56,12 @@ export function runReducer(run: RunState, action: RunAction): RunState {
       return finishCombat(run, action.result);
     case 'resolveReward':
       return resolveReward(run, action.card);
+    case 'drinkRewardPotion':
+      return drinkRewardPotion(run);
+    case 'swapRewardPotion':
+      return swapRewardPotion(run, action.slot);
+    case 'declineRewardPotion':
+      return declineRewardPotion(run);
     case 'chooseBossRelic':
       return chooseBossRelic(run, action.relicId);
     case 'startFinalBattle':

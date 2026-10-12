@@ -26,6 +26,12 @@ export function useRun(setup: RunSetup) {
     (card: CardDefinition | null) => dispatch({ type: 'resolveReward', card }),
     [],
   );
+  const drinkRewardPotion = useCallback(() => dispatch({ type: 'drinkRewardPotion' }), []);
+  const swapRewardPotion = useCallback(
+    (slot: number) => dispatch({ type: 'swapRewardPotion', slot }),
+    [],
+  );
+  const declineRewardPotion = useCallback(() => dispatch({ type: 'declineRewardPotion' }), []);
   const chooseBossRelic = useCallback(
     (relicId: string | null) => dispatch({ type: 'chooseBossRelic', relicId }),
     [],
@@ -94,6 +100,9 @@ export function useRun(setup: RunSetup) {
     moveTo,
     finishCombat,
     resolveReward,
+    drinkRewardPotion,
+    swapRewardPotion,
+    declineRewardPotion,
     chooseBossRelic,
     startFinalBattle,
     newRun,

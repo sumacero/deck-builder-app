@@ -152,17 +152,31 @@ export function moveTo(run: RunState, nodeId: string): RunState {
 }
 
 /**
- * 勝てばゴールドとカード 3 択。空きのポーション枠があれば 1 個入る。
+ * 勝てばゴールドとカード 3 択とポーション 1 個。
+ * 空き枠があればそこに入り、埋まっていれば使うか入れ替えるか置いていくかを選ぶ。
  * エリートはレリックも、ボスはそのあとボスレリックの 3 択。ラスボスを倒したらクリア。
  */
 
-/** 最初の空き枠へ、候補から 1 個入れる。空きが無ければ出さない。 */
-function grantRewardPotion(run: RunState): { run: RunState; potion: PotionDefinition | null } {
-  const slot = run.potions.findIndex((held) => held === null);
-  if (slot < 0) return { run, potion: null };
+/**
+ * 戦闘の外で今すぐ効く回復量。回復の無いポーションは null。
+ * HP が満タンなら 0（飲んでも増えない）。
+ */
+export function rewardPotionHeal(player: { hp: number; maxHp: number }, potion: PotionDefinition): number | null {
+  let amount = 0;
+  for (const effect of potion.effects) {
+    if (effect.kind === 'heal') amount += effect.amount;
+  }
+  if (amount <= 0) return null;
+  return Math.min(amount, Math.max(0, player.maxHp - player.hp));
+}
+
+/** 候補から 1 個出す。空き枠があれば入れ、無ければ報酬画面で決めてもらう。 */
+function offerRewardPotion(run: RunState): { run: RunState; potion: PotionDefinition | null; pending: boolean } {
   const picked = pickOne(run.potionPool, run.rngSeed);
   const potion = picked.item;
-  if (!potion) return { run: { ...run, rngSeed: picked.seed }, potion: null };
+  if (!potion) return { run: { ...run, rngSeed: picked.seed }, potion: null, pending: false };
+  const slot = run.potions.findIndex((held) => held === null);
+  if (slot < 0) return { run: { ...run, rngSeed: picked.seed }, potion, pending: true };
   return {
     run: {
       ...run,
@@ -170,7 +184,44 @@ function grantRewardPotion(run: RunState): { run: RunState; potion: PotionDefini
       potions: run.potions.map((held, index) => (index === slot ? potion : held)),
     },
     potion,
+    pending: false,
   };
+}
+
+function pendingRewardPotion(run: RunState): PotionDefinition | null {
+  if (run.phase.kind !== 'reward' || !run.phase.potionPending) return null;
+  return run.phase.potion;
+}
+
+/** 枠が埋まっている報酬ポーションを、回復できるときだけその場で飲む。 */
+export function drinkRewardPotion(run: RunState): RunState {
+  const potion = pendingRewardPotion(run);
+  if (!potion || run.phase.kind !== 'reward') return run;
+  const heal = rewardPotionHeal(run.player, potion);
+  if (heal === null || heal <= 0) return run;
+  return {
+    ...run,
+    player: { ...run.player, hp: run.player.hp + heal },
+    phase: { ...run.phase, potion: null, potionPending: false },
+  };
+}
+
+/** 持っているポーションと入れ替える。空枠とは入れ替えない。 */
+export function swapRewardPotion(run: RunState, slot: number): RunState {
+  const potion = pendingRewardPotion(run);
+  const held = run.potions[slot];
+  if (!potion || !held || run.phase.kind !== 'reward') return run;
+  return {
+    ...run,
+    potions: run.potions.map((current, index) => (index === slot ? potion : current)),
+    phase: { ...run.phase, potion, potionPending: false },
+  };
+}
+
+/** 報酬のポーションを持たずに、カード選びへ進む。 */
+export function declineRewardPotion(run: RunState): RunState {
+  if (run.phase.kind !== 'reward' || !run.phase.potionPending) return run;
+  return { ...run, phase: { ...run.phase, potion: null, potionPending: false } };
 }
 
 export function finishCombat(run: RunState, result: CombatResult): RunState {
@@ -198,7 +249,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
-  const dropped = grantRewardPotion(looted.run);
+  const dropped = offerRewardPotion(looted.run);
   const offered = pickRewardChoices(
     draftPool(dropped.run),
     dropped.run.deck,
@@ -215,6 +266,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
       gold: gold.value,
       relic: looted.relic,
       potion: dropped.potion,
+      potionPending: dropped.pending,
       next: rank === 'boss' ? 'bossRelic' : 'map',
     },
   };
@@ -237,9 +289,9 @@ export const FINAL_BATTLE_NODE_ID = 'final';
 
 const BOSS_RELIC_CHOICES = 3;
 
-/** card が null ならスキップ。ボスの報酬ならボスレリックの 3 択へ（候補が無ければ次の章へ）。 */
+/** card が null ならスキップ。ポーションをまだ決めていないあいだは進まない。 */
 export function resolveReward(run: RunState, card: CardDefinition | null): RunState {
-  if (run.phase.kind !== 'reward') return run;
+  if (run.phase.kind !== 'reward' || run.phase.potionPending) return run;
   const picked: RunState = { ...run, deck: card ? [...run.deck, card] : run.deck };
   if (run.phase.next === 'map') return { ...picked, phase: { kind: 'map' } };
   const offered = pickUnique(

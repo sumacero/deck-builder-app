@@ -166,6 +166,14 @@ function offerCardPick(run: RunState): RunState {
   return {
     ...run,
     rngSeed: offered.seed,
-    phase: { kind: 'reward', choices: offered.items, gold: 0, relic: null, potion: null, next: 'map' },
+    phase: {
+      kind: 'reward',
+      choices: offered.items,
+      gold: 0,
+      relic: null,
+      potion: null,
+      potionPending: false,
+      next: 'map',
+    },
   };
 }
