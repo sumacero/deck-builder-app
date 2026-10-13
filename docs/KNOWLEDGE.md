@@ -101,6 +101,10 @@
   `wsl -d Ubuntu --cd /home/sumacero/projects/deck-builder-app -- bash -lc "<command>"`
   （PowerShell では `&&` / `||` が使えない点に注意。bash -lc の中なら使える）
 - Node.js v20（nodesource）、パッケージマネージャーは npm（`package-lock.json`）。bun は未使用。
+- **ローカル開発環境の立ち上げコマンド**（オーナーが「ローカル開発環境の立ち上げコマンド」と聞いたら、説明より先にこの 2 つをそのまま出す。ターミナルを 2 つ開いてそれぞれで実行）:
+  1. ゲームの開発サーバー（スマホの Expo Go で QR を読む）: `cd ~/projects/deck-builder-app && npx expo start --tunnel`
+  2. スマホから指示するためのワーカー（My Machines）: `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`
+  - `--tunnel` を付けないと QR が WSL 内部のアドレス（`exp://172.x.x.x:8081`）になり、Expo Go が「Something went wrong」になる（2026-10-13 に実際に起きた）。起動ログの `libasound.so.2` のエラーは PC 用デバッグツールのもので、実機確認には関係ない。
 - 実機確認: Android 端末の Expo Go。`npx expo start --tunnel` で起動（WSL のネットワーク分離のため tunnel を使用。`@expo/ngrok` はグローバルにインストール済み）。
 - **スマホ（Android）から指示する（2026-10-06）**: Cursor の **My Machines**（自分の PC で動くクラウドエージェント）。作業はこの PC のフォルダで直接行われる。全体図と仕組みは `docs/DEV_ENVIRONMENT.md`。
   - Cursor CLI を `~/.local/bin/agent` に導入（PATH は `~/.bashrc`）。`agent login` 済み（`agent status` で確認）。

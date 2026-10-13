@@ -70,6 +70,10 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 
 ## Commands
 
+- オーナーに「ローカル開発環境の立ち上げコマンド」と聞かれたら、説明より先に次の 2 つをそのまま答える（ターミナル 2 つで実行。詳細は `docs/KNOWLEDGE.md` の環境の節）:
+  1. `cd ~/projects/deck-builder-app && npx expo start --tunnel`（WSL なので `--tunnel` 必須。無いと Expo Go が「Something went wrong」）
+  2. `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`（スマホから指示するための My Machines ワーカー）
+
 Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
 
 ```bash
