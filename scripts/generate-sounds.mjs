@@ -210,6 +210,29 @@ const SOUNDS = {
       return lp(buzz(index === 0 ? 196 : 165) * env, 0.2);
     });
   },
+
+  /**
+   * 手札を重ねる: 二筋の水流が交差して一つになる。
+   * 片方は低い音から上がり、もう片方は高い音から下がり、真ん中で交わる。
+   */
+  fuse: () => {
+    const riseNoise = lowpass();
+    const fallNoise = lowpass();
+    const rise = oscillator(sine);
+    const fall = oscillator(sine);
+    const splash = oscillator(sine);
+    return render(0.55, (t, p) => {
+      const env = Math.sin(Math.PI * p);
+      const rising = lerp(210, 680, p);
+      const falling = lerp(760, 240, p);
+      const current =
+        riseNoise(noise(), 0.06 + 0.4 * p) * 0.55 + fallNoise(noise(), 0.5 - 0.38 * p) * 0.55;
+      const tones = rise(rising) * 0.28 + fall(falling) * 0.24;
+      const meet = Math.exp(-((p - 0.48) * (p - 0.48)) / 0.012);
+      const ripple = splash(lerp(520, 980, (t * 7) % 1)) * meet * 0.35;
+      return (current + tones) * env + ripple;
+    });
+  },
 };
 
 // ===== 書き出し =====

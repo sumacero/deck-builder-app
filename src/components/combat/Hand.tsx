@@ -20,7 +20,7 @@ type HandProps = CardDragHandlers & {
   isPlayable: (instanceId: string) => boolean;
   /** 持ち上げている最中のカード。 */
   draggingId: string | null;
-  /** タップして、狙う敵を選んでいる最中のカード。 */
+  /** 少し浮かしている札。波紋の起点も同じだけ上がる。 */
   selectedId: string | null;
   /** カードを離した位置が手札より上かを判定するため、外枠の View を渡す。 */
   viewRef: (node: View | null) => void;

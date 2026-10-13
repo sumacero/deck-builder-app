@@ -3,7 +3,7 @@ import type { EnemyUid } from '../../domain/combat';
 
 export type Point = { x: number; y: number };
 
-/** つまんだ位置から指がこれだけ動いたら「動かした」。それまではタップ・長押しとして扱い、使い道も決めない。 */
+/** つまんだ位置から指がこれだけ動いたら「動かした」。それまではタップとして扱い、使い道も決めない。 */
 export const DRAG_LIFT_DISTANCE = 10;
 
 /** 持ち上げてから離すまでの共通の知らせ。velocity は離した瞬間の指の速さ（px/ms）。 */
@@ -102,13 +102,6 @@ export function projectFlick(point: Point, velocity: Point): Point {
     y: point.y + velocity.y * FLICK_PROJECTION_MS,
   };
 }
-
-/**
- * タップだけで使えるか。狙う敵を選ぶ必要がないカード（自分・敵全体、敵が 1 体だけのときの単体攻撃）。
- * 敵が複数いるときの単体攻撃は、狙う敵へスワイプするか、タップしてから敵をタップして使う。
- */
-export const canPlayByTap = (target: CardTarget, livingEnemyCount: number) =>
-  target !== 'enemy' || livingEnemyCount <= 1;
 
 export const sameDrop = (a: DropTarget | null, b: DropTarget | null) =>
   a?.kind === b?.kind && (a?.kind !== 'enemy' || (b?.kind === 'enemy' && a.uid === b.uid));

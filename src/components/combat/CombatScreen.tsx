@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import {
   Animated,
   type LayoutChangeEvent,
@@ -29,7 +29,7 @@ import { CardView } from '../cards/CardView';
 import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
-import { canPlayByTap, type DropTarget } from './cardDrop';
+import { type DropTarget } from './cardDrop';
 import { CombatFooter } from './CombatFooter';
 import { CombatLog } from './CombatLog';
 import { CombatResultOverlay } from './CombatResultOverlay';
@@ -57,8 +57,8 @@ const pileCards = (state: CombatState, pile: Pile): CardInstance[] => {
   return [...(pile === 'discard' ? state.discardPile : state.exhaustPile)].reverse();
 };
 
-/** タップしたあと、使う相手の敵をタップで選んでいる最中のもの。 */
-type Pending = { kind: 'card'; instanceId: string } | { kind: 'potion'; slot: number };
+/** ポーションを使う相手の敵を、タップで選んでいる最中。カードは摘んで動かして使う。 */
+type Pending = { kind: 'potion'; slot: number };
 
 type CombatScreenProps = {
   setup: CombatSetup;
@@ -133,45 +133,22 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     : portraitFigures(stageSize, enemyCount);
 
   const living = livingEnemies(state).map((enemy) => enemy.uid);
-  // 選んでいる最中に、そのカードが使えなくなった（ターン終了など）・ポーションが無くなったら取り消し扱い。
-  const activePending = isPendingValid(pending, state.hand, isPlayable, isDrinkable) ? pending : null;
-  const pendingCardId = activePending?.kind === 'card' ? activePending.instanceId : null;
+  // 選んでいる最中にポーションが無くなったら、取り消し扱い。
+  const activePending = isPendingValid(pending, isDrinkable) ? pending : null;
 
   let previews: DamagePreview[] = [];
   if (drag?.kind === 'card' && hover && hover.kind !== 'self') {
     previews = previewDamage(drag.instanceId, hover.kind === 'enemy' ? hover.uid : undefined);
-  } else if (!drag && pendingCardId) {
-    previews = living.flatMap((uid) =>
-      previewDamage(pendingCardId, uid).filter((preview) => preview.uid === uid),
-    );
   }
 
   const onDrink = (slot: number) => {
     if (potionNeedsTarget(slot)) setPending({ kind: 'potion', slot });
     else drinkPotion(slot);
   };
-  // 手札のジェスチャーはこの関数ごと作られるので、戦闘の状態が変わらない間は同じ関数を渡す。
-  const onTapCard = useCallback(
-    (instanceId: string) => {
-      const instance = state.hand.find((c) => c.instanceId === instanceId);
-      if (!instance || !isPlayable(instanceId)) return;
-      if (canPlayByTap(instance.card.target, livingEnemies(state).length)) {
-        setPending(null);
-        playCard(instanceId);
-        return;
-      }
-      // もう一度タップしたら取りやめ。別のカードをタップしたら、そちらに持ち替える。
-      setPending((prev) =>
-        prev?.kind === 'card' && prev.instanceId === instanceId ? null : { kind: 'card', instanceId },
-      );
-    },
-    [state, isPlayable, playCard],
-  );
   const onSelectEnemy = (uid: EnemyUid) => {
     if (!activePending) return;
     setPending(null);
-    if (activePending.kind === 'card') playCard(activePending.instanceId, uid);
-    else drinkPotion(activePending.slot, uid);
+    drinkPotion(activePending.slot, uid);
   };
   const hint = drag && lifted ? dragHint(drag.kind, hover, stackHover !== null) : null;
   const heldCard =
@@ -225,7 +202,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     activePending && !drag ? (
       <View style={styles.hintRow}>
         <Text style={styles.hint}>
-          {activePending.kind === 'card' ? 'カードを使う敵をタップ' : 'ポーションを使う敵をタップ'}
+          ポーションを使う敵をタップ
         </Text>
         <Pressable
           onPress={() => setPending(null)}
@@ -250,12 +227,11 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       events={state.events}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
-      selectedId={pendingCardId}
+      selectedId={null}
       viewRef={bindHand}
       onCardWidth={setCardWidth}
       maxCardHeight={landscape ? windowHeight * COMBAT_LAYOUT.landscapeCardHeightRatio : undefined}
       {...cardHandlers}
-      onTap={onTapCard}
       style={landscape ? styles.landscapeHand : styles.portraitHand}
     />
   );
@@ -427,15 +403,8 @@ function dragHint(kind: 'card' | 'potion', hover: DropTarget | null, stacking: b
   return kind === 'card' ? 'もっと上まで持ち上げて離す' : '使う相手のほうへ動かして離す';
 }
 
-function isPendingValid(
-  pending: Pending | null,
-  hand: readonly { instanceId: string }[],
-  isPlayable: (instanceId: string) => boolean,
-  isDrinkable: (slot: number) => boolean,
-): boolean {
-  if (!pending) return false;
-  if (pending.kind === 'potion') return isDrinkable(pending.slot);
-  return hand.some((c) => c.instanceId === pending.instanceId) && isPlayable(pending.instanceId);
+function isPendingValid(pending: Pending | null, isDrinkable: (slot: number) => boolean): boolean {
+  return pending !== null && isDrinkable(pending.slot);
 }
 
 const styles = StyleSheet.create({

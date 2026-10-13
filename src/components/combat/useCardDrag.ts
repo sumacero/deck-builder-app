@@ -239,7 +239,7 @@ export function useCardDrag({
       onDragCancel: reset,
     };
 
-    const cards: Omit<CardDragHandlers, 'onTap'> = {
+    const cards: CardDragHandlers = {
       ...common,
       onDragStart: (instanceId, point) => {
         const instance = latest.current.hand.find((c) => c.instanceId === instanceId);
