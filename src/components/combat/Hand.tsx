@@ -6,6 +6,7 @@ import { describeHandCard } from '../../logic/describe';
 import { markLinks, stackOf } from '../../logic/marks';
 import { COLORS, HAND_LAYOUT, MARK_COLORS, SPACING } from '../../theme';
 import { type CardDragHandlers, DraggableCard } from './DraggableCard';
+import { FuseReveal } from './effects/FuseReveal';
 import { HandFullEffect } from './effects/HandFullEffect';
 import { MarkLinkOverlay } from './effects/MarkLinkOverlay';
 import { handCardSpacing, handCardWidth } from './handLayout';
@@ -48,6 +49,7 @@ export function Hand({
   ...handlers
 }: HandProps) {
   const [width, setWidth] = useState(0);
+  const [dismissedFuseId, setDismissedFuseId] = useState<number | null>(null);
   const cardWidth = handCardWidth(width, maxCardHeight);
   const spacing = handCardSpacing(width, cardWidth, cards.length);
   const focusId = draggingId ?? selectedId;
@@ -56,6 +58,9 @@ export function Hand({
   useEffect(() => {
     onCardWidth(cardWidth);
   }, [cardWidth, onCardWidth]);
+
+  const fused = events.find((event): event is MarksFusedEvent => event.kind === 'marksFused');
+  const reveal = fused && fused.id !== dismissedFuseId ? fused : null;
 
   return (
     <View
@@ -69,29 +74,47 @@ export function Hand({
         ) : (
           cardWidth > 0 && (
             <View style={styles.row}>
-              {cards.map((instance, i) => (
-                <View
-                  key={instance.instanceId}
-                  style={[styles.slot, i > 0 && { marginLeft: spacing }, { zIndex: i }]}
-                >
-                  <DraggableCard
-                    instanceId={instance.instanceId}
-                    card={instance.card}
-                    width={cardWidth}
-                    playable={isPlayable(instance.instanceId)}
-                    dragging={draggingId === instance.instanceId}
-                    selected={selectedId === instance.instanceId}
-                    linkColor={
-                      instance.card.mark && linkedIds.has(instance.instanceId)
-                        ? MARK_COLORS[instance.card.mark]
-                        : undefined
-                    }
-                    {...handlers}
-                    description={describeHandCard(instance, player)}
-                    stack={stackOf(instance)}
-                  />
-                </View>
-              ))}
+              {cards.map((instance, i) => {
+                const settling = reveal?.playedId === instance.instanceId;
+                return (
+                  <View
+                    key={instance.instanceId}
+                    style={[
+                      styles.slot,
+                      i > 0 && { marginLeft: spacing },
+                      { zIndex: settling ? 30 : i },
+                    ]}
+                  >
+                    <View style={settling ? styles.settling : undefined}>
+                      <DraggableCard
+                        instanceId={instance.instanceId}
+                        card={instance.card}
+                        width={cardWidth}
+                        playable={isPlayable(instance.instanceId)}
+                        dragging={draggingId === instance.instanceId}
+                        selected={selectedId === instance.instanceId}
+                        linkColor={
+                          instance.card.mark && linkedIds.has(instance.instanceId)
+                            ? MARK_COLORS[instance.card.mark]
+                            : undefined
+                        }
+                        {...handlers}
+                        description={describeHandCard(instance, player)}
+                        stack={stackOf(instance)}
+                      />
+                    </View>
+                    {settling && reveal && (
+                      <FuseReveal
+                        consumed={reveal.consumed}
+                        kept={instance}
+                        player={player}
+                        cardWidth={cardWidth}
+                        onDone={() => setDismissedFuseId(reveal.id)}
+                      />
+                    )}
+                  </View>
+                );
+              })}
             </View>
           )
         )}
@@ -112,8 +135,12 @@ export function Hand({
   );
 }
 
+type MarksFusedEvent = Extract<CombatEvent, { kind: 'marksFused' }>;
+
 const styles = StyleSheet.create({
   container: { justifyContent: 'center' },
+  /** 演出のあいだ、本当の札は隠す。見えるのは上から降りる札。 */
+  settling: { opacity: 0 },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',

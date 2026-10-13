@@ -1064,8 +1064,9 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
 
 /**
  * 手札の札を、種類と段が同じもう一枚の上に重ねる。エナジーは要らない。
- * 残った札の段が倍になり、重ねた札は 1 段の札に戻って捨て札へ。
- * 重ねた札の印で、重ねた瞬間の効果が出る（水面の分だけ繰り返す）。毎ターン最初の 1 回で水晶の文鎮が発動する。
+ * 摘んでいた札が残って段が倍になる。置き場所は下の札があった位置のまま（手札の並びは動かさない）。
+ * 下の札は 1 段に戻って捨て札へ。消えた下の札の印で、重ねた瞬間の効果が出る（水面の分だけ繰り返す）。
+ * 毎ターン最初の 1 回で水晶の文鎮が発動する。
  */
 export function fuseInHand(state: CombatState, sourceId: string, targetId: string): CombatState {
   if (state.status !== 'playerTurn' || sourceId === targetId) return state;
@@ -1073,22 +1074,30 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
   const target = state.hand.find((card) => card.instanceId === targetId);
   if (!source || !target || !canStackOnto(state.hand, source, target)) return state;
 
-  const stack = stackOf(target) * 2;
-  const stacked: CardInstance = { instanceId: target.instanceId, card: target.card, stack };
-  const hand = state.hand.map((card) => (card.instanceId === targetId ? stacked : card));
+  const stack = stackOf(source) * 2;
+  const stacked: CardInstance = { instanceId: source.instanceId, card: source.card, stack };
+  const hand = state.hand.flatMap((card) => {
+    if (card.instanceId === sourceId) return [];
+    if (card.instanceId === targetId) return [stacked];
+    return [card];
+  });
   const fused: CombatState = {
     ...state,
-    hand: hand.filter((card) => card.instanceId !== sourceId),
-    discardPile: [...state.discardPile, releaseFusion(source)],
+    hand,
+    discardPile: [...state.discardPile, releaseFusion(target)],
     player: { ...state.player, fusesThisTurn: state.player.fusesThisTurn + 1 },
   };
-  const announced = withEvent(withLog(fused, `${source.card.name}を${target.card.name}に重ねた（${stack} 段）`), {
-    kind: 'marksFused',
-    target: 'player',
-    playedId: targetId,
-    materialIds: [sourceId],
-  });
-  const burst = fuseBurst(source.card, stackOf(source));
+  const announced = withEvent(
+    withLog(fused, `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段）`),
+    {
+      kind: 'marksFused',
+      target: 'player',
+      playedId: sourceId,
+      materialIds: [targetId],
+      consumed: target,
+    },
+  );
+  const burst = fuseBurst(target.card, stackOf(target));
   const repeats = 1 + powerOf(state, 'fuseEcho');
   let next = announced;
   for (let i = 0; i < repeats && burst; i++) {

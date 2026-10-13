@@ -136,8 +136,18 @@ export type CombatEventBody =
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
-  /** 手札で印を重ねた。波紋の演出に使う。playedId は残った札、materialIds は捨て札にした札。 */
-  | { kind: 'marksFused'; target: 'player'; playedId: string; materialIds: string[] }
+  /**
+   * 手札で印を重ねた。波紋と、重なる動きの演出に使う。
+   * playedId は残った札（摘んでいた札）。materialIds は捨て札にした下の札。
+   * consumed は、消える直前の下の札。
+   */
+  | {
+      kind: 'marksFused';
+      target: 'player';
+      playedId: string;
+      materialIds: string[];
+      consumed: CardInstance;
+    }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 

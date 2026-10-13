@@ -163,6 +163,8 @@ export const MOTION = {
   ripplePulseHot: 780,
   /** 融合した瞬間に、消えた札の位置から波紋が広がる時間。 */
   rippleBurst: 720,
+  /** 手札で重ねたとき、下の札の上に摘んだ札が降りて、何が残ったか読めるまで。 */
+  fuseReveal: 1200,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {

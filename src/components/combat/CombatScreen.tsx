@@ -179,7 +179,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const stackTarget = stackHover
     ? state.hand.find((card) => card.instanceId === stackHover)
     : undefined;
-  const stackForecast = heldCard && stackTarget ? forecastStack(stackTarget, state.player) : null;
+  const stackForecast = heldCard && stackTarget ? forecastStack(heldCard, state.player) : null;
 
   const itemBar = (
     <ItemBar
@@ -411,13 +411,13 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
   }
 }
 
-/** 重ねたあとに残る札（下の札）の、段が倍になった説明。 */
-function forecastStack(target: CardInstance, player: PlayerState): { name: string; stack: number; description: string } {
-  const stack = stackOf(target) * 2;
+/** 重ねたあとに残る札（摘んでいた札）の、段が倍になった説明。 */
+function forecastStack(source: CardInstance, player: PlayerState): { name: string; stack: number; description: string } {
+  const stack = stackOf(source) * 2;
   return {
-    name: target.card.name,
+    name: source.card.name,
     stack,
-    description: describeHandCard({ ...target, stack }, player),
+    description: describeHandCard({ ...source, stack }, player),
   };
 }
 
