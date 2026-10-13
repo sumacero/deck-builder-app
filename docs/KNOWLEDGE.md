@@ -202,6 +202,7 @@
   - イベントと音の対応は純粋関数 `src/audio/combatSounds.ts` の `soundForEvent`。カード使用（`cardPlayed` イベント）・打撃・大ダメージ（10 以上）・ガード・ブロック獲得・被弾・勝利・敗北の 8 種。
   - 再生は `src/audio/soundPlayer.ts`（起動時に全音を先読み。失敗してもゲームは止めない）。音量 = 各音の `volume` × `SOUND_MASTER_VOLUME` × `OUTPUT_GAIN`（`src/audio/sounds.ts` の 0.51 は効果音と BGM の比率。2026-10-04 に BGM より大きいとのことで 0.6 → さらに 15% 下げて 0.51 に。2026-10-07 に全体を 2 倍にする `OUTPUT_GAIN` を `src/audio/gain.ts` に追加し、BGM の各曲の volume にも同じ倍率をかけた）。`src/hooks/useCombatSounds.ts` が演出と同じ時間差で鳴らす。
   - 手札を重ねたとき（`marksFused`）は、二筋の水流が交差する音（`fuse`、2026-10-13）。新しい音は `generate-sounds.mjs` の末尾に足す（途中に入れると、それ以降の音のノイズがずれる）。
+  - スマホだけ無音だった（2026-10-14）: ブラウザは音の URL をその場で鳴らせる。Android / iOS は、ファイルを端末に落とし終わる前の `play` が捨てられる。効果音はスマホでは先に落として、読み込みが終わってから鳴らす（`soundPlayer.ts` の `downloadFirst`）。音程も、端末のスピーカーが出す帯（600〜1800Hz）に上げた。こもったノイズだけだと PC では聞こえても端末では BGM に埋もれる。
   - ~~マナーモード中は鳴らさない（`playsInSilentMode: false`）~~（変更: 2026-10-03。Android 実機で音が出なかった。Android ではこの設定だとバイブモードでも消音される）→ `playsInSilentMode` は Android で true（メディア音量に従う）、iOS で false（消音スイッチに従う）。他アプリの音楽は止めない（`mixWithOthers`）。
   - 音声モードは起動時に 1 回だけ設定するので、変更を試すときは保存だけでなく `r` でリロードが必要。
   - `app.json` の expo-audio プラグインでマイク権限・録音権限・バックグラウンド再生を無効化（ネイティブビルド時のみ影響）。

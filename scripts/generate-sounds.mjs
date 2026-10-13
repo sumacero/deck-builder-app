@@ -213,24 +213,26 @@ const SOUNDS = {
 
   /**
    * 手札を重ねる: 二筋の水流が交差して一つになる。
-   * 片方は低い音から上がり、もう片方は高い音から下がり、真ん中で交わる。
+   * 音程はスマホのスピーカーが出せる帯（おおよそ 600〜1800Hz）に置く。
+   * こもったノイズだけにすると、PC のスピーカーでは聞こえても端末では BGM に埋もれる。
    */
   fuse: () => {
-    const riseNoise = lowpass();
-    const fallNoise = lowpass();
     const rise = oscillator(sine);
     const fall = oscillator(sine);
-    const splash = oscillator(sine);
-    return render(0.55, (t, p) => {
+    const bubble = oscillator(sine);
+    const air = lowpass();
+    return render(0.5, (t, p) => {
       const env = Math.sin(Math.PI * p);
-      const rising = lerp(210, 680, p);
-      const falling = lerp(760, 240, p);
-      const current =
-        riseNoise(noise(), 0.06 + 0.4 * p) * 0.55 + fallNoise(noise(), 0.5 - 0.38 * p) * 0.55;
-      const tones = rise(rising) * 0.28 + fall(falling) * 0.24;
-      const meet = Math.exp(-((p - 0.48) * (p - 0.48)) / 0.012);
-      const ripple = splash(lerp(520, 980, (t * 7) % 1)) * meet * 0.35;
-      return (current + tones) * env + ripple;
+      const up = rise(lerp(640, 1580, p)) * 0.62;
+      const down = fall(lerp(1720, 760, p)) * 0.55;
+      const whoosh = air(noise(), 0.4) * 0.18 * env;
+      let pop = 0;
+      for (const at of [0.22, 0.38, 0.5]) {
+        const local = (t - at) / 0.07;
+        if (local < 0 || local > 1) continue;
+        pop += bubble(lerp(980, 1680, local)) * Math.sin(Math.PI * local) * decay(local, 2.4) * 0.5;
+      }
+      return (up + down) * env + whoosh + pop;
     });
   },
 };

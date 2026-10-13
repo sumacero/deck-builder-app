@@ -48,5 +48,5 @@ export const SOUNDS: Record<SoundId, SoundDef> = {
   coin: { source: require('../../assets/sounds/coin.wav'), volume: 0.5 },
   slotIn: { source: require('../../assets/sounds/slot-in.wav'), volume: 0.7 },
   handFull: { source: require('../../assets/sounds/hand-full.wav'), volume: 0.7 },
-  fuse: { source: require('../../assets/sounds/fuse.wav'), volume: 0.7 },
+  fuse: { source: require('../../assets/sounds/fuse.wav'), volume: 1 },
 };
