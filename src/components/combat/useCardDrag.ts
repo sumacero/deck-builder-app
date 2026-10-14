@@ -45,6 +45,8 @@ type Layout = {
   handRect: Rect | null;
   releaseLineY: number;
   enemyRects: { uid: EnemyUid; rect: Rect }[];
+  /** 自分の枠。自分に使うカードは、この中で離したときだけ使う。 */
+  playerRect: Rect | null;
 };
 
 type UseCardDragOptions = {
@@ -83,11 +85,13 @@ export function useCardDrag({
   const containerView = useRef<View | null>(null);
   const handView = useRef<View | null>(null);
   const enemyViews = useRef(new Map<EnemyUid, View>());
+  const playerView = useRef<View | null>(null);
   const layout = useRef<Layout>({
     origin: { x: 0, y: 0 },
     handRect: null,
     releaseLineY: Number.NEGATIVE_INFINITY,
     enemyRects: [],
+    playerRect: null,
   });
   const draggingRef = useRef<Dragging | null>(null);
   const hoverRef = useRef<DropTarget | null>(null);
@@ -114,6 +118,9 @@ export function useCardDrag({
         layout.current.handRect = { x, y, width, height };
         const cardHeight = latest.current.cardWidth * HAND_LAYOUT.aspectRatio;
         layout.current.releaseLineY = y + HAND_LAYOUT.topPadding + cardHeight * RELEASE_LINE_IN_CARD;
+      });
+      playerView.current?.measureInWindow((x, y, width, height) => {
+        layout.current.playerRect = width > 0 && height > 0 ? { x, y, width, height } : null;
       });
       const views = latest.current.enemies.filter(isAlive).flatMap((enemy) => {
         const view = enemyViews.current.get(enemy.uid);
@@ -155,7 +162,13 @@ export function useCardDrag({
     const aim = (dragging: Dragging, point: Point): DropTarget | null => {
       const { item, start } = dragging;
       return item.kind === 'card'
-        ? resolveDrop(point, item.card.target, livingRects(), layout.current.releaseLineY)
+        ? resolveDrop(
+            point,
+            item.card.target,
+            livingRects(),
+            layout.current.releaseLineY,
+            layout.current.playerRect,
+          )
         : resolveItemDrop(point, start, item.potion.target, livingRects());
     };
     /** 指の下に、持ち上げた札を重ねられる相手がいれば、その札。 */
@@ -266,6 +279,9 @@ export function useCardDrag({
     if (node) enemyViews.current.set(uid, node);
     else enemyViews.current.delete(uid);
   }, []);
+  const bindPlayer = useCallback((node: View | null) => {
+    playerView.current = node;
+  }, []);
 
   return {
     drag,
@@ -279,5 +295,6 @@ export function useCardDrag({
     measureContainer,
     bindHand,
     bindEnemy,
+    bindPlayer,
   };
 }

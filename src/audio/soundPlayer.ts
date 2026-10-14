@@ -1,20 +1,16 @@
-import {
-  type AudioPlayer,
-  type AudioStatus,
-  createAudioPlayer,
-  setAudioModeAsync,
-} from 'expo-audio';
+import { type AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { Platform } from 'react-native';
 import { getAudioSettings, subscribeAudioSettings } from './audioSettings';
 import { outputVolume } from './levels';
 import { SOUND_MASTER_VOLUME, type SoundId, SOUNDS } from './sounds';
 
 const players = new Map<SoundId, AudioPlayer>();
-const playTails = new Map<SoundId, Promise<void>>();
 let preparing: Promise<void> | null = null;
 
-/** 読み込み待ちがこれ以上かかったら、鳴らしにいく。 */
-const LOAD_WAIT_MS = 2000;
+/** まだ読み込めていない音を、この間隔で見にいく。状態通知は再生中しか来ないので、自分で見る。 */
+const LOAD_POLL_MS = 16;
+/** これだけ待っても読めなければ、その音は鳴らさない。遅い音を後から重ねない。 */
+const LOAD_WAIT_MS = 400;
 
 /** 各音の大きさ × 効果音全体のバランス × 設定（50 で今までどおり）。 */
 function soundVolume(id: SoundId): number {
@@ -62,22 +58,22 @@ export function configureAudioMode(): Promise<void> {
   return configuring;
 }
 
-function whenLoaded(player: AudioPlayer): Promise<void> {
-  if (player.isLoaded) return Promise.resolve();
+/** 読み込み済みなら true。状態通知を待たず、短い間隔で isLoaded を見る。 */
+function whenLoaded(player: AudioPlayer): Promise<boolean> {
+  if (player.isLoaded) return Promise.resolve(true);
   return new Promise((resolve) => {
-    let settled = false;
-    const finish = () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      subscription.remove();
-      resolve();
-    };
-    const subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
-      if (status.isLoaded) finish();
-    });
-    const timeout = setTimeout(finish, LOAD_WAIT_MS);
-    if (player.isLoaded) finish();
+    const started = Date.now();
+    const timer = setInterval(() => {
+      if (player.isLoaded) {
+        clearInterval(timer);
+        resolve(true);
+        return;
+      }
+      if (Date.now() - started >= LOAD_WAIT_MS) {
+        clearInterval(timer);
+        resolve(false);
+      }
+    }, LOAD_POLL_MS);
   });
 }
 
@@ -101,37 +97,38 @@ export function prepareSounds(): Promise<void> {
   return preparing;
 }
 
-function playNow(id: SoundId): void {
-  const player = playerFor(id);
-  player.volume = soundVolume(id);
-  if (player.currentTime > 0) void player.seekTo(0);
-  player.play();
-}
-
-async function playWhenReady(id: SoundId): Promise<void> {
-  await prepareSounds();
-  const player = players.get(id) ?? playerFor(id);
-  await whenLoaded(player);
-  player.volume = soundVolume(id);
-  if (player.currentTime > 0.05) await player.seekTo(0);
-  player.play();
-}
-
-/** 効果音の失敗でゲームが止まらないよう、例外は握りつぶして警告だけ出す。 */
-export function playSound(id: SoundId): void {
-  if (Platform.OS === 'web') {
-    void prepareSounds();
+/** 頭から鳴らす。シークが要るときだけ、シークが届いてから再生する。 */
+function playFromStart(player: AudioPlayer): void {
+  const start = () => {
     try {
-      playNow(id);
+      player.play();
     } catch (error: unknown) {
-      console.warn(`効果音 ${id} の再生に失敗しました`, error);
+      console.warn('効果音の再生に失敗しました', error);
     }
+  };
+  if (player.currentTime <= 0.02) {
+    start();
     return;
   }
-  const run = () =>
-    playWhenReady(id).catch((error: unknown) => {
-      console.warn(`効果音 ${id} の再生に失敗しました`, error);
-    });
-  const previous = playTails.get(id) ?? Promise.resolve();
-  playTails.set(id, previous.then(run, run));
+  void player.seekTo(0).then(start, start);
+}
+
+/**
+ * 効果音を鳴らす。読み込み済みならその場で鳴らす。
+ * スマホは、全音の準備や状態通知（最大 2 秒）を待たない。未読のときだけ、読めた瞬間に鳴らす。
+ * 失敗してもゲームは止めない。
+ */
+export function playSound(id: SoundId): void {
+  void prepareSounds();
+  const player = playerFor(id);
+  player.volume = soundVolume(id);
+  if (Platform.OS === 'web' || player.isLoaded) {
+    playFromStart(player);
+    return;
+  }
+  void whenLoaded(player).then((ready) => {
+    if (!ready) return;
+    player.volume = soundVolume(id);
+    playFromStart(player);
+  });
 }

@@ -117,6 +117,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     measureContainer,
     bindHand,
     bindEnemy,
+    bindPlayer,
   } = useCardDrag({
     hand: state.hand,
     enemies: state.enemies,
@@ -150,7 +151,10 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     setPending(null);
     drinkPotion(activePending.slot, uid);
   };
-  const hint = drag && lifted ? dragHint(drag.kind, hover, stackHover !== null) : null;
+  const hint =
+    drag && lifted
+      ? dragHint(drag.kind, hover, stackHover !== null, drag.kind === 'card' && drag.card.target === 'self')
+      : null;
   const heldCard =
     drag?.kind === 'card' ? state.hand.find((card) => card.instanceId === drag.instanceId) : undefined;
   const stackTarget = stackHover
@@ -196,6 +200,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       defeatDelay={effectsTime}
       figureSize={figures.player}
       highlighted={hover?.kind === 'self'}
+      viewRef={bindPlayer}
     />
   );
   const hintRow =
@@ -397,9 +402,15 @@ function forecastStack(source: CardInstance, player: PlayerState): { name: strin
   };
 }
 
-function dragHint(kind: 'card' | 'potion', hover: DropTarget | null, stacking: boolean): string {
+function dragHint(
+  kind: 'card' | 'potion',
+  hover: DropTarget | null,
+  stacking: boolean,
+  selfCard: boolean,
+): string {
   if (stacking) return '離して重ねる';
   if (hover) return '離して使う';
+  if (selfCard) return '自分の上で離す';
   return kind === 'card' ? 'もっと上まで持ち上げて離す' : '使う相手のほうへ動かして離す';
 }
 
