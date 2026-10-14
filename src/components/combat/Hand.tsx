@@ -76,9 +76,24 @@ export function Hand({
             <View style={styles.row}>
               {cards.map((instance, i) => {
                 const settling = reveal?.playedId === instance.instanceId;
-                const shown = settling
-                  ? { ...instance, stack: Math.max(1, stackOf(instance) / 2) }
-                  : instance;
+                const card = (
+                  <DraggableCard
+                    instanceId={instance.instanceId}
+                    card={instance.card}
+                    width={cardWidth}
+                    playable={isPlayable(instance.instanceId)}
+                    dragging={draggingId === instance.instanceId}
+                    selected={selectedId === instance.instanceId}
+                    linkColor={
+                      instance.card.mark && linkedIds.has(instance.instanceId)
+                        ? MARK_COLORS[instance.card.mark]
+                        : undefined
+                    }
+                    {...handlers}
+                    description={describeHandCard(instance, player)}
+                    stack={stackOf(instance)}
+                  />
+                );
                 return (
                   <View
                     key={instance.instanceId}
@@ -88,30 +103,18 @@ export function Hand({
                       { zIndex: settling ? 30 : i },
                     ]}
                   >
-                    <DraggableCard
-                      instanceId={instance.instanceId}
-                      card={instance.card}
-                      width={cardWidth}
-                      playable={isPlayable(instance.instanceId)}
-                      dragging={draggingId === instance.instanceId}
-                      selected={selectedId === instance.instanceId}
-                      linkColor={
-                        instance.card.mark && linkedIds.has(instance.instanceId)
-                          ? MARK_COLORS[instance.card.mark]
-                          : undefined
-                      }
-                      {...handlers}
-                      description={describeHandCard(shown, player)}
-                      stack={settling ? undefined : stackOf(instance)}
-                    />
-                    {settling && reveal && (
+                    {settling && reveal ? (
                       <FuseReveal
                         consumed={reveal.consumed}
                         kept={instance}
                         player={player}
                         cardWidth={cardWidth}
                         onDone={() => setDismissedFuseId(reveal.id)}
-                      />
+                      >
+                        {card}
+                      </FuseReveal>
+                    ) : (
+                      card
                     )}
                   </View>
                 );

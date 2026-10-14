@@ -1,54 +1,56 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { type ReactNode, useEffect, useEffectEvent, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import type { CardInstance } from '../../../domain/card';
 import type { PlayerState } from '../../../domain/combat';
 import { describeHandCard } from '../../../logic/describe';
 import { stackOf } from '../../../logic/marks';
-import { ATTRIBUTE_COLORS, COLORS, HAND_LAYOUT, MARK_COLORS, MOTION, SPACING } from '../../../theme';
+import { ATTRIBUTE_COLORS, COLORS, HAND_LAYOUT, MARK_COLORS, MOTION, RADIUS } from '../../../theme';
 import { CardView } from '../../cards/CardView';
-import { FusedBadge } from '../../cards/FusedBadge';
 
 type FuseRevealProps = {
-  /** 捨て札になった下の札。波紋になって沈む。 */
+  /** 捨て札になった下の札。残った札の下から、水に溶けて引き上げられる。 */
   consumed: CardInstance;
-  /** 残った札。摘んでいた札で、段はすでに倍。位置は動かさない。 */
+  /** 残った札。摘んでいた札で、位置も本文も動かさない。 */
   kept: CardInstance;
   player: PlayerState;
   cardWidth: number;
   onDone: () => void;
+  children: ReactNode;
 };
 
 type RingSpec = {
   color: string;
-  /** 輪が広がり始める時刻（0〜1）。 */
   start: number;
-  /** 輪が消える時刻（0〜1）。 */
   end: number;
   from: number;
   to: number;
+  /** 一番濃いときの不透明度。 */
+  peak: number;
 };
 
-const RINGS: readonly RingSpec[] = [
-  { color: ATTRIBUTE_COLORS.water, start: 0.06, end: 0.62, from: 0.28, to: 1.55 },
-  { color: COLORS.gold, start: 0.2, end: 0.82, from: 0.2, to: 1.85 },
-];
-
 /**
- * 重ねた直後。摘んでいた札はその場に残し、下の札だけが水の輪になって下へ沈む。
- * 沈みきったあと、段の印が跳ねて出る。指で置いた札を、もう一度上から降ろさない。
+ * 重ねた直後。残る札はその場のまま。
+ * 下の札は下端だけ覗いていて、その場で水に溶けながら札の中へ引き込まれる。
+ * 位置を飛ばして別の札に差し替えない。
  */
-export function FuseReveal({ consumed, kept, player, cardWidth, onDone }: FuseRevealProps) {
+export function FuseReveal({ consumed, kept, player, cardWidth, onDone, children }: FuseRevealProps) {
   const [clock] = useState(() => new Animated.Value(0));
   const finish = useEffectEvent(onDone);
   const cardHeight = cardWidth * HAND_LAYOUT.aspectRatio;
+  const peek = cardHeight * 0.14;
   const mark = kept.card.mark;
+  const rings: readonly RingSpec[] = [
+    { color: ATTRIBUTE_COLORS.water, start: 0.04, end: 0.7, from: 0.18, to: 1.25, peak: 0.32 },
+    { color: mark ? MARK_COLORS[mark] : COLORS.gold, start: 0.16, end: 0.86, from: 0.22, to: 1.6, peak: 0.28 },
+    { color: COLORS.gold, start: 0.3, end: 1, from: 0.3, to: 1.9, peak: 0.2 },
+  ];
 
   useEffect(() => {
     clock.setValue(0);
     const animation = Animated.timing(clock, {
       toValue: 1,
       duration: MOTION.fuseReveal,
-      easing: Easing.out(Easing.cubic),
+      easing: Easing.inOut(Easing.cubic),
       useNativeDriver: true,
     });
     animation.start(({ finished }) => {
@@ -57,30 +59,36 @@ export function FuseReveal({ consumed, kept, player, cardWidth, onDone }: FuseRe
     return () => animation.stop();
   }, [clock, consumed.instanceId, kept.instanceId]);
 
-  const sinkY = clock.interpolate({
-    inputRange: [0, 0.18, 0.76],
-    outputRange: [cardHeight * 0.62, cardHeight * 0.62, cardHeight * 1.08],
+  const ghostY = clock.interpolate({
+    inputRange: [0, 0.78],
+    outputRange: [peek, 0],
     extrapolate: 'clamp',
   });
-  const consumedOpacity = clock.interpolate({
-    inputRange: [0, 0.22, 0.76],
-    outputRange: [0.95, 0.95, 0],
+  const ghostOpacity = clock.interpolate({
+    inputRange: [0, 0.12, 0.78],
+    outputRange: [0, 0.85, 0],
     extrapolate: 'clamp',
   });
-  const badgeScale = clock.interpolate({
-    inputRange: [0, 0.58, 0.74, 0.88, 1],
-    outputRange: [0.4, 0.4, 1.22, 1, 1],
+  const ghostScale = clock.interpolate({
+    inputRange: [0, 0.78],
+    outputRange: [1, 0.94],
     extrapolate: 'clamp',
   });
-  const badgeOpacity = clock.interpolate({
-    inputRange: [0, 0.58, 0.7, 1],
-    outputRange: [0, 0, 1, 1],
+  const washOpacity = clock.interpolate({
+    inputRange: [0, 0.22, 0.48, 0.9],
+    outputRange: [0, 0.34, 0.22, 0],
     extrapolate: 'clamp',
   });
 
   return (
-    <View pointerEvents="none" style={styles.stage}>
-      <Animated.View style={[styles.layer, { opacity: consumedOpacity, transform: [{ translateY: sinkY }] }]}>
+    <View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.ghost,
+          { opacity: ghostOpacity, transform: [{ translateY: ghostY }, { scale: ghostScale }] },
+        ]}
+      >
         <CardView
           card={consumed.card}
           width={cardWidth}
@@ -88,20 +96,17 @@ export function FuseReveal({ consumed, kept, player, cardWidth, onDone }: FuseRe
           stack={stackOf(consumed)}
           detailOnHold={false}
         />
-      </Animated.View>
-      {RINGS.map((ring) => (
-        <WaterRing key={ring.color} clock={clock} ring={ring} cardWidth={cardWidth} cardHeight={cardHeight} />
-      ))}
-      {mark && (
         <Animated.View
-          style={[
-            styles.badge,
-            { opacity: badgeOpacity, transform: [{ scale: badgeScale }] },
-          ]}
-        >
-          <FusedBadge count={stackOf(kept)} color={MARK_COLORS[mark]} />
-        </Animated.View>
-      )}
+          style={[styles.wash, { width: cardWidth, height: cardHeight, opacity: ghostOpacity }]}
+        />
+      </Animated.View>
+      {children}
+      <View pointerEvents="none" style={styles.front}>
+        {rings.map((ring) => (
+          <WaterRing key={`${ring.color}-${ring.start}`} clock={clock} ring={ring} cardWidth={cardWidth} cardHeight={cardHeight} />
+        ))}
+        <Animated.View style={[styles.wash, { width: cardWidth, height: cardHeight, opacity: washOpacity }]} />
+      </View>
     </View>
   );
 }
@@ -117,8 +122,8 @@ function WaterRing({
   cardWidth: number;
   cardHeight: number;
 }) {
-  const size = cardWidth * 0.92;
-  const mid = ring.start + (ring.end - ring.start) * 0.45;
+  const size = cardWidth * 0.86;
+  const mid = ring.start + (ring.end - ring.start) * 0.4;
   const scale = clock.interpolate({
     inputRange: [0, ring.start, ring.end, 1],
     outputRange: [ring.from, ring.from, ring.to, ring.to],
@@ -126,7 +131,7 @@ function WaterRing({
   });
   const opacity = clock.interpolate({
     inputRange: [0, ring.start, mid, ring.end, 1],
-    outputRange: [0, 0, 0.9, 0, 0],
+    outputRange: [0, 0, ring.peak, 0, 0],
     extrapolate: 'clamp',
   });
   return (
@@ -138,8 +143,7 @@ function WaterRing({
         width: size,
         height: size,
         borderRadius: size / 2,
-        borderWidth: 2,
-        borderColor: ring.color,
+        backgroundColor: ring.color,
         opacity,
         transform: [{ scale }],
       }}
@@ -148,11 +152,13 @@ function WaterRing({
 }
 
 const styles = StyleSheet.create({
-  stage: { position: 'absolute', top: 0, left: 0, right: 0 },
-  layer: { position: 'absolute', top: 0, left: 0 },
-  badge: {
+  ghost: { position: 'absolute', top: 0, left: 0 },
+  front: { position: 'absolute', top: 0, left: 0, right: 0 },
+  wash: {
     position: 'absolute',
-    top: -SPACING.sm,
-    right: -SPACING.xs,
+    top: 0,
+    left: 0,
+    borderRadius: RADIUS.md,
+    backgroundColor: ATTRIBUTE_COLORS.water,
   },
 });
