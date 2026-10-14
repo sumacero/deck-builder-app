@@ -76,6 +76,9 @@ export function Hand({
             <View style={styles.row}>
               {cards.map((instance, i) => {
                 const settling = reveal?.playedId === instance.instanceId;
+                const shown = settling
+                  ? { ...instance, stack: Math.max(1, stackOf(instance) / 2) }
+                  : instance;
                 return (
                   <View
                     key={instance.instanceId}
@@ -85,24 +88,22 @@ export function Hand({
                       { zIndex: settling ? 30 : i },
                     ]}
                   >
-                    <View style={settling ? styles.settling : undefined}>
-                      <DraggableCard
-                        instanceId={instance.instanceId}
-                        card={instance.card}
-                        width={cardWidth}
-                        playable={isPlayable(instance.instanceId)}
-                        dragging={draggingId === instance.instanceId}
-                        selected={selectedId === instance.instanceId}
-                        linkColor={
-                          instance.card.mark && linkedIds.has(instance.instanceId)
-                            ? MARK_COLORS[instance.card.mark]
-                            : undefined
-                        }
-                        {...handlers}
-                        description={describeHandCard(instance, player)}
-                        stack={stackOf(instance)}
-                      />
-                    </View>
+                    <DraggableCard
+                      instanceId={instance.instanceId}
+                      card={instance.card}
+                      width={cardWidth}
+                      playable={isPlayable(instance.instanceId)}
+                      dragging={draggingId === instance.instanceId}
+                      selected={selectedId === instance.instanceId}
+                      linkColor={
+                        instance.card.mark && linkedIds.has(instance.instanceId)
+                          ? MARK_COLORS[instance.card.mark]
+                          : undefined
+                      }
+                      {...handlers}
+                      description={describeHandCard(shown, player)}
+                      stack={settling ? undefined : stackOf(instance)}
+                    />
                     {settling && reveal && (
                       <FuseReveal
                         consumed={reveal.consumed}
@@ -139,8 +140,6 @@ type MarksFusedEvent = Extract<CombatEvent, { kind: 'marksFused' }>;
 
 const styles = StyleSheet.create({
   container: { justifyContent: 'center' },
-  /** 演出のあいだ、本当の札は隠す。見えるのは上から降りる札。 */
-  settling: { opacity: 0 },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',

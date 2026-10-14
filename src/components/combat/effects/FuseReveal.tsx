@@ -1,30 +1,47 @@
 import { useEffect, useEffectEvent, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
 import type { CardInstance } from '../../../domain/card';
 import type { PlayerState } from '../../../domain/combat';
-import { describeFuseBurst, describeHandCard } from '../../../logic/describe';
+import { describeHandCard } from '../../../logic/describe';
 import { stackOf } from '../../../logic/marks';
-import { COLORS, HAND_LAYOUT, MOTION, RADIUS, SPACING } from '../../../theme';
+import { ATTRIBUTE_COLORS, COLORS, HAND_LAYOUT, MARK_COLORS, MOTION, SPACING } from '../../../theme';
 import { CardView } from '../../cards/CardView';
+import { FusedBadge } from '../../cards/FusedBadge';
 
 type FuseRevealProps = {
-  /** 捨て札になった下の札（消える直前）。 */
+  /** 捨て札になった下の札。波紋になって沈む。 */
   consumed: CardInstance;
-  /** 残った札。摘んでいた札で、段はすでに倍。 */
+  /** 残った札。摘んでいた札で、段はすでに倍。位置は動かさない。 */
   kept: CardInstance;
   player: PlayerState;
   cardWidth: number;
   onDone: () => void;
 };
 
+type RingSpec = {
+  color: string;
+  /** 輪が広がり始める時刻（0〜1）。 */
+  start: number;
+  /** 輪が消える時刻（0〜1）。 */
+  end: number;
+  from: number;
+  to: number;
+};
+
+const RINGS: readonly RingSpec[] = [
+  { color: ATTRIBUTE_COLORS.water, start: 0.06, end: 0.62, from: 0.28, to: 1.55 },
+  { color: COLORS.gold, start: 0.2, end: 0.82, from: 0.2, to: 1.85 },
+];
+
 /**
- * 重ねた直後の手札。下の札が見えたまま、摘んでいた札が上から降りて段の説明に代わる。
- * 札の中身だけをその場で書き換えると、何が残ったか読めない。
+ * 重ねた直後。摘んでいた札はその場に残し、下の札だけが水の輪になって下へ沈む。
+ * 沈みきったあと、段の印が跳ねて出る。指で置いた札を、もう一度上から降ろさない。
  */
 export function FuseReveal({ consumed, kept, player, cardWidth, onDone }: FuseRevealProps) {
   const [clock] = useState(() => new Animated.Value(0));
   const finish = useEffectEvent(onDone);
-  const burst = describeFuseBurst(consumed.card, stackOf(consumed));
+  const cardHeight = cardWidth * HAND_LAYOUT.aspectRatio;
+  const mark = kept.card.mark;
 
   useEffect(() => {
     clock.setValue(0);
@@ -32,7 +49,7 @@ export function FuseReveal({ consumed, kept, player, cardWidth, onDone }: FuseRe
       toValue: 1,
       duration: MOTION.fuseReveal,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: true,
     });
     animation.start(({ finished }) => {
       if (finished) finish();
@@ -40,26 +57,30 @@ export function FuseReveal({ consumed, kept, player, cardWidth, onDone }: FuseRe
     return () => animation.stop();
   }, [clock, consumed.instanceId, kept.instanceId]);
 
+  const sinkY = clock.interpolate({
+    inputRange: [0, 0.18, 0.76],
+    outputRange: [cardHeight * 0.62, cardHeight * 0.62, cardHeight * 1.08],
+    extrapolate: 'clamp',
+  });
   const consumedOpacity = clock.interpolate({
-    inputRange: [0, 0.38, 0.62],
-    outputRange: [1, 1, 0],
+    inputRange: [0, 0.22, 0.76],
+    outputRange: [0.95, 0.95, 0],
+    extrapolate: 'clamp',
   });
-  const keptOpacity = clock.interpolate({
-    inputRange: [0, 0.12, 0.32],
-    outputRange: [0, 0, 1],
+  const badgeScale = clock.interpolate({
+    inputRange: [0, 0.58, 0.74, 0.88, 1],
+    outputRange: [0.4, 0.4, 1.22, 1, 1],
+    extrapolate: 'clamp',
   });
-  const keptY = clock.interpolate({
-    inputRange: [0, 0.12, 0.5],
-    outputRange: [-48, -48, 0],
-  });
-  const captionOpacity = clock.interpolate({
-    inputRange: [0, 0.5, 0.62, 0.86, 1],
-    outputRange: [0, 0, 1, 1, 0],
+  const badgeOpacity = clock.interpolate({
+    inputRange: [0, 0.58, 0.7, 1],
+    outputRange: [0, 0, 1, 1],
+    extrapolate: 'clamp',
   });
 
   return (
     <View pointerEvents="none" style={styles.stage}>
-      <Animated.View style={[styles.layer, { opacity: consumedOpacity }]}>
+      <Animated.View style={[styles.layer, { opacity: consumedOpacity, transform: [{ translateY: sinkY }] }]}>
         <CardView
           card={consumed.card}
           width={cardWidth}
@@ -68,47 +89,70 @@ export function FuseReveal({ consumed, kept, player, cardWidth, onDone }: FuseRe
           detailOnHold={false}
         />
       </Animated.View>
-      <Animated.View style={[styles.layer, { opacity: keptOpacity, transform: [{ translateY: keptY }] }]}>
-        <CardView
-          card={kept.card}
-          width={cardWidth}
-          selected
-          description={describeHandCard(kept, player)}
-          stack={stackOf(kept)}
-          detailOnHold={false}
-        />
-      </Animated.View>
-      <Animated.View
-        style={[
-          styles.caption,
-          { opacity: captionOpacity, marginLeft: (cardWidth - HAND_LAYOUT.stackForecastWidth) / 2 },
-        ]}
-      >
-        <Text style={styles.captionTitle}>
-          {kept.card.name}を{consumed.card.name}の上に
-        </Text>
-        <Text style={styles.captionBody}>{stackOf(kept)} 段になった</Text>
-        {burst !== '' && <Text style={styles.captionBody}>{burst}</Text>}
-      </Animated.View>
+      {RINGS.map((ring) => (
+        <WaterRing key={ring.color} clock={clock} ring={ring} cardWidth={cardWidth} cardHeight={cardHeight} />
+      ))}
+      {mark && (
+        <Animated.View
+          style={[
+            styles.badge,
+            { opacity: badgeOpacity, transform: [{ scale: badgeScale }] },
+          ]}
+        >
+          <FusedBadge count={stackOf(kept)} color={MARK_COLORS[mark]} />
+        </Animated.View>
+      )}
     </View>
+  );
+}
+
+function WaterRing({
+  clock,
+  ring,
+  cardWidth,
+  cardHeight,
+}: {
+  clock: Animated.Value;
+  ring: RingSpec;
+  cardWidth: number;
+  cardHeight: number;
+}) {
+  const size = cardWidth * 0.92;
+  const mid = ring.start + (ring.end - ring.start) * 0.45;
+  const scale = clock.interpolate({
+    inputRange: [0, ring.start, ring.end, 1],
+    outputRange: [ring.from, ring.from, ring.to, ring.to],
+    extrapolate: 'clamp',
+  });
+  const opacity = clock.interpolate({
+    inputRange: [0, ring.start, mid, ring.end, 1],
+    outputRange: [0, 0, 0.9, 0, 0],
+    extrapolate: 'clamp',
+  });
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        left: (cardWidth - size) / 2,
+        top: (cardHeight - size) / 2,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        borderWidth: 2,
+        borderColor: ring.color,
+        opacity,
+        transform: [{ scale }],
+      }}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   stage: { position: 'absolute', top: 0, left: 0, right: 0 },
   layer: { position: 'absolute', top: 0, left: 0 },
-  caption: {
+  badge: {
     position: 'absolute',
-    bottom: '100%',
-    width: HAND_LAYOUT.stackForecastWidth,
-    marginBottom: SPACING.xs,
-    backgroundColor: COLORS.overlay,
-    borderColor: COLORS.gold,
-    borderWidth: 1,
-    borderRadius: RADIUS.md,
-    padding: SPACING.sm,
-    gap: SPACING.xs,
+    top: -SPACING.sm,
+    right: -SPACING.xs,
   },
-  captionTitle: { color: COLORS.gold, fontSize: 13, fontWeight: '800', textAlign: 'center' },
-  captionBody: { color: COLORS.text, fontSize: 13, lineHeight: 18, textAlign: 'center' },
 });
