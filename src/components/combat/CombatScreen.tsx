@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   Animated,
   type LayoutChangeEvent,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import type { Region } from '../../domain/act';
 import type { CardInstance } from '../../domain/card';
-import type { CombatSetup, CombatState, DamagePreview, EnemyUid, PlayerState } from '../../domain/combat';
+import type { CombatEvent, CombatSetup, CombatState, DamagePreview, EnemyUid, PlayerState } from '../../domain/combat';
 import type { CombatResult } from '../../domain/run';
 import { battleMusicFor } from '../../audio/music';
 import { useMusic } from '../../hooks/useMusic';
@@ -30,13 +30,14 @@ import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { type DropTarget } from './cardDrop';
-import { CombatFooter } from './CombatFooter';
+import { CombatFooter, type CombatPile } from './CombatFooter';
 import { CombatLog } from './CombatLog';
 import { CombatResultOverlay } from './CombatResultOverlay';
 import { ArteCutIn } from './effects/ArteCutIn';
 import { DamageVignette } from './effects/DamageVignette';
 import { EnemyRow } from './EnemyRow';
 import { EnergyOrb } from './EnergyOrb';
+import { PileTravel } from './effects/PileTravel';
 import { Hand } from './Hand';
 import { PlayerPanel } from './PlayerPanel';
 import { landscapeFigures, portraitFigures, type Size } from './stageLayout';
@@ -69,6 +70,7 @@ type CombatScreenProps = {
 };
 
 const NO_SIZE: Size = { width: 0, height: 0 };
+const NO_REVEALED: ReadonlySet<number> = new Set();
 
 const sizeOf = (e: LayoutChangeEvent): Size => ({
   width: e.nativeEvent.layout.width,
@@ -105,6 +107,30 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   useMusic(inProgress ? battleMusicFor(setup.rank, region) : null);
 
   const [cardWidth, setCardWidth] = useState(0);
+  const handView = useRef<View | null>(null);
+  const pileViews = useRef<Partial<Record<CombatPile, View | null>>>({});
+  const [shownTravels, setShownTravels] = useState<{ events: CombatEvent[]; ids: ReadonlySet<number> }>({
+    events: state.events,
+    ids: NO_REVEALED,
+  });
+  const revealedTravels = shownTravels.events === state.events ? shownTravels.ids : NO_REVEALED;
+  const concealedIds = new Set<string>();
+  for (const event of state.events) {
+    if (event.kind === 'pileTravel' && event.to === 'hand' && !revealedTravels.has(event.id)) {
+      concealedIds.add(event.card.instanceId);
+    }
+  }
+  const revealTravel = (id: number) => {
+    setShownTravels((prev) => {
+      const ids = new Set(prev.events === state.events ? prev.ids : []);
+      if (ids.has(id) && prev.events === state.events) return prev;
+      ids.add(id);
+      return { events: state.events, ids };
+    });
+  };
+  const bindPile = useCallback((pile: CombatPile, node: View | null) => {
+    pileViews.current[pile] = node;
+  }, []);
   const {
     drag,
     hover,
@@ -127,6 +153,13 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     onFuse: fuseInHand,
     onDrinkPotion: drinkPotion,
   });
+  const bindHandNode = useCallback(
+    (node: View | null) => {
+      handView.current = node;
+      bindHand(node);
+    },
+    [bindHand],
+  );
 
   const enemyCount = state.enemies.length;
   const figures = landscape
@@ -230,10 +263,11 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       cards={state.hand}
       player={state.player}
       events={state.events}
+      concealedIds={concealedIds}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
       selectedId={null}
-      viewRef={bindHand}
+      viewRef={bindHandNode}
       onCardWidth={setCardWidth}
       maxCardHeight={landscape ? windowHeight * COMBAT_LAYOUT.landscapeCardHeightRatio : undefined}
       {...cardHandlers}
@@ -250,6 +284,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       onOpenDraw={() => setOpenPile('draw')}
       onOpenDiscard={() => setOpenPile('discard')}
       onOpenExhaust={() => setOpenPile('exhaust')}
+      onPileRef={bindPile}
       vertical={landscape}
     />
   );
@@ -311,6 +346,15 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
             {footer}
           </>
         )}
+        <PileTravel
+          events={state.events}
+          hand={state.hand}
+          player={state.player}
+          cardWidth={cardWidth}
+          handView={handView}
+          pileViews={pileViews}
+          onReveal={revealTravel}
+        />
         <DamageVignette events={state.events} />
         <ArteCutIn events={state.events} agentName={setup.agent.name} />
         {drag && (

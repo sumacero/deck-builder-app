@@ -148,6 +148,22 @@ export type CombatEventBody =
       materialIds: string[];
       consumed: CardInstance;
     }
+  /**
+   * 山札・手札・捨て札・廃棄札のあいだを札が移った。
+   * 枚数は先に更新する。UI は札のゴーストを from から to へ飛ばし、
+   * 手札へ着く札は着くまで見せない（補充が一瞬で埋まるのを避ける）。
+   * handIndex / handCount は、手札を離れた瞬間の並び。
+   * 山札から来た札の着地点は、今の手札から instanceId で探す。
+   */
+  | {
+      kind: 'pileTravel';
+      target: 'player';
+      card: CardInstance;
+      from: 'draw' | 'hand';
+      to: 'hand' | 'discard' | 'exhaust';
+      handIndex: number;
+      handCount: number;
+    }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 

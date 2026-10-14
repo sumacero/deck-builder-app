@@ -165,6 +165,14 @@ export const MOTION = {
   rippleBurst: 720,
   /** 手札で重ねたとき、下の札が水に溶けて引き込まれるまで。 */
   fuseReveal: 1000,
+  /** 山札・捨て札・廃棄札へ札が移動する時間。 */
+  pileFly: 480,
+  /** 同じ操作で複数枚が動くとき、1 枚ずつずらす間隔。 */
+  pileStagger: 64,
+  /** 手札を離れる札がある操作では、山札からの補充を少し遅らせて、減ってから増える順に見せる。 */
+  pileArriveLead: 220,
+  /** 融合で溶けた札が、捨て札へ向かい始めるまで。溶け込みを見せてから飛ばす。 */
+  pileFuseLeave: 380,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {

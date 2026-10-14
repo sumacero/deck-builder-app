@@ -5,8 +5,8 @@ import { MOTION } from '../theme';
 /** そのイベントのあと、次のイベントまで空ける時間。秘奥義はカットインを見せる分だけ長い。 */
 const gapAfter = (event: CombatEvent) => {
   if (event.kind === 'mysticArte') return MOTION.eventStagger + MOTION.arteCutIn;
-  // 手札の波紋はカードが消える瞬間に出す。打撃の演出を遅らせない。
-  if (event.kind === 'marksFused') return 0;
+  // 手札の波紋と、山札・捨て札への移動はカードの上に重ねる。打撃の演出を遅らせない。
+  if (event.kind === 'marksFused' || event.kind === 'pileTravel') return 0;
   return MOTION.eventStagger;
 };
 

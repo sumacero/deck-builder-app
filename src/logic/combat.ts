@@ -119,6 +119,29 @@ function withEvent(state: CombatState, event: CombatEventBody): CombatState {
   };
 }
 
+/**
+ * 山札・手札・捨て札・廃棄札の移動を演出に知らせる。枚数の更新は呼び出し側が先に行う。
+ * handIndex / handCount は、手札を離れた瞬間の並び（引いた札は足したあとの位置）。
+ */
+function withPileTravel(
+  state: CombatState,
+  card: CardInstance,
+  from: 'draw' | 'hand',
+  to: 'hand' | 'discard' | 'exhaust',
+  handIndex: number,
+  handCount: number,
+): CombatState {
+  return withEvent(state, {
+    kind: 'pileTravel',
+    target: 'player',
+    card,
+    from,
+    to,
+    handIndex,
+    handCount,
+  });
+}
+
 /** 次の操作の前に、前回分のイベントを捨てる。 */
 export function clearEvents(state: CombatState): CombatState {
   return state.events.length === 0 ? state : { ...state, events: [] };
@@ -174,8 +197,20 @@ export function drawCards(state: CombatState, count: number): CombatState {
   const shuffledLog = reshuffled ? withLog(next, '捨て札をシャッフルして山札に戻した') : next;
   const drawnLog =
     drawn.length > 0 ? withLog(shuffledLog, `カードを ${drawn.length} 枚引いた`) : shuffledLog;
-  if (blocked === 0) return drawnLog;
-  return withEvent(withLog(drawnLog, `手札がいっぱいで ${blocked} 枚引けなかった`), {
+  const traveled = drawn.reduce(
+    (current, card, index) =>
+      withPileTravel(
+        current,
+        card,
+        'draw',
+        'hand',
+        state.hand.length + index,
+        state.hand.length + drawn.length,
+      ),
+    drawnLog,
+  );
+  if (blocked === 0) return traveled;
+  return withEvent(withLog(traveled, `手札がいっぱいで ${blocked} 枚引けなかった`), {
     kind: 'handFull',
     target: 'player',
     blocked,
@@ -1081,6 +1116,7 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
     if (card.instanceId === targetId) return [stacked];
     return [card];
   });
+  const targetIndex = state.hand.findIndex((card) => card.instanceId === targetId);
   const fused: CombatState = {
     ...state,
     hand,
@@ -1088,7 +1124,14 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
     player: { ...state.player, fusesThisTurn: state.player.fusesThisTurn + 1 },
   };
   const announced = withEvent(
-    withLog(fused, `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段）`),
+    withPileTravel(
+      withLog(fused, `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段）`),
+      target,
+      'hand',
+      'discard',
+      targetIndex,
+      state.hand.length,
+    ),
     {
       kind: 'marksFused',
       target: 'player',
@@ -1113,6 +1156,8 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || !canPlayCard(state, instanceId)) return state;
   const { card } = instance;
+  const handIndex = state.hand.findIndex((c) => c.instanceId === instanceId);
+  const handCount = state.hand.length;
   // 段は、捨て札・廃棄・山札に移っても札に残る。
   const multiplier = handMultiplier(instance, state.player);
   const aim = resolveAim(state, card.target, target);
@@ -1130,13 +1175,23 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
         discardPile: [...spent.discardPile, { instanceId: `copy-${state.nextEventId}`, card }],
       }
     : spent;
-  const played = withEvent(withLog(copied, `${card.name}を使用`), {
-    kind: 'cardPlayed',
-    target: 'player',
-    targets: card.target === 'self' ? [] : aimedUids(state, aim),
-    cardType: card.type,
-    motion: cardMotion(card),
-  });
+  const played = withEvent(
+    withPileTravel(
+      withLog(copied, `${card.name}を使用`),
+      instance,
+      'hand',
+      card.exhaust ? 'exhaust' : 'discard',
+      handIndex,
+      handCount,
+    ),
+    {
+      kind: 'cardPlayed',
+      target: 'player',
+      targets: card.target === 'self' ? [] : aimedUids(state, aim),
+      cardType: card.type,
+      motion: cardMotion(card),
+    },
+  );
   const announced = card.mysticArte
     ? withEvent(withLog(played, `秘奥義「${card.name}」！`), {
         kind: 'mysticArte',
@@ -1510,16 +1565,26 @@ function discardHand(state: CombatState): CombatState {
   }, state);
   const retainArrows = powerOf(afterEffects, 'arrowRetain') > 0;
   const isRetained = (instance: CardInstance) => retainArrows && instance.card.arrow === true;
-  const retained = afterEffects.hand.filter(isRetained);
-  const rest = afterEffects.hand.filter((c) => !isRetained(c));
-  const vanishing = rest.filter(({ card }) => card.ethereal);
-  const kept = rest.filter(({ card }) => !card.ethereal);
+  const hand = afterEffects.hand;
+  let next = afterEffects;
+  const vanishing: CardInstance[] = [];
+  const kept: CardInstance[] = [];
+  hand.forEach((instance, index) => {
+    if (isRetained(instance)) return;
+    if (instance.card.ethereal) {
+      vanishing.push(instance);
+      next = withPileTravel(next, instance, 'hand', 'exhaust', index, hand.length);
+      return;
+    }
+    kept.push(instance);
+    next = withPileTravel(next, instance, 'hand', 'discard', index, hand.length);
+  });
   return onExhausted(
     {
-      ...afterEffects,
-      hand: retained,
-      discardPile: [...afterEffects.discardPile, ...kept],
-      exhaustPile: [...afterEffects.exhaustPile, ...vanishing],
+      ...next,
+      hand: hand.filter(isRetained),
+      discardPile: [...next.discardPile, ...kept],
+      exhaustPile: [...next.exhaustPile, ...vanishing],
     },
     vanishing.length,
   );

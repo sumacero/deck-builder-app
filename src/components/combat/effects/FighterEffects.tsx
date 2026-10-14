@@ -104,6 +104,7 @@ export function FighterEffects({
       case 'won':
       case 'handFull':
       case 'marksFused':
+      case 'pileTravel':
       case 'mysticArte':
         return;
     }

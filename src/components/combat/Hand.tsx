@@ -17,6 +17,8 @@ type HandProps = CardDragHandlers & {
   player: PlayerState;
   /** 手札がいっぱいで引けなかった演出と、融合の波紋に使う。 */
   events: CombatEvent[];
+  /** 山札から飛んでくる途中の札。着くまで場所だけ確保して見せない。 */
+  concealedIds: ReadonlySet<string>;
   isPlayable: (instanceId: string) => boolean;
   /** 持ち上げている最中のカード。 */
   draggingId: string | null;
@@ -39,6 +41,7 @@ export function Hand({
   cards,
   player,
   events,
+  concealedIds,
   isPlayable,
   draggingId,
   selectedId,
@@ -76,6 +79,7 @@ export function Hand({
             <View style={styles.row}>
               {cards.map((instance, i) => {
                 const settling = reveal?.playedId === instance.instanceId;
+                const concealed = concealedIds.has(instance.instanceId);
                 const card = (
                   <DraggableCard
                     instanceId={instance.instanceId}
@@ -97,10 +101,12 @@ export function Hand({
                 return (
                   <View
                     key={instance.instanceId}
+                    pointerEvents={concealed ? 'none' : 'auto'}
                     style={[
                       styles.slot,
                       i > 0 && { marginLeft: spacing },
                       { zIndex: settling ? 30 : i },
+                      concealed && styles.concealed,
                     ]}
                   >
                     {settling && reveal ? (
@@ -152,4 +158,5 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center' },
   slot: { position: 'relative' },
+  concealed: { opacity: 0 },
 });
