@@ -52,6 +52,10 @@ export type PlayerState = Fighter & {
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
+  /** かわす: 敵のヒットを無効にできる残り回数。次の自分のターンの始めに消える。 */
+  evade: number;
+  /** このターン、手札で札を重ねた回数（水晶の文鎮は最初の 1 回で発動）。 */
+  fusesThisTurn: number;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
@@ -82,6 +86,8 @@ export type EnemyState = Fighter & {
   artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
+  /** 霜。次の攻撃のダメージが、1 ヒットごとにこの分下がる。攻撃を終えると消える。 */
+  frost: number;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -105,6 +111,12 @@ export type CombatEventBody =
     }
   /** 敵が行動した（攻撃は 1 発ごと）。target は行動した敵。 */
   | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
+  /**
+   * 敵のターンの始まりと終わり。演出は出さない。
+   * このあいだの出来事が終わるまで、UI は手札を触れなくする。
+   */
+  | { kind: 'enemyTurnStart'; target: 'player' }
+  | { kind: 'enemyTurnEnd'; target: 'player' }
   | { kind: 'potionUsed'; target: 'player'; potionId: string }
   | { kind: 'relicTriggered'; target: 'player'; relicId: string }
   /**
@@ -130,6 +142,34 @@ export type CombatEventBody =
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
+  /**
+   * 手札で印を重ねた。波紋と、重なる動きの演出に使う。
+   * playedId は残った札（摘んでいた札）。materialIds は廃棄札にした下の札。
+   * consumed は、消える直前の下の札。
+   */
+  | {
+      kind: 'marksFused';
+      target: 'player';
+      playedId: string;
+      materialIds: string[];
+      consumed: CardInstance;
+    }
+  /**
+   * 山札・手札・捨て札・廃棄札のあいだを札が移った。
+   * 枚数は先に更新する。UI は札のゴーストを from から to へ飛ばし、
+   * 手札へ着く札は着くまで見せない（補充が一瞬で埋まるのを避ける）。
+   * handIndex / handCount は、手札を離れた瞬間の並び。
+   * 山札から来た札の着地点は、今の手札から instanceId で探す。
+   */
+  | {
+      kind: 'pileTravel';
+      target: 'player';
+      card: CardInstance;
+      from: 'draw' | 'hand';
+      to: 'hand' | 'discard' | 'exhaust';
+      handIndex: number;
+      handCount: number;
+    }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 

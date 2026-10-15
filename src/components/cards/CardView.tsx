@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { cardAttributes } from '../../logic/attribute';
-import { ATTRIBUTE_ICON, CARD_TYPE_LABEL, describeAttributes, describeCard } from '../../logic/describe';
+import { MARK_NAME } from '../../logic/marks';
+import {
+  ATTRIBUTE_ICON,
+  CARD_RARITY_LABEL,
+  CARD_TYPE_LABEL,
+  describeAttributes,
+  describeCard,
+} from '../../logic/describe';
 import {
   ATTRIBUTE_COLORS,
   ATTRIBUTE_TINT_ALPHA,
@@ -10,17 +17,26 @@ import {
   CARD_TYPE_COLORS,
   COLORS,
   HAND_LAYOUT,
+  MARK_COLORS,
   RADIUS,
+  RELIC_RARITY_COLORS,
   SPACING,
 } from '../../theme';
 import { CardDetailSheet } from './CardDetailSheet';
 import { CARD_TYPE_EMBLEM, cardArt } from './cardArt';
+import { FusedBadge } from './FusedBadge';
 
 type CardViewProps = {
   card: CardDefinition;
   count?: number;
   dimmed?: boolean;
   selected?: boolean;
+  /** 融合で結ばれている印の色。枠をその色にする。 */
+  linkColor?: string;
+  /** 手札で重ねたあとの数字。省略すると、カードに書かれた効果。 */
+  description?: string;
+  /** 札の段。2 段以上で右上に出す。 */
+  stack?: number;
   size?: 'sm' | 'md';
   /** 指定すると size より優先し、幅に合わせて文字も縮める（手札用）。 */
   width?: number;
@@ -36,6 +52,8 @@ const BASE_WIDTH = 96;
 const NARROW_WIDTH = 90;
 const WIDE_WIDTH = 108;
 const BORDER_WIDTH = 2;
+/** 選択中・融合の相手のときの枠。 */
+const EMPHASIZED_BORDER_WIDTH = 3;
 const ART_INSET = 3;
 
 const artHeight = (width: number) => Math.round(width * CARD_ART.heightRatio);
@@ -88,6 +106,9 @@ export function CardView({
   count,
   dimmed = false,
   selected = false,
+  linkColor,
+  description,
+  stack = 1,
   size = 'sm',
   width,
   onPress,
@@ -100,9 +121,13 @@ export function CardView({
   // 属性のカードは枠を属性の色に。無属性は種類の色のまま。
   const frameColor = attributeColor ?? typeColor;
   const narrow = width !== undefined && width < NARROW_WIDTH;
+  // 手札（幅を指定して並べる）では種類の行が足りないので出さない。報酬・ショップ・図鑑・詳細で見せる。
+  const showRarity = width === undefined && card.type !== 'status' && !card.arrow;
   const wide = size === 'md' && width === undefined;
   const scaled = width !== undefined ? scaledStyles(width, card.name) : null;
   const art = cardArt(card);
+  const emphasized = selected || linkColor !== undefined;
+  const borderWidth = emphasized ? EMPHASIZED_BORDER_WIDTH : BORDER_WIDTH;
   return (
     <>
       <Pressable
@@ -114,8 +139,8 @@ export function CardView({
           styles.card,
           wide && styles.wide,
           scaled?.card,
-          { borderColor: selected ? COLORS.gold : frameColor },
-          selected && styles.selected,
+          { borderColor: linkColor ?? (selected ? COLORS.gold : frameColor) },
+          { borderWidth },
           pressed && onPress && styles.pressed,
         ]}
       >
@@ -145,6 +170,11 @@ export function CardView({
               </Text>
             </View>
           )}
+          {card.mark && (
+            <View style={styles.markBadge}>
+              <Text style={[styles.markText, scaled?.emblemText]}>{MARK_NAME[card.mark]}</Text>
+            </View>
+          )}
           <View style={styles.emblem}>
             <Text style={[styles.emblemText, scaled?.emblemText]}>
               {CARD_TYPE_EMBLEM[card.type]}
@@ -168,19 +198,37 @@ export function CardView({
               </Text>
             )}
           </Text>
-          <Text style={[styles.description, scaled?.description]}>{describeCard(card)}</Text>
+          {showRarity && (
+            <Text style={[styles.rarity, { color: RELIC_RARITY_COLORS[card.rarity] }]}>
+              {CARD_RARITY_LABEL[card.rarity]}
+            </Text>
+          )}
+          <Text style={[styles.description, scaled?.description]}>{description ?? describeCard(card)}</Text>
         </View>
+        {dimmed && (
+          <View
+            pointerEvents="none"
+            style={[styles.dim, { top: -borderWidth, right: -borderWidth, bottom: -borderWidth, left: -borderWidth }]}
+          />
+        )}
         <View style={styles.costGem}>
           <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
         </View>
+        {dimmed && <View pointerEvents="none" style={styles.dimGem} />}
+        {stack > 1 && card.mark && (
+          <View pointerEvents="none" style={styles.fusedBadge}>
+            <FusedBadge count={stack} color={MARK_COLORS[card.mark]} />
+          </View>
+        )}
         {count !== undefined && count > 1 && (
           <View style={styles.countBadge}>
             <Text style={styles.countText}>×{count}</Text>
           </View>
         )}
-        {dimmed && <View pointerEvents="none" style={styles.dim} />}
       </Pressable>
-      {detailOpen && <CardDetailSheet card={card} visible onClose={() => setDetailOpen(false)} />}
+      {detailOpen && (
+        <CardDetailSheet card={card} description={description} visible onClose={() => setDetailOpen(false)} />
+      )}
     </>
   );
 }
@@ -204,16 +252,23 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.sm,
   },
   wide: { width: WIDE_WIDTH, minHeight: 168 },
-  selected: { borderWidth: 3 },
-  /** はみ出すコストの宝石まで覆う。カードの不透明度は下げない。 */
+  /**
+   * カードの外枠にぴったり重ねる。位置は枠の太さだけ外へ広げる（太さは選択中に変わる）。
+   * コストの宝石は枠の外なので、別の丸い覆いを宝石の上に載せる（宝石は不透明なので、下の覆いと二重にならない）。
+   */
   dim: {
     position: 'absolute',
-    top: -SPACING.sm,
-    right: -SPACING.xs,
-    bottom: 0,
-    left: -SPACING.sm,
     backgroundColor: COLORS.cardDim,
     borderRadius: RADIUS.md,
+  },
+  dimGem: {
+    position: 'absolute',
+    top: -SPACING.sm,
+    left: -SPACING.sm,
+    width: GEM_SIZE,
+    height: GEM_SIZE,
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.cardDim,
   },
   pressed: { transform: [{ translateY: -8 }] },
   art: {
@@ -226,6 +281,15 @@ const styles = StyleSheet.create({
   },
   wideArt: { height: artHeight(WIDE_WIDTH) },
   artImage: { width: '100%', height: '100%' },
+  markBadge: {
+    position: 'absolute',
+    left: 2,
+    bottom: 1,
+    backgroundColor: COLORS.panel,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 3,
+  },
+  markText: { color: COLORS.gold, fontSize: 10, fontWeight: '800' },
   emblem: {
     position: 'absolute',
     right: 1,
@@ -249,7 +313,10 @@ const styles = StyleSheet.create({
   },
   attributeIcon: { fontSize: 12 },
   body: {
-    flex: 1,
+    // flex:1（基準 0）だと、本文がカードの最低の高さに押し込まれて説明が切れる。
+    // 文章の高さは残し、余白があるときだけカードいっぱいに広げる。
+    flexGrow: 1,
+    flexShrink: 0,
     alignItems: 'center',
     gap: SPACING.xs / 2,
     paddingTop: SPACING.xs / 2,
@@ -283,6 +350,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
+  fusedBadge: { position: 'absolute', top: -SPACING.sm, right: -SPACING.xs },
   countText: { color: COLORS.onGold, fontSize: 11, fontWeight: '800' },
   name: {
     color: COLORS.text,
@@ -295,6 +363,7 @@ const styles = StyleSheet.create({
   },
   upgradedName: { color: COLORS.upgraded },
   type: { fontSize: 10, fontWeight: '600' },
+  rarity: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   attribute: { color: COLORS.text, fontWeight: '800' },
   description: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },
 });

@@ -84,6 +84,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     economy: setup.economy,
     restHealRatio: setup.restHealRatio,
     removalCount: 0,
+    markBias: null,
     stats: EMPTY_RUN_STATS,
     rngSeed: afterActs,
   };
@@ -178,7 +179,13 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
-  const offered = pickRewardChoices(draftPool(looted.run), looted.run.deck, 3, looted.run.rngSeed);
+  const offered = pickRewardChoices(
+    draftPool(looted.run),
+    looted.run.deck,
+    3,
+    looted.run.rngSeed,
+    looted.run.economy.cardTierWeight,
+  );
   return {
     ...looted.run,
     rngSeed: offered.seed,

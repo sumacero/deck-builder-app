@@ -4,6 +4,7 @@ import type { CardDefinition, CardInstance } from '../../domain/card';
 import type { EnemyState, EnemyUid, PotionSlot } from '../../domain/combat';
 import type { PotionDefinition } from '../../domain/potion';
 import { isAlive } from '../../logic/combat';
+import { canStackOnto } from '../../logic/marks';
 import { HAND_LAYOUT, ITEM_BAR } from '../../theme';
 import {
   DRAG_LIFT_DISTANCE,
@@ -18,6 +19,7 @@ import {
   sameDrop,
 } from './cardDrop';
 import type { CardDragHandlers } from './DraggableCard';
+import { handCardAtPoint } from './handLayout';
 
 /**
  * 指がこの高さより上に来たら「使う」位置。手札のカードの上端から、カードの高さのこの割合だけ下。
@@ -39,8 +41,12 @@ type Dragging = { item: DragItem; start: Point; lifted: boolean };
 
 type Layout = {
   origin: Point;
+  /** 手札の枠。画面座標。カードの上に重ねる判定に使う。 */
+  handRect: Rect | null;
   releaseLineY: number;
   enemyRects: { uid: EnemyUid; rect: Rect }[];
+  /** 自分の枠。自分に使うカードは、この中で離したときだけ使う。 */
+  playerRect: Rect | null;
 };
 
 type UseCardDragOptions = {
@@ -49,6 +55,8 @@ type UseCardDragOptions = {
   potions: PotionSlot[];
   cardWidth: number;
   onPlayCard: (instanceId: string, target?: EnemyUid) => void;
+  /** 手札の印を、もう一枚の上に重ねる。 */
+  onFuse: (sourceId: string, targetId: string) => void;
   onDrinkPotion: (slot: number, target?: EnemyUid) => void;
 };
 
@@ -63,10 +71,13 @@ export function useCardDrag({
   potions,
   cardWidth,
   onPlayCard,
+  onFuse,
   onDrinkPotion,
 }: UseCardDragOptions) {
   const [drag, setDrag] = useState<DragItem | null>(null);
   const [hover, setHover] = useState<DropTarget | null>(null);
+  /** 指の下にある、重ねられる札。 */
+  const [stackHover, setStackHover] = useState<string | null>(null);
   /** 持ち始めた位置から動かしたか。動かす前は案内を出さない（タップかもしれない）。 */
   const [lifted, setLifted] = useState(false);
   const [ghost] = useState(() => new Animated.ValueXY());
@@ -74,16 +85,20 @@ export function useCardDrag({
   const containerView = useRef<View | null>(null);
   const handView = useRef<View | null>(null);
   const enemyViews = useRef(new Map<EnemyUid, View>());
+  const playerView = useRef<View | null>(null);
   const layout = useRef<Layout>({
     origin: { x: 0, y: 0 },
+    handRect: null,
     releaseLineY: Number.NEGATIVE_INFINITY,
     enemyRects: [],
+    playerRect: null,
   });
   const draggingRef = useRef<Dragging | null>(null);
   const hoverRef = useRef<DropTarget | null>(null);
-  const latest = useRef({ hand, enemies, potions, cardWidth, onPlayCard, onDrinkPotion });
+  const stackRef = useRef<string | null>(null);
+  const latest = useRef({ hand, enemies, potions, cardWidth, onPlayCard, onFuse, onDrinkPotion });
   useEffect(() => {
-    latest.current = { hand, enemies, potions, cardWidth, onPlayCard, onDrinkPotion };
+    latest.current = { hand, enemies, potions, cardWidth, onPlayCard, onFuse, onDrinkPotion };
   });
 
   const measureContainer = useCallback(() => {
@@ -99,9 +114,13 @@ export function useCardDrag({
      */
     const measureAll = () => {
       measureContainer();
-      handView.current?.measureInWindow((_x, y) => {
+      handView.current?.measureInWindow((x, y, width, height) => {
+        layout.current.handRect = { x, y, width, height };
         const cardHeight = latest.current.cardWidth * HAND_LAYOUT.aspectRatio;
         layout.current.releaseLineY = y + HAND_LAYOUT.topPadding + cardHeight * RELEASE_LINE_IN_CARD;
+      });
+      playerView.current?.measureInWindow((x, y, width, height) => {
+        layout.current.playerRect = width > 0 && height > 0 ? { x, y, width, height } : null;
       });
       const views = latest.current.enemies.filter(isAlive).flatMap((enemy) => {
         const view = enemyViews.current.get(enemy.uid);
@@ -143,8 +162,27 @@ export function useCardDrag({
     const aim = (dragging: Dragging, point: Point): DropTarget | null => {
       const { item, start } = dragging;
       return item.kind === 'card'
-        ? resolveDrop(point, item.card.target, livingRects(), layout.current.releaseLineY)
+        ? resolveDrop(
+            point,
+            item.card.target,
+            livingRects(),
+            layout.current.releaseLineY,
+            layout.current.playerRect,
+          )
         : resolveItemDrop(point, start, item.potion.target, livingRects());
+    };
+    /** 指の下に、持ち上げた札を重ねられる相手がいれば、その札。 */
+    const stackTargetAt = (point: Point, sourceId: string): string | null => {
+      const { hand, cardWidth: width } = latest.current;
+      const rect = layout.current.handRect;
+      if (!rect || width <= 0) return null;
+      const sourceIndex = hand.findIndex((card) => card.instanceId === sourceId);
+      const hit = handCardAtPoint(point, rect, rect.width, width, hand.length, sourceIndex);
+      if (hit === null) return null;
+      const source = hand[sourceIndex];
+      const target = hand[hit];
+      if (!source || !target || !canStackOnto(hand, source, target)) return null;
+      return target.instanceId;
     };
     const updateHover = (point: Point) => {
       const dragging = draggingRef.current;
@@ -154,7 +192,15 @@ export function useCardDrag({
         dragging.lifted = true;
         setLifted(true);
       }
-      const next = dragging.lifted ? aim(dragging, point) : null;
+      const nextStack =
+        dragging.lifted && dragging.item.kind === 'card'
+          ? stackTargetAt(point, dragging.item.instanceId)
+          : null;
+      if (nextStack !== stackRef.current) {
+        stackRef.current = nextStack;
+        setStackHover(nextStack);
+      }
+      const next = dragging.lifted && nextStack === null ? aim(dragging, point) : null;
       if (sameDrop(next, hoverRef.current)) return;
       hoverRef.current = next;
       setHover(next);
@@ -162,8 +208,10 @@ export function useCardDrag({
     const reset = () => {
       draggingRef.current = null;
       hoverRef.current = null;
+      stackRef.current = null;
       setDrag(null);
       setHover(null);
+      setStackHover(null);
       setLifted(false);
     };
     const begin = (item: DragItem, point: Point) => {
@@ -184,8 +232,16 @@ export function useCardDrag({
       },
       onDragEnd: (point, velocity) => {
         const dragging = draggingRef.current;
+        const stacking =
+          dragging?.lifted && dragging.item.kind === 'card'
+            ? stackTargetAt(point, dragging.item.instanceId)
+            : null;
         reset();
         if (!dragging) return;
+        if (stacking && dragging.item.kind === 'card') {
+          latest.current.onFuse(dragging.item.instanceId, stacking);
+          return;
+        }
         const target = aim(dragging, projectFlick(point, velocity));
         if (!target) return;
         const uid = target.kind === 'enemy' ? target.uid : undefined;
@@ -196,7 +252,7 @@ export function useCardDrag({
       onDragCancel: reset,
     };
 
-    const cards: Omit<CardDragHandlers, 'onTap'> = {
+    const cards: CardDragHandlers = {
       ...common,
       onDragStart: (instanceId, point) => {
         const instance = latest.current.hand.find((c) => c.instanceId === instanceId);
@@ -223,10 +279,14 @@ export function useCardDrag({
     if (node) enemyViews.current.set(uid, node);
     else enemyViews.current.delete(uid);
   }, []);
+  const bindPlayer = useCallback((node: View | null) => {
+    playerView.current = node;
+  }, []);
 
   return {
     drag,
     hover,
+    stackHover,
     lifted,
     ghost,
     cardHandlers,
@@ -235,5 +295,6 @@ export function useCardDrag({
     measureContainer,
     bindHand,
     bindEnemy,
+    bindPlayer,
   };
 }

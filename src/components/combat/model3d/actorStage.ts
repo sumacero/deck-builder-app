@@ -2,6 +2,7 @@ import type { ExpoWebGLRenderingContext } from 'expo-gl';
 import {
   AdditiveBlending,
   BackSide,
+  Box3,
   type BufferGeometry,
   BoxGeometry,
   CapsuleGeometry,
@@ -51,6 +52,11 @@ const FLICKER_AMOUNT = 0.16;
 const ORBIT_SPEED = 0.7;
 const HOVER_SPEED = 2;
 const HOVER_HEIGHT = 0.05;
+/**
+ * カメラの寄り方。distance まで寄り、モデルと足元の魔法陣が画面の fill の範囲に収まらなければ収まるまで引く。
+ * rise は見下ろす高さ（距離に対する割合）。
+ */
+const CAMERA = { fov: 34, distance: 3.6, maxDistance: 8, step: 0.1, rise: 0.17, fill: 0.9 };
 /** 輪郭線の太さ（モデル座標）。 */
 const OUTLINE_WIDTH = 0.022;
 /** これより小さい部品（目など）には輪郭線を付けない。 */
@@ -175,6 +181,26 @@ function createPart(part: ModelPart, modelScale: number): BuiltPart {
     mesh.add(halo);
   }
   return { mesh, material, halo };
+}
+
+/** モデル（と足元）がはみ出さない一番近い距離までカメラを寄せ、全体の中心を見る。 */
+function frameCamera(camera: PerspectiveCamera, subjects: Group[]): void {
+  const box = new Box3();
+  subjects.forEach((subject) => box.expandByObject(subject));
+  const center = box.getCenter(new Vector3());
+  const corners = [box.min.x, box.max.x].flatMap((x) =>
+    [box.min.y, box.max.y].flatMap((y) => [box.min.z, box.max.z].map((z) => new Vector3(x, y, z))),
+  );
+  for (let distance = CAMERA.distance; distance <= CAMERA.maxDistance; distance += CAMERA.step) {
+    camera.position.set(0, center.y + distance * CAMERA.rise, distance);
+    camera.lookAt(0, center.y, 0);
+    camera.updateMatrixWorld();
+    const fits = corners.every((corner) => {
+      const p = corner.clone().project(camera);
+      return Math.abs(p.x) <= CAMERA.fill && Math.abs(p.y) <= CAMERA.fill;
+    });
+    if (fits) return;
+  }
 }
 
 /** 足元でゆっくり回る魔法陣。 */
@@ -402,9 +428,7 @@ export function createActorStage(
 ): ActorStage {
   const renderer = createRenderer(gl);
   const scene = new Scene();
-  const camera = new PerspectiveCamera(34, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.1, 50);
-  camera.position.set(0, 0.7, 4.4);
-  camera.lookAt(0, -0.05, 0);
+  const camera = new PerspectiveCamera(CAMERA.fov, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.1, 50);
 
   const auraStyle: AuraStyle = model.aura ?? 'arcane';
   const auraColor = model.aura
@@ -487,6 +511,7 @@ export function createActorStage(
       });
     }
   }
+  frameCamera(camera, [pivot, magicCircle]);
 
   const applyIdle = (time: number) => {
     pivot.position.y = 0;

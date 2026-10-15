@@ -1,5 +1,8 @@
+import { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+
+export type CombatPile = 'draw' | 'discard' | 'exhaust';
 
 type CombatFooterProps = {
   drawCount: number;
@@ -10,6 +13,8 @@ type CombatFooterProps = {
   onOpenDraw: () => void;
   onOpenDiscard: () => void;
   onOpenExhaust: () => void;
+  /** 札が飛んでいく先を測るため、山札・捨て札・廃棄札の枠を渡す。 */
+  onPileRef: (pile: CombatPile, node: View | null) => void;
   /** 横向きでは手札の横に置くので、ボタンの下に山札・捨て札・廃棄札を並べる。 */
   vertical?: boolean;
 };
@@ -23,6 +28,7 @@ export function CombatFooter({
   onOpenDraw,
   onOpenDiscard,
   onOpenExhaust,
+  onPileRef,
   vertical = false,
 }: CombatFooterProps) {
   const endTurn = (
@@ -39,9 +45,29 @@ export function CombatFooter({
       <Text style={styles.endTurnText}>ターン終了</Text>
     </Pressable>
   );
-  const draw = <PileCounter label="山札" count={drawCount} onPress={onOpenDraw} fill={vertical} />;
-  const discard = <PileCounter label="捨て札" count={discardCount} onPress={onOpenDiscard} fill={vertical} />;
-  const exhaust = <PileCounter label="廃棄札" count={exhaustCount} onPress={onOpenExhaust} fill={vertical} />;
+  const draw = (
+    <PileCounter pile="draw" label="山札" count={drawCount} onPress={onOpenDraw} fill={vertical} onPileRef={onPileRef} />
+  );
+  const discard = (
+    <PileCounter
+      pile="discard"
+      label="捨て札"
+      count={discardCount}
+      onPress={onOpenDiscard}
+      fill={vertical}
+      onPileRef={onPileRef}
+    />
+  );
+  const exhaust = (
+    <PileCounter
+      pile="exhaust"
+      label="廃棄札"
+      count={exhaustCount}
+      onPress={onOpenExhaust}
+      fill={vertical}
+      onPileRef={onPileRef}
+    />
+  );
 
   if (vertical) {
     return (
@@ -66,24 +92,31 @@ export function CombatFooter({
 }
 
 function PileCounter({
+  pile,
   label,
   count,
   onPress,
   fill,
+  onPileRef,
 }: {
+  pile: CombatPile;
   label: string;
   count: number;
   onPress: () => void;
   /** 横向きの狭い列では幅を固定せず、3 つで均等に分ける。 */
   fill: boolean;
+  onPileRef: (pile: CombatPile, node: View | null) => void;
 }) {
+  const viewRef = useCallback((node: View | null) => onPileRef(pile, node), [onPileRef, pile]);
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.pile, fill && styles.pileFill, pressed && styles.pressed]}>
-      <Text style={styles.pileCount}>{count}</Text>
-      <Text style={styles.pileLabel} numberOfLines={1}>
-        {label}
-      </Text>
-    </Pressable>
+    <View ref={viewRef} collapsable={false} style={[styles.pile, fill && styles.pileFill]}>
+      <Pressable onPress={onPress} style={({ pressed }) => [styles.pileHit, pressed && styles.pressed]}>
+        <Text style={styles.pileCount}>{count}</Text>
+        <Text style={styles.pileLabel} numberOfLines={1}>
+          {label}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -92,6 +125,7 @@ const styles = StyleSheet.create({
   column: { gap: SPACING.xs, justifyContent: 'center' },
   pile: { width: 56, alignItems: 'center', paddingVertical: SPACING.xs },
   pileFill: { width: undefined, flex: 1 },
+  pileHit: { alignItems: 'center', alignSelf: 'stretch' },
   pileCount: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
   pileLabel: { color: COLORS.textMuted, fontSize: 11 },
   endTurn: {

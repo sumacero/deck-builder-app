@@ -100,9 +100,13 @@ export function FighterEffects({
       case 'potionUsed':
       case 'relicTriggered':
       case 'enemyAct':
+      case 'enemyTurnStart':
+      case 'enemyTurnEnd':
       case 'defeated':
       case 'won':
       case 'handFull':
+      case 'marksFused':
+      case 'pileTravel':
       case 'mysticArte':
         return;
     }
