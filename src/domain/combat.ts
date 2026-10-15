@@ -138,7 +138,7 @@ export type CombatEventBody =
   | { kind: 'handFull'; target: 'player'; blocked: number }
   /**
    * 手札で印を重ねた。波紋と、重なる動きの演出に使う。
-   * playedId は残った札（摘んでいた札）。materialIds は捨て札にした下の札。
+   * playedId は残った札（摘んでいた札）。materialIds は廃棄札にした下の札。
    * consumed は、消える直前の下の札。
    */
   | {

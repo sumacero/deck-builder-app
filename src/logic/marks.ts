@@ -21,7 +21,7 @@ export function stackOf(instance: CardInstance): number {
   return instance.stack ?? 1;
 }
 
-/** 重ねて消える側の札。段は相手に移したので、捨て札では 1 段の札に戻す。 */
+/** 重ねて消える側の札。段は相手に移したので、廃棄札では 1 段の札に戻す。 */
 export function releaseFusion(instance: CardInstance): CardInstance {
   if (instance.stack === undefined) return instance;
   return { instanceId: instance.instanceId, card: instance.card };

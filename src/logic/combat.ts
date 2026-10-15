@@ -1100,7 +1100,7 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
 /**
  * 手札の札を、種類と段が同じもう一枚の上に重ねる。エナジーは要らない。
  * 摘んでいた札が残って段が倍になる。置き場所は下の札があった位置のまま（手札の並びは動かさない）。
- * 下の札は 1 段に戻って捨て札へ。消えた下の札の印で、重ねた瞬間の効果が出る（水面の分だけ繰り返す）。
+ * 下の札は 1 段に戻って廃棄札へ。この戦闘ではもう引けない。消えた下の札の印で、重ねた瞬間の効果が出る（水面の分だけ繰り返す）。
  * 毎ターン最初の 1 回で水晶の文鎮が発動する。
  */
 export function fuseInHand(state: CombatState, sourceId: string, targetId: string): CombatState {
@@ -1120,7 +1120,7 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
   const fused: CombatState = {
     ...state,
     hand,
-    discardPile: [...state.discardPile, releaseFusion(target)],
+    exhaustPile: [...state.exhaustPile, releaseFusion(target)],
     player: { ...state.player, fusesThisTurn: state.player.fusesThisTurn + 1 },
   };
   const announced = withEvent(
@@ -1128,7 +1128,7 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
       withLog(fused, `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段）`),
       target,
       'hand',
-      'discard',
+      'exhaust',
       targetIndex,
       state.hand.length,
     ),
@@ -1148,7 +1148,7 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
     if (aim !== null) next = applyEffects(next, burst.effects, aim);
   }
   const relics = next.player.fusesThisTurn === 1 ? triggerRelics(next, 'firstFuse') : next;
-  return settle(relics);
+  return settle(onExhausted(relics, 1));
 }
 
 /** target は敵 1 体を狙うカードのときに、どの敵の上で離したか。 */

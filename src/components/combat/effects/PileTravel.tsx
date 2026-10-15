@@ -41,7 +41,7 @@ type Ghost = {
 
 const ARC = 22;
 const ARC_STEPS = [0, 0.25, 0.5, 0.75, 1];
-/** 融合で溶けた札は、残った札の上に重ねず、少し進んだ位置から捨て札へ飛ばす。 */
+/** 融合で溶けた札は、残った札の上に重ねず、少し進んだ位置から廃棄札へ飛ばす。 */
 const FUSE_DEPART = 0.22;
 
 const measureView = (view: View | null): Promise<Rect | null> => {
@@ -75,7 +75,7 @@ function slotCenter(hand: Rect, cardWidth: number, count: number, index: number)
 
 /**
  * 手札を離れる札を先に、補充のドローを少し遅れて動かす。
- * 融合で捨てた札は、水に溶ける演出を見せてから捨て札へ向かう。
+ * 融合で消した札は、水に溶ける演出を見せてから廃棄札へ向かう。
  */
 function delaysFor(moves: TravelEvent[], fusedIds: ReadonlySet<string>): Map<number, number> {
   const hasLeave = moves.some((move) => move.to !== 'hand');

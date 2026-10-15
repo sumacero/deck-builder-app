@@ -49,7 +49,7 @@ type OpenPile = Pile | null;
 const PILE_VIEW: Record<Pile, { title: string; note: string }> = {
   draw: { title: '山札', note: '残っているカードです。順番はシャッフルされます。' },
   discard: { title: '捨て札', note: '使ったカードと、ターン終了で捨てたカード。' },
-  exhaust: { title: '廃棄札', note: 'この戦闘ではもう使えないカード（廃棄・パワーなど）。戦闘が終わればデッキに戻ります。' },
+  exhaust: { title: '廃棄札', note: 'この戦闘ではもう使えないカード（廃棄・パワー・重ねて消した札）。戦闘が終わればデッキに戻ります。' },
 };
 
 /** 捨て札・廃棄札は新しいものから並べる。 */
