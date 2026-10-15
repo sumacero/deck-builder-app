@@ -1,6 +1,7 @@
 import type { CardMotion } from '../../../domain/card';
 import type { ActorId, CombatEvent } from '../../../domain/combat';
 import type { EnemyAction } from '../../../domain/enemy';
+import { MOTION } from '../../../theme';
 import type { ActorAction } from '../model3d/actorActions';
 
 /**
@@ -302,6 +303,13 @@ const AGENT_MOTIONS: Record<string, Record<CardMotion, MotionPreset>> = {
   'mirror-seer': MAGE_MOTIONS,
 };
 
+/** キーフレームと、エフェクトが消えるまでの長い方。 */
+export function presetDuration(preset: MotionPreset): number {
+  const motion = preset.keyframes.reduce((sum, frame) => sum + frame.duration, 0);
+  const burst = preset.burst ? preset.burst.delay + MOTION.burst : 0;
+  return Math.max(motion, burst);
+}
+
 /** 敵の動き。攻撃は 1 発ごとに体当たりする。 */
 const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
   attack: {
@@ -401,6 +409,11 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
     ],
   },
 };
+
+/** この敵の行動の絵が終わるまで。 */
+export function enemyActionDuration(action: EnemyAction['kind']): number {
+  return presetDuration(ENEMY_MOTIONS[action]);
+}
 
 /** 相手（プレイヤー）に向けて行う敵の行動。 */
 const TARGETS_PLAYER: ReadonlySet<EnemyAction['kind']> = new Set([

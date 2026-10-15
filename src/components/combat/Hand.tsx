@@ -19,6 +19,8 @@ type HandProps = CardDragHandlers & {
   events: CombatEvent[];
   /** 山札から飛んでくる途中の札。着くまで場所だけ確保して見せない。 */
   concealedIds: ReadonlySet<string>;
+  /** 敵のターンの演出が終わるまで、摘むことも詳細を開くこともできない。 */
+  locked: boolean;
   isPlayable: (instanceId: string) => boolean;
   /** 持ち上げている最中のカード。 */
   draggingId: string | null;
@@ -42,6 +44,7 @@ export function Hand({
   player,
   events,
   concealedIds,
+  locked,
   isPlayable,
   draggingId,
   selectedId,
@@ -68,6 +71,7 @@ export function Hand({
   return (
     <View
       ref={viewRef}
+      pointerEvents={locked ? 'none' : 'auto'}
       style={[styles.container, { minHeight: cardWidth * HAND_LAYOUT.aspectRatio }, style]}
       onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
     >

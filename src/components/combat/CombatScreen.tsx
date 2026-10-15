@@ -15,7 +15,7 @@ import type { CombatResult } from '../../domain/run';
 import { battleMusicFor } from '../../audio/music';
 import { useMusic } from '../../hooks/useMusic';
 import { useCombat } from '../../hooks/useCombat';
-import { eventsDuration } from '../../hooks/useCombatEvents';
+import { eventsDuration, useEnemyTurnBusy } from '../../hooks/useCombatEvents';
 import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
@@ -101,6 +101,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const [stageSize, setStageSize] = useState(NO_SIZE);
   const [playerSlotSize, setPlayerSlotSize] = useState(NO_SIZE);
   const inProgress = state.status === 'playerTurn';
+  const enemyTurnBusy = useEnemyTurnBusy(state.events);
+  const canAct = inProgress && !enemyTurnBusy;
   const effectsTime = eventsDuration(state.events);
   useCombatSounds(state.events);
   // 決着したら、勝敗の効果音が聞こえるようにフェードアウトする。
@@ -149,9 +151,18 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     enemies: state.enemies,
     potions: state.potions,
     cardWidth,
-    onPlayCard: playCard,
-    onFuse: fuseInHand,
-    onDrinkPotion: drinkPotion,
+    onPlayCard: (instanceId, target) => {
+      if (!canAct) return;
+      playCard(instanceId, target);
+    },
+    onFuse: (sourceId, targetId) => {
+      if (!canAct) return;
+      fuseInHand(sourceId, targetId);
+    },
+    onDrinkPotion: (slot, target) => {
+      if (!canAct) return;
+      drinkPotion(slot, target);
+    },
   });
   const bindHandNode = useCallback(
     (node: View | null) => {
@@ -176,11 +187,16 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   }
 
   const onDrink = (slot: number) => {
+    if (!canAct) return;
     if (potionNeedsTarget(slot)) setPending({ kind: 'potion', slot });
     else drinkPotion(slot);
   };
+  const onEndTurn = () => {
+    setPending(null);
+    endTurn();
+  };
   const onSelectEnemy = (uid: EnemyUid) => {
-    if (!activePending) return;
+    if (!canAct || !activePending) return;
     setPending(null);
     drinkPotion(activePending.slot, uid);
   };
@@ -202,7 +218,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       events={state.events}
       onDiscardPotion={discardPotion}
       potionUse={{
-        isDrinkable,
+        isDrinkable: (slot) => canAct && isDrinkable(slot),
         onDrink,
         drag: potionHandlers,
         draggingSlot: drag?.kind === 'potion' ? drag.slot : null,
@@ -264,6 +280,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       player={state.player}
       events={state.events}
       concealedIds={concealedIds}
+      locked={enemyTurnBusy}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
       selectedId={null}
@@ -279,8 +296,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       drawCount={state.drawPile.length}
       discardCount={state.discardPile.length}
       exhaustCount={state.exhaustPile.length}
-      canEndTurn={inProgress}
-      onEndTurn={endTurn}
+      canEndTurn={canAct}
+      onEndTurn={onEndTurn}
       onOpenDraw={() => setOpenPile('draw')}
       onOpenDiscard={() => setOpenPile('discard')}
       onOpenExhaust={() => setOpenPile('exhaust')}

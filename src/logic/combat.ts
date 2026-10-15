@@ -1599,9 +1599,12 @@ export function endTurn(state: CombatState): CombatState {
       : afterRelics;
   const discarded = settle(withLog(discardHand(afterMetal), 'ターン終了'));
   if (discarded.status !== 'playerTurn') return discarded;
-  const afterEnemy = runEnemyTurn(discarded);
+  const afterEnemy = runEnemyTurn(withEvent(discarded, { kind: 'enemyTurnStart', target: 'player' }));
   if (afterEnemy.status !== 'playerTurn') return afterEnemy;
-  const started = triggerRelics(startPlayerTurn(afterEnemy), 'turnStart');
+  const started = triggerRelics(
+    startPlayerTurn(withEvent(afterEnemy, { kind: 'enemyTurnEnd', target: 'player' })),
+    'turnStart',
+  );
   return finishIfWon(spreadOvergrowth(supplyArrows(started)));
 }
 

@@ -15,6 +15,8 @@ export function soundForEvent(event: CombatEvent): SoundId | null {
     case 'heal':
       return 'heal';
     case 'enemyAct':
+    case 'enemyTurnStart':
+    case 'enemyTurnEnd':
       return null;
     case 'hit':
       if (event.hpLoss === 0) return event.blocked > 0 ? 'guard' : null;

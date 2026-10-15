@@ -111,6 +111,12 @@ export type CombatEventBody =
     }
   /** 敵が行動した（攻撃は 1 発ごと）。target は行動した敵。 */
   | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
+  /**
+   * 敵のターンの始まりと終わり。演出は出さない。
+   * このあいだの出来事が終わるまで、UI は手札を触れなくする。
+   */
+  | { kind: 'enemyTurnStart'; target: 'player' }
+  | { kind: 'enemyTurnEnd'; target: 'player' }
   | { kind: 'potionUsed'; target: 'player'; potionId: string }
   | { kind: 'relicTriggered'; target: 'player'; relicId: string }
   /**
