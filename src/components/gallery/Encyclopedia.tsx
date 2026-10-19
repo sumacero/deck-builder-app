@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
   tabActive: { borderColor: COLORS.gold, backgroundColor: COLORS.gold },
   tabText: { color: COLORS.text, fontSize: 13, fontWeight: '800' },
   tabTextActive: { color: COLORS.onGold },
-  content: { flex: 1 },
+  /** Web / 入れ子 flex で子の ScrollView が潰れるのを防ぐ。 */
+  content: { flex: 1, minHeight: 0 },
   pressed: { opacity: 0.7 },
 });

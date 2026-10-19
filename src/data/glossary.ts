@@ -396,7 +396,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   },
   enchant: {
     id: 'enchant',
-    name: '魔法剣',
+    name: '属性付与',
     icon: '✨',
     description: 'このターンの間、使うアタックすべてに属性が加わる。弱点が合わない敵にも、弱点を突けるようになる。',
   },

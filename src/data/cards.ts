@@ -604,51 +604,7 @@ export const REWARD_CARDS: CardDefinition[] = [
       ],
     },
   },
-  {
-    id: 'enchant-fire',
-    name: '魔法剣・火',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'fire',
-    archetypes: ['element'],
-    cost: 1,
-    target: 'self',
-    effects: [
-      { kind: 'enchant', attribute: 'fire' },
-      { kind: 'draw', amount: 1 },
-    ],
-    upgrade: { cost: 0 },
-  },
-  {
-    id: 'enchant-water',
-    name: '魔法剣・水',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'water',
-    archetypes: ['element'],
-    cost: 1,
-    target: 'self',
-    effects: [
-      { kind: 'enchant', attribute: 'water' },
-      { kind: 'draw', amount: 1 },
-    ],
-    upgrade: { cost: 0 },
-  },
-  {
-    id: 'enchant-grass',
-    name: '魔法剣・草',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'grass',
-    archetypes: ['element'],
-    cost: 1,
-    target: 'self',
-    effects: [
-      { kind: 'enchant', attribute: 'grass' },
-      { kind: 'draw', amount: 1 },
-    ],
-    upgrade: { cost: 0 },
-  },
+  // 魔法剣・火／水／草は削除（2026-10-20）。属性付与はポーション（火霊・水霊・草霊）に残す。
 
   // --- デバフ軸: 弱体・衰弱を重ねて、そのターン数を力に変える ---
   {

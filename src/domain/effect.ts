@@ -42,7 +42,7 @@ export type Effect =
   | { kind: 'consumeBlock'; multiplier: number }
   /** damage を与え、それで敵を倒したら最大 HP +maxHp（ランの間ずっと）。 */
   | { kind: 'feed'; damage: number; maxHp: number }
-  /** 魔法剣: このターン、アタックに attribute の属性が加わる。 */
+  /** 属性付与（ポーション等）: このターン、アタックに attribute の属性が加わる。 */
   | { kind: 'enchant'; attribute: Attribute }
   /** 狙った敵の status のターン数を factor 倍にする（かかっていなければ何もしない）。 */
   | { kind: 'multiplyDebuff'; status: DebuffId; factor: number }

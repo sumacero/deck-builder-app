@@ -35,7 +35,7 @@ export type PlayerState = Fighter & {
   powers: Powers;
   /** エージェントの基本属性。敵の攻撃を受けるときの相性に使う。 */
   attribute: Attribute;
-  /** 魔法剣で、このターンのアタックに加わっている属性。 */
+  /** ポーション等で、このターンのアタックに加わっている属性。 */
   enchant: Attribute[];
   /** このターンに使ったカードの枚数（手数を数えるカード用）。 */
   cardsThisTurn: number;

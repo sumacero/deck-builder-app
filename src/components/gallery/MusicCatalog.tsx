@@ -17,7 +17,7 @@ export function MusicCatalog() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.list}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
       <Text style={styles.note}>全曲がメインテーマ「三つの旗」の旋律をどこかに持っている。</Text>
       {MUSIC_ENTRIES.map((entry) => (
         <MusicRow key={entry.id} entry={entry} playing={playing === entry.id} onPress={() => toggle(entry.id)} />
@@ -45,7 +45,8 @@ function MusicRow({ entry, playing, onPress }: MusicRowProps) {
 }
 
 const styles = StyleSheet.create({
-  list: { gap: SPACING.sm, paddingVertical: SPACING.sm },
+  scroll: { flex: 1, minHeight: 0 },
+  list: { gap: SPACING.sm, paddingVertical: SPACING.sm, flexGrow: 1 },
   note: { color: COLORS.textMuted, fontSize: 12, textAlign: 'center' },
   row: {
     flexDirection: 'row',

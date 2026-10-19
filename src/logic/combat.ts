@@ -1411,7 +1411,7 @@ function quickdrawShot(state: CombatState, amount: number): CombatState {
   return target ? hitEnemy(state, target.uid, amount, FIXED_HIT) : state;
 }
 
-/** カードの属性に、魔法剣で加わった属性を足したもの（アタックのみ）。 */
+/** カードの属性に、ポーション等で加わった属性を足したもの（アタックのみ）。 */
 function playedAttributes(state: CombatState, card: CardDefinition): Attribute[] {
   const own = cardAttributes(card);
   if (card.type !== 'attack') return own;
