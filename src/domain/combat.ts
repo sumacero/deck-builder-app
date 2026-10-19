@@ -1,6 +1,7 @@
 import type { AgentDefinition } from './agent';
 import type { Attribute } from './attribute';
-import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
+import type { CardDefinition, CardInstance, CardMark, CardMotion, CardType } from './card';
+import type { Effect } from './effect';
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
@@ -38,6 +39,16 @@ export type PlayerState = Fighter & {
   enchant: Attribute[];
   /** このターンに使ったカードの枚数（手数を数えるカード用）。 */
   cardsThisTurn: number;
+  /** このターンに使ったスキルの枚数（使ったあとに数えるカードより前の分）。 */
+  skillsThisTurn: number;
+  /** このターンに使ったアタックの枚数。 */
+  attacksThisTurn: number;
+  /** このターンに手札から捨てた枚数（効果・ターン終了）。 */
+  discardsThisTurn: number;
+  /** このターンに廃棄した枚数。 */
+  exhaustsThisTurn: number;
+  /** この戦闘で廃棄した枚数（灰・燃え殻・廃棄シナジー用）。 */
+  exhaustsThisCombat: number;
   /** このターンだけ、ムチの攻撃が 1 回当たるたびにその敵へ与える宿り木（パワーの宿り木の蔓とは別に足す）。 */
   lashSeedThisTurn: number;
   /** この戦闘で使った（廃棄した）矢の本数。 */
@@ -88,6 +99,8 @@ export type EnemyState = Fighter & {
   awakened: boolean;
   /** 霜。次の攻撃のダメージが、1 ヒットごとにこの分下がる。攻撃を終えると消える。 */
   frost: number;
+  /** 次の攻撃のヒット数をこの分減らす（重ねた瞬間の霞）。攻撃を終えると消える。 */
+  hitCut: number;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -108,6 +121,8 @@ export type CombatEventBody =
       targets: EnemyUid[];
       cardType: CardType;
       motion: CardMotion;
+      /** 性質カードの印。水鏡のノアは、この印で戦闘エフェクトを切り替える。 */
+      mark?: CardMark;
     }
   /** 敵が行動した（攻撃は 1 発ごと）。target は行動した敵。 */
   | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
@@ -229,6 +244,20 @@ export type CombatState = {
   /** 直前の操作 1 回分のイベント。操作のたびに作り直す。 */
   events: CombatEvent[];
   nextEventId: number;
+  /**
+   * 札を重ねたあと、敵をタップで選ぶ待ち。
+   * ブロック半減・攻撃回数減で、候補が 2 体以上いるときだけ入る。
+   */
+  pendingFuse: PendingFuseAim | null;
+};
+
+/** 重ねた瞬間の効果で、敵を選んでもらう待ち。 */
+export type PendingFuseAim = {
+  effects: Effect[];
+  candidates: EnemyUid[];
+  repeats: number;
+  /** 案内文用。block = ブロック半減、multiHit = 攻撃回数を減らす。 */
+  kind: 'block' | 'multiHit';
 };
 
 /** カードを敵の上で離したときに、その敵が受ける実ダメージの予告。 */

@@ -20,9 +20,18 @@ export function volumeGain(level: number): number {
 }
 
 /**
+ * 再生プレイヤーへ渡す直前の音量を 0〜1 に収める。
+ * Web の HTMLMediaElement は範囲外だと例外になる。
+ */
+export function clampPlaybackVolume(volume: number): number {
+  if (!Number.isFinite(volume)) return 0;
+  return Math.min(1, Math.max(0, volume));
+}
+
+/**
  * 実際にプレイヤーへ渡す音量（全体の倍率 OUTPUT_GAIN もかける）。
- * expo-audio は 1 を超えると例外になるので、そこで頭打ちにする。
+ * expo-audio / ブラウザは 0〜1 の外だと例外になるので、ここで収める。
  */
 export function outputVolume(base: number, level: number): number {
-  return Math.min(1, Math.max(0, base * OUTPUT_GAIN * volumeGain(level)));
+  return clampPlaybackVolume(base * OUTPUT_GAIN * volumeGain(level));
 }

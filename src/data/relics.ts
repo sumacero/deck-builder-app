@@ -10,14 +10,14 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/** ノアの初期レリック。毎ターン最初に札を重ねたとき、1 枚引く。 */
+/** ノアの初期レリック。毎ターン最初に札を重ねたとき、ブロック 4 を得る。 */
 export const CRYSTAL_WEIGHT: RelicDefinition = {
   id: 'crystal-weight',
   name: '水晶の文鎮',
   icon: '💎',
   rarity: 'starter',
   trigger: 'firstFuse',
-  effects: [{ kind: 'draw', amount: 1 }],
+  effects: [{ kind: 'block', amount: 4 }],
 };
 
 /** リーネの初期レリック。 */

@@ -28,9 +28,16 @@ export function enemySlotWidth(rowWidth: number, count: number, soloRatio: numbe
   return (rowWidth - SPACING.sm * (count - 1)) / count;
 }
 
+/** 群れは隣と少し重なってよいので、枠幅より広い予算を渡す。 */
+function enemyWidthBudget(slot: number, enemyCount: number, panelInset: number): number {
+  const { enemyWidthOverflow } = COMBAT_LAYOUT;
+  if (enemyCount <= 1) return slot - panelInset;
+  return slot * enemyWidthOverflow - panelInset;
+}
+
 /**
- * 縦向き: 上に敵の列、左下に自分。縦に重ならないよう、高さを敵と自分で分け合う。
- * 敵が多くて横幅で小さくなったぶん、自分は大きく描ける。
+ * 縦向き: 上に敵、下に自分。体は UI（HP・名前）の背景に重ねてよいので、
+ * 舞台の高さを大きめに使って 3D を取る（今の下限より小さくしない）。
  */
 export function portraitFigures(stage: Size, enemyCount: number): FigureSizes {
   if (!isMeasured(stage)) return UNMEASURED;
@@ -46,10 +53,11 @@ export function portraitFigures(stage: Size, enemyCount: number): FigureSizes {
   const compact = enemyCount >= compactEnemyCount;
   const chrome = compact ? compactEnemyChrome : enemyChrome;
   const slot = enemySlotWidth(stage.width, enemyCount, soloEnemyWidthRatio);
-  const enemy = fit(slot - panelInset, (stage.height - chrome - playerChrome) / 2);
+  // 敵は舞台の上半分強、自分は下半分。群れは横にはみ出して大きく取る。
+  const enemy = fit(enemyWidthBudget(slot, enemyCount, panelInset), stage.height * 0.62 - chrome);
   const player = fit(
     stage.width * playerWidthRatio - panelInset,
-    stage.height - enemy - chrome - playerChrome,
+    stage.height * 0.55 - playerChrome,
   );
   return { enemy, player, compact };
 }
@@ -60,7 +68,10 @@ export function landscapeFigures(enemyStage: Size, playerSlot: Size, enemyCount:
   const { compactEnemyChrome, playerChrome, panelInset } = COMBAT_LAYOUT;
   const slot = enemySlotWidth(enemyStage.width, enemyCount, 1 / Math.max(enemyCount, 2));
   return {
-    enemy: fit(slot - panelInset, enemyStage.height - compactEnemyChrome),
+    enemy: fit(
+      enemyWidthBudget(slot, enemyCount, panelInset),
+      enemyStage.height - compactEnemyChrome,
+    ),
     player: fit(playerSlot.width - panelInset, playerSlot.height - playerChrome),
     compact: true,
   };

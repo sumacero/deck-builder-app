@@ -61,6 +61,10 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['strength'];
     case 'cleanse':
       return ['cleanse'];
+    case 'halveBlock':
+      return ['block'];
+    case 'cutHits':
+      return ['intentAttack'];
     case 'ifTargetHas':
       return [effect.status, ...effect.effects.flatMap(keywordsForEffect)];
     case 'consumeBlock':
@@ -74,7 +78,17 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'bloomSeed':
       return ['seed'];
     case 'damagePerCardPlayed':
+    case 'damagePerSkillPlayed':
+    case 'damagePerAttackPlayed':
+    case 'damagePerDiscard':
+    case 'damagePerExhaust':
       return ['damage'];
+    case 'blockPerCardPlayed':
+      return ['block'];
+    case 'discardFromHand':
+      return [];
+    case 'exhaustFromHand':
+      return ['exhaust'];
     case 'gainLashSeed':
       return ['lashSeedTurn', 'whip', 'seed'];
   }
@@ -92,6 +106,9 @@ const POWER_IDS: readonly PowerId[] = [
   'verdure',
   'fuseEcho',
   'stackDepth',
+  'momentum',
+  'scavenge',
+  'cinder',
   'quickdraw',
   'flurry',
   'lashSeed',

@@ -5,8 +5,9 @@ import { ALL_ENEMIES } from '../../data/bestiary';
 import type { ActorId, CombatEvent } from '../../domain/combat';
 import { ENEMY_RANK_LABEL } from '../../logic/describe';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
+import { AgentPortrait } from '../agents/AgentPortrait';
 import { ActorFigure } from '../combat/model3d/ActorFigure';
-import { AGENT_MODELS, ENEMY_MODELS } from '../combat/model3d/actorModels';
+import { ENEMY_MODELS } from '../combat/model3d/actorModels';
 import type { ActorModel } from '../combat/model3d/modelTypes';
 
 type GalleryEntry = {
@@ -16,7 +17,10 @@ type GalleryEntry = {
   /** エージェント / エリート / ボスなど。通常の敵は null。 */
   label: string | null;
   hp: number | null;
+  /** 敵の 3D。エージェントは立ち絵なので undefined。 */
   model: ActorModel | undefined;
+  /** エージェントなら id（立ち絵用）。 */
+  agentId: string | null;
   /** 向きを決めるため（自分は右向き、敵は左向き）。 */
   actorId: ActorId;
 };
@@ -29,7 +33,8 @@ const ENTRIES: GalleryEntry[] = [
       icon: agent.icon,
       label: 'エージェント',
       hp: null,
-      model: AGENT_MODELS[agent.id],
+      model: undefined,
+      agentId: agent.id,
       actorId: 'player',
     }),
   ),
@@ -41,6 +46,7 @@ const ENTRIES: GalleryEntry[] = [
       label: ENEMY_RANK_LABEL[enemy.rank],
       hp: enemy.maxHp,
       model: ENEMY_MODELS[enemy.id],
+      agentId: null,
       actorId: 'enemy-0',
     }),
   ),
@@ -50,7 +56,7 @@ const ENTRIES: GalleryEntry[] = [
 const PER_PAGE = 6;
 const NO_EVENTS: CombatEvent[] = [];
 
-/** キャラクター（エージェントと敵）の 3D モデルを、ページに分けて並べる。図鑑の「キャラ」タブ。 */
+/** エージェントは切り紙立ち絵、敵は 3D。図鑑の「キャラ」タブ。 */
 export function ModelGallery() {
   const [page, setPage] = useState(0);
   const { width, height } = useWindowDimensions();
@@ -66,20 +72,24 @@ export function ModelGallery() {
       <View style={styles.grid}>
         {entries.map((entry) => (
           <View key={entry.key} style={[styles.cell, { width: cellWidth }]}>
-            <ActorFigure
-              model={entry.model}
-              icon={entry.icon}
-              actorId={entry.actorId}
-              events={NO_EVENTS}
-              agentId={CRIMSON_HERO.id}
-              size={size}
-            />
+            {entry.agentId ? (
+              <AgentPortrait agentId={entry.agentId} icon={entry.icon} size={size} />
+            ) : (
+              <ActorFigure
+                model={entry.model}
+                icon={entry.icon}
+                actorId={entry.actorId}
+                events={NO_EVENTS}
+                agentId={CRIMSON_HERO.id}
+                size={size}
+              />
+            )}
             {entry.label && <Text style={styles.label}>{entry.label}</Text>}
             <Text style={styles.name} numberOfLines={1}>
               {entry.icon} {entry.name}
             </Text>
             {entry.hp !== null && <Text style={styles.hp}>HP {entry.hp}</Text>}
-            {!entry.model && <Text style={styles.noModel}>3D なし</Text>}
+            {!entry.agentId && !entry.model && <Text style={styles.noModel}>3D なし</Text>}
           </View>
         ))}
       </View>

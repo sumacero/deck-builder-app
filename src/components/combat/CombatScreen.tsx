@@ -86,6 +86,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     state,
     playCard,
     fuseInHand,
+    resolveFuseAim,
     drinkPotion,
     discardPotion,
     endTurn,
@@ -102,7 +103,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const [playerSlotSize, setPlayerSlotSize] = useState(NO_SIZE);
   const inProgress = state.status === 'playerTurn';
   const enemyTurnBusy = useEnemyTurnBusy(state.events);
-  const canAct = inProgress && !enemyTurnBusy;
+  const canAct = inProgress && !enemyTurnBusy && !state.pendingFuse;
+  const canPickFuse = inProgress && !enemyTurnBusy && Boolean(state.pendingFuse);
   const effectsTime = eventsDuration(state.events);
   useCombatSounds(state.events);
   // 決着したら、勝敗の効果音が聞こえるようにフェードアウトする。
@@ -180,6 +182,13 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const living = livingEnemies(state).map((enemy) => enemy.uid);
   // 選んでいる最中にポーションが無くなったら、取り消し扱い。
   const activePending = isPendingValid(pending, isDrinkable) ? pending : null;
+  const fusePending = state.pendingFuse;
+  const selectingEnemy = Boolean(fusePending || (activePending && !drag));
+  const selectHighlight = fusePending
+    ? fusePending.candidates
+    : activePending
+      ? living
+      : [];
 
   let previews: DamagePreview[] = [];
   if (drag?.kind === 'card' && hover && hover.kind !== 'self') {
@@ -196,6 +205,11 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     endTurn();
   };
   const onSelectEnemy = (uid: EnemyUid) => {
+    if (fusePending) {
+      if (!canPickFuse || !fusePending.candidates.includes(uid)) return;
+      resolveFuseAim(uid);
+      return;
+    }
     if (!canAct || !activePending) return;
     setPending(null);
     drinkPotion(activePending.slot, uid);
@@ -236,8 +250,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       compact={figures.compact}
       soloWidthRatio={landscape ? 0.5 : COMBAT_LAYOUT.soloEnemyWidthRatio}
       previews={previews}
-      highlighted={drag ? highlightedEnemies(hover, living) : activePending ? living : []}
-      onSelect={activePending && !drag ? onSelectEnemy : undefined}
+      highlighted={drag ? highlightedEnemies(hover, living) : selectHighlight}
+      onSelect={selectingEnemy ? onSelectEnemy : undefined}
       registerView={bindEnemy}
     />
   );
@@ -252,8 +266,18 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       viewRef={bindPlayer}
     />
   );
+  const fuseHint =
+    fusePending?.kind === 'block'
+      ? 'ブロックがある敵をタップ（半分にする）'
+      : fusePending?.kind === 'multiHit'
+        ? '連続攻撃の敵をタップ（回数を減らす）'
+        : null;
   const hintRow =
-    activePending && !drag ? (
+    fuseHint && !drag ? (
+      <View style={styles.hintRow}>
+        <Text style={styles.hint}>{fuseHint}</Text>
+      </View>
+    ) : activePending && !drag ? (
       <View style={styles.hintRow}>
         <Text style={styles.hint}>
           ポーションを使う敵をタップ
@@ -489,9 +513,9 @@ const styles = StyleSheet.create({
   turnRow: { flexDirection: 'row', alignItems: 'center' },
   turnRowSide: { flex: 1, alignItems: 'flex-start' },
   turnRowEnd: { alignItems: 'flex-end' },
-  /** 上に敵、左下にエージェント。斜めに向かい合って画面を広く使う。 */
+  /** 上に敵、下にエージェント。自分へのカード判定は下段を横いっぱいに使う。 */
   portraitStage: { flex: 1, justifyContent: 'space-between', paddingBottom: SPACING.sm },
-  playerSlot: { alignSelf: 'flex-start', width: `${COMBAT_LAYOUT.playerWidthRatio * 100}%` },
+  playerSlot: { alignSelf: 'stretch' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 64 },
   /** 所持品の説明欄が右の舞台の上に重なって見えるよう、右の列より手前に置く。 */
   side: {

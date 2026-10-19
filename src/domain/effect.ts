@@ -50,6 +50,20 @@ export type Effect =
   | { kind: 'bloomSeed' }
   /** base + このターンにこのカードより前に使ったカード 1 枚につき perCard のダメージ。 */
   | { kind: 'damagePerCardPlayed'; base: number; perCard: number }
+  /** base + このターンに先に使ったスキル 1 枚につき perCard のダメージ。 */
+  | { kind: 'damagePerSkillPlayed'; base: number; perCard: number }
+  /** base + このターンに先に使ったアタック 1 枚につき perCard のダメージ。 */
+  | { kind: 'damagePerAttackPlayed'; base: number; perCard: number }
+  /** base + このターンに捨てたカード 1 枚につき perCard のダメージ。 */
+  | { kind: 'damagePerDiscard'; base: number; perCard: number }
+  /** base + この戦闘で廃棄したカード 1 枚につき perCard のダメージ。 */
+  | { kind: 'damagePerExhaust'; base: number; perCard: number }
+  /** base + このターンに先に使ったカード 1 枚につき perCard のブロック。 */
+  | { kind: 'blockPerCardPlayed'; base: number; perCard: number }
+  /** 手札からランダムに amount 枚捨てる（使った札は除く）。 */
+  | { kind: 'discardFromHand'; amount: number }
+  /** 手札からランダムに amount 枚廃棄する（使った札は除く）。 */
+  | { kind: 'exhaustFromHand'; amount: number }
   /** このターン、ムチの攻撃が 1 回当たるたびにその敵へ宿り木 amount。 */
   | { kind: 'gainLashSeed'; amount: number }
   /** 狙った敵の宿り木 × perTurn のダメージを与え、その宿り木を消す。 */
@@ -65,7 +79,11 @@ export type Effect =
   /** 狙った敵の筋力を amount まで消す（0 より下にはしない）。 */
   | { kind: 'stripStrength'; amount: number }
   /** 自分にかかっている悪い効果を count 個消す。 */
-  | { kind: 'cleanse'; count: number };
+  | { kind: 'cleanse'; count: number }
+  /** 狙った敵のブロックを半分にする（切り捨て。0 なら何もしない）。 */
+  | { kind: 'halveBlock' }
+  /** 狙った敵の次の攻撃のヒット数を amount 減らす（0 未満にはしない。攻撃したら消える）。 */
+  | { kind: 'cutHits'; amount: number };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

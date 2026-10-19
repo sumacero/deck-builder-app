@@ -221,20 +221,20 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '氷の印',
     icon: '❄️',
     description:
-      '単体への大きなダメージと、大きなブロックの印。氷の札を重ねて消すと、一番強い攻撃をしてくる敵に霜（1 ヒットにつき 2 × 消えた札の段）を与える。',
+      '単体への大きなダメージと、大きなブロックの印。氷の札を重ねて消すと、棘（茨の鎧）を 2 × 消えた札の段だけ得る。戦闘中ずっと残り、敵の攻撃を受けるとその敵に同ダメージ。',
   },
   drop: {
     id: 'drop',
     name: '雫の印',
     icon: '💧',
-    description: '敵全体への攻撃と、ブロック＋ドローの印。雫の札を重ねて消すと、消えた札の段の数だけカードを引く。',
+    description: '敵全体への攻撃と、ブロック＋ドローの印。雫の札を重ねて消すと、ブロックがある敵のブロックを半分にする（複数なら選ぶ。無ければ効果なし）。',
   },
   mist: {
     id: 'mist',
     name: '霞の印',
     icon: '🌫️',
     description:
-      'ブロック無視・かわす・デバフ・悪い効果を消す印。霞のアタックを重ねて消すと筋力が一番高い敵の筋力を 3 × 段だけ消し、霞のスキルを重ねて消すと自分の悪い効果を段の数だけ消す。',
+      'ブロック無視・かわす・デバフ・悪い効果を消す印。霞の札を重ねて消すと、連続攻撃（2 ヒット以上）の敵の次の攻撃回数を 1 減らす（複数なら選ぶ。いなければ効果なし）。アタック／スキル共通。',
   },
   fuse: {
     id: 'fuse',
@@ -248,7 +248,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '段',
     icon: '🃏',
     description:
-      '札を重ねた深さ。1 段どうしで 2 段、2 段どうしで 4 段（最大）。2 段の札は数値が 2 倍、4 段は 3 倍。段は捨て札や山札に移っても戦闘のあいだ残り、重ねて消えた札は廃棄札へ行く。',
+      '札を重ねた深さ。1 段どうしで 2 段、2 段どうしで 4 段（最大）。2 段の札は数値が 1.5 倍、4 段は 2 倍。段は捨て札や山札に移っても戦闘のあいだ残り、重ねて消えた札は廃棄札へ行く。',
   },
   fuseEcho: {
     id: 'fuseEcho',
@@ -260,7 +260,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'stackDepth',
     name: '深み',
     icon: '🔷',
-    description: '2 段以上の札の倍率が、その数値だけ上がる（2 段で 3 倍、4 段で 4 倍など）。',
+    description: '2 段以上の札の倍率が、その数値だけ上がる（2 段で 2.5 倍、4 段で 3 倍など）。',
   },
   pierce: {
     id: 'pierce',
@@ -354,6 +354,24 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '無限の矢筒',
     icon: '♾️',
     description: '自分のターンの始めに、その数値の本数だけ矢を手札に加える。',
+  },
+  momentum: {
+    id: 'momentum',
+    name: '勢い',
+    icon: '🌪️',
+    description: 'カードを使うたびに、このターンの筋力をその数値だけ得る。手数が多いデッキほど殴りが伸びる。',
+  },
+  scavenge: {
+    id: 'scavenge',
+    name: '拾い集め',
+    icon: '🧲',
+    description: 'カードの効果で手札から捨てるたびに、捨てた枚数 × その数値だけカードを引く。ターン終了の捨て札では発動しない。',
+  },
+  cinder: {
+    id: 'cinder',
+    name: '燃え殻',
+    icon: '🔥',
+    description: 'カードが廃棄されるたびに、HP が一番低い敵にその数値のダメージを与える。灰より立つと組むと守りと攻めが同時に回る。',
   },
   growth: {
     id: 'growth',

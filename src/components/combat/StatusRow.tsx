@@ -26,7 +26,7 @@ export function StatusRow({ statuses }: StatusRowProps) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: SPACING.xs },
+  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: SPACING.xs },
   chip: {
     backgroundColor: COLORS.panelTranslucent,
     borderColor: COLORS.panelBorder,

@@ -12,9 +12,8 @@ export const MARK_NAME: Record<CardMark, string> = {
 /** 段の上限。1 + 1 で 2、2 + 2 で 4。 */
 export const MAX_STACK = 4;
 
-/** 重ねた瞬間の効果の、消える札 1 段あたりの量。 */
-export const FUSE_FROST_PER_STACK = 2;
-export const FUSE_STRIP_PER_STACK = 3;
+/** 氷を重ねて消したとき、1 段あたり得る棘（茨の鎧）。戦闘中ずっと残る。 */
+export const FUSE_THORNS_PER_STACK = 2;
 
 /** この札の段（まとまっている枚数）。 */
 export function stackOf(instance: CardInstance): number {
@@ -28,12 +27,13 @@ export function releaseFusion(instance: CardInstance): CardInstance {
 }
 
 /** 重ねられる札。印があり、アタックかスキル。 */
-const isStackable = (card: CardDefinition) =>
-  card.mark !== undefined && (card.type === 'attack' || card.type === 'skill');
+function isStackable(card: CardDefinition): boolean {
+  return card.mark !== undefined && (card.type === 'attack' || card.type === 'skill');
+}
 
 /**
- * この札を重ねられる手札の相手。印があり、種類（アタック・スキル）と段が同じ札。印は違ってよい。
- * 重ねたあとの段が MAX_STACK を超える相手は除く。
+ * この札の上に重ねられる相手。同じ種類・同じ段で、重ねたあとも上限以下。
+ * 印は違ってよい。
  */
 export function stackPartners(hand: readonly CardInstance[], instance: CardInstance): CardInstance[] {
   if (!isStackable(instance.card)) return [];
@@ -48,13 +48,13 @@ export function stackPartners(hand: readonly CardInstance[], instance: CardInsta
   );
 }
 
-/** ドラッグした札を、相手の上に重ねられるか。相手が stackPartners に入っているときだけ。 */
+/** source を target の上に重ねられるか。 */
 export function canStackOnto(
   hand: readonly CardInstance[],
   source: CardInstance,
   target: CardInstance,
 ): boolean {
-  return stackPartners(hand, source).some((card) => card.instanceId === target.instanceId);
+  return stackPartners(hand, target).some((card) => card.instanceId === source.instanceId);
 }
 
 export type MarkLink = {
@@ -64,34 +64,35 @@ export type MarkLink = {
   toMark: CardMark;
 };
 
-/**
- * 手札に波紋を引く組。
- * focus が無いときは、どの札を重ねても結ばれる組を全部（摘む前）。
- * あるときは、その札を重ねられる相手だけ（摘んだとき）。
- */
+/** 手札の波紋。focus があるときはその札と組める相手だけ。 */
 export function markLinks(hand: readonly CardInstance[], focusId: string | null): MarkLink[] {
-  const sources = focusId ? hand.filter((card) => card.instanceId === focusId) : hand;
-  const seen = new Set<string>();
   const links: MarkLink[] = [];
-  for (const source of sources) {
-    const mark = source.card.mark;
+  const seen = new Set<string>();
+  for (const card of hand) {
+    if (focusId && card.instanceId !== focusId) continue;
+    const mark = card.card.mark;
     if (!mark) continue;
-    for (const partner of stackPartners(hand, source)) {
-      const other = partner.card.mark;
-      if (!other) continue;
-      const key = [source.instanceId, partner.instanceId].sort().join('\0');
+    for (const partner of stackPartners(hand, card)) {
+      const partnerMark = partner.card.mark;
+      if (!partnerMark) continue;
+      const key = [card.instanceId, partner.instanceId].sort().join('|');
       if (seen.has(key)) continue;
       seen.add(key);
-      links.push({ fromId: source.instanceId, toId: partner.instanceId, fromMark: mark, toMark: other });
+      links.push({
+        fromId: card.instanceId,
+        toId: partner.instanceId,
+        fromMark: mark,
+        toMark: partnerMark,
+      });
     }
   }
   return links;
 }
 
-/** 段の倍率。1 段は 1 倍、2 段は 2 倍、4 段は 3 倍。深みは重ねた札（2 段以上）にだけ足す。 */
+/** 段の倍率。1 段は 1 倍、2 段は 1.5 倍、4 段は 2 倍。深みは重ねた札（2 段以上）にだけ足す。 */
 export function stackMultiplier(stack: number, depth: number): number {
   if (stack <= 1) return 1;
-  return (stack >= MAX_STACK ? 3 : 2) + depth;
+  return (stack >= MAX_STACK ? 2 : 1.5) + depth;
 }
 
 /** 手札のこの札を、いま使ったときの倍率。 */
@@ -99,10 +100,10 @@ export function handMultiplier(instance: CardInstance, player: PlayerState): num
   return stackMultiplier(stackOf(instance), player.powers.stackDepth ?? 0);
 }
 
-const scale = (amount: number, multiplier: number) => amount * multiplier;
+const scale = (amount: number, multiplier: number) => Math.floor(amount * multiplier);
 
 /**
- * 段の倍率をかけた効果。ダメージ・ブロック・デバフのターン数・霜・かわす・筋力を消す量・悪い効果を消す数。
+ * 段の倍率をかけた効果。ダメージ・ブロック・デバフのターン数・霜・かわす・筋力を消す量・悪い効果を消す数・攻撃回数減。
  * ドローとエナジーは増やさない。印の無いカードはそのまま。
  */
 export function scaledEffects(card: CardDefinition, multiplier: number): Effect[] {
@@ -118,7 +119,21 @@ function scaleEffect(effect: Effect, multiplier: number): Effect {
     case 'applyFrost':
     case 'gainEvade':
     case 'stripStrength':
+    case 'cutHits':
+    case 'discardFromHand':
+    case 'exhaustFromHand':
       return { ...effect, amount: scale(effect.amount, multiplier) };
+    case 'damagePerCardPlayed':
+    case 'damagePerSkillPlayed':
+    case 'damagePerAttackPlayed':
+    case 'damagePerDiscard':
+    case 'damagePerExhaust':
+    case 'blockPerCardPlayed':
+      return {
+        ...effect,
+        base: scale(effect.base, multiplier),
+        perCard: scale(effect.perCard, multiplier),
+      };
     case 'applyDebuff':
       return { ...effect, turns: scale(effect.turns, multiplier) };
     case 'cleanse':
@@ -131,24 +146,25 @@ function scaleEffect(effect: Effect, multiplier: number): Effect {
 }
 
 /**
- * 重ねた瞬間の効果の狙い。threat = 予告の攻撃が一番大きい敵、strongest = 筋力が一番高い敵、self = 自分。
- * 札を重ねるドラッグの先は札なので、敵は指で選ばない。
+ * 重ねた瞬間の効果の狙い。
+ * self = 自分、block = ブロックがある敵（複数なら選ぶ）、multiHit = 複数ヒット予告の敵（複数なら選ぶ）。
  */
-export type FuseAim = 'threat' | 'strongest' | 'self';
+export type FuseAim = 'self' | 'block' | 'multiHit';
 
 export type FuseBurst = { effects: Effect[]; aim: FuseAim };
 
-/** 重ねて消える札の印と種類で決まる、重ねた瞬間の効果。量は消える札の段に比例する。 */
+/** 重ねて消える札の印で決まる、重ねた瞬間の効果。量は消える札の段に比例。アタック／スキル共通。 */
 export function fuseBurst(card: CardDefinition, stack: number): FuseBurst | null {
   switch (card.mark) {
     case 'ice':
-      return { effects: [{ kind: 'applyFrost', amount: FUSE_FROST_PER_STACK * stack }], aim: 'threat' };
+      return {
+        effects: [{ kind: 'gainPower', power: 'thorns', amount: FUSE_THORNS_PER_STACK * stack }],
+        aim: 'self',
+      };
     case 'drop':
-      return { effects: [{ kind: 'draw', amount: stack }], aim: 'self' };
+      return { effects: [{ kind: 'halveBlock' }], aim: 'block' };
     case 'mist':
-      return card.type === 'attack'
-        ? { effects: [{ kind: 'stripStrength', amount: FUSE_STRIP_PER_STACK * stack }], aim: 'strongest' }
-        : { effects: [{ kind: 'cleanse', count: stack }], aim: 'self' };
+      return { effects: [{ kind: 'cutHits', amount: 1 }], aim: 'multiHit' };
     case undefined:
       return null;
   }

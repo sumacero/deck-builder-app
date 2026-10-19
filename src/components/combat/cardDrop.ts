@@ -39,10 +39,10 @@ function nearestByX<T extends { rect: Rect }>(items: readonly T[], x: number): T
 }
 
 /**
- * 自分に使うカードは、自分の枠からこの余白までを「自分の範囲」とする。
+ * 自分に使うカードは、自分の枠（縦向きでは下段の横いっぱい）からこの余白までを「自分の範囲」とする。
  * 範囲の外で離すと手札に戻る。
  */
-export const SELF_DROP_PADDING = 16;
+export const SELF_DROP_PADDING = 28;
 
 function containsPoint(rect: Rect, point: Point, padding: number): boolean {
   return (

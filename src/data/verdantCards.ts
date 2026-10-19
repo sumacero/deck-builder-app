@@ -790,12 +790,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'self',
     effects: [
-      { kind: 'addArrows', amount: 1 },
+      { kind: 'addArrows', amount: 2 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'addArrows', amount: 2 },
+        { kind: 'addArrows', amount: 3 },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -897,8 +897,9 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 0,
     target: 'self',
-    effects: [{ kind: 'block', amount: 3 }],
-    upgrade: { effects: [{ kind: 'block', amount: 4 }] },
+    // 0 コスト守りの底上げ。流し受けより狩り向けに少し厚く。
+    effects: [{ kind: 'block', amount: 4 }],
+    upgrade: { effects: [{ kind: 'block', amount: 6 }] },
     motion: 'guard',
   },
   {

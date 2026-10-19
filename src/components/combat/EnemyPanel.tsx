@@ -59,7 +59,18 @@ export function EnemyPanel({
 }: EnemyPanelProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   const alive = isAlive(enemy);
-  const move = currentIntent(enemy);
+  const rawMove = currentIntent(enemy);
+  const move =
+    enemy.hitCut > 0
+      ? {
+          ...rawMove,
+          actions: rawMove.actions.map((action) =>
+            action.kind === 'attack'
+              ? { ...action, hits: Math.max(0, action.hits - enemy.hitCut) }
+              : action,
+          ),
+        }
+      : rawMove;
   const attacker = attackerFor(enemy, move);
   const rankLabel = ENEMY_RANK_LABEL[enemy.rank];
   const statuses = enemyStatuses(enemy);
@@ -92,47 +103,56 @@ export function EnemyPanel({
           events={events}
           defeated={!alive}
           defeatDelay={defeatDelay}
-          style={styles.body}
+          style={[styles.body, figureSize > 0 && { minHeight: figureSize * 0.85 }]}
         >
-          <ActorMotion actorId={enemy.uid} events={events} agentId={agentId}>
-            {figureSize > 0 ? (
-              <ActorFigure
-                // GL の描画バッファは作成時の大きさのままなので、大きさが変わったら作り直す。
-                key={`${enemy.uid}-${figureSize}`}
-                model={ENEMY_MODELS[enemy.id]}
-                icon={enemy.icon}
-                actorId={enemy.uid}
-                events={events}
-                agentId={agentId}
-                size={figureSize}
-              />
-            ) : (
-              <View style={styles.unmeasured} />
-            )}
-          </ActorMotion>
-          {rankLabel && <Text style={styles.rank}>{rankLabel}</Text>}
-          <Text style={[styles.name, compact && styles.compactName]} numberOfLines={1}>
-            {enemy.name}
-          </Text>
-          <View style={styles.weaknesses}>
-            <Text style={[styles.weakIcon, compact && styles.compactWeakIcon]}>
-              {enemy.attribute ? ATTRIBUTE_ICON[enemy.attribute] : '⚙️'}
-            </Text>
-            <Text style={styles.weakLabel}>弱点</Text>
-            {enemy.weaknesses.map((attribute) => (
-              <Text key={attribute} style={[styles.weakIcon, compact && styles.compactWeakIcon]}>
-                {ATTRIBUTE_ICON[attribute]}
-              </Text>
-            ))}
+          {/* 体は名前・HP の背景。重なってよい。 */}
+          <View pointerEvents="none" style={styles.figureLayer}>
+            <View style={figureSize > 0 ? { width: figureSize, height: figureSize } : undefined}>
+              <ActorMotion actorId={enemy.uid} events={events} agentId={agentId}>
+                {figureSize > 0 ? (
+                  <ActorFigure
+                    key={`${enemy.uid}-${figureSize}`}
+                    model={ENEMY_MODELS[enemy.id]}
+                    icon={enemy.icon}
+                    actorId={enemy.uid}
+                    events={events}
+                    agentId={agentId}
+                    size={figureSize}
+                  />
+                ) : (
+                  <View style={styles.unmeasured} />
+                )}
+              </ActorMotion>
+            </View>
           </View>
-          <StatusRow statuses={statuses} />
-          <HpBar
-            hp={vitals.hp}
-            maxHp={enemy.maxHp}
-            block={vitals.block}
-            compact={compact}
-            incoming={incoming}
-          />
+          {/* 名前はプレイヤーと同じく HP のすぐ上・左寄せ。 */}
+          <View style={styles.chrome}>
+            {rankLabel && <Text style={styles.rank}>{rankLabel}</Text>}
+            <Text style={[styles.name, compact && styles.compactName]} numberOfLines={1}>
+              {enemy.name}
+            </Text>
+            <View style={styles.weaknesses}>
+              <Text style={[styles.weakIcon, compact && styles.compactWeakIcon]}>
+                {enemy.attribute ? ATTRIBUTE_ICON[enemy.attribute] : '⚙️'}
+              </Text>
+              <Text style={styles.weakLabel}>弱点</Text>
+              {enemy.weaknesses.map((attribute) => (
+                <Text key={attribute} style={[styles.weakIcon, compact && styles.compactWeakIcon]}>
+                  {ATTRIBUTE_ICON[attribute]}
+                </Text>
+              ))}
+            </View>
+            <StatusRow statuses={statuses} />
+            <View style={styles.hpWrap}>
+              <HpBar
+                hp={vitals.hp}
+                maxHp={enemy.maxHp}
+                block={vitals.block}
+                compact={compact}
+                incoming={incoming}
+              />
+            </View>
+          </View>
         </FighterEffects>
         {preview && (
           <View style={styles.previewLayer}>
@@ -159,32 +179,61 @@ export function EnemyPanel({
 }
 
 const styles = StyleSheet.create({
-  slot: { flex: 1, maxWidth: 220 },
+  slot: { flex: 1, maxWidth: 300, overflow: 'visible' },
   column: {
     gap: SPACING.xs,
     borderRadius: RADIUS.md,
     borderWidth: 2,
     borderColor: 'transparent',
+    overflow: 'visible',
   },
   highlighted: { borderColor: COLORS.gold, backgroundColor: COLORS.goldDark },
-  intent: { alignItems: 'center', gap: SPACING.xs },
+  intent: { alignItems: 'center', gap: SPACING.xs, zIndex: 2 },
   hidden: { opacity: 0 },
   caption: { color: COLORS.textMuted, fontSize: 11, fontWeight: '600' },
   badges: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: SPACING.xs },
-  body: { gap: SPACING.xs, padding: SPACING.xs },
+  body: { padding: SPACING.xs, overflow: 'visible' },
+  figureLayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    zIndex: 0,
+  },
+  chrome: {
+    zIndex: 1,
+    gap: SPACING.xs,
+    marginTop: 'auto',
+    paddingTop: SPACING.lg,
+    alignItems: 'flex-start',
+    alignSelf: 'stretch',
+  },
   rank: {
     color: COLORS.danger,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 4,
-    textAlign: 'center',
+    textAlign: 'left',
+    textShadowColor: COLORS.textOutline,
+    textShadowRadius: 4,
   },
-  name: { color: COLORS.text, fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  name: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'left',
+    textShadowColor: COLORS.textOutline,
+    textShadowRadius: 4,
+  },
   compactName: { fontSize: 11 },
-  weaknesses: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 2 },
+  weaknesses: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: 2 },
   weakLabel: { color: COLORS.weakness, fontSize: 10, fontWeight: '800', marginHorizontal: 2 },
   weakIcon: { fontSize: 14 },
   compactWeakIcon: { fontSize: 11 },
+  /** alignItems:flex-start でもバーは枠いっぱいに伸ばす。 */
+  hpWrap: { alignSelf: 'stretch' },
   unmeasured: { height: ACTOR_FIGURE.minSize },
   previewLayer: {
     position: 'absolute',
@@ -193,5 +242,6 @@ const styles = StyleSheet.create({
     top: '45%',
     alignItems: 'center',
     pointerEvents: 'none',
+    zIndex: 3,
   },
 });

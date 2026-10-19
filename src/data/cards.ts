@@ -1,4 +1,5 @@
 import type { CardDefinition } from '../domain/card';
+import { SYNERGY_CARDS } from './synergyCards';
 
 export const STRIKE: CardDefinition = {
   id: 'strike',
@@ -8,8 +9,9 @@ export const STRIKE: CardDefinition = {
   cost: 1,
   target: 'enemy',
   attuned: true,
-  effects: [{ kind: 'damage', amount: 6 }],
-  upgrade: { effects: [{ kind: 'damage', amount: 9 }] },
+  /** 生火力は抑え、シナジー軸で戦う前提（2026-10-18）。 */
+  effects: [{ kind: 'damage', amount: 4 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 6 }] },
 };
 
 export const DEFEND: CardDefinition = {
@@ -19,8 +21,8 @@ export const DEFEND: CardDefinition = {
   type: 'skill',
   cost: 1,
   target: 'self',
-  effects: [{ kind: 'block', amount: 5 }],
-  upgrade: { effects: [{ kind: 'block', amount: 8 }] },
+  effects: [{ kind: 'block', amount: 4 }],
+  upgrade: { effects: [{ kind: 'block', amount: 6 }] },
 };
 
 export const BASH: CardDefinition = {
@@ -32,12 +34,12 @@ export const BASH: CardDefinition = {
   cost: 2,
   target: 'enemy',
   effects: [
-    { kind: 'damage', amount: 8 },
+    { kind: 'damage', amount: 5 },
     { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
   ],
   upgrade: {
     effects: [
-      { kind: 'damage', amount: 10 },
+      { kind: 'damage', amount: 7 },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 3 },
     ],
   },
@@ -52,8 +54,8 @@ export const ULTIMATE_STRIKE: CardDefinition = {
   cost: 1,
   target: 'enemy',
   attuned: true,
-  effects: [{ kind: 'damage', amount: 13 }],
-  upgrade: { effects: [{ kind: 'damage', amount: 18 }] },
+  effects: [{ kind: 'damage', amount: 9 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 12 }] },
 };
 
 /** イベント「融合の祭壇」で防御 2 枚から作る。報酬には出ない。 */
@@ -64,8 +66,8 @@ export const ULTIMATE_DEFEND: CardDefinition = {
   type: 'skill',
   cost: 1,
   target: 'self',
-  effects: [{ kind: 'block', amount: 11 }],
-  upgrade: { effects: [{ kind: 'block', amount: 15 }] },
+  effects: [{ kind: 'block', amount: 8 }],
+  upgrade: { effects: [{ kind: 'block', amount: 11 }] },
 };
 
 /** 紅蓮のカイルの秘奥義。ゲージが溜まると手札に来る。報酬には出ない。 */
@@ -91,7 +93,7 @@ export const CRIMSON_STARTER_DECK: CardDefinition[] = [
   ...copies(DEFEND, 4),
 ];
 
-/** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。 */
+/** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。末尾にシナジー札を足す。 */
 export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'twin-strike',
@@ -101,8 +103,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['strength', 'element'],
     cost: 1,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 5, hits: 2 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 7, hits: 2 }] },
+    effects: [{ kind: 'damage', amount: 3, hits: 2 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 2 }] },
   },
   {
     id: 'pommel-strike',
@@ -112,12 +114,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 5 },
+      { kind: 'damage', amount: 3 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 7 },
+        { kind: 'damage', amount: 4 },
         { kind: 'draw', amount: 2 },
       ],
     },
@@ -131,13 +133,13 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 5 },
-      { kind: 'block', amount: 5 },
+      { kind: 'damage', amount: 3 },
+      { kind: 'block', amount: 4 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 7 },
-        { kind: 'block', amount: 7 },
+        { kind: 'damage', amount: 4 },
+        { kind: 'block', amount: 6 },
       ],
     },
   },
@@ -150,8 +152,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['strength'],
     cost: 2,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 12, strengthMultiplier: 3 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 14, strengthMultiplier: 5 }] },
+    effects: [{ kind: 'damage', amount: 8, strengthMultiplier: 3 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 10, strengthMultiplier: 5 }] },
   },
   {
     id: 'clothesline',
@@ -162,12 +164,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 2,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 10 },
+      { kind: 'damage', amount: 7 },
       { kind: 'applyDebuff', status: 'weak', turns: 2 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 12 },
+        { kind: 'damage', amount: 9 },
         { kind: 'applyDebuff', status: 'weak', turns: 3 },
       ],
     },
@@ -175,7 +177,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'hemokinesis',
     name: '紅蓮の刃',
-    rarity: 'common',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['sacrifice'],
     cost: 1,
@@ -183,12 +185,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     attribute: 'fire',
     effects: [
       { kind: 'loseHp', amount: 3 },
-      { kind: 'damage', amount: 12 },
+      { kind: 'damage', amount: 8 },
     ],
     upgrade: {
       effects: [
         { kind: 'loseHp', amount: 3 },
-        { kind: 'damage', amount: 16 },
+        { kind: 'damage', amount: 11 },
       ],
     },
   },
@@ -201,6 +203,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'enemy',
     attribute: 'fire',
+    // コピーで山が膨らむ代償があるので、単発の数値をストライク寄りに。
     effects: [{ kind: 'damage', amount: 4 }],
     addCopyToDiscard: true,
     upgrade: { effects: [{ kind: 'damage', amount: 6 }] },
@@ -212,8 +215,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'attack',
     cost: 1,
     target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 7 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 10 }] },
+    effects: [{ kind: 'damage', amount: 4 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 6 }] },
   },
   {
     id: 'thunderclap',
@@ -282,13 +285,16 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'seeing-red',
-    name: '見切り',
+    name: '闘志',
     rarity: 'uncommon',
     type: 'skill',
     archetypes: ['strength'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainEnergy', amount: 2 }],
+    effects: [
+      { kind: 'gainEnergy', amount: 2 },
+      { kind: 'draw', amount: 1 },
+    ],
     exhaust: true,
     upgrade: { cost: 0 },
   },
@@ -297,6 +303,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     name: '生命転換',
     rarity: 'uncommon',
     type: 'skill',
+    attribute: 'fire',
     archetypes: ['sacrifice'],
     cost: 0,
     target: 'self',
@@ -316,17 +323,19 @@ export const REWARD_CARDS: CardDefinition[] = [
     name: '戦闘トランス',
     rarity: 'uncommon',
     type: 'skill',
+    attribute: 'fire',
     archetypes: ['sacrifice'],
     cost: 0,
     target: 'self',
+    // 自傷のわりにドローが薄かったので底上げ。
     effects: [
       { kind: 'loseHp', amount: 2 },
-      { kind: 'draw', amount: 2 },
+      { kind: 'draw', amount: 3 },
     ],
     upgrade: {
       effects: [
         { kind: 'loseHp', amount: 2 },
-        { kind: 'draw', amount: 3 },
+        { kind: 'draw', amount: 4 },
       ],
     },
   },
@@ -335,6 +344,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     name: '捧げの儀',
     rarity: 'rare',
     type: 'skill',
+    attribute: 'fire',
     archetypes: ['sacrifice'],
     cost: 0,
     target: 'self',
@@ -360,8 +370,17 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['strength'],
     cost: 0,
     target: 'self',
-    effects: [{ kind: 'gainStrength', amount: 2, duration: 'turn' }],
-    upgrade: { effects: [{ kind: 'gainStrength', amount: 4, duration: 'turn' }] },
+    // このターン複数枚振る前提。単体でもドローで手数が残る。
+    effects: [
+      { kind: 'gainStrength', amount: 2, duration: 'turn' },
+      { kind: 'draw', amount: 1 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'gainStrength', amount: 4, duration: 'turn' },
+        { kind: 'draw', amount: 1 },
+      ],
+    },
   },
   {
     id: 'inflame',
@@ -387,18 +406,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     effects: [{ kind: 'gainEndTurnBlock', amount: 3 }],
     exhaust: true,
     upgrade: { effects: [{ kind: 'gainEndTurnBlock', amount: 4 }] },
-  },
-  {
-    id: 'intimidate',
-    name: '威圧の一喝',
-    rarity: 'common',
-    type: 'skill',
-    archetypes: ['debuff'],
-    cost: 0,
-    target: 'allEnemies',
-    effects: [{ kind: 'applyDebuff', status: 'weak', turns: 1 }],
-    exhaust: true,
-    upgrade: { effects: [{ kind: 'applyDebuff', status: 'weak', turns: 2 }] },
   },
   {
     id: 'uppercut',
@@ -519,23 +526,9 @@ export const REWARD_CARDS: CardDefinition[] = [
     effects: [{ kind: 'gainBuff', status: 'blazing', turns: 2 }],
     upgrade: { effects: [{ kind: 'gainBuff', status: 'blazing', turns: 3 }] },
   },
-  {
-    id: 'soul-flame',
-    name: '魂の炎',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'fire',
-    archetypes: ['strength'],
-    cost: 0,
-    target: 'self',
-    effects: [{ kind: 'extendBuffs', turns: 2 }],
-    exhaust: true,
-    upgrade: { effects: [{ kind: 'extendBuffs', turns: 3 }] },
-  },
-
   // --- 属性: 敵の弱点を突く ---
   {
-    id: 'frost-edge',
+    id: 'water-blade',
     name: '水刃',
     rarity: 'common',
     type: 'attack',
@@ -553,6 +546,7 @@ export const REWARD_CARDS: CardDefinition[] = [
         { kind: 'applyDebuff', status: 'weak', turns: 1 },
       ],
     },
+    art: 'frost-edge',
   },
   {
     id: 'ice-lances',
@@ -569,7 +563,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'leaf-flash',
     name: '若葉の一閃',
-    rarity: 'common',
+    rarity: 'uncommon',
     type: 'attack',
     archetypes: ['element'],
     cost: 0,
@@ -778,6 +772,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     name: '灰より立つ',
     rarity: 'uncommon',
     type: 'power',
+    attribute: 'fire',
     archetypes: ['block'],
     cost: 1,
     target: 'self',
@@ -950,4 +945,126 @@ export const REWARD_CARDS: CardDefinition[] = [
       ],
     },
   },
+
+  // --- 3 エナジーの大技（ターンのエナジーを全部使う前提。単体ゴリ押しより軸回収向き）---
+  {
+    id: 'meteor-slash',
+    name: '流星斬',
+    rarity: 'rare',
+    type: 'attack',
+    attribute: 'fire',
+    archetypes: ['strength'],
+    cost: 3,
+    target: 'enemy',
+    effects: [{ kind: 'damage', amount: 14, strengthMultiplier: 2 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 18, strengthMultiplier: 2 }] },
+    motion: 'heavy',
+  },
+  {
+    id: 'citadel-wall',
+    name: '城塞の壁',
+    rarity: 'rare',
+    type: 'skill',
+    archetypes: ['block'],
+    cost: 3,
+    target: 'self',
+    effects: [
+      { kind: 'block', amount: 22 },
+      { kind: 'gainBuff', status: 'retainBlock', turns: 1 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'block', amount: 28 },
+        { kind: 'gainBuff', status: 'retainBlock', turns: 1 },
+      ],
+    },
+  },
+  {
+    id: 'condemnation',
+    name: '断罪',
+    rarity: 'rare',
+    type: 'attack',
+    archetypes: ['debuff'],
+    cost: 3,
+    target: 'enemy',
+    effects: [{ kind: 'damagePerDebuff', base: 8, perTurn: 4 }],
+    upgrade: { effects: [{ kind: 'damagePerDebuff', base: 10, perTurn: 5 }] },
+    motion: 'heavy',
+  },
+  {
+    id: 'cataclysm',
+    name: '破局の一閃',
+    rarity: 'uncommon',
+    type: 'attack',
+    archetypes: ['tempo'],
+    cost: 3,
+    target: 'allEnemies',
+    effects: [{ kind: 'damagePerCardPlayed', base: 6, perCard: 3 }],
+    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 8, perCard: 4 }] },
+    motion: 'sweep',
+  },
+  {
+    id: 'ashen-tempest',
+    name: '灰燼の嵐',
+    rarity: 'rare',
+    type: 'attack',
+    archetypes: ['tempo', 'sacrifice'],
+    cost: 3,
+    target: 'allEnemies',
+    effects: [
+      { kind: 'exhaustFromHand', amount: 2 },
+      { kind: 'damagePerExhaust', base: 4, perCard: 3 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'exhaustFromHand', amount: 2 },
+        { kind: 'damagePerExhaust', base: 5, perCard: 4 },
+      ],
+    },
+    motion: 'sweep',
+  },
+  {
+    id: 'discard-judgment',
+    name: '散札の裁き',
+    rarity: 'uncommon',
+    type: 'attack',
+    archetypes: ['tempo'],
+    cost: 3,
+    target: 'enemy',
+    effects: [
+      { kind: 'discardFromHand', amount: 2 },
+      { kind: 'damagePerDiscard', base: 6, perCard: 5 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'discardFromHand', amount: 2 },
+        { kind: 'damagePerDiscard', base: 8, perCard: 6 },
+      ],
+    },
+    motion: 'heavy',
+  },
+  {
+    id: 'blood-canon',
+    name: '血の法典',
+    rarity: 'rare',
+    type: 'skill',
+    attribute: 'fire',
+    archetypes: ['sacrifice', 'strength'],
+    cost: 3,
+    target: 'self',
+    effects: [
+      { kind: 'loseHp', amount: 5 },
+      { kind: 'gainStrength', amount: 4, duration: 'combat' },
+      { kind: 'draw', amount: 2 },
+    ],
+    exhaust: true,
+    upgrade: {
+      effects: [
+        { kind: 'loseHp', amount: 5 },
+        { kind: 'gainStrength', amount: 5, duration: 'combat' },
+        { kind: 'draw', amount: 3 },
+      ],
+    },
+  },
+  ...SYNERGY_CARDS,
 ];

@@ -103,6 +103,10 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}筋力を ${effect.amount} 消す。`;
     case 'cleanse':
       return `自分の悪い効果を ${effect.count} つ消す。`;
+    case 'halveBlock':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}ブロックを半分にする。`;
+    case 'cutHits':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}次の攻撃の回数を ${effect.amount} 減らす。`;
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -117,6 +121,20 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}宿り木を今すぐ発動させる（数値は減らない）。`;
     case 'damagePerCardPlayed':
       return `${effect.base} ダメージ。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
+    case 'damagePerSkillPlayed':
+      return `${effect.base} ダメージ。このターンに先に使ったスキル 1 枚につき +${effect.perCard}。`;
+    case 'damagePerAttackPlayed':
+      return `${effect.base} ダメージ。このターンに先に使ったアタック 1 枚につき +${effect.perCard}。`;
+    case 'damagePerDiscard':
+      return `${effect.base} ダメージ。このターンに捨てたカード 1 枚につき +${effect.perCard}。`;
+    case 'damagePerExhaust':
+      return `${effect.base} ダメージ。この戦闘で廃棄したカード 1 枚につき +${effect.perCard}。`;
+    case 'blockPerCardPlayed':
+      return `ブロック ${effect.base}。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
+    case 'discardFromHand':
+      return `手札から ${effect.amount} 枚捨てる。`;
+    case 'exhaustFromHand':
+      return `手札から ${effect.amount} 枚廃棄する。`;
     case 'gainLashSeed':
       return `このターン、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${effect.amount} を与える。`;
   }
@@ -169,6 +187,9 @@ export const POWER_LABEL: Record<PowerId, string> = {
   arrowSupply: '無限の矢筒',
   fuseEcho: '水面',
   stackDepth: '深み',
+  momentum: '勢い',
+  scavenge: '拾い集め',
+  cinder: '燃え殻',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -210,6 +231,12 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、札を重ねたときの効果がもう ${amount} 回発動する。`;
     case 'stackDepth':
       return `この戦闘中、重ねた札の倍率が +${amount} される。`;
+    case 'momentum':
+      return `この戦闘中、カードを使うたびにこのターンの筋力 ${amount} を得る。`;
+    case 'scavenge':
+      return `この戦闘中、効果で手札から捨てるたびに、捨てた枚数 × ${amount} 枚引く。`;
+    case 'cinder':
+      return `この戦闘中、カードが廃棄されるたびに HP が一番低い敵に ${amount} ダメージ。`;
   }
 }
 
@@ -263,17 +290,29 @@ export function describeHandCard(instance: CardInstance, player: PlayerState): s
 }
 
 const FUSE_AIM_TEXT: Record<FuseAim, string> = {
-  threat: '一番強い攻撃をしてくる敵の',
-  strongest: '筋力が一番高い敵の',
   self: '',
+  block: 'ブロックがある敵の',
+  multiHit: '連続攻撃の敵の',
 };
 
 /** この札（stack 段）を別の札に重ねて消すときに起きること。 */
 export function describeFuseBurst(card: CardDefinition, stack: number): string {
   const burst = fuseBurst(card, stack);
   if (!burst) return '';
+  const aim = FUSE_AIM_TEXT[burst.aim];
   return burst.effects
-    .map((effect) => FUSE_AIM_TEXT[burst.aim] + describeEffect(effect, 'self').replace(/^敵の/, ''))
+    .map((effect) => {
+      if (effect.kind === 'gainPower' && effect.power === 'thorns') {
+        return `棘 ${effect.amount} を得る（敵の攻撃を受けるとその敵に同ダメージ。戦闘中ずっと）。`;
+      }
+      if (effect.kind === 'halveBlock') {
+        return 'ブロックがある敵を選び、そのブロックを半分にする（無ければ効果なし）。';
+      }
+      if (effect.kind === 'cutHits') {
+        return `連続攻撃の敵を選び、次の攻撃回数を ${effect.amount} 減らす（いなければ効果なし）。`;
+      }
+      return aim + describeEffect(effect, 'self').replace(/^敵の/, '');
+    })
     .join('');
 }
 

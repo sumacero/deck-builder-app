@@ -11,8 +11,7 @@ type SampleDraftTrack = {
 /** ラスボス戦の曲のパートをさりげなく引用したサンプル 100 曲。図鑑で聞くだけで、ゲーム中には流れない。 */
 export const SAMPLE_DRAFT_TRACKS = [
   { id: 'sampleDraft:01', title: '【サンプル 1】タイトル向け・ための上り坂（レ→ミ→ファ）', description: 'タイトル向け、ハ短調。弦の新しい旋律で始まり、中ほどで低い弦がための上り坂（レ→ミ→ファ）を和音の奥でなぞる（上では笛が長い音を伸ばす）。（69 BPM）', source: require('../../assets/music/sample-draft-01.wav') },
-  { id: 'sampleDraft:02', title: '【サンプル 2】タイトル向け・B メロの五度圏（前半）', description: 'タイトル向け、ト長調。笛の新しい旋律で始まり、中ほどで弦がB メロの五度圏（前半）を倍の長さでゆったりなぞる。（73 BPM）', source: require('../../assets/music/sample-draft-02.wav') },
-  { id: 'sampleDraft:03', title: '【サンプル 3】タイトル向け・ための上り坂（レ→ミ→ファ）', description: 'タイトル向け、嬰ハ短調。ベルの新しい旋律で始まり、中ほどで遠くの小さなベルがための上り坂（レ→ミ→ファ）を鳴らす。（77 BPM）', source: require('../../assets/music/sample-draft-03.wav') },
+  // sampleDraft:02 / 03 は採用済み → titleLene（翠風 −序−）/ titleNoa（水鏡 −序−）。再生成で戻るので、戻ったらまた外す。
   { id: 'sampleDraft:04', title: '【サンプル 4】タイトル向け・サビの 3 度下のハモり', description: 'タイトル向け、ホ短調。ベルの新しい旋律で始まり、中ほどでオルガンがサビの 3 度下のハモりを倍の長さでゆったりなぞる。（82 BPM）', source: require('../../assets/music/sample-draft-04.wav') },
   { id: 'sampleDraft:05', title: '【サンプル 5】タイトル向け・サビの 3 度下のハモり', description: 'タイトル向け、ハ短調。鍵盤の新しい旋律で始まり、中ほどで弦がサビの 3 度下のハモりを倍の長さでゆったりなぞる。（74 BPM）', source: require('../../assets/music/sample-draft-05.wav') },
   { id: 'sampleDraft:06', title: '【サンプル 6】タイトル向け・締めのレへの解決', description: 'タイトル向け、ニ短調。金管の新しい旋律で始まり、中ほどでオルガンが締めのレへの解決を倍の長さでゆったりなぞる。（83 BPM）', source: require('../../assets/music/sample-draft-06.wav') },

@@ -6,6 +6,8 @@ import { SAMPLE_DRAFT_TRACKS, type SampleDraftId } from './sampleDrafts';
 /** 地域ごとの曲は `field:grassland` のように「種類:地域」で表す。 */
 export type MusicId =
   | 'title'
+  | 'titleLene'
+  | 'titleNoa'
   | 'battleNormal'
   | 'battleBoss'
   | 'battleFinal'
@@ -13,6 +15,16 @@ export type MusicId =
   | `field:${Region}`
   | `elite:${Region}`
   | SampleDraftId;
+
+/** タイトル画面で流す 3 キャラ分の曲（起動のたびにどれか 1 つ）。 */
+export type TitleMusicId = 'title' | 'titleLene' | 'titleNoa';
+
+export const TITLE_MUSIC_IDS: readonly TitleMusicId[] = ['title', 'titleLene', 'titleNoa'];
+
+/** タイトル画面用。3 キャラの曲から等確率で 1 つ選ぶ。 */
+export function pickTitleMusic(): TitleMusicId {
+  return TITLE_MUSIC_IDS[Math.floor(Math.random() * TITLE_MUSIC_IDS.length)]!;
+}
 
 type MusicDef = {
   source: AudioSource;
@@ -27,6 +39,10 @@ const SAMPLE_MUSIC = Object.fromEntries(
 export const MUSIC: Record<MusicId, MusicDef> = {
   ...SAMPLE_MUSIC,
   title: { source: require('../../assets/music/title.wav'), volume: 0.34 },
+  /** 旧【サンプル 2】。翠風のリーネのタイトル。 */
+  titleLene: { source: require('../../assets/music/title-lene.wav'), volume: 0.34 },
+  /** 旧【サンプル 3】。水鏡のノアのタイトル。 */
+  titleNoa: { source: require('../../assets/music/title-noa.wav'), volume: 0.34 },
   battleNormal: { source: require('../../assets/music/battle-normal.wav'), volume: 0.36 },
   battleBoss: { source: require('../../assets/music/battle-boss.wav'), volume: 0.27 },
   battleFinal: { source: require('../../assets/music/battle-final.wav'), volume: 0.32 },
@@ -65,7 +81,23 @@ export type MusicEntry = {
 
 /** 図鑑の「BGM」で聴ける曲の一覧。 */
 export const MUSIC_ENTRIES: MusicEntry[] = [
-  { id: 'title', title: '三つの旗 −序−', description: 'タイトル。笛の旋律と、ゆったりした A メロの頭。' },
+  {
+    id: 'title',
+    title: '三つの旗 −序−',
+    description: 'タイトル（紅蓮のカイル）。笛の旋律と、ゆったりした A メロの頭。起動時に 3 キャラの曲からランダム。',
+  },
+  {
+    id: 'titleLene',
+    title: '翠風 −序−',
+    description:
+      'タイトル（翠風のリーネ）。旧サンプル 2。ト長調・笛の旋律。中ほどで B メロの五度圏（前半）をゆったり引用。（73 BPM）',
+  },
+  {
+    id: 'titleNoa',
+    title: '水鏡 −序−',
+    description:
+      'タイトル（水鏡のノア）。旧サンプル 3。嬰ハ短調・ベルの旋律。中ほどでための上り坂を小さなベルが鳴らす。（77 BPM）',
+  },
   { id: 'battleNormal', title: '三つの旗 −静−', description: '通常戦闘（全地域）。ハープとパッドだけの静かな曲。旋律は和音の奥にひそんでいる。' },
   { id: 'battleBoss', title: '三つの旗 −試−', description: '各章のボス戦。ラスボス曲の構成を 140 BPM で踏襲し、旋律を少し変えた弟分。B メロはギターが落ち着いて歌う。サビはラスボス戦まで取っておく。' },
   { id: 'battleFinal', title: '三つの旗 −試− 改', description: 'ラスボス戦（星喰みの魔皇ノクス）。加速するイントロ、低く歌う A メロ、五度圏を巡る B メロ、上り坂のためを経て、ハモり付きの 20 小節のサビ。締めはレに解決してイントロへ戻る。' },

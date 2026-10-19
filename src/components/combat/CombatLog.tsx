@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { CombatLogEntry } from '../../domain/combat';
-import { COLORS, SPACING } from '../../theme';
+import { COLORS, RADIUS, SPACING } from '../../theme';
 
 type CombatLogProps = {
   entries: CombatLogEntry[];
@@ -15,7 +15,7 @@ export function CombatLog({ entries }: CombatLogProps) {
       {visible.map((entry, index) => (
         <Text
           key={entry.id}
-          style={[styles.line, { opacity: (index + 1) / visible.length }]}
+          style={[styles.line, { opacity: 0.55 + (0.45 * (index + 1)) / visible.length }]}
           numberOfLines={1}
         >
           {entry.text}
@@ -31,7 +31,12 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     justifyContent: 'flex-end',
     paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     overflow: 'hidden',
+    backgroundColor: COLORS.panelTranslucent,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.panelBorder,
   },
-  line: { color: COLORS.textMuted, fontSize: 12, lineHeight: 18 },
+  line: { color: COLORS.text, fontSize: 12, lineHeight: 18, fontWeight: '600' },
 });

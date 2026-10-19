@@ -34,6 +34,22 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'exploit',
   'dropkick',
   'weak-point',
+  // シナジー軸（捨て・廃棄・手数）。誰でも報酬に出る。
+  'toss-draw',
+  'sweep-out',
+  'scatter-blade',
+  'offer-ember',
+  'ashen-rite',
+  'skill-follow',
+  'momentum-form',
+  'scavenge-form',
+  'cinder-form',
+  'combo-pulse',
+  // 3 エナジーの共通大技
+  'condemnation',
+  'cataclysm',
+  'ashen-tempest',
+  'discard-judgment',
 ]);
 
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
