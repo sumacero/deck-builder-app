@@ -55,6 +55,9 @@ type UseCardDragOptions = {
   potions: PotionSlot[];
   cardWidth: number;
   onPlayCard: (instanceId: string, target?: EnemyUid) => void;
+  /** 手札から捨てる・廃棄する札を選んでいるあいだ。離すとその札を選ぶ。 */
+  picking?: boolean;
+  onPickCard?: (instanceId: string) => void;
   /** 手札の印を、もう一枚の上に重ねる。 */
   onFuse: (sourceId: string, targetId: string) => void;
   onDrinkPotion: (slot: number, target?: EnemyUid) => void;
@@ -73,6 +76,8 @@ export function useCardDrag({
   onPlayCard,
   onFuse,
   onDrinkPotion,
+  picking = false,
+  onPickCard,
 }: UseCardDragOptions) {
   const [drag, setDrag] = useState<DragItem | null>(null);
   const [hover, setHover] = useState<DropTarget | null>(null);
@@ -96,9 +101,29 @@ export function useCardDrag({
   const draggingRef = useRef<Dragging | null>(null);
   const hoverRef = useRef<DropTarget | null>(null);
   const stackRef = useRef<string | null>(null);
-  const latest = useRef({ hand, enemies, potions, cardWidth, onPlayCard, onFuse, onDrinkPotion });
+  const latest = useRef({
+    hand,
+    enemies,
+    potions,
+    cardWidth,
+    onPlayCard,
+    onFuse,
+    onDrinkPotion,
+    picking,
+    onPickCard,
+  });
   useEffect(() => {
-    latest.current = { hand, enemies, potions, cardWidth, onPlayCard, onFuse, onDrinkPotion };
+    latest.current = {
+      hand,
+      enemies,
+      potions,
+      cardWidth,
+      onPlayCard,
+      onFuse,
+      onDrinkPotion,
+      picking,
+      onPickCard,
+    };
   });
 
   const measureContainer = useCallback(() => {
@@ -193,14 +218,15 @@ export function useCardDrag({
         setLifted(true);
       }
       const nextStack =
-        dragging.lifted && dragging.item.kind === 'card'
+        !latest.current.picking && dragging.lifted && dragging.item.kind === 'card'
           ? stackTargetAt(point, dragging.item.instanceId)
           : null;
       if (nextStack !== stackRef.current) {
         stackRef.current = nextStack;
         setStackHover(nextStack);
       }
-      const next = dragging.lifted && nextStack === null ? aim(dragging, point) : null;
+      const next =
+        !latest.current.picking && dragging.lifted && nextStack === null ? aim(dragging, point) : null;
       if (sameDrop(next, hoverRef.current)) return;
       hoverRef.current = next;
       setHover(next);
@@ -238,6 +264,10 @@ export function useCardDrag({
             : null;
         reset();
         if (!dragging) return;
+        if (latest.current.picking && dragging.item.kind === 'card') {
+          latest.current.onPickCard?.(dragging.item.instanceId);
+          return;
+        }
         if (stacking && dragging.item.kind === 'card') {
           latest.current.onFuse(dragging.item.instanceId, stacking);
           return;

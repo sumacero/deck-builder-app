@@ -87,6 +87,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     playCard,
     fuseInHand,
     resolveFuseAim,
+    resolveHandRemoval,
     drinkPotion,
     discardPotion,
     endTurn,
@@ -103,7 +104,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const [playerSlotSize, setPlayerSlotSize] = useState(NO_SIZE);
   const inProgress = state.status === 'playerTurn';
   const enemyTurnBusy = useEnemyTurnBusy(state.events);
-  const canAct = inProgress && !enemyTurnBusy && !state.pendingFuse;
+  const handRemoval = state.pendingHandRemoval;
+  const choosingHand = Boolean(handRemoval) && inProgress && !enemyTurnBusy;
+  const canAct = inProgress && !enemyTurnBusy && !state.pendingFuse && !handRemoval;
   const canPickFuse = inProgress && !enemyTurnBusy && Boolean(state.pendingFuse);
   const effectsTime = eventsDuration(state.events);
   useCombatSounds(state.events);
@@ -153,6 +156,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     enemies: state.enemies,
     potions: state.potions,
     cardWidth,
+    picking: choosingHand,
+    onPickCard: resolveHandRemoval,
     onPlayCard: (instanceId, target) => {
       if (!canAct) return;
       playCard(instanceId, target);
@@ -272,8 +277,17 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       : fusePending?.kind === 'multiHit'
         ? '連続攻撃の敵をタップ（回数を減らす）'
         : null;
+  const removalHint = handRemoval
+    ? handRemoval.mode === 'exhaust'
+      ? `廃棄する札をタップ（あと ${handRemoval.left} 枚）`
+      : `捨てる札をタップ（あと ${handRemoval.left} 枚）`
+    : null;
   const hintRow =
-    fuseHint && !drag ? (
+    removalHint && choosingHand ? (
+      <View style={styles.hintRow}>
+        <Text style={styles.hint}>{removalHint}</Text>
+      </View>
+    ) : fuseHint && !drag ? (
       <View style={styles.hintRow}>
         <Text style={styles.hint}>{fuseHint}</Text>
       </View>
@@ -305,6 +319,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       events={state.events}
       concealedIds={concealedIds}
       locked={enemyTurnBusy}
+      choosing={choosingHand}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
       selectedId={null}

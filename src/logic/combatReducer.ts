@@ -6,13 +6,16 @@ import {
   endTurn,
   fuseInHand,
   playCard,
+  prepareHandRemovalTap,
   resolveFuseAim,
+  resolveHandRemoval,
 } from './combat';
 
 export type CombatAction =
   | { type: 'playCard'; instanceId: string; target?: EnemyUid }
   | { type: 'stackCards'; sourceId: string; targetId: string }
   | { type: 'resolveFuseAim'; uid: EnemyUid }
+  | { type: 'resolveHandRemoval'; instanceId: string }
   | { type: 'drinkPotion'; slot: number; target?: EnemyUid }
   | { type: 'discardPotion'; slot: number }
   | { type: 'endTurn' };
@@ -29,6 +32,11 @@ export function combatReducer(state: CombatState, action: CombatAction): CombatS
     case 'resolveFuseAim': {
       const cleared = clearEvents(state);
       const next = resolveFuseAim(cleared, action.uid);
+      return next === cleared ? state : next;
+    }
+    case 'resolveHandRemoval': {
+      const cleared = prepareHandRemovalTap(state);
+      const next = resolveHandRemoval(cleared, action.instanceId);
       return next === cleared ? state : next;
     }
     case 'drinkPotion':

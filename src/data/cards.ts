@@ -967,13 +967,14 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['tempo', 'sacrifice'],
     cost: 3,
     target: 'allEnemies',
+    // 選んで廃棄できる。呪い札や初期札を抜いてから全体に当てる。
     effects: [
-      { kind: 'exhaustFromHand', amount: 2 },
+      { kind: 'exhaustFromHand', amount: 2, choose: true },
       { kind: 'damagePerExhaust', base: 4, perCard: 3 },
     ],
     upgrade: {
       effects: [
-        { kind: 'exhaustFromHand', amount: 2 },
+        { kind: 'exhaustFromHand', amount: 2, choose: true },
         { kind: 'damagePerExhaust', base: 5, perCard: 4 },
       ],
     },
@@ -987,13 +988,14 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['tempo'],
     cost: 3,
     target: 'enemy',
+    // 選んで捨てられる。無作為に飛ぶコモンより、外したい札を指定できる分だけ強い。
     effects: [
-      { kind: 'discardFromHand', amount: 2 },
+      { kind: 'discardFromHand', amount: 2, choose: true },
       { kind: 'damagePerDiscard', base: 6, perCard: 5 },
     ],
     upgrade: {
       effects: [
-        { kind: 'discardFromHand', amount: 2 },
+        { kind: 'discardFromHand', amount: 2, choose: true },
         { kind: 'damagePerDiscard', base: 8, perCard: 6 },
       ],
     },

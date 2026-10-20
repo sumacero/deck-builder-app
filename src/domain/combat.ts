@@ -249,6 +249,30 @@ export type CombatState = {
    * ブロック半減・攻撃回数減で、候補が 2 体以上いるときだけ入る。
    */
   pendingFuse: PendingFuseAim | null;
+  /**
+   * 手札から捨てる・廃棄する札を、プレイヤーがタップで選ぶ待ち。
+   * 枚数を選び終わるまで、ターン終了やほかのカードは使えない。
+   */
+  pendingHandRemoval: PendingHandRemoval | null;
+};
+
+/** 手札から手放す札を選ぶ待ち。rest は、選び終わったあとに続ける効果。 */
+export type PendingHandRemoval = {
+  mode: 'discard' | 'exhaust';
+  /** あと何枚選ぶか。 */
+  left: number;
+  /** この選択で既に手放した枚数。拾い集めのドローは、選び終わってからまとめて行う。 */
+  taken: number;
+  rest: readonly Effect[];
+  aim: EnemyUid | 'all';
+  attributes: readonly Attribute[];
+  pierce?: boolean;
+  fixed?: boolean;
+  /**
+   * カード使用の後処理。ポーションやレリック由来なら null。
+   * sawWeak は、タップでイベントを捨てる前に出ていた弱点ヒット。
+   */
+  follow: { instance: CardInstance; eventsBefore: number; sawWeak?: boolean } | null;
 };
 
 /** 重ねた瞬間の効果で、敵を選んでもらう待ち。 */

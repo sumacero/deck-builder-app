@@ -25,6 +25,10 @@ export function useCombat(setup: CombatSetup, seed: number) {
     (uid: EnemyUid) => dispatch({ type: 'resolveFuseAim', uid }),
     [],
   );
+  const resolveHandRemoval = useCallback(
+    (instanceId: string) => dispatch({ type: 'resolveHandRemoval', instanceId }),
+    [],
+  );
   const drinkPotion = useCallback(
     (slot: number, target?: EnemyUid) => dispatch({ type: 'drinkPotion', slot, target }),
     [],
@@ -54,6 +58,7 @@ export function useCombat(setup: CombatSetup, seed: number) {
     playCard,
     fuseInHand,
     resolveFuseAim,
+    resolveHandRemoval,
     drinkPotion,
     discardPotion,
     endTurn,

@@ -14,6 +14,8 @@ type DraggableCardProps = CardDragHandlers & {
   card: CardDefinition;
   width: number;
   playable: boolean;
+  /** 手札から捨てる・廃棄する札を選んでいる。タップでもその札を選ぶ。 */
+  choosing?: boolean;
   /**
    * 持ち上げている最中。元の位置は消す。
    * 薄く残すと、10 枚近く重なった手札ではその 1 枚の向こうが透けて、手札全体が透明に見える。
@@ -50,6 +52,7 @@ export function DraggableCard({
   card,
   width,
   playable,
+  choosing = false,
   dragging,
   selected,
   linkColor,
@@ -79,7 +82,7 @@ export function DraggableCard({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: (_, g) => {
           reset();
-          if (playable) {
+          if (playable || choosing) {
             gesture.dragging = true;
             onDragStart(instanceId, { x: g.x0, y: g.y0 });
           }
@@ -92,7 +95,7 @@ export function DraggableCard({
           const wasDragging = gesture.dragging;
           const moved = gesture.moved || Math.hypot(g.dx, g.dy) > DRAG_LIFT_DISTANCE;
           gesture.moved = false;
-          if (moved && wasDragging) {
+          if (wasDragging && (moved || choosing)) {
             gesture.dragging = false;
             onDragEnd({ x: g.moveX, y: g.moveY }, { x: g.vx, y: g.vy });
             return;
@@ -105,7 +108,7 @@ export function DraggableCard({
         onPanResponderTerminate: reset,
       }),
     };
-  }, [playable, instanceId, onDragStart, onDragMove, onDragEnd, onDragCancel]);
+  }, [playable, choosing, instanceId, onDragStart, onDragMove, onDragEnd, onDragCancel]);
 
   useEffect(() => cancel, [cancel]);
 
@@ -118,7 +121,7 @@ export function DraggableCard({
         <CardView
           card={card}
           width={width}
-          dimmed={!playable}
+          dimmed={!playable && !choosing}
           selected={selected}
           linkColor={linkColor}
           description={description}

@@ -60,10 +60,16 @@ export type Effect =
   | { kind: 'damagePerExhaust'; base: number; perCard: number }
   /** base + このターンに先に使ったカード 1 枚につき perCard のブロック。 */
   | { kind: 'blockPerCardPlayed'; base: number; perCard: number }
-  /** 手札からランダムに amount 枚捨てる（使った札は除く）。 */
-  | { kind: 'discardFromHand'; amount: number }
-  /** 手札からランダムに amount 枚廃棄する（使った札は除く）。 */
-  | { kind: 'exhaustFromHand'; amount: number }
+  /**
+   * 手札から amount 枚捨てる（使った札は除く）。
+   * choose なら自分で選ぶ。無いときは無作為で、良い札まで飛ぶデメリットになりやすい。
+   */
+  | { kind: 'discardFromHand'; amount: number; choose?: boolean }
+  /**
+   * 手札から amount 枚廃棄する（使った札は除く）。
+   * choose なら自分で選ぶ。無いときは無作為。選んで消せる方が、呪い札や初期札を抜けるので強い。
+   */
+  | { kind: 'exhaustFromHand'; amount: number; choose?: boolean }
   /** このターン、ムチの攻撃が 1 回当たるたびにその敵へ宿り木 amount。 */
   | { kind: 'gainLashSeed'; amount: number }
   /** 狙った敵の宿り木 × perTurn のダメージを与え、その宿り木を消す。 */

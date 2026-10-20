@@ -14,6 +14,7 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     archetypes: ['tempo'],
     cost: 1,
     target: 'self',
+    // 無作為に 1 枚飛ぶ。ドローの対価で、良い札が消えることもある。
     effects: [
       { kind: 'discardFromHand', amount: 1 },
       { kind: 'draw', amount: 2 },
@@ -95,13 +96,14 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     // 廃棄 1 枚だけでも 9 ダメ。燃え殻と組むとさらに伸びる。
+    // 選んで廃棄できる。呪い札や初期札を抜きつつダメージになる、無作為より高い効果。
     effects: [
-      { kind: 'exhaustFromHand', amount: 1 },
+      { kind: 'exhaustFromHand', amount: 1, choose: true },
       { kind: 'damagePerExhaust', base: 6, perCard: 3 },
     ],
     upgrade: {
       effects: [
-        { kind: 'exhaustFromHand', amount: 1 },
+        { kind: 'exhaustFromHand', amount: 1, choose: true },
         { kind: 'damagePerExhaust', base: 7, perCard: 4 },
       ],
     },

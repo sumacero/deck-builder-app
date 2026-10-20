@@ -132,9 +132,13 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'blockPerCardPlayed':
       return `ブロック ${effect.base}。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
     case 'discardFromHand':
-      return `手札から ${effect.amount} 枚捨てる。`;
+      return effect.choose
+        ? `手札から ${effect.amount} 枚を選んで捨てる。`
+        : `手札から ${effect.amount} 枚を無作為に捨てる。`;
     case 'exhaustFromHand':
-      return `手札から ${effect.amount} 枚廃棄する。`;
+      return effect.choose
+        ? `手札から ${effect.amount} 枚を選んで廃棄する。`
+        : `手札から ${effect.amount} 枚を無作為に廃棄する。`;
     case 'gainLashSeed':
       return `このターン、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${effect.amount} を与える。`;
   }

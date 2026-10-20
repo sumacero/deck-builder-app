@@ -9,6 +9,7 @@ import type {
   CombatSide,
   CombatState,
   DamagePreview,
+  PendingHandRemoval,
   EnemyState,
   EnemyUid,
   Fighter,
@@ -145,6 +146,28 @@ function withPileTravel(
 /** 次の操作の前に、前回分のイベントを捨てる。 */
 export function clearEvents(state: CombatState): CombatState {
   return state.events.length === 0 ? state : { ...state, events: [] };
+}
+
+/**
+ * 手放す札をタップする直前。前回の演出は捨てる。
+ * 捨てる前の弱点ヒットは覚えておき、新しい演出は先頭から数える。
+ */
+export function prepareHandRemovalTap(state: CombatState): CombatState {
+  const pending = state.pendingHandRemoval;
+  const cleared = clearEvents(state);
+  if (!pending?.follow) return cleared;
+  const sawWeak =
+    Boolean(pending.follow.sawWeak) ||
+    state.events
+      .slice(pending.follow.eventsBefore)
+      .some((event) => event.kind === 'hit' && event.weak);
+  return {
+    ...cleared,
+    pendingHandRemoval: {
+      ...pending,
+      follow: { ...pending.follow, eventsBefore: 0, sawWeak },
+    },
+  };
 }
 
 function formatHit(targetName: string, result: { blocked: number; hpLoss: number }): string {
@@ -381,6 +404,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
     events: [],
     nextEventId: 0,
     pendingFuse: null,
+    pendingHandRemoval: null,
   };
   const names = groupedNames(setup.enemies.map((enemy) => enemy.name));
   const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
@@ -420,7 +444,7 @@ export const needsTargetChoice = (state: CombatState, target: EffectTarget) =>
   target === 'enemy' && livingEnemies(state).length > 1;
 
 export function canPlayCard(state: CombatState, instanceId: string): boolean {
-  if (state.status !== 'playerTurn' || state.pendingFuse) return false;
+  if (state.status !== 'playerTurn' || state.pendingFuse || state.pendingHandRemoval) return false;
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || instance.card.unplayable || instance.card.cost > state.player.energy) return false;
   return !(state.player.hindrance.seal && instance.card.type === 'skill');
@@ -920,9 +944,9 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
     case 'blockPerCardPlayed':
       return gainPlayerBlock(state, effect.base + state.player.cardsThisTurn * effect.perCard);
     case 'discardFromHand':
-      return discardFromHand(state, effect.amount);
+      return effect.choose ? state : discardFromHand(state, effect.amount);
     case 'exhaustFromHand':
-      return exhaustFromHand(state, effect.amount);
+      return effect.choose ? state : exhaustFromHand(state, effect.amount);
     case 'gainLashSeed':
       return withLog(
         {
@@ -939,13 +963,16 @@ function discardFromHand(state: CombatState, amount: number): CombatState {
   if (amount <= 0 || state.hand.length === 0) return state;
   const n = Math.min(amount, state.hand.length);
   const { items: order, seed } = shuffle(state.hand, state.rngSeed);
-  const picked = order.slice(0, n);
+  return discardSpecific({ ...state, rngSeed: seed }, order.slice(0, n), true);
+}
+
+/** 指定した札を捨てる。drawScavenge は、選び終わったあとにまとめて引くとき false。 */
+function discardSpecific(state: CombatState, picked: readonly CardInstance[], drawScavenge: boolean): CombatState {
+  if (picked.length === 0) return state;
   const pickedIds = new Set(picked.map((card) => card.instanceId));
-  const remaining = state.hand.filter((card) => !pickedIds.has(card.instanceId));
   let next: CombatState = {
     ...state,
-    rngSeed: seed,
-    hand: remaining,
+    hand: state.hand.filter((card) => !pickedIds.has(card.instanceId)),
     discardPile: [...state.discardPile, ...picked],
     player: { ...state.player, discardsThisTurn: state.player.discardsThisTurn + picked.length },
   };
@@ -953,7 +980,11 @@ function discardFromHand(state: CombatState, amount: number): CombatState {
     const fromIndex = state.hand.findIndex((card) => card.instanceId === instance.instanceId);
     next = withPileTravel(next, instance, 'hand', 'discard', fromIndex, state.hand.length - index);
   });
-  const logged = withLog(next, `手札から ${picked.length} 枚捨てた`);
+  const logged = withLog(
+    next,
+    picked.length === 1 ? `手札から${picked[0].card.name}を捨てた` : `手札から ${picked.length} 枚捨てた`,
+  );
+  if (!drawScavenge) return logged;
   const scavenge = powerOf(logged, 'scavenge') * picked.length;
   return scavenge > 0 ? drawCards(withLog(logged, `拾い集めで ${scavenge} 枚引く`), scavenge) : logged;
 }
@@ -963,20 +994,27 @@ function exhaustFromHand(state: CombatState, amount: number): CombatState {
   if (amount <= 0 || state.hand.length === 0) return state;
   const n = Math.min(amount, state.hand.length);
   const { items: order, seed } = shuffle(state.hand, state.rngSeed);
-  const picked = order.slice(0, n);
+  return exhaustSpecific({ ...state, rngSeed: seed }, order.slice(0, n));
+}
+
+/** 指定した札を廃棄する。 */
+function exhaustSpecific(state: CombatState, picked: readonly CardInstance[]): CombatState {
+  if (picked.length === 0) return state;
   const pickedIds = new Set(picked.map((card) => card.instanceId));
-  const remaining = state.hand.filter((card) => !pickedIds.has(card.instanceId));
   let next: CombatState = {
     ...state,
-    rngSeed: seed,
-    hand: remaining,
+    hand: state.hand.filter((card) => !pickedIds.has(card.instanceId)),
     exhaustPile: [...state.exhaustPile, ...picked],
   };
   picked.forEach((instance, index) => {
     const fromIndex = state.hand.findIndex((card) => card.instanceId === instance.instanceId);
     next = withPileTravel(next, instance, 'hand', 'exhaust', fromIndex, state.hand.length - index);
   });
-  return onExhausted(withLog(next, `手札から ${picked.length} 枚廃棄した`), picked.length);
+  const logged = withLog(
+    next,
+    picked.length === 1 ? `手札から${picked[0].card.name}を廃棄した` : `手札から ${picked.length} 枚廃棄した`,
+  );
+  return onExhausted(logged, picked.length);
 }
 
 /** 霜: その敵の次の攻撃を、1 ヒットごとに amount 下げる。重ねると足す。アーティファクトでは防がれない。 */
@@ -1145,10 +1183,94 @@ function onExhausted(state: CombatState, count: number): CombatState {
 
 const applyEffects = (
   state: CombatState,
-  effects: Effect[],
+  effects: readonly Effect[],
   aim: Aim,
   hitKind: HitKind = NO_ATTRIBUTE,
-): CombatState => effects.reduce((current, effect) => applyEffect(current, effect, aim, hitKind), state);
+): CombatState => {
+  let current = state;
+  for (let index = 0; index < effects.length; index += 1) {
+    const effect = effects[index];
+    if (
+      (effect.kind === 'discardFromHand' || effect.kind === 'exhaustFromHand') &&
+      effect.choose
+    ) {
+      const mode = effect.kind === 'discardFromHand' ? 'discard' : 'exhaust';
+      if (effect.amount <= 0 || current.hand.length === 0) continue;
+      if (current.hand.length <= effect.amount) {
+        current =
+          mode === 'discard'
+            ? discardSpecific(current, current.hand, true)
+            : exhaustSpecific(current, current.hand);
+        continue;
+      }
+      return {
+        ...current,
+        pendingHandRemoval: {
+          mode,
+          left: effect.amount,
+          taken: 0,
+          rest: effects.slice(index + 1),
+          aim,
+          attributes: hitKind.attributes,
+          pierce: hitKind.pierce,
+          fixed: hitKind.fixed,
+          follow: null,
+        },
+      };
+    }
+    current = applyEffect(current, effect, aim, hitKind);
+  }
+  return current;
+};
+
+/** 選んで手放し終わったあと、残りの効果と、カード使用の後処理を続ける。 */
+function continueAfterRemoval(state: CombatState, pending: PendingHandRemoval): CombatState {
+  const drawn =
+    pending.mode === 'discard' && pending.taken > 0
+      ? drawScavenge(state, pending.taken)
+      : state;
+  const next = applyEffects(drawn, pending.rest, pending.aim, {
+    attributes: pending.attributes,
+    pierce: pending.pierce,
+    fixed: pending.fixed,
+  });
+  if (next.pendingHandRemoval) {
+    return pending.follow
+      ? { ...next, pendingHandRemoval: { ...next.pendingHandRemoval, follow: pending.follow } }
+      : next;
+  }
+  return pending.follow ? finishPlay(next, pending.follow, pending.aim) : settle(next);
+}
+
+function drawScavenge(state: CombatState, count: number): CombatState {
+  const scavenge = powerOf(state, 'scavenge') * count;
+  return scavenge > 0 ? drawCards(withLog(state, `拾い集めで ${scavenge} 枚引く`), scavenge) : state;
+}
+
+/** 手札から捨てる・廃棄する札を 1 枚タップしたとき。 */
+export function resolveHandRemoval(state: CombatState, instanceId: string): CombatState {
+  const pending = state.pendingHandRemoval;
+  if (!pending || state.status !== 'playerTurn') return state;
+  const instance = state.hand.find((card) => card.instanceId === instanceId);
+  if (!instance) return state;
+  const removed =
+    pending.mode === 'discard'
+      ? discardSpecific({ ...state, pendingHandRemoval: null }, [instance], false)
+      : exhaustSpecific({ ...state, pendingHandRemoval: null }, [instance]);
+  const taken = pending.taken + 1;
+  const left = pending.left - 1;
+  if (left > 0 && removed.hand.length > 0) {
+    if (removed.hand.length <= left) {
+      const swept =
+        pending.mode === 'discard'
+          ? discardSpecific(removed, removed.hand, false)
+          : exhaustSpecific(removed, removed.hand);
+      return continueAfterRemoval(swept, { ...pending, taken: taken + removed.hand.length, left: 0 });
+    }
+    return { ...removed, pendingHandRemoval: { ...pending, left, taken } };
+  }
+  return continueAfterRemoval(removed, { ...pending, taken, left: 0 });
+}
 
 function conditionMet(state: CombatState, condition: RelicCondition | undefined): boolean {
   switch (condition) {
@@ -1200,7 +1322,12 @@ function settle(state: CombatState): CombatState {
 }
 
 export function canDrinkPotion(state: CombatState, slot: number): boolean {
-  return state.status === 'playerTurn' && !state.pendingFuse && Boolean(state.potions[slot]);
+  return (
+    state.status === 'playerTurn' &&
+    !state.pendingFuse &&
+    !state.pendingHandRemoval &&
+    Boolean(state.potions[slot])
+  );
 }
 
 export function drinkPotion(state: CombatState, slot: number, target?: EnemyUid): CombatState {
@@ -1233,7 +1360,9 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
  * 毎ターン最初の 1 回で水晶の文鎮が発動する（ブロック）。
  */
 export function fuseInHand(state: CombatState, sourceId: string, targetId: string): CombatState {
-  if (state.status !== 'playerTurn' || state.pendingFuse || sourceId === targetId) return state;
+  if (state.status !== 'playerTurn' || state.pendingFuse || state.pendingHandRemoval || sourceId === targetId) {
+    return state;
+  }
   const source = state.hand.find((card) => card.instanceId === sourceId);
   const target = state.hand.find((card) => card.instanceId === targetId);
   if (!source || !target || !canStackOnto(state.hand, source, target)) return state;
@@ -1364,11 +1493,31 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const resolved = applyEffects(boosted, scaledEffects(card, multiplier), aim, {
     attributes: playedAttributes(state, card),
   });
-  const exhausted = card.exhaust ? onExhausted(resolved, 1) : resolved;
+  const follow = { instance, eventsBefore };
+  if (resolved.pendingHandRemoval) {
+    return {
+      ...resolved,
+      pendingHandRemoval: { ...resolved.pendingHandRemoval, follow },
+    };
+  }
+  return finishPlay(resolved, follow, aim);
+}
+
+/** 効果が出終わったあとの、使った枚数・ムチ・勢い・秘奥義。選んで手放すあいだはまだ走らない。 */
+function finishPlay(
+  state: CombatState,
+  follow: { instance: CardInstance; eventsBefore: number; sawWeak?: boolean },
+  aim: Aim,
+): CombatState {
+  const { instance, eventsBefore } = follow;
+  const { card } = instance;
+  const exhausted = card.exhaust ? onExhausted(state, 1) : state;
   const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
   const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
   const shot = quickdrawShot(lashed, powerOf(state, 'quickdraw'));
-  const weakHit = shot.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
+  const weakHit =
+    Boolean(follow.sawWeak) ||
+    shot.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
   const momentum = powerOf(shot, 'momentum');
   const counted = {
     ...shot,
@@ -1752,7 +1901,7 @@ function discardHand(state: CombatState): CombatState {
 }
 
 export function endTurn(state: CombatState): CombatState {
-  if (state.status !== 'playerTurn' || state.pendingFuse) return state;
+  if (state.status !== 'playerTurn' || state.pendingFuse || state.pendingHandRemoval) return state;
   const afterRelics = triggerRelics(state, 'turnEnd');
   const afterMetal =
     afterRelics.player.endTurnBlock > 0
