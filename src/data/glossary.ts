@@ -250,6 +250,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     description:
       '札を重ねた深さ。1 段どうしで 2 段、2 段どうしで 4 段（最大）。2 段の札は数値が 1.5 倍、4 段は 2 倍。段は捨て札や山札に移っても戦闘のあいだ残り、重ねて消えた札は廃棄札へ行く。',
   },
+  tidecall: {
+    id: 'tidecall',
+    name: '潮招き',
+    icon: '🌊',
+    description: 'ターンの始めに、その枚数だけカードを多く引く。手札がいっぱいの分は引けない。',
+  },
   fuseEcho: {
     id: 'fuseEcho',
     name: '水面',

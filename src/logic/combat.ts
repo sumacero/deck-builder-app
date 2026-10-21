@@ -295,7 +295,10 @@ export function startPlayerTurn(state: CombatState): CombatState {
     ...hindranceLogs(hindrance),
   ];
   const logged = logs.reduce(withLog, withLog(started, `ターン ${turn} 開始`));
-  return grantArteIfReady(drawCards(logged, Math.max(0, state.drawPerTurn - hindrance.chill)));
+  const drawn = drawCards(logged, Math.max(0, state.drawPerTurn - hindrance.chill));
+  const tide = powerOf(drawn, 'tidecall');
+  const tided = tide > 0 ? drawCards(withLog(drawn, `潮招きで ${tide} 枚引く`), tide) : drawn;
+  return grantArteIfReady(tided);
 }
 
 export const EMPTY_STATS: CombatStats = {

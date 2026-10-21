@@ -194,6 +194,7 @@ export const POWER_LABEL: Record<PowerId, string> = {
   momentum: '勢い',
   scavenge: '拾い集め',
   cinder: '燃え殻',
+  tidecall: '潮招き',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -241,6 +242,8 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、効果で手札から捨てるたびに、捨てた枚数 × ${amount} 枚引く。`;
     case 'cinder':
       return `この戦闘中、カードが廃棄されるたびに HP が一番低い敵に ${amount} ダメージ。`;
+    case 'tidecall':
+      return `この戦闘中、ターンの始めにカードを ${amount} 枚多く引く。`;
   }
 }
 

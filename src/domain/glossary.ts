@@ -42,6 +42,7 @@ export type KeywordId =
   | 'momentum'
   | 'scavenge'
   | 'cinder'
+  | 'tidecall'
   | 'pierce'
   | 'evade'
   | 'frost'

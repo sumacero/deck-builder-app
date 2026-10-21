@@ -166,6 +166,23 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   'ashen-tempest': require('../../../assets/cards/ashen-tempest.jpg'),
   'discard-judgment': require('../../../assets/cards/discard-judgment.jpg'),
   'blood-canon': require('../../../assets/cards/blood-canon.jpg'),
+  'frost-flurry': require('../../../assets/cards/frost-flurry.jpg'),
+  'crystal-hail': require('../../../assets/cards/crystal-hail.jpg'),
+  ripple: require('../../../assets/cards/ripple.jpg'),
+  'spring-tide': require('../../../assets/cards/spring-tide.jpg'),
+  'fog-lance': require('../../../assets/cards/fog-lance.jpg'),
+  'shard-guard': require('../../../assets/cards/shard-guard.jpg'),
+  'ice-bind': require('../../../assets/cards/ice-bind.jpg'),
+  'well-spring': require('../../../assets/cards/well-spring.jpg'),
+  'tide-read': require('../../../assets/cards/tide-read.jpg'),
+  'mist-step': require('../../../assets/cards/mist-step.jpg'),
+  'fog-bind': require('../../../assets/cards/fog-bind.jpg'),
+  'purge-mist': require('../../../assets/cards/purge-mist.jpg'),
+  'frost-pillar': require('../../../assets/cards/frost-pillar.jpg'),
+  'wave-chain': require('../../../assets/cards/wave-chain.jpg'),
+  'dew-mail': require('../../../assets/cards/dew-mail.jpg'),
+  'tide-call': require('../../../assets/cards/tide-call.jpg'),
+  'mist-eye': require('../../../assets/cards/mist-eye.jpg'),
 };
 
 /** イラストの隅に重ねる種類の紋章。小さな手札でも種類がひと目で分かるように。 */

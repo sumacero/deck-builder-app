@@ -109,6 +109,7 @@ const POWER_IDS: readonly PowerId[] = [
   'momentum',
   'scavenge',
   'cinder',
+  'tidecall',
   'quickdraw',
   'flurry',
   'lashSeed',
