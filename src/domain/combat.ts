@@ -1,6 +1,7 @@
 import type { AgentDefinition } from './agent';
 import type { Attribute } from './attribute';
-import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
+import type { CardDefinition, CardInstance, CardMark, CardMotion, CardType } from './card';
+import type { Effect } from './effect';
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
@@ -34,10 +35,20 @@ export type PlayerState = Fighter & {
   powers: Powers;
   /** エージェントの基本属性。敵の攻撃を受けるときの相性に使う。 */
   attribute: Attribute;
-  /** 魔法剣で、このターンのアタックに加わっている属性。 */
+  /** ポーション等で、このターンのアタックに加わっている属性。 */
   enchant: Attribute[];
   /** このターンに使ったカードの枚数（手数を数えるカード用）。 */
   cardsThisTurn: number;
+  /** このターンに使ったスキルの枚数（使ったあとに数えるカードより前の分）。 */
+  skillsThisTurn: number;
+  /** このターンに使ったアタックの枚数。 */
+  attacksThisTurn: number;
+  /** このターンに手札から捨てた枚数（効果・ターン終了）。 */
+  discardsThisTurn: number;
+  /** このターンに廃棄した枚数。 */
+  exhaustsThisTurn: number;
+  /** この戦闘で廃棄した枚数（灰・燃え殻・廃棄シナジー用）。 */
+  exhaustsThisCombat: number;
   /** このターンだけ、ムチの攻撃が 1 回当たるたびにその敵へ与える宿り木（パワーの宿り木の蔓とは別に足す）。 */
   lashSeedThisTurn: number;
   /** この戦闘で使った（廃棄した）矢の本数。 */
@@ -52,6 +63,10 @@ export type PlayerState = Fighter & {
   hindrance: Hindrance;
   /** 敵のターンにかけられ、次の自分のターンに効く妨害。 */
   pendingHindrance: Hindrance;
+  /** かわす: 敵のヒットを無効にできる残り回数。次の自分のターンの始めに消える。 */
+  evade: number;
+  /** このターン、手札で札を重ねた回数（水晶の文鎮は最初の 1 回で発動）。 */
+  fusesThisTurn: number;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
@@ -82,6 +97,10 @@ export type EnemyState = Fighter & {
   artifact: number;
   /** 覚醒の性質を持つ敵が、すでに覚醒したか。 */
   awakened: boolean;
+  /** 霜。次の攻撃のダメージが、1 ヒットごとにこの分下がる。攻撃を終えると消える。 */
+  frost: number;
+  /** 次の攻撃のヒット数をこの分減らす（重ねた瞬間の霞）。攻撃を終えると消える。 */
+  hitCut: number;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';
@@ -102,9 +121,17 @@ export type CombatEventBody =
       targets: EnemyUid[];
       cardType: CardType;
       motion: CardMotion;
+      /** 性質カードの印。水鏡のノアは、この印で戦闘エフェクトを切り替える。 */
+      mark?: CardMark;
     }
   /** 敵が行動した（攻撃は 1 発ごと）。target は行動した敵。 */
   | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
+  /**
+   * 敵のターンの始まりと終わり。演出は出さない。
+   * このあいだの出来事が終わるまで、UI は手札を触れなくする。
+   */
+  | { kind: 'enemyTurnStart'; target: 'player' }
+  | { kind: 'enemyTurnEnd'; target: 'player' }
   | { kind: 'potionUsed'; target: 'player'; potionId: string }
   | { kind: 'relicTriggered'; target: 'player'; relicId: string }
   /**
@@ -130,6 +157,34 @@ export type CombatEventBody =
   | { kind: 'callout'; target: ActorId; text: string }
   /** 手札が上限で、blocked 枚を引けなかった（山札に残る）。 */
   | { kind: 'handFull'; target: 'player'; blocked: number }
+  /**
+   * 手札で印を重ねた。波紋と、重なる動きの演出に使う。
+   * playedId は残った札（摘んでいた札）。materialIds は廃棄札にした下の札。
+   * consumed は、消える直前の下の札。
+   */
+  | {
+      kind: 'marksFused';
+      target: 'player';
+      playedId: string;
+      materialIds: string[];
+      consumed: CardInstance;
+    }
+  /**
+   * 山札・手札・捨て札・廃棄札のあいだを札が移った。
+   * 枚数は先に更新する。UI は札のゴーストを from から to へ飛ばし、
+   * 手札へ着く札は着くまで見せない（補充が一瞬で埋まるのを避ける）。
+   * handIndex / handCount は、手札を離れた瞬間の並び。
+   * 山札から来た札の着地点は、今の手札から instanceId で探す。
+   */
+  | {
+      kind: 'pileTravel';
+      target: 'player';
+      card: CardInstance;
+      from: 'draw' | 'hand';
+      to: 'hand' | 'discard' | 'exhaust';
+      handIndex: number;
+      handCount: number;
+    }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 
@@ -189,6 +244,44 @@ export type CombatState = {
   /** 直前の操作 1 回分のイベント。操作のたびに作り直す。 */
   events: CombatEvent[];
   nextEventId: number;
+  /**
+   * 札を重ねたあと、敵をタップで選ぶ待ち。
+   * ブロック半減・攻撃回数減で、候補が 2 体以上いるときだけ入る。
+   */
+  pendingFuse: PendingFuseAim | null;
+  /**
+   * 手札から捨てる・廃棄する札を、プレイヤーがタップで選ぶ待ち。
+   * 枚数を選び終わるまで、ターン終了やほかのカードは使えない。
+   */
+  pendingHandRemoval: PendingHandRemoval | null;
+};
+
+/** 手札から手放す札を選ぶ待ち。rest は、選び終わったあとに続ける効果。 */
+export type PendingHandRemoval = {
+  mode: 'discard' | 'exhaust';
+  /** あと何枚選ぶか。 */
+  left: number;
+  /** この選択で既に手放した枚数。拾い集めのドローは、選び終わってからまとめて行う。 */
+  taken: number;
+  rest: readonly Effect[];
+  aim: EnemyUid | 'all';
+  attributes: readonly Attribute[];
+  pierce?: boolean;
+  fixed?: boolean;
+  /**
+   * カード使用の後処理。ポーションやレリック由来なら null。
+   * sawWeak は、タップでイベントを捨てる前に出ていた弱点ヒット。
+   */
+  follow: { instance: CardInstance; eventsBefore: number; sawWeak?: boolean } | null;
+};
+
+/** 重ねた瞬間の効果で、敵を選んでもらう待ち。 */
+export type PendingFuseAim = {
+  effects: Effect[];
+  candidates: EnemyUid[];
+  repeats: number;
+  /** 案内文用。block = ブロック半減、multiHit = 攻撃回数を減らす。 */
+  kind: 'block' | 'multiHit';
 };
 
 /** カードを敵の上で離したときに、その敵が受ける実ダメージの予告。 */

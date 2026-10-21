@@ -1,6 +1,6 @@
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio';
 import { getAudioSettings, subscribeAudioSettings } from './audioSettings';
-import { outputVolume } from './levels';
+import { clampPlaybackVolume, outputVolume } from './levels';
 import { MUSIC, type MusicId } from './music';
 import { configureAudioMode } from './soundPlayer';
 
@@ -18,6 +18,11 @@ function musicVolume(id: MusicId): number {
   return outputVolume(MUSIC[id].volume, getAudioSettings().bgm);
 }
 
+/** Web は 0〜1 の外で例外になるので、必ず収めてから渡す。 */
+function setPlayerVolume(player: AudioPlayer, volume: number): void {
+  player.volume = clampPlaybackVolume(volume);
+}
+
 function playerFor(id: MusicId): AudioPlayer {
   const existing = players.get(id);
   if (existing) return existing;
@@ -25,6 +30,26 @@ function playerFor(id: MusicId): AudioPlayer {
   player.loop = true;
   players.set(id, player);
   return player;
+}
+
+/** WAV を端末メモリから外す。createAudioPlayer は remove しないと溜まる（Expo の注意）。 */
+function disposePlayer(id: MusicId): void {
+  const player = players.get(id);
+  if (!player) return;
+  players.delete(id);
+  try {
+    player.pause();
+    player.remove();
+  } catch (error: unknown) {
+    console.warn(`BGM ${id} の解放に失敗しました`, error);
+  }
+}
+
+/** 今流す曲以外のプレイヤーを全部捨てる。章の後半で曲が増えて落ちるのを防ぐ。 */
+function disposeOthers(keep: MusicId | null): void {
+  for (const id of [...players.keys()]) {
+    if (id !== keep) disposePlayer(id);
+  }
 }
 
 function cancelFade(): void {
@@ -35,6 +60,7 @@ function cancelFade(): void {
 /**
  * 音量を target まで durationMs かけて変える。
  * target が関数のときは、フェードの途中で設定が変わっても、終わりは新しい音量になる。
+ * 補間の結果は常に 0〜1 に収め、範囲外セットで Web が例外を投げてタイマーが残るのを防ぐ。
  */
 function fadeTo(
   player: AudioPlayer,
@@ -43,17 +69,24 @@ function fadeTo(
   onDone?: () => void,
 ): void {
   cancelFade();
-  const from = player.volume;
+  const from = clampPlaybackVolume(player.volume);
   const steps = Math.max(1, Math.round(durationMs / FADE_STEP_MS));
   let step = 0;
-  const destination = () => (typeof target === 'function' ? target() : target);
+  const destination = () =>
+    clampPlaybackVolume(typeof target === 'function' ? target() : target);
   fadeTimer = setInterval(() => {
     step += 1;
-    const to = destination();
-    player.volume = from + ((to - from) * step) / steps;
-    if (step >= steps) {
+    try {
+      const to = destination();
+      setPlayerVolume(player, from + ((to - from) * step) / steps);
+      if (step >= steps) {
+        cancelFade();
+        setPlayerVolume(player, destination());
+        onDone?.();
+      }
+    } catch (error: unknown) {
+      console.warn('BGM のフェードに失敗しました', error);
       cancelFade();
-      player.volume = destination();
       onDone?.();
     }
   }, FADE_STEP_MS);
@@ -66,11 +99,9 @@ export function playMusic(id: MusicId): void {
   cancelFade();
   void configureAudioMode().catch((error: unknown) => console.warn('音声モードの設定に失敗しました', error));
   try {
-    players.forEach((player, key) => {
-      if (key !== id) player.pause();
-    });
+    disposeOthers(id);
     const player = playerFor(id);
-    player.volume = 0;
+    setPlayerVolume(player, 0);
     void player.seekTo(0);
     player.play();
     fadeTo(player, () => musicVolume(id), FADE_IN_MS);
@@ -85,10 +116,11 @@ export function playMusic(id: MusicId): void {
  */
 export function stopMusic(id?: MusicId): void {
   if (!current || (id && current !== id)) return;
-  const player = players.get(current);
+  const stopping = current;
+  const player = players.get(stopping);
   current = null;
   if (!player) return;
-  fadeTo(player, 0, FADE_OUT_MS, () => player.pause());
+  fadeTo(player, 0, FADE_OUT_MS, () => disposePlayer(stopping));
 }
 
 /** 図鑑で試聴を始める前に流れていた曲。undefined は試聴していない。 */
@@ -121,5 +153,5 @@ export function resumeMusic(): void {
 subscribeAudioSettings(() => {
   if (!current || fadeTimer) return;
   const player = players.get(current);
-  if (player) player.volume = musicVolume(current);
+  if (player) setPlayerVolume(player, musicVolume(current));
 });

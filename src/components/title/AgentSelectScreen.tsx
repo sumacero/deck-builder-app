@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import type { Region } from '../../domain/act';
-import type { CombatEvent } from '../../domain/combat';
 import type { RunSetup } from '../../domain/run';
 import { STRONG_AGAINST, weaknessesOf } from '../../logic/attribute';
 import { attributeText, describeRelic } from '../../logic/describe';
 import { useMusic } from '../../hooks/useMusic';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
+import { AgentPortrait } from '../agents/AgentPortrait';
 import { SceneBackground } from '../backgrounds/SceneBackground';
-import { ActorFigure } from '../combat/model3d/ActorFigure';
-import { AGENT_MODELS } from '../combat/model3d/actorModels';
 import { ScreenScroll } from '../layout/ScreenScroll';
 
 type AgentSelectScreenProps = {
@@ -19,7 +17,6 @@ type AgentSelectScreenProps = {
 };
 
 const BACKGROUND_REGION: Region = 'grassland';
-const NO_EVENTS: CombatEvent[] = [];
 
 /** 冒険に連れて行くエージェントを選ぶ。カードを押して選び、「この仲間で出発」で始める。 */
 export function AgentSelectScreen({ runs, onSelect, onBack }: AgentSelectScreenProps) {
@@ -72,14 +69,7 @@ function AgentOption({ setup, selected, onPress }: AgentOptionProps) {
       style={({ pressed }) => [styles.option, selected && styles.selected, pressed && styles.pressed]}
     >
       <View style={styles.figure}>
-        <ActorFigure
-          model={AGENT_MODELS[agent.id]}
-          icon={agent.icon}
-          actorId="player"
-          events={NO_EVENTS}
-          agentId={agent.id}
-          size={ACTOR_FIGURE.selectSize}
-        />
+        <AgentPortrait agentId={agent.id} icon={agent.icon} size={ACTOR_FIGURE.selectSize} />
       </View>
       <View style={styles.info}>
         <Text style={styles.title}>{agent.title}</Text>

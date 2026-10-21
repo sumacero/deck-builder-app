@@ -12,7 +12,7 @@ type EntryCatalogProps = {
 /** レリック・ポーション・イベント・恩恵の一覧（縦に並べてスクロール）。 */
 export function EntryCatalog({ items, note }: EntryCatalogProps) {
   return (
-    <ScrollView contentContainerStyle={styles.list}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
       {note ? <Text style={styles.note}>{note}</Text> : null}
       {items.map(({ key, ...item }) => (
         <CatalogEntry key={key} {...item} />
@@ -22,6 +22,7 @@ export function EntryCatalog({ items, note }: EntryCatalogProps) {
 }
 
 const styles = StyleSheet.create({
-  list: { gap: SPACING.sm, paddingVertical: SPACING.sm },
+  scroll: { flex: 1, minHeight: 0 },
+  list: { gap: SPACING.sm, paddingVertical: SPACING.sm, flexGrow: 1 },
   note: { color: COLORS.textMuted, fontSize: 12, textAlign: 'center' },
 });

@@ -210,6 +210,31 @@ const SOUNDS = {
       return lp(buzz(index === 0 ? 196 : 165) * env, 0.2);
     });
   },
+
+  /**
+   * 手札を重ねる: 二筋の水流が交差して一つになる。
+   * 音程はスマホのスピーカーが出せる帯（おおよそ 600〜1800Hz）に置く。
+   * こもったノイズだけにすると、PC のスピーカーでは聞こえても端末では BGM に埋もれる。
+   */
+  fuse: () => {
+    const rise = oscillator(sine);
+    const fall = oscillator(sine);
+    const bubble = oscillator(sine);
+    const air = lowpass();
+    return render(0.5, (t, p) => {
+      const env = Math.sin(Math.PI * p);
+      const up = rise(lerp(640, 1580, p)) * 0.62;
+      const down = fall(lerp(1720, 760, p)) * 0.55;
+      const whoosh = air(noise(), 0.4) * 0.18 * env;
+      let pop = 0;
+      for (const at of [0.22, 0.38, 0.5]) {
+        const local = (t - at) / 0.07;
+        if (local < 0 || local > 1) continue;
+        pop += bubble(lerp(980, 1680, local)) * Math.sin(Math.PI * local) * decay(local, 2.4) * 0.5;
+      }
+      return (up + down) * env + whoosh + pop;
+    });
+  },
 };
 
 // ===== 書き出し =====

@@ -39,8 +39,8 @@ const BUILD_RAMP = [0.85, 1.0, 1.1, 1.28];
  * イントロ: サビ頭の「レー・ドー・シ♭」の形を、小節ごとに倍の速さにしていく。
  * ドラムも旋律と一緒にティンパニ → ハーフ → 8 ビート → ツーバスと加速させ、サビの終わりからゆったりした頭へ自然に戻す。
  */
-const INTRO_CHORDS = ['Bb', 'C Dm', 'Gm C', 'A'];
-const INTRO_BARS = [
+export const INTRO_CHORDS = ['Bb', 'C Dm', 'Gm C', 'A'];
+export const INTRO_BARS = [
   'D6:1.5 C6:1.5 Bb5:1',
   'E6:0.75 D6:0.75 C6:0.5 F6:0.75 E6:0.75 D6:0.5',
   'D6:0.5 C6:0.5 Bb5:0.5 G5:0.5 E6:0.5 D6:0.5 C6:0.5 G5:0.5',
@@ -75,7 +75,7 @@ const verseSections = [
 ];
 
 /** B メロ: 五度圏を巡る（8 小節）。 */
-const run = {
+export const run = {
   name: 'run',
   chords: bars('Dm', 'Gm', 'C', 'F', 'Bb', 'Gm', 'A', 'A'),
   parts: [
@@ -119,7 +119,7 @@ const rampBars = (section, levels) => {
  * 後半は金管の長い音が 1 段ずつ高く上がり（案 1）、ギターが同じ音を 8 分 → 16 分で刻んで行進のスネアと前へ押す（案 6）。
  * 後半はコードが Gm→A→B♭→C→A と 1 段ずつ上がり、1 小節ずつ音量を上げ、ロールの小節を一番大きくしてサビへ飛び込む。
  */
-const [buildCalm, buildRise] = [
+export const [buildCalm, buildRise] = [
   {
     name: 'build',
     chords: bars('Gm', 'A', 'Bb', 'A'),
@@ -151,7 +151,7 @@ const build = [buildCalm, ...rampBars(buildRise, BUILD_RAMP)];
  */
 const chorus1 = { ...chorus, name: 'chorus1', drums: 'drive', level: 1.0 };
 
-const HARMONY_BARS = [
+export const HARMONY_BARS = [
   'Bb5:0.75 A5:0.75 G5:0.5 D5:1 Bb5:1',
   'C6:0.75 Bb5:0.75 A5:0.5 E5:1 C6:1',
   'A5:0.5 G#5:0.5 E5:0.5 C5:0.5 A5:1 C6:1',
@@ -161,7 +161,7 @@ const HARMONY_BARS = [
   'C5:0.5 F5:0.5 A5:0.5 C6:0.5 C#6:0.5 A5:0.5 E5:1',
   'E5:0.5 A5:0.5 C#6:0.5 E6:0.5 E6:2',
 ];
-const RESOLVED_BAR = 'A5:0.5 C#6:0.5 E6:0.5 G6:0.5 F6:1 D6:1';
+export const RESOLVED_BAR = 'A5:0.5 C#6:0.5 E6:0.5 G6:0.5 F6:1 D6:1';
 const RESOLVED_HARMONY_BAR = 'E5:0.5 A5:0.5 C#6:0.5 E6:0.5 D6:1 A5:1';
 
 /** ハモり付きのサビの部分（旋律・ハモり・弦・1 オクターブ下のギター）。 */

@@ -86,18 +86,53 @@ export function diffRunEvents(prev: RunState, next: RunState): RunEvent[] {
 }
 
 /** ラン本体と、まだ見せていない出来事の順番待ち。 */
-export type RunStore = { run: RunState; events: QueuedRunEvent[]; nextEventId: number };
+export type RunStore = {
+  run: RunState;
+  events: QueuedRunEvent[];
+  nextEventId: number;
+  /**
+   * 演出が終わるまで画面に出しているラン。null なら run を出す。
+   * 回復・強化・入手と、次の画面とその BGM が同時に来ると見づらいので、
+   * 画面が変わる操作では順番待ちが空になるまで前の画面を保つ。
+   */
+  shown: RunState | null;
+};
 
 export type RunStoreAction = RunAction | { type: 'dismissEvent'; id: number };
 
 export function createRunStore(run: RunState): RunStore {
-  return { run, events: [], nextEventId: 0 };
+  return { run, events: [], nextEventId: 0, shown: null };
+}
+
+/**
+ * 暗転と BGM が付く画面の単位。同じ種類の画面のまま（ショップで買う、イベントの結末を読む）なら
+ * 演出はそこへ着地させる。章が変わるとフィールド曲も変わるので、章も分ける。
+ */
+function screenKey(run: RunState): string {
+  return `${run.actIndex}:${run.phase.kind}`;
+}
+
+/**
+ * 出来事が残っていて、いま見えている画面と次の画面が違うときだけ前の画面を保つ。
+ * 出来事が無い移動はすぐ切り替える。
+ */
+function screenWhileEvents(
+  previous: RunState,
+  next: RunState,
+  held: RunState | null,
+  events: readonly QueuedRunEvent[],
+): RunState | null {
+  if (events.length === 0) return null;
+  const visible = held ?? previous;
+  if (screenKey(visible) !== screenKey(next)) return visible;
+  return held;
 }
 
 /** ランの操作をかけ、起きた出来事を順番待ちに足す。演出が終わったら dismissEvent で取り除く。 */
 export function runStoreReducer(store: RunStore, action: RunStoreAction): RunStore {
   if (action.type === 'dismissEvent') {
-    return { ...store, events: store.events.filter((queued) => queued.id !== action.id) };
+    const events = store.events.filter((queued) => queued.id !== action.id);
+    return { ...store, events, shown: events.length === 0 ? null : store.shown };
   }
   const run = runReducer(store.run, action);
   if (run === store.run) return store;
@@ -105,9 +140,11 @@ export function runStoreReducer(store: RunStore, action: RunStoreAction): RunSto
     id: store.nextEventId + i,
     event,
   }));
+  const events = [...store.events, ...added];
   return {
     run,
-    events: [...store.events, ...added],
+    events,
     nextEventId: store.nextEventId + added.length,
+    shown: screenWhileEvents(store.run, run, store.shown, events),
   };
 }

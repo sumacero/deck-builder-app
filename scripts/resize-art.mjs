@@ -17,6 +17,8 @@ const ASSETS = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets');
 const KINDS = [
   { tag: 'card-', dir: 'cards', width: 320, height: 240, quality: 80 },
   { tag: 'bg-', dir: 'backgrounds', width: 720, height: 1280, quality: 82 },
+  /** プレイヤー立ち絵（切り紙調 2D）。戦闘・タイトルで 3D の代わりに使う。 */
+  { tag: 'agent-', dir: 'agents', width: 360, height: 480, quality: 85 },
 ];
 
 const [sourceDir, prefix = ''] = process.argv.slice(2);

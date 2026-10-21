@@ -10,7 +10,11 @@ import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, statusTurns } from './status';
 function keywordsForEffect(effect: Effect): KeywordId[] {
   switch (effect.kind) {
     case 'damage':
-      return effect.strengthMultiplier ? ['damage', 'strength'] : ['damage'];
+      return [
+        'damage',
+        ...(effect.strengthMultiplier ? (['strength'] as const) : []),
+        ...(effect.pierce ? (['pierce'] as const) : []),
+      ];
     case 'damagePerSelfHpLost':
       return ['damage', 'loseHp'];
     case 'damageFromBlock':
@@ -31,6 +35,7 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'gainEndTurnBlock':
       return ['endTurnBlock'];
     case 'applyDebuff':
+      return [effect.status, 'statusTurns'];
     case 'gainBuff':
       return [effect.status, 'statusTurns'];
     case 'extendDebuffs':
@@ -48,6 +53,18 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['damage', 'vulnerable', 'weak', 'statusTurns'];
     case 'detonateSeed':
       return ['damage', 'seed'];
+    case 'applyFrost':
+      return ['frost'];
+    case 'gainEvade':
+      return ['evade'];
+    case 'stripStrength':
+      return ['strength'];
+    case 'cleanse':
+      return ['cleanse'];
+    case 'halveBlock':
+      return ['block'];
+    case 'cutHits':
+      return ['intentAttack'];
     case 'ifTargetHas':
       return [effect.status, ...effect.effects.flatMap(keywordsForEffect)];
     case 'consumeBlock':
@@ -61,7 +78,17 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'bloomSeed':
       return ['seed'];
     case 'damagePerCardPlayed':
+    case 'damagePerSkillPlayed':
+    case 'damagePerAttackPlayed':
+    case 'damagePerDiscard':
+    case 'damagePerExhaust':
       return ['damage'];
+    case 'blockPerCardPlayed':
+      return ['block'];
+    case 'discardFromHand':
+      return [];
+    case 'exhaustFromHand':
+      return ['exhaust'];
     case 'gainLashSeed':
       return ['lashSeedTurn', 'whip', 'seed'];
   }
@@ -77,6 +104,12 @@ const POWER_IDS: readonly PowerId[] = [
   'thorns',
   'overgrowth',
   'verdure',
+  'fuseEcho',
+  'stackDepth',
+  'momentum',
+  'scavenge',
+  'cinder',
+  'tidecall',
   'quickdraw',
   'flurry',
   'lashSeed',
@@ -111,6 +144,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.ethereal ? (['ethereal'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
+    ...(card.mark ? ([card.mark, 'fuse', 'stack'] as const) : []),
   ]);
 }
 
@@ -144,6 +178,7 @@ export function playerStatuses(player: PlayerState): StatusView[] {
     { keyword: 'tempStrength', value: player.tempStrength },
     { keyword: 'lashSeedTurn', value: player.lashSeedThisTurn },
     { keyword: 'endTurnBlock', value: player.endTurnBlock },
+    { keyword: 'evade', value: player.evade },
     { keyword: 'paralysis', value: player.hindrance.paralysis },
     { keyword: 'chill', value: player.hindrance.chill },
     { keyword: 'seal', value: player.hindrance.seal ? 1 : 0, flag: true },
@@ -156,6 +191,7 @@ export function enemyStatuses(enemy: EnemyState): StatusView[] {
   return nonZero([
     { keyword: 'block', value: enemy.block },
     { keyword: 'strength', value: enemy.strength },
+    { keyword: 'frost', value: enemy.frost },
     ...statusViews(enemy.statuses, [...DEBUFF_IDS, ...ENEMY_STATUS_IDS]),
     ...traitViews(enemy),
   ]);

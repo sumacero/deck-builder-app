@@ -3,7 +3,7 @@ import type { EnemyUid } from '../../domain/combat';
 
 export type Point = { x: number; y: number };
 
-/** つまんだ位置から指がこれだけ動いたら「動かした」。それまではタップ・長押しとして扱い、使い道も決めない。 */
+/** つまんだ位置から指がこれだけ動いたら「動かした」。それまではタップとして扱い、使い道も決めない。 */
 export const DRAG_LIFT_DISTANCE = 10;
 
 /** 持ち上げてから離すまでの共通の知らせ。velocity は離した瞬間の指の速さ（px/ms）。 */
@@ -39,8 +39,23 @@ function nearestByX<T extends { rect: Rect }>(items: readonly T[], x: number): T
 }
 
 /**
+ * 自分に使うカードは、自分の枠（縦向きでは下段の横いっぱい）からこの余白までを「自分の範囲」とする。
+ * 範囲の外で離すと手札に戻る。
+ */
+export const SELF_DROP_PADDING = 28;
+
+function containsPoint(rect: Rect, point: Point, padding: number): boolean {
+  return (
+    point.x >= rect.x - padding &&
+    point.x <= rect.x + rect.width + padding &&
+    point.y >= rect.y - padding &&
+    point.y <= rect.y + rect.height + padding
+  );
+}
+
+/**
  * 指を離した位置から、カードの使い道を決める。座標はすべて画面（ウィンドウ）基準。
- * - 自分に使うカードは、少しでも持ち上げたらどこで離しても自分に使う。
+ * - 自分に使うカードは、自分の範囲の中で離したときだけ使う。外で離すと手札に戻る。
  * - それ以外は、手札より上（releaseLineY より上）まで持ち上げていなければ使わない。
  * - 敵 1 体を狙うカードは、指の横位置に一番近い生きている敵を狙う（高さは問わない）。
  * - 敵全体に使うカードは、上まで持ち上げて離せば使える。
@@ -50,8 +65,11 @@ export function resolveDrop(
   target: CardTarget,
   livingEnemyRects: readonly { uid: EnemyUid; rect: Rect }[],
   releaseLineY: number,
+  playerRect: Rect | null,
 ): DropTarget | null {
-  if (target === 'self') return { kind: 'self' };
+  if (target === 'self') {
+    return playerRect && containsPoint(playerRect, point, SELF_DROP_PADDING) ? { kind: 'self' } : null;
+  }
   if (point.y > releaseLineY) return null;
   switch (target) {
     case 'enemy': {
@@ -102,13 +120,6 @@ export function projectFlick(point: Point, velocity: Point): Point {
     y: point.y + velocity.y * FLICK_PROJECTION_MS,
   };
 }
-
-/**
- * タップだけで使えるか。狙う敵を選ぶ必要がないカード（自分・敵全体、敵が 1 体だけのときの単体攻撃）。
- * 敵が複数いるときの単体攻撃は、狙う敵へスワイプするか、タップしてから敵をタップして使う。
- */
-export const canPlayByTap = (target: CardTarget, livingEnemyCount: number) =>
-  target !== 'enemy' || livingEnemyCount <= 1;
 
 export const sameDrop = (a: DropTarget | null, b: DropTarget | null) =>
   a?.kind === b?.kind && (a?.kind !== 'enemy' || (b?.kind === 'enemy' && a.uid === b.uid));

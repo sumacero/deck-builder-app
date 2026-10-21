@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
-import { CRIMSON_HERO } from '../../data/agents';
+import { pickTitleMusic, type TitleMusicId } from '../../audio/music';
+import { CRIMSON_HERO, MIRROR_SEER, VERDANT_ARCHER } from '../../data/agents';
 import { GAME_SUBTITLE, GAME_TITLE } from '../../data/gameInfo';
+import type { AgentDefinition } from '../../domain/agent';
 import type { Region } from '../../domain/act';
-import type { CombatEvent } from '../../domain/combat';
 import { useMusic } from '../../hooks/useMusic';
-import { COLORS, MOTION, RADIUS, SPACING } from '../../theme';
+import { ACTOR_FIGURE, COLORS, MOTION, RADIUS, SPACING } from '../../theme';
+import { AgentPortrait } from '../agents/AgentPortrait';
 import { SceneBackground } from '../backgrounds/SceneBackground';
-import { ActorFigure } from '../combat/model3d/ActorFigure';
-import { AGENT_MODELS } from '../combat/model3d/actorModels';
 import { GalleryButton } from '../gallery/GalleryButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ScreenScroll } from '../layout/ScreenScroll';
@@ -19,13 +19,22 @@ type TitleScreenProps = {
 
 /** タイトルの背景は水の古都の景色。 */
 const BACKGROUND_REGION: Region = 'sunkenCity';
-const NO_EVENTS: CombatEvent[] = [];
+
+/** 曲と、画面に立つ仲間を対応させる。 */
+const TITLE_CAST: Record<TitleMusicId, AgentDefinition> = {
+  title: CRIMSON_HERO,
+  titleLene: VERDANT_ARCHER,
+  titleNoa: MIRROR_SEER,
+};
 
 /** 起動直後の画面。ゲーム名が浮かび上がり、「冒険を始める」が呼吸するように光る。 */
 export function TitleScreen({ onStart }: TitleScreenProps) {
   const [appear] = useState(() => new Animated.Value(0));
   const [glow] = useState(() => new Animated.Value(0));
-  useMusic('title');
+  // 起動のたびに 3 キャラのうち 1 人（曲も同じ人）。再描画では変えない。
+  const [musicId] = useState(pickTitleMusic);
+  const agent = TITLE_CAST[musicId];
+  useMusic(musicId);
 
   useEffect(() => {
     const intro = Animated.timing(appear, {
@@ -62,13 +71,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
           <View style={styles.rule} />
         </Animated.View>
 
-        <ActorFigure
-          model={AGENT_MODELS[CRIMSON_HERO.id]}
-          icon={CRIMSON_HERO.icon}
-          actorId="player"
-          events={NO_EVENTS}
-          agentId={CRIMSON_HERO.id}
-        />
+        <AgentPortrait agentId={agent.id} icon={agent.icon} size={ACTOR_FIGURE.size} />
 
         <Animated.View style={[styles.menu, { opacity: appear }]}>
           <Animated.View style={{ transform: [{ scale: buttonScale }] }}>

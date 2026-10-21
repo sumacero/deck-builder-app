@@ -1,4 +1,5 @@
 import type { ActConfig } from '../domain/act';
+import type { Attribute } from '../domain/attribute';
 import type { CardDefinition } from '../domain/card';
 import type { CombatSetup } from '../domain/combat';
 import type { Encounter } from '../domain/enemy';
@@ -9,7 +10,7 @@ import { soloEncounter, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
 import { draftPool, pickRewardChoices } from './archetype';
-import { attuneDeck, isDraftable } from './attribute';
+import { attuneDeck, isDraftable, regionDisadvantagesPlayer } from './attribute';
 import { pickOne, pickUnique, randomInt } from './random';
 import { grantRandomRelic, obtainRelic, unownedRelics } from './runEffects';
 import { generateShopStock } from './shop';
@@ -39,22 +40,33 @@ function startAct(run: RunState, actIndex: number): RunState {
   return { ...entered, rngSeed: blessing.seed, phase: { kind: 'blessing', options: blessing.options } };
 }
 
-/** 章ごとに地域の候補から 1 つ選ぶ。前の章で選ばれた地域は避ける（候補が尽きたら重複を許す）。 */
-export function pickActs(choices: ActConfig[][], seed: number): { acts: ActConfig[]; seed: number } {
+/**
+ * 章ごとに地域の候補から 1 つ選ぶ。前の章で選ばれた地域は避ける（候補が尽きたら重複を許す）。
+ * 第 1 章だけ、プレイヤー属性に不利な地域（被ダメ ×1.25 になる主属性）は出さない。
+ */
+export function pickActs(
+  choices: ActConfig[][],
+  seed: number,
+  playerAttribute?: Attribute,
+): { acts: ActConfig[]; seed: number } {
   let current = seed;
   const acts: ActConfig[] = [];
-  for (const options of choices) {
-    const fresh = options.filter((option) => !acts.some((act) => act.region === option.region));
-    const pool = fresh.length > 0 ? fresh : options;
+  choices.forEach((options, actIndex) => {
+    let pool = options.filter((option) => !acts.some((act) => act.region === option.region));
+    if (pool.length === 0) pool = [...options];
+    if (actIndex === 0 && playerAttribute) {
+      const fair = pool.filter((option) => !regionDisadvantagesPlayer(option.region, playerAttribute));
+      if (fair.length > 0) pool = fair;
+    }
     const picked = pickOne(pool, current);
     current = picked.seed;
     acts.push(picked.item ?? pool[0]);
-  }
+  });
   return { acts, seed: current };
 }
 
 export function createRun(setup: RunSetup, seed: number): RunState {
-  const { acts, seed: afterActs } = pickActs(setup.actChoices, seed);
+  const { acts, seed: afterActs } = pickActs(setup.actChoices, seed, setup.agent.attribute);
   const firstAct = acts[0];
   const base: RunState = {
     phase: { kind: 'map' },
@@ -84,6 +96,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     economy: setup.economy,
     restHealRatio: setup.restHealRatio,
     removalCount: 0,
+    markBias: null,
     stats: EMPTY_RUN_STATS,
     rngSeed: afterActs,
   };
@@ -178,7 +191,13 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
-  const offered = pickRewardChoices(draftPool(looted.run), looted.run.deck, 3, looted.run.rngSeed);
+  const offered = pickRewardChoices(
+    draftPool(looted.run),
+    looted.run.deck,
+    3,
+    looted.run.rngSeed,
+    looted.run.economy.cardTierWeight,
+  );
   return {
     ...looted.run,
     rngSeed: offered.seed,

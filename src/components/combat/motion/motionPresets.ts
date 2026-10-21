@@ -1,6 +1,7 @@
-import type { CardMotion } from '../../../domain/card';
+import type { CardMark, CardMotion } from '../../../domain/card';
 import type { ActorId, CombatEvent } from '../../../domain/combat';
 import type { EnemyAction } from '../../../domain/enemy';
+import { MOTION } from '../../../theme';
 import type { ActorAction } from '../model3d/actorActions';
 
 /**
@@ -15,8 +16,25 @@ export type Keyframe = {
   duration: number;
 };
 
-/** 動きの最中に出すエフェクト絵文字。self は動いた本人、opponent は相手の位置に出る。 */
-export type Burst = { emoji: string; on: 'self' | 'opponent'; delay: number };
+/** アニメ風 VFX の種類（斬撃ライン・衝撃波など）。 */
+export type VfxKind =
+  | 'slash'
+  | 'cross'
+  | 'impact'
+  | 'spin'
+  | 'guard'
+  | 'power'
+  | 'spark'
+  | 'wince'
+  | 'arrow'
+  | 'leaf'
+  | 'water'
+  | 'ice'
+  | 'drop'
+  | 'mist';
+
+/** 動きの最中に出すエフェクト。self は動いた本人、opponent は相手の位置に出る。 */
+export type Burst = { kind: VfxKind; on: 'self' | 'opponent'; delay: number };
 
 /**
  * keyframes は絵（3D の描画面ごと）の移動、action は 3D モデル自身の動き（腕・武器を振る）。
@@ -28,99 +46,102 @@ export type MotionPreset = {
   action?: ActorAction;
 };
 
-/** 紅蓮のカイル: 踏み込んで斬る、剣を構えて守る。 */
+/**
+ * 紅蓮のカイル（2D 切り紙）: 3D の腕振りが無いぶん、踏み込み・回転・拡大を強めに出す。
+ */
 const SWORDSMAN_MOTIONS: Record<CardMotion, MotionPreset> = {
   strike: {
     action: 'slash',
     keyframes: [
-      { x: -10, duration: 80 },
-      { x: 48, rotate: 12, duration: 120 },
-      { x: 48, rotate: 12, duration: 60 },
-      { duration: 180 },
+      { x: -10, rotate: -6, duration: 90 },
+      { x: 36, rotate: 12, scale: 1.06, duration: 130 },
+      { x: 28, rotate: 8, duration: 70 },
+      { duration: 200 },
     ],
-    burst: { emoji: '🗡️', on: 'opponent', delay: 180 },
+    burst: { kind: 'slash', on: 'opponent', delay: 200 },
   },
   flurry: {
     action: 'combo',
     keyframes: [
-      { x: -6, duration: 60 },
-      { x: 38, rotate: 10, duration: 80 },
-      { x: 14, rotate: -6, duration: 70 },
-      { x: 42, rotate: 12, duration: 80 },
-      { x: 16, rotate: -6, duration: 70 },
-      { x: 46, rotate: 14, duration: 80 },
-      { duration: 160 },
+      { x: -8, duration: 50 },
+      { x: 30, rotate: 10, scale: 1.04, duration: 70 },
+      { x: 12, rotate: -8, duration: 60 },
+      { x: 34, rotate: 12, scale: 1.06, duration: 70 },
+      { x: 12, rotate: -8, duration: 60 },
+      { x: 36, rotate: 14, scale: 1.06, duration: 80 },
+      { duration: 180 },
     ],
-    burst: { emoji: '⚔️', on: 'opponent', delay: 140 },
+    burst: { kind: 'cross', on: 'opponent', delay: 120 },
   },
   heavy: {
     action: 'cleave',
     keyframes: [
-      { y: -26, scale: 1.15, rotate: -18, duration: 220 },
-      { x: 54, scale: 1.2, rotate: 22, duration: 110 },
-      { x: 54, scale: 1.2, rotate: 22, duration: 90 },
-      { duration: 220 },
+      { y: -22, scale: 1.1, rotate: -14, duration: 240 },
+      { x: 40, y: 4, scale: 1.14, rotate: 16, duration: 120 },
+      { x: 32, scale: 1.08, rotate: 10, duration: 100 },
+      { duration: 240 },
     ],
-    burst: { emoji: '💥', on: 'opponent', delay: 330 },
+    burst: { kind: 'impact', on: 'opponent', delay: 340 },
   },
   sweep: {
     action: 'spin',
     keyframes: [
-      { scale: 0.95, duration: 100 },
-      { x: 24, scale: 1.08, duration: 320 },
-      { x: 18, duration: 120 },
-      { duration: 180 },
+      { scale: 0.94, rotate: -12, duration: 100 },
+      { x: 20, scale: 1.08, rotate: 24, duration: 280 },
+      { x: 14, rotate: 8, duration: 120 },
+      { duration: 200 },
     ],
-    burst: { emoji: '🌀', on: 'opponent', delay: 300 },
+    burst: { kind: 'spin', on: 'opponent', delay: 300 },
   },
   // 剣士にムチのカードは無いが、型を埋めるため通常の斬撃と同じにする。
   lash: {
     action: 'slash',
     keyframes: [
-      { x: -10, duration: 80 },
-      { x: 48, rotate: 12, duration: 120 },
-      { x: 48, rotate: 12, duration: 60 },
-      { duration: 180 },
+      { x: -10, rotate: -6, duration: 90 },
+      { x: 36, rotate: 12, scale: 1.06, duration: 130 },
+      { x: 28, rotate: 8, duration: 70 },
+      { duration: 200 },
     ],
-    burst: { emoji: '🗡️', on: 'opponent', delay: 180 },
+    burst: { kind: 'slash', on: 'opponent', delay: 200 },
   },
   guard: {
     action: 'guard',
     keyframes: [
-      { x: -12, scale: 0.92, duration: 120 },
-      { x: -12, scale: 0.92, duration: 160 },
-      { duration: 180 },
+      { x: -12, scale: 0.94, duration: 130 },
+      { x: -12, scale: 0.94, duration: 180 },
+      { duration: 200 },
     ],
-    burst: { emoji: '🛡️', on: 'self', delay: 60 },
+    burst: { kind: 'guard', on: 'self', delay: 50 },
   },
   empower: {
     action: 'raise',
     keyframes: [
-      { y: -12, scale: 1.25, duration: 220 },
-      { y: -12, scale: 1.25, duration: 140 },
-      { duration: 220 },
+      { y: -12, scale: 1.14, duration: 240 },
+      { y: -12, scale: 1.14, duration: 160 },
+      { duration: 240 },
     ],
-    burst: { emoji: '🔥', on: 'self', delay: 120 },
+    burst: { kind: 'power', on: 'self', delay: 100 },
   },
   focus: {
     action: 'charge',
     keyframes: [
-      { y: -14, duration: 150 },
-      { duration: 150 },
-      { y: -6, duration: 100 },
-      { duration: 100 },
+      { y: -10, scale: 0.96, duration: 160 },
+      { y: -6, scale: 1.08, duration: 140 },
+      { y: -4, duration: 100 },
+      { duration: 120 },
     ],
-    burst: { emoji: '✨', on: 'self', delay: 80 },
+    burst: { kind: 'spark', on: 'self', delay: 80 },
   },
   sacrifice: {
     action: 'wince',
     keyframes: [
-      { rotate: -10, scale: 0.95, duration: 60 },
-      { rotate: 10, scale: 0.95, duration: 60 },
-      { rotate: -6, duration: 60 },
-      { duration: 80 },
+      { rotate: -8, scale: 0.96, duration: 55 },
+      { rotate: 8, scale: 0.96, duration: 55 },
+      { rotate: -6, duration: 55 },
+      { rotate: 4, duration: 55 },
+      { duration: 90 },
     ],
-    burst: { emoji: '💢', on: 'self', delay: 40 },
+    burst: { kind: 'wince', on: 'self', delay: 30 },
   },
 };
 
@@ -134,7 +155,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { x: 8, duration: 70 },
       { duration: 160 },
     ],
-    burst: { emoji: '🏹', on: 'opponent', delay: 220 },
+    burst: { kind: 'arrow', on: 'opponent', delay: 220 },
   },
   flurry: {
     action: 'rapid',
@@ -147,7 +168,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { x: 6, duration: 50 },
       { duration: 140 },
     ],
-    burst: { emoji: '🍃', on: 'opponent', delay: 120 },
+    burst: { kind: 'leaf', on: 'opponent', delay: 120 },
   },
   heavy: {
     action: 'volley',
@@ -157,7 +178,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { x: 10, scale: 1.15, duration: 90 },
       { duration: 240 },
     ],
-    burst: { emoji: '🌪️', on: 'opponent', delay: 340 },
+    burst: { kind: 'spin', on: 'opponent', delay: 340 },
   },
   // 腰のムチを抜いて、その場で回って敵全体を薙ぐ。
   sweep: {
@@ -167,7 +188,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { x: 14, scale: 1.05, duration: 360 },
       { duration: 200 },
     ],
-    burst: { emoji: '🌿', on: 'opponent', delay: 320 },
+    burst: { kind: 'leaf', on: 'opponent', delay: 320 },
   },
   // 腰のムチを抜いて、頭上を回して打ち据える。
   lash: {
@@ -178,7 +199,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { x: 14, duration: 120 },
       { duration: 160 },
     ],
-    burst: { emoji: '💫', on: 'opponent', delay: 290 },
+    burst: { kind: 'impact', on: 'opponent', delay: 290 },
   },
   guard: {
     action: 'hopBack',
@@ -187,7 +208,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { x: -18, duration: 100 },
       { duration: 180 },
     ],
-    burst: { emoji: '🌿', on: 'self', delay: 60 },
+    burst: { kind: 'leaf', on: 'self', delay: 60 },
   },
   empower: {
     action: 'raise',
@@ -196,7 +217,7 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { y: -10, scale: 1.18, rotate: -4, duration: 160 },
       { duration: 220 },
     ],
-    burst: { emoji: '🌸', on: 'self', delay: 120 },
+    burst: { kind: 'power', on: 'self', delay: 120 },
   },
   focus: {
     action: 'aim',
@@ -206,7 +227,91 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
       { y: -5, duration: 100 },
       { duration: 100 },
     ],
-    burst: { emoji: '🌱', on: 'opponent', delay: 120 },
+    burst: { kind: 'leaf', on: 'opponent', delay: 120 },
+  },
+  sacrifice: SWORDSMAN_MOTIONS.sacrifice,
+};
+
+/** 水鏡のノア: その場で札を払う。杖は持たず、唱える動きは占いの手つきとして使う。 */
+const MAGE_MOTIONS: Record<CardMotion, MotionPreset> = {
+  strike: {
+    action: 'cast',
+    keyframes: [
+      { x: -6, duration: 90 },
+      { x: 16, rotate: 4, duration: 120 },
+      { x: 16, rotate: 4, duration: 70 },
+      { duration: 160 },
+    ],
+    burst: { kind: 'water', on: 'opponent', delay: 200 },
+  },
+  flurry: {
+    action: 'cast',
+    keyframes: [
+      { x: -4, duration: 60 },
+      { x: 12, duration: 70 },
+      { x: 2, duration: 50 },
+      { x: 14, duration: 70 },
+      { x: 4, duration: 50 },
+      { x: 16, duration: 70 },
+      { duration: 140 },
+    ],
+    burst: { kind: 'water', on: 'opponent', delay: 140 },
+  },
+  heavy: {
+    action: 'cleave',
+    keyframes: [
+      { y: -18, scale: 1.08, rotate: -8, duration: 220 },
+      { x: 22, scale: 1.12, rotate: 8, duration: 120 },
+      { x: 18, duration: 100 },
+      { duration: 200 },
+    ],
+    burst: { kind: 'water', on: 'opponent', delay: 320 },
+  },
+  sweep: {
+    action: 'spin',
+    keyframes: [
+      { scale: 0.96, duration: 100 },
+      { x: 12, scale: 1.06, duration: 320 },
+      { duration: 180 },
+    ],
+    burst: { kind: 'water', on: 'opponent', delay: 280 },
+  },
+  lash: {
+    action: 'cast',
+    keyframes: [
+      { x: -6, duration: 90 },
+      { x: 16, duration: 120 },
+      { duration: 160 },
+    ],
+    burst: { kind: 'water', on: 'opponent', delay: 180 },
+  },
+  guard: {
+    action: 'guard',
+    keyframes: [
+      { x: -8, scale: 0.94, duration: 120 },
+      { x: -8, scale: 0.94, duration: 150 },
+      { duration: 170 },
+    ],
+    burst: { kind: 'guard', on: 'self', delay: 60 },
+  },
+  empower: {
+    action: 'raise',
+    keyframes: [
+      { y: -10, scale: 1.16, duration: 220 },
+      { y: -10, scale: 1.16, duration: 140 },
+      { duration: 200 },
+    ],
+    burst: { kind: 'water', on: 'self', delay: 120 },
+  },
+  focus: {
+    action: 'charge',
+    keyframes: [
+      { y: -8, duration: 150 },
+      { duration: 140 },
+      { y: -4, duration: 100 },
+      { duration: 100 },
+    ],
+    burst: { kind: 'water', on: 'opponent', delay: 100 },
   },
   sacrifice: SWORDSMAN_MOTIONS.sacrifice,
 };
@@ -215,7 +320,21 @@ const ARCHER_MOTIONS: Record<CardMotion, MotionPreset> = {
 const AGENT_MOTIONS: Record<string, Record<CardMotion, MotionPreset>> = {
   'crimson-hero': SWORDSMAN_MOTIONS,
   'verdant-archer': ARCHER_MOTIONS,
+  'mirror-seer': MAGE_MOTIONS,
 };
+
+/** キーフレームと、エフェクトが消えるまでの長い方。 */
+export function presetDuration(preset: MotionPreset): number {
+  const motion = preset.keyframes.reduce((sum, frame) => sum + frame.duration, 0);
+  const burst = preset.burst ? preset.burst.delay + MOTION.burst : 0;
+  return Math.max(motion, burst);
+}
+
+/** エージェントのカード動きの再生時間（ポーズを戻すタイミング用）。 */
+export function agentMotionDuration(agentId: string, motion: CardMotion): number {
+  const motions = AGENT_MOTIONS[agentId] ?? SWORDSMAN_MOTIONS;
+  return presetDuration(motions[motion]);
+}
 
 /** 敵の動き。攻撃は 1 発ごとに体当たりする。 */
 const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
@@ -232,7 +351,7 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
       { scale: 0.88, duration: 120 },
       { duration: 200 },
     ],
-    burst: { emoji: '🛡️', on: 'self', delay: 40 },
+    burst: { kind: 'guard', on: 'self', delay: 40 },
   },
   buff: {
     keyframes: [
@@ -240,35 +359,35 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
       { y: -10, scale: 1.25, duration: 100 },
       { duration: 220 },
     ],
-    burst: { emoji: '💢', on: 'self', delay: 100 },
+    burst: { kind: 'wince', on: 'self', delay: 100 },
   },
   heal: {
     keyframes: [
       { y: -6, scale: 1.1, duration: 200 },
       { duration: 220 },
     ],
-    burst: { emoji: '🍃', on: 'self', delay: 80 },
+    burst: { kind: 'leaf', on: 'self', delay: 80 },
   },
   paralyze: {
     keyframes: [
       { x: 16, scale: 1.05, duration: 120 },
       { duration: 200 },
     ],
-    burst: { emoji: '💫', on: 'opponent', delay: 120 },
+    burst: { kind: 'impact', on: 'opponent', delay: 120 },
   },
   chill: {
     keyframes: [
       { x: 16, scale: 1.05, duration: 120 },
       { duration: 200 },
     ],
-    burst: { emoji: '❄️', on: 'opponent', delay: 120 },
+    burst: { kind: 'guard', on: 'opponent', delay: 120 },
   },
   seal: {
     keyframes: [
       { x: 16, scale: 1.05, duration: 120 },
       { duration: 200 },
     ],
-    burst: { emoji: '🔒', on: 'opponent', delay: 120 },
+    burst: { kind: 'spark', on: 'opponent', delay: 120 },
   },
   charge: {
     keyframes: [
@@ -276,14 +395,14 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
       { scale: 1.15, duration: 200 },
       { duration: 200 },
     ],
-    burst: { emoji: '🔋', on: 'self', delay: 160 },
+    burst: { kind: 'power', on: 'self', delay: 160 },
   },
   debuff: {
     keyframes: [
       { x: 16, scale: 1.05, duration: 120 },
       { duration: 200 },
     ],
-    burst: { emoji: '🌀', on: 'opponent', delay: 120 },
+    burst: { kind: 'spin', on: 'opponent', delay: 120 },
   },
   addCard: {
     keyframes: [
@@ -291,7 +410,7 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
       { x: 20, rotate: 8, duration: 120 },
       { duration: 200 },
     ],
-    burst: { emoji: '🃏', on: 'opponent', delay: 160 },
+    burst: { kind: 'spark', on: 'opponent', delay: 160 },
   },
   intangible: {
     keyframes: [
@@ -299,7 +418,7 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
       { y: -6, scale: 1.05, duration: 200 },
       { duration: 240 },
     ],
-    burst: { emoji: '👻', on: 'self', delay: 120 },
+    burst: { kind: 'spark', on: 'self', delay: 120 },
   },
   shiftAttribute: {
     keyframes: [
@@ -307,7 +426,7 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
       { y: -14, scale: 1.2, duration: 120 },
       { duration: 220 },
     ],
-    burst: { emoji: '🚩', on: 'self', delay: 120 },
+    burst: { kind: 'power', on: 'self', delay: 120 },
   },
   idle: {
     keyframes: [
@@ -316,6 +435,11 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
     ],
   },
 };
+
+/** この敵の行動の絵が終わるまで。 */
+export function enemyActionDuration(action: EnemyAction['kind']): number {
+  return presetDuration(ENEMY_MOTIONS[action]);
+}
 
 /** 相手（プレイヤー）に向けて行う敵の行動。 */
 const TARGETS_PLAYER: ReadonlySet<EnemyAction['kind']> = new Set([
@@ -334,12 +458,46 @@ export type ActorMotionPlan = {
   preset: MotionPreset;
 };
 
+/** 敵の攻撃を受けたときののけぞり（2D 立ち絵向け）。 */
+export const PLAYER_FLINCH: MotionPreset = {
+  keyframes: [
+    { x: -28, rotate: -12, scale: 0.94, duration: 90 },
+    { x: -18, rotate: -6, duration: 80 },
+    { duration: 160 },
+  ],
+  burst: { kind: 'impact', on: 'self', delay: 40 },
+};
+
+/** ノアの性質カード。印が無いカードは、動き側に書いた水のエフェクトのまま。 */
+function burstKindForMark(mark: CardMark): VfxKind {
+  switch (mark) {
+    case 'ice':
+      return 'ice';
+    case 'drop':
+      return 'drop';
+    case 'mist':
+      return 'mist';
+  }
+}
+
 /** イベントから「誰が・誰に向けて・どう動くか」を決める。動きの無いイベントは null。 */
 export function motionForEvent(event: CombatEvent, agentId: string): ActorMotionPlan | null {
   switch (event.kind) {
     case 'cardPlayed': {
       const motions = AGENT_MOTIONS[agentId] ?? SWORDSMAN_MOTIONS;
-      return { actor: 'player', opponents: event.targets, preset: motions[event.motion] };
+      const base = motions[event.motion];
+      const preset =
+        agentId === 'mirror-seer' && event.mark
+          ? {
+              ...base,
+              burst: {
+                kind: burstKindForMark(event.mark),
+                on: base.burst?.on ?? (event.targets.length > 0 ? 'opponent' : 'self'),
+                delay: base.burst?.delay ?? 80,
+              },
+            }
+          : base;
+      return { actor: 'player', opponents: event.targets, preset };
     }
     case 'enemyAct':
       return {

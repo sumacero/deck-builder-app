@@ -1,6 +1,7 @@
 import type { Attribute } from '../domain/attribute';
 import type { BlessingDefinition } from '../domain/blessing';
-import type { Archetype, CardDefinition, CardGrowth, CardType } from '../domain/card';
+import type { Archetype, CardDefinition, CardGrowth, CardInstance, CardRarity, CardType } from '../domain/card';
+import type { PlayerState } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
 import type { EnemyAction, EnemyMove, EnemyRank, EnemyTrait } from '../domain/enemy';
 import type { EventOption } from '../domain/event';
@@ -10,6 +11,7 @@ import type { RelicCondition, RelicDefinition, RelicRarity } from '../domain/rel
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import type { DebuffId, PowerId, StatusId } from '../domain/status';
 import { ALL_ATTRIBUTES } from './attribute';
+import { type FuseAim, MARK_NAME, MAX_STACK, fuseBurst, handMultiplier, scaledEffects, stackMultiplier } from './marks';
 
 export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   enemy: '敵',
@@ -29,6 +31,9 @@ export const ARCHETYPE_LABEL: Record<Archetype, string> = {
   growth: '成長軸',
   element: '属性軸',
   tempo: '手数軸',
+  ice: '氷の印',
+  drop: '雫の印',
+  mist: '霞の印',
 };
 
 export const CARD_TYPE_LABEL: Record<CardType, string> = {
@@ -41,7 +46,7 @@ export const CARD_TYPE_LABEL: Record<CardType, string> = {
 function describeEffect(effect: Effect, target: EffectTarget): string {
   switch (effect.kind) {
     case 'damage': {
-      const whom = target === 'allEnemies' ? '敵全体に' : '';
+      const whom = (target === 'allEnemies' ? '敵全体に' : '') + (effect.pierce ? 'ブロック無視で ' : '');
       const scaling =
         effect.strengthMultiplier && effect.strengthMultiplier > 1 ? `筋力が ${effect.strengthMultiplier} 倍で乗る。` : '';
       return effect.hits && effect.hits > 1
@@ -90,6 +95,18 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体に、' : ''}この戦闘で廃棄した矢の数だけ、矢 1 本分のダメージを与える。`;
     case 'detonateSeed':
       return `${target === 'allEnemies' ? '敵全体に、' : ''}宿り木 × ${effect.perTurn} のダメージを与え、宿り木を消す。`;
+    case 'applyFrost':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}次の攻撃を 1 ヒットにつき ${effect.amount} 減らす（霜）。`;
+    case 'gainEvade':
+      return `このターン、敵の攻撃を ${effect.amount} 回かわす。`;
+    case 'stripStrength':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}筋力を ${effect.amount} 消す。`;
+    case 'cleanse':
+      return `自分の悪い効果を ${effect.count} つ消す。`;
+    case 'halveBlock':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}ブロックを半分にする。`;
+    case 'cutHits':
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}次の攻撃の回数を ${effect.amount} 減らす。`;
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -104,6 +121,24 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}宿り木を今すぐ発動させる（数値は減らない）。`;
     case 'damagePerCardPlayed':
       return `${effect.base} ダメージ。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
+    case 'damagePerSkillPlayed':
+      return `${effect.base} ダメージ。このターンに先に使ったスキル 1 枚につき +${effect.perCard}。`;
+    case 'damagePerAttackPlayed':
+      return `${effect.base} ダメージ。このターンに先に使ったアタック 1 枚につき +${effect.perCard}。`;
+    case 'damagePerDiscard':
+      return `${effect.base} ダメージ。このターンに捨てたカード 1 枚につき +${effect.perCard}。`;
+    case 'damagePerExhaust':
+      return `${effect.base} ダメージ。この戦闘で廃棄したカード 1 枚につき +${effect.perCard}。`;
+    case 'blockPerCardPlayed':
+      return `ブロック ${effect.base}。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
+    case 'discardFromHand':
+      return effect.choose
+        ? `手札から ${effect.amount} 枚を選んで捨てる。`
+        : `手札から ${effect.amount} 枚を無作為に捨てる。`;
+    case 'exhaustFromHand':
+      return effect.choose
+        ? `手札から ${effect.amount} 枚を選んで廃棄する。`
+        : `手札から ${effect.amount} 枚を無作為に廃棄する。`;
     case 'gainLashSeed':
       return `このターン、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${effect.amount} を与える。`;
   }
@@ -154,6 +189,12 @@ export const POWER_LABEL: Record<PowerId, string> = {
   arrowSpread: '散り矢の構え',
   arrowRetain: '矢筒の備え',
   arrowSupply: '無限の矢筒',
+  fuseEcho: '水面',
+  stackDepth: '深み',
+  momentum: '勢い',
+  scavenge: '拾い集め',
+  cinder: '燃え殻',
+  tidecall: '潮招き',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -191,6 +232,18 @@ export function describePower(power: PowerId, amount: number): string {
       return 'この戦闘中、ターン終了時に手札の矢を捨てずに残す。';
     case 'arrowSupply':
       return `この戦闘中、ターンの始めに矢 ${amount} 本を手札に加える。`;
+    case 'fuseEcho':
+      return `この戦闘中、札を重ねたときの効果がもう ${amount} 回発動する。`;
+    case 'stackDepth':
+      return `この戦闘中、重ねた札の倍率が +${amount} される。`;
+    case 'momentum':
+      return `この戦闘中、カードを使うたびにこのターンの筋力 ${amount} を得る。`;
+    case 'scavenge':
+      return `この戦闘中、効果で手札から捨てるたびに、捨てた枚数 × ${amount} 枚引く。`;
+    case 'cinder':
+      return `この戦闘中、カードが廃棄されるたびに HP が一番低い敵に ${amount} ダメージ。`;
+    case 'tidecall':
+      return `この戦闘中、ターンの始めにカードを ${amount} 枚多く引く。`;
   }
 }
 
@@ -236,6 +289,57 @@ export function describeCard(card: CardDefinition): string {
   return (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
 }
 
+/** 手札の札。段と深みが入った、いま使うと出る数字。 */
+export function describeHandCard(instance: CardInstance, player: PlayerState): string {
+  const multiplier = handMultiplier(instance, player);
+  if (multiplier === 1) return describeCard(instance.card);
+  return describeCard({ ...instance.card, effects: scaledEffects(instance.card, multiplier) });
+}
+
+const FUSE_AIM_TEXT: Record<FuseAim, string> = {
+  self: '',
+  block: 'ブロックがある敵の',
+  multiHit: '連続攻撃の敵の',
+};
+
+/** この札（stack 段）を別の札に重ねて消すときに起きること。 */
+export function describeFuseBurst(card: CardDefinition, stack: number): string {
+  const burst = fuseBurst(card, stack);
+  if (!burst) return '';
+  const aim = FUSE_AIM_TEXT[burst.aim];
+  return burst.effects
+    .map((effect) => {
+      if (effect.kind === 'gainPower' && effect.power === 'thorns') {
+        return `棘 ${effect.amount} を得る（敵の攻撃を受けるとその敵に同ダメージ。戦闘中ずっと）。`;
+      }
+      if (effect.kind === 'halveBlock') {
+        return 'ブロックがある敵を選び、そのブロックを半分にする（無ければ効果なし）。';
+      }
+      if (effect.kind === 'cutHits') {
+        return `連続攻撃の敵を選び、次の攻撃回数を ${effect.amount} 減らす（いなければ効果なし）。`;
+      }
+      return aim + describeEffect(effect, 'self').replace(/^敵の/, '');
+    })
+    .join('');
+}
+
+export type MarkPreviewLine = { label: string; text: string };
+
+/** 報酬の印チップ。この札の段ごとの数字と、重ねて消えるときの効果。深みは戦闘に入る前なので含めない。 */
+export function markPreviewLines(card: CardDefinition): MarkPreviewLine[] {
+  if (!card.mark) return [];
+  const atStack = (stack: number) => {
+    const multiplier = stackMultiplier(stack, 0);
+    return { label: `${stack} 段（×${multiplier}）`, text: describeCard({ ...card, effects: scaledEffects(card, multiplier) }) };
+  };
+  return [
+    { label: 'そのまま', text: describeCard(card) },
+    atStack(2),
+    atStack(MAX_STACK),
+    { label: `重ねて消えるとき（${MARK_NAME[card.mark]}）`, text: describeFuseBurst(card, 1) },
+  ];
+}
+
 export function describePotion(potion: PotionDefinition): string {
   return describeEffects(potion.effects, potion.target);
 }
@@ -259,6 +363,8 @@ function relicTiming(relic: RelicDefinition): string {
       return condition ? `ターン終了時に${condition}、` : 'ターン終了時、';
     case 'combatWon':
       return '戦闘に勝利したとき、';
+    case 'firstFuse':
+      return '毎ターン最初に札を重ねたとき、';
     case undefined:
       return '';
   }
@@ -272,6 +378,12 @@ export function describeRelic(relic: RelicDefinition): string {
   const passive = (relic.onObtain ?? []).map((effect) => `${describeRunEffect(effect)}。`).join('');
   return triggered + passive;
 }
+
+export const CARD_RARITY_LABEL: Record<CardRarity, string> = {
+  common: 'コモン',
+  uncommon: 'アンコモン',
+  rare: 'レア',
+};
 
 export const RELIC_RARITY_LABEL: Record<RelicRarity, string> = {
   starter: '初期',
@@ -421,6 +533,8 @@ export function describeRunEffect(effect: RunEffect): string {
       return `毎ターン引く枚数 ${signed(effect.amount)}`;
     case 'fuseCards':
       return `${effect.from.name} ${effect.count} 枚を融合し「${effect.into.name}」にする（コスト ${effect.into.cost}：${describeCard(effect.into)}）`;
+    case 'lockMark':
+      return `これからの報酬を${MARK_NAME[effect.mark]}の印か、印の無いカードに絞る`;
   }
 }
 
@@ -440,11 +554,12 @@ function isNegative(effect: RunEffect): boolean {
   }
 }
 
-const RUN_CHOICE_TEXT: Record<RunChoice, string> = {
-  upgradeCard: 'カードを 1 枚選んで強化',
-  removeCard: 'カードを 1 枚選んで削除',
-  pickCard: '3 枚から 1 枚を選んでデッキに加える',
-};
+function describeRunChoice(choice: RunChoice): string {
+  if (choice === 'upgradeCard') return 'カードを 1 枚選んで強化';
+  if (choice === 'removeCard') return 'カードを 1 枚選んで削除';
+  if (choice === 'pickCard') return '3 枚から 1 枚を選んでデッキに加える';
+  return `カードを 1 枚選んで${MARK_NAME[choice.mark]}の印にする`;
+}
 
 export type EffectLine = { text: string; negative: boolean };
 
@@ -464,7 +579,7 @@ export function describeRunEffects(
     text: count > 1 ? `${text} ×${count}` : text,
     negative,
   }));
-  return choice ? [...lines, { text: RUN_CHOICE_TEXT[choice], negative: false }] : lines;
+  return choice ? [...lines, { text: describeRunChoice(choice), negative: false }] : lines;
 }
 
 export const describeBlessing = (blessing: BlessingDefinition): EffectLine[] =>

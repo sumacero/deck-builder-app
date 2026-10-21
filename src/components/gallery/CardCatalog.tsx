@@ -15,7 +15,9 @@ export function CardCatalog() {
   return (
     <View style={styles.root}>
       <View style={styles.toolbar}>
-        <Text style={styles.hint}>タップで詳しく見る</Text>
+        <Text style={styles.hint}>
+          全 {cards.length} 枚 · タップで詳しく見る
+        </Text>
         <Pressable
           onPress={() => setUpgraded(!upgraded)}
           style={({ pressed }) => [styles.toggle, upgraded && styles.toggleOn, pressed && styles.pressed]}
@@ -25,7 +27,11 @@ export function CardCatalog() {
           </Text>
         </Pressable>
       </View>
-      <ScrollView contentContainerStyle={styles.grid}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.grid}
+        nestedScrollEnabled
+      >
         {cards.map((card) => (
           <CardView
             key={card.id}
@@ -41,9 +47,11 @@ export function CardCatalog() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, gap: SPACING.sm },
-  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  hint: { color: COLORS.textMuted, fontSize: 12 },
+  root: { flex: 1, minHeight: 0, gap: SPACING.sm },
+  /** 親が flex:1 のとき高さ 0 に潰れてカードが消えないよう伸ばす（Web は minHeight:0 が必要）。 */
+  scroll: { flex: 1, minHeight: 0 },
+  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
+  hint: { color: COLORS.textMuted, fontSize: 12, flexShrink: 1 },
   toggle: {
     borderWidth: 1,
     borderColor: COLORS.upgraded,
@@ -60,6 +68,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.md,
     paddingVertical: SPACING.md,
+    flexGrow: 1,
   },
   pressed: { opacity: 0.7 },
 });

@@ -1,5 +1,5 @@
 import type { Attribute } from './domain/attribute';
-import type { CardType } from './domain/card';
+import type { CardMark, CardType } from './domain/card';
 import type { MapNodeType } from './domain/map';
 import type { RelicRarity } from './domain/relic';
 
@@ -39,10 +39,11 @@ export const COLORS = {
   hpTrail: '#F5DFA0',
   /** 強化済みカードの名前。 */
   upgraded: '#6EE09A',
-  /** 背景画像の上に重ねて少し落ち着かせ、UI を読みやすくする。 */
-  sceneShade: 'rgba(10, 14, 30, 0.35)',
+  /** 背景のごく薄い紺ヴェール。Style B ではぼかし無しなので、文字可読性用だけ残す。 */
+  sceneShade: 'rgba(30, 42, 72, 0.12)',
   /** 背景画像が透けて見えるパネル。 */
   panelTranslucent: 'rgba(30, 39, 66, 0.86)',
+
   textOutline: '#0A0E1C',
   /** 強化の瞬間の閃光。 */
   flash: '#FFF4D6',
@@ -123,6 +124,8 @@ export const MOTION = {
   resultExtraDelay: 600,
   /** 斬撃・盾などのエフェクト絵文字が出て消えるまで。 */
   burst: 600,
+  /** プレイヤー立ち絵の待機上下揺れ（片道）。 */
+  portraitIdle: 900,
   /** タイトルのゲーム名が浮かび上がる時間と、開始ボタンが一回ふくらむ（しぼむ）時間。 */
   titleFadeIn: 1200,
   titlePulse: 1100,
@@ -158,6 +161,21 @@ export const MOTION = {
   goldDelta: 1100,
   /** 秘奥義のカットインを見せる時間（この間、後続の演出は待つ）。 */
   arteCutIn: 1400,
+  /** 手札の印が、結ばれる相手へ波紋を送る周期。摘んでいる間は短くする。 */
+  ripplePulse: 1500,
+  ripplePulseHot: 780,
+  /** 融合した瞬間に、消えた札の位置から波紋が広がる時間。 */
+  rippleBurst: 720,
+  /** 手札で重ねたとき、下の札が水に溶けて引き込まれるまで。 */
+  fuseReveal: 1000,
+  /** 山札・捨て札・廃棄札へ札が移動する時間。 */
+  pileFly: 480,
+  /** 同じ操作で複数枚が動くとき、1 枚ずつずらす間隔。 */
+  pileStagger: 64,
+  /** 手札を離れる札がある操作では、山札からの補充を少し遅らせて、減ってから増える順に見せる。 */
+  pileArriveLead: 220,
+  /** 融合で溶けた札が、廃棄札へ向かい始めるまで。溶け込みを見せてから飛ばす。 */
+  pileFuseLeave: 380,
 } as const;
 
 export const CARD_TYPE_COLORS: Record<CardType, string> = {
@@ -172,6 +190,13 @@ export const ATTRIBUTE_COLORS: Record<Attribute, string> = {
   grass: '#4CC96A',
   fire: '#FF7A2B',
   water: '#2FB8E8',
+};
+
+/** 印の波紋。雨は明るい雫、波は深い海、氷は白い氷。水属性の枠より明るく、または深くして見分ける。 */
+export const MARK_COLORS: Record<CardMark, string> = {
+  ice: '#DFF6FF',
+  drop: '#3D8BFF',
+  mist: '#C9B8F0',
 };
 
 /** 属性カードの本文の背景にうっすら敷く色の不透明度（16 進 2 桁）。 */
@@ -195,13 +220,14 @@ export const RADIUS = {
 
 /** 戦闘画面のキャラクター（3D 表示）。size は描画領域の一辺、duration はミリ秒。 */
 export const ACTOR_FIGURE = {
-  size: 128,
-  /** エージェント選択画面の 3D の一辺。 */
+  /** 戦闘での体の高さ上限（プレイヤーは切り紙立ち絵、敵は 3D）。 */
+  size: 256,
+  /** エージェント選択画面の立ち絵の高さ。 */
   selectSize: 112,
   /** ラスボス戦の前の画面に立つ、ラスボスの 3D の一辺。 */
   finaleSize: 176,
-  /** 敵が多い・画面が低いときに縮めても、これより小さくはしない。 */
-  minSize: 48,
+  /** 戦闘での下限（以前の標準サイズ前後。これより小さくしない）。 */
+  minSize: 112,
   /** サイズはこの刻みに丸める（わずかなレイアウトの揺れで 3D を作り直さないため）。 */
   step: 8,
   /** 行動したときに相手の方へ体を傾ける時間。 */
@@ -229,16 +255,26 @@ export const ACTOR_FIGURE = {
  * 敵が compactEnemyCount 体以上いるときと横向きのときは、文字を小さくした詰めた表示にする。
  */
 export const COMBAT_LAYOUT = {
-  enemyChrome: 130,
-  compactEnemyChrome: 108,
-  /** 自分の 3D 以外（名前・状態・HP・秘奥義ゲージ・余白）の高さ。足りないと下のエナジー欄に重なる。 */
-  playerChrome: 128,
+  /**
+   * サイズ計算用の「絵以外」の高さ。小さく見積もると 3D が大きくなり、名前・HP の下に体が重なる。
+   * 見た目の余白はパネル側で確保する。
+   */
+  enemyChrome: 48,
+  compactEnemyChrome: 40,
+  /** 自分のサイズ計算用。名前・HP・ゲージは絵の手前に重ねる。 */
+  playerChrome: 48,
   /** パネルの枠線と内側の余白の合計（左右）。 */
-  panelInset: 12,
+  panelInset: 8,
+  /**
+   * 群れ戦で隣の枠からはみ出してよい倍率（1 = 枠内のみ）。
+   * 体どうし・HP との重なりを許して、3 体戦でも下限に張り付かないようにする。
+   */
+  enemyWidthOverflow: 1.6,
   compactEnemyCount: 3,
-  /** 縦向きで敵が 1 体のとき・自分の、舞台の幅に対する割合。 */
-  soloEnemyWidthRatio: 0.6,
-  playerWidthRatio: 0.6,
+  /** 縦向きで敵が 1 体のとき、舞台の幅に対する割合。 */
+  soloEnemyWidthRatio: 0.78,
+  /** 縦向きの自分の 3D サイズ用（判定は画面下を横いっぱいに使う）。 */
+  playerWidthRatio: 0.85,
   /** 横向きの左の列（所持品・自分・エナジー）の幅の割合。 */
   landscapeSideRatio: 0.27,
   /** 横向きのとき、手札のカードの高さを画面の高さのこの割合までにする。 */
@@ -265,6 +301,8 @@ export const HAND_LAYOUT = {
   topPadding: SPACING.sm,
   /** カードの縦横比（高さ / 幅）。 */
   aspectRatio: 1.375,
+  /** 重ねるあいだ、持ち上げたカードの上に出す説明の幅。指で隠れないよう、カードより広くする。 */
+  stackForecastWidth: 220,
 } as const;
 
 /** カードの上半分に置くイラスト枠。 */

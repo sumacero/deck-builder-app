@@ -1,4 +1,4 @@
-import type { CardDefinition } from './card';
+import type { CardDefinition, CardMark } from './card';
 import type { RelicTier } from './relic';
 
 /**
@@ -25,7 +25,9 @@ export type RunEffect =
   /** 毎ターン引く枚数。負の値で減る。 */
   | { kind: 'changeDrawPerTurn'; amount: number }
   /** from（強化後も含む）を count 枚取り除き、into を 1 枚加える。素材に強化済みがあれば into も強化済み。 */
-  | { kind: 'fuseCards'; from: CardDefinition; count: number; into: CardDefinition };
+  | { kind: 'fuseCards'; from: CardDefinition; count: number; into: CardDefinition }
+  /** これからの報酬を、この印か印の無いカードだけにする。 */
+  | { kind: 'lockMark'; mark: CardMark };
 
-/** 効果のあとにプレイヤーがカードを選ぶ。 */
-export type RunChoice = 'upgradeCard' | 'removeCard' | 'pickCard';
+/** 効果のあとにプレイヤーがカードを選ぶ。印の書き換えは、どの印にするかまで含む。 */
+export type RunChoice = 'upgradeCard' | 'removeCard' | 'pickCard' | { kind: 'remarkCard'; mark: CardMark };

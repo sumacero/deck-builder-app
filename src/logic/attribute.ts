@@ -1,3 +1,4 @@
+import type { Region } from '../domain/act';
 import type { AgentDefinition } from '../domain/agent';
 import type { Attribute } from '../domain/attribute';
 import type { CardDefinition } from '../domain/card';
@@ -9,6 +10,20 @@ export const STRONG_AGAINST: Record<Attribute, Attribute> = {
   grass: 'water',
   water: 'fire',
   fire: 'grass',
+};
+
+/** 地域の主属性。歯車塔は無属性（相性なし）。 */
+export const REGION_ATTRIBUTE: Record<Region, Attribute | null> = {
+  volcano: 'fire',
+  grassland: 'grass',
+  sunkenCity: 'water',
+  clockwork: null,
+};
+
+/** その地域の敵属性がプレイヤー属性に強いか（1 章で避ける不利マップ判定用）。 */
+export const regionDisadvantagesPlayer = (region: Region, player: Attribute): boolean => {
+  const regionAttr = REGION_ATTRIBUTE[region];
+  return regionAttr != null && STRONG_AGAINST[regionAttr] === player;
 };
 
 /** 相性で有利な攻撃のダメージ倍率（あなたの攻撃でも敵の攻撃でも同じ）。 */
