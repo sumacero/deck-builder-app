@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { fieldMusicFor } from '../../audio/music';
 import { prepareSounds } from '../../audio/soundPlayer';
 import { useMusic } from '../../hooks/useMusic';
-import type { RunSetup } from '../../domain/run';
+import type { RunSetup, RunState } from '../../domain/run';
 import { useRun } from '../../hooks/useRun';
 import { buildCombatSetup, currentAct } from '../../logic/run';
 import { BlessingScreen } from '../blessing/BlessingScreen';
@@ -26,7 +26,9 @@ import { RunEventLayer } from './effects/RunEventLayer';
 type RunRootProps = {
   /** 選んだエージェントのラン設定。「新しいラン」も同じエージェントで始める。 */
   setup: RunSetup;
-  /** タイトルに戻る。途中であきらめても、ランの終わりからでも。戻るとこのランは消える。 */
+  /** 端末に残っていたラン。あるときは、この状態から再開する。 */
+  initialRun?: RunState;
+  /** タイトルに戻る。途中であきらめても、ランの終わりからでも。戻るとセーブは消える。 */
   onExitToTitle: () => void;
 };
 
@@ -35,7 +37,7 @@ type RunRootProps = {
  * 画面が変わるたびに暗転から明け、回復・強化などの演出はどの画面の上にも重ねて出す。
  * 演出と画面の切り替わりが重なるときは、演出が終わってから次の画面と BGM に進む。
  */
-export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
+export function RunRoot({ setup, initialRun, onExitToTitle }: RunRootProps) {
   const {
     run,
     events,
@@ -53,7 +55,7 @@ export function RunRoot({ setup, onExitToTitle }: RunRootProps) {
     shopActions,
     eventActions,
     treasureActions,
-  } = useRun(setup);
+  } = useRun(setup, initialRun);
 
   // 新しいランでは、所持金の数え上げなどの記憶を捨てる。
   const [runCount, setRunCount] = useState(0);

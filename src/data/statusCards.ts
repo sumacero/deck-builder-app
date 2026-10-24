@@ -52,4 +52,34 @@ export const SCRAP: CardDefinition = {
   unplayable: true,
 };
 
-export const STATUS_CARDS: CardDefinition[] = [BURN, TANGLING_VINE, ICE_SHARD, SCRAP];
+/**
+ * 呪い。出来事でデッキに入り、戦闘が終わっても残る。
+ * お邪魔カード（敵がその戦闘だけ混ぜるもの）とは違い、ショップや出来事で削除するまで山札に混ざる。
+ */
+export const DOUBT: CardDefinition = {
+  id: 'doubt',
+  name: '迷い',
+  rarity: 'common',
+  type: 'status',
+  cost: 0,
+  target: 'self',
+  effects: [],
+  unplayable: true,
+  curse: true,
+};
+
+/** 迷いより重い。手札に残したターンの終わりに、体力を削る。 */
+export const HEX: CardDefinition = {
+  id: 'hex',
+  name: '呪詛',
+  rarity: 'common',
+  type: 'status',
+  cost: 0,
+  target: 'self',
+  effects: [],
+  unplayable: true,
+  curse: true,
+  turnEndInHand: [{ kind: 'loseHp', amount: 2 }],
+};
+
+export const STATUS_CARDS: CardDefinition[] = [BURN, TANGLING_VINE, ICE_SHARD, SCRAP, DOUBT, HEX];

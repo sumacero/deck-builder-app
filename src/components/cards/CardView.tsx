@@ -190,7 +190,7 @@ export function CardView({
           ]}
         >
           <Text style={[styles.type, scaled?.type, { color: typeColor }]} numberOfLines={1}>
-            {CARD_TYPE_LABEL[card.type]}
+            {card.curse ? '呪い' : CARD_TYPE_LABEL[card.type]}
             {attributes.length > 0 && !narrow && (
               <Text style={[styles.attribute, attributeColor !== undefined && { color: attributeColor }]}>
                 {' '}

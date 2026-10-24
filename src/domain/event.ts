@@ -19,4 +19,9 @@ export type EventDefinition = {
   icon: string;
   text: string;
   options: EventOption[];
+  /**
+   * 出る章（1 始まり）。省略すると全章。
+   * 同じランでも、章が変わると候補が入れ替わる。
+   */
+  chapters?: readonly number[];
 };

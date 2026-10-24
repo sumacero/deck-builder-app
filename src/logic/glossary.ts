@@ -131,7 +131,7 @@ const unique = (ids: KeywordId[]): KeywordId[] => [...new Set(ids)];
 /** カードの説明文に出てくる用語。種類 → 効果の順 → 廃棄などの特性。 */
 export function keywordsForCard(card: CardDefinition): KeywordId[] {
   return unique([
-    card.type,
+    card.curse ? 'curse' : card.type,
     ...(card.mysticArte ? (['mysticArte'] as const) : []),
     ...(card.whip ? (['whip'] as const) : []),
     ...(card.arrow ? (['arrow'] as const) : []),

@@ -88,6 +88,11 @@ export type CardDefinition = {
   motion?: CardMotion;
   /** 使用できない。 */
   unplayable?: boolean;
+  /**
+   * 呪い。デッキに残り、毎戦闘の山札に入る。戦闘が終わっても消えない。
+   * ショップや出来事の削除でだけ抜ける。
+   */
+  curse?: boolean;
   /** ターン終了時に手札にあると廃棄される。 */
   ethereal?: boolean;
   /** ターン終了時に手札にあるとかかる効果。 */

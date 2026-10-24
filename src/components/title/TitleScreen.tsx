@@ -15,6 +15,9 @@ import { ScreenScroll } from '../layout/ScreenScroll';
 
 type TitleScreenProps = {
   onStart: () => void;
+  /** 端末にランが残っているときだけ渡す。 */
+  continueLabel?: string;
+  onContinue?: () => void;
 };
 
 /** タイトルの背景は水の古都の景色。 */
@@ -28,7 +31,7 @@ const TITLE_CAST: Record<TitleMusicId, AgentDefinition> = {
 };
 
 /** 起動直後の画面。ゲーム名が浮かび上がり、「冒険を始める」が呼吸するように光る。 */
-export function TitleScreen({ onStart }: TitleScreenProps) {
+export function TitleScreen({ onStart, continueLabel, onContinue }: TitleScreenProps) {
   const [appear] = useState(() => new Animated.Value(0));
   const [glow] = useState(() => new Animated.Value(0));
   // 起動のたびに 3 キャラのうち 1 人（曲も同じ人）。再描画では変えない。
@@ -74,6 +77,14 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
         <AgentPortrait agentId={agent.id} icon={agent.icon} size={ACTOR_FIGURE.size} />
 
         <Animated.View style={[styles.menu, { opacity: appear }]}>
+          {onContinue && continueLabel && (
+            <Pressable
+              onPress={onContinue}
+              style={({ pressed }) => [styles.continueRun, pressed && styles.pressed]}
+            >
+              <Text style={styles.continueText}>{continueLabel}</Text>
+            </Pressable>
+          )}
           <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
             <Pressable
               onPress={onStart}
@@ -82,6 +93,9 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               <Text style={styles.startText}>冒険を始める</Text>
             </Pressable>
           </Animated.View>
+          {onContinue && (
+            <Text style={styles.note}>新しい冒険を始めると、今の続きは消えます。</Text>
+          )}
           <GalleryButton large />
           <SettingsButton large />
         </Animated.View>
@@ -110,6 +124,15 @@ const styles = StyleSheet.create({
   },
   rule: { width: 160, height: 2, backgroundColor: COLORS.gold, opacity: 0.6 },
   menu: { alignItems: 'center', gap: SPACING.md },
+  continueRun: {
+    backgroundColor: COLORS.panel,
+    borderColor: COLORS.gold,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+  },
+  continueText: { color: COLORS.gold, fontSize: 15, fontWeight: '800', textAlign: 'center' },
   start: {
     backgroundColor: COLORS.gold,
     borderRadius: RADIUS.md,
@@ -117,5 +140,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl * 2,
   },
   startText: { color: COLORS.onGold, fontSize: 18, fontWeight: '900', letterSpacing: 4 },
+  note: { color: COLORS.textMuted, fontSize: 12, textAlign: 'center' },
   pressed: { opacity: 0.7 },
 });

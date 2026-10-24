@@ -25,6 +25,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '💢',
     description: '敵に捨て札へ混ぜられるカード。手札を圧迫する。この戦闘が終わるとデッキから消える。',
   },
+  curse: {
+    id: 'curse',
+    name: '呪い',
+    icon: '🕯️',
+    description:
+      '出来事でデッキに入る悪いカード。毎戦闘の山札に混ざり、戦闘が終わっても残る。ショップや出来事で削除できる。',
+  },
   unplayable: {
     id: 'unplayable',
     name: '使用不可',

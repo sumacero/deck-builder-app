@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import type { CardDefinition, CardMark } from '../domain/card';
-import type { CombatResult, RunSetup } from '../domain/run';
+import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { createRun } from '../logic/run';
 import { createRunStore, runStoreReducer } from '../logic/runEvents';
+import { saveRun } from '../services/runStorage';
 
 const createSeed = () => Math.floor(Math.random() * 2 ** 31);
 
@@ -11,10 +12,17 @@ const createSeed = () => Math.floor(Math.random() * 2 ** 31);
  * 回復・強化などの出来事は events に順番に積まれ、演出が終わったら dismissEvent で消す。
  * その出来事が画面の切り替わりと重なるときは、shown に前の画面を残す。
  */
-export function useRun(setup: RunSetup) {
-  const [{ run, events, shown }, dispatch] = useReducer(runStoreReducer, setup, (s) =>
-    createRunStore(createRun(s, createSeed())),
+export function useRun(setup: RunSetup, initial?: RunState) {
+  const [{ run, events, shown }, dispatch] = useReducer(
+    runStoreReducer,
+    { setup, initial },
+    ({ setup: nextSetup, initial: saved }) => createRunStore(saved ?? createRun(nextSetup, createSeed())),
   );
+
+  // アプリを閉じても続きから入れるよう、画面が変わるたびに端末へ書く。
+  useEffect(() => {
+    saveRun(run);
+  }, [run]);
 
   const dismissEvent = useCallback((id: number) => dispatch({ type: 'dismissEvent', id }), []);
   const moveTo = useCallback((nodeId: string) => dispatch({ type: 'moveTo', nodeId }), []);

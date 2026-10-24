@@ -4,6 +4,7 @@ export type KeywordId =
   | 'skill'
   | 'power'
   | 'status'
+  | 'curse'
   | 'unplayable'
   | 'ethereal'
   | 'damage'
