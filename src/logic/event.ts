@@ -1,13 +1,22 @@
-import type { EventOption } from '../domain/event';
+import type { EventDefinition, EventOption } from '../domain/event';
 import type { RunState } from '../domain/run';
 import { startRandomCombat } from './encounter';
 import { pickOne } from './random';
 import { applyEffectsThenChoice, canApplyRunEffect, canMakeChoice } from './runEffects';
 
+/** 今の章に出る出来事。chapters が無いものは全章。 */
+export function eventsForAct(run: RunState): EventDefinition[] {
+  const chapter = run.actIndex + 1;
+  return run.eventPool.filter(
+    (event) => event.chapters === undefined || event.chapters.includes(chapter),
+  );
+}
+
 /** 「？」マスに入ったときのイベントを決める。まだ起きていないものを優先する。 */
 export function startEvent(run: RunState): RunState {
-  const unseen = run.eventPool.filter((event) => !run.seenEventIds.includes(event.id));
-  const picked = pickOne(unseen.length > 0 ? unseen : run.eventPool, run.rngSeed);
+  const pool = eventsForAct(run);
+  const unseen = pool.filter((event) => !run.seenEventIds.includes(event.id));
+  const picked = pickOne(unseen.length > 0 ? unseen : pool, run.rngSeed);
   if (!picked.item) return { ...run, rngSeed: picked.seed, phase: { kind: 'map' } };
   return {
     ...run,

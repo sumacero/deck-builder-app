@@ -21,7 +21,7 @@ export const VERDANT_ARCHER: AgentDefinition = {
   icon: '🌿',
   title: '弓とムチの森の狩人',
   playStyle:
-    '宿り木の種で毎ターンじわじわ削るのが基本。腰のムチで打つたびに宿り木を植え、弓は 0 コストの矢を次々に作って放つ。ブロックは蔦・年輪・葉・鞭で受け、攻めながら壁を足す。',
+    '宿り木の種で毎ターンじわじわ削るのが基本。腰のムチで打つたびに宿り木を植え、弓は 0 コストの矢を次々に作って放つ。ブロックは樹皮と茨で受け、根の打ち据えで壁を攻撃に変える。',
   attribute: 'grass',
   mysticArte: THOUSAND_YEAR_TREE,
 };

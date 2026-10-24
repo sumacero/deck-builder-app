@@ -15,7 +15,7 @@ import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
  * 報酬に出るカードは「共通の無属性カード」+「そのキャラの属性のカード」。
  * 無属性は 3 人とも同じ集合（2026-10-21。剣・盾は火属性。強打・剛腕撃・粉砕撃・力みは共通）。
  * 2026-10-07 時点では各 38 種、共通 8 種。2026-10-08 にブロックを足した。
- * リーネのブロックは蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ。
+ * リーネのブロックは蔦の受け・年輪の盾・葉の番え・鞭の牽制・樹皮の衣・茨返し・根の打ち据え。
  * 2026-10-10 のノアは印のカード。波はブロック軸ではなく波の印なので、盾のフィルタには掛からない。
  * エージェントと違う属性のカードは報酬に出ず、ショップでだけ買える（`isDraftable`）ので、候補には入れておく。
  */
@@ -60,7 +60,8 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
 
 /**
- * リーネのブロック軸。盾のカードは出さず、この 4 種だけ報酬とショップに出す。
+ * リーネのブロック軸。盾のカードは出さず、狩人の守りだけ報酬とショップに出す。
+ * 樹皮の衣は厚いブロック、茨返しは受けた攻撃を返し、根の打ち据えはブロックをダメージに変える。
  * 以前の茨の鎧・茨の垣根・命の芽吹き・大樹の加護・世界樹の種は、ここに無いので出さない。
  */
 const HUNTER_BLOCK_CARD_IDS: ReadonlySet<string> = new Set([
@@ -68,6 +69,9 @@ const HUNTER_BLOCK_CARD_IDS: ReadonlySet<string> = new Set([
   'ring-shield',
   'leaf-nock',
   'whip-check',
+  'bark-mail',
+  'thorn-return',
+  'root-slam',
 ]);
 
 /**
@@ -93,7 +97,7 @@ const HUNTER_EXCLUDED_CARD_IDS: ReadonlySet<string> = new Set([
 
 /**
  * リーネの候補: 属性カード（草は報酬、火・水はショップ限定）と、共通の無属性カードだけ。
- * ブロック軸は、狩人の 4 種（蔦の受け・年輪の盾・葉の番え・鞭の牽制）だけ出す。カイルの盾や以前の茨の守りは出さない。
+ * ブロック軸は、狩人の 7 種だけ出す。カイルの盾や以前の茨の守りは出さない。
  */
 const HUNTER_REWARD_CARDS = [
   ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),

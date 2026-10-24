@@ -1,11 +1,14 @@
 import type { EventDefinition } from '../domain/event';
 import { DEFEND, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
-import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
+import { BURN, DOUBT, HEX, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
 const LEAVE = { id: 'leave', label: '立ち去る', effects: [], outcome: 'あなたは先を急いだ。' };
 
-/** 「？」マスのイベント。1 ランの中では、候補が残っている間は同じものが出ない。 */
-export const STANDARD_EVENTS: EventDefinition[] = [
+/**
+ * 「？」マスの出来事。1 ランの中では、その章の候補が残っている間は同じものが出ない。
+ * chapters が無いものは全章。あるものは、その章だけで出る。
+ */
+const EVENT_LIST: EventDefinition[] = [
   {
     id: 'old-shrine',
     title: '古の祠',
@@ -436,6 +439,192 @@ export const STANDARD_EVENTS: EventDefinition[] = [
     ],
   },
 ];
+
+/** 章が進むほど代償が重くなる出来事。呪い札はデッキに残り、削除するまで山札に混ざる。 */
+const CHAPTER_EVENTS: EventDefinition[] = [
+  {
+    id: 'wayside-fortune',
+    title: '道端の占い',
+    icon: '🌙',
+    chapters: [1],
+    text: '路傍で、占い師が札を並べている。「凶と吉、どちらを引きますか」',
+    options: [
+      {
+        id: 'blessing',
+        label: '吉を引く',
+        effects: [{ kind: 'heal', amount: 12 }],
+        outcome: '札は穏やかな絵だった。肩の力が抜けていく。',
+      },
+      {
+        id: 'omen',
+        label: '凶を引き受け、金貨を受け取る',
+        effects: [
+          { kind: 'addCard', card: DOUBT },
+          { kind: 'gainGold', amount: 70 },
+        ],
+        outcome: '札の絵が胸に張りついた。代わりに、暖かい金貨の袋が渡された。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'roadside-stone',
+    title: '路傍の石碑',
+    icon: '🪨',
+    chapters: [1],
+    text: '苔むした石碑に、旅人の誓いが刻まれている。触れると、石がわずかに温かい。',
+    options: [
+      {
+        id: 'offer',
+        label: '金貨を供えて技を磨く',
+        effects: [{ kind: 'loseGold', amount: 25 }],
+        choice: 'upgradeCard',
+        outcome: '石碑の文字が一度光り、技の輪郭がくっきりした。',
+      },
+      {
+        id: 'vow',
+        label: '迷いを誓い、生命を得る',
+        effects: [
+          { kind: 'addCard', card: DOUBT },
+          { kind: 'gainMaxHp', amount: 6 },
+        ],
+        outcome: '誓いの言葉が胸に残り、体の底に静かな力が宿った。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'sealed-reliquary',
+    title: '封じの聖櫃',
+    icon: '📦',
+    chapters: [2],
+    text: '道の中央に、鎖で巻かれた小さな聖櫃がある。隙から、冷たい光が漏れている。',
+    options: [
+      {
+        id: 'break',
+        label: '封を破って中を取る',
+        effects: [
+          { kind: 'gainRelic', tier: 'uncommon' },
+          { kind: 'addCard', card: HEX },
+        ],
+        outcome: '光とともに宝が転がり出た。指先に、黒い文字が残っている。',
+      },
+      {
+        id: 'buy',
+        label: '金貨で、封を解かずに買う',
+        effects: [
+          { kind: 'loseGold', amount: 70 },
+          { kind: 'gainRelic' },
+        ],
+        outcome: '鎖は解けなかった。櫃の脇に置かれた宝だけを、静かに受け取った。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'abandoned-banner',
+    title: '捨てられた陣幕',
+    icon: '🚩',
+    chapters: [2],
+    text: '風に鳴る陣幕の下に、武具と、読みかけの戦術書が残されている。',
+    options: [
+      {
+        id: 'arm',
+        label: '武具を受け取り、迷いも抱える',
+        effects: [{ kind: 'addCard', card: DOUBT }],
+        choice: 'pickCard',
+        outcome: '新しい技を得たが、陣幕の影が頭から離れない。',
+      },
+      {
+        id: 'rest',
+        label: '幕の陰で休む',
+        effects: [{ kind: 'heal', amount: 18 }],
+        outcome: '風の音を聞きながら、傷を休めた。',
+      },
+      LEAVE,
+    ],
+  },
+  {
+    id: 'abyss-whisper',
+    title: '深淵の囁き',
+    icon: '🌑',
+    chapters: [3],
+    text: '足元の割れ目から、名前を呼ぶ声がする。耳を貸すと、次の一手が見える気がした。',
+    options: [
+      {
+        id: 'listen',
+        label: '耳を貸す',
+        effects: [
+          { kind: 'loseMaxHp', amount: 8 },
+          { kind: 'changeDrawPerTurn', amount: 1 },
+          { kind: 'addCard', card: HEX },
+        ],
+        outcome: '視界が一段広くなった。その代わり、胸の奥で呪いが脈打っている。',
+      },
+      {
+        id: 'refuse',
+        label: '耳を塞いで離れる',
+        effects: [{ kind: 'loseHp', amount: 6 }],
+        outcome: '声は追いかけてこなかった。ただ、耳の奥がまだ痛い。',
+      },
+    ],
+  },
+  {
+    id: 'fallen-crown',
+    title: '落ちた冠',
+    icon: '👑',
+    chapters: [3],
+    text: '石畳に、誰かの冠が転がっている。かぶれば王の力、溶かせば金になる。',
+    options: [
+      {
+        id: 'wear',
+        label: 'かぶる',
+        effects: [
+          { kind: 'gainMaxHp', amount: 10 },
+          { kind: 'addCard', card: HEX },
+          { kind: 'addCard', card: DOUBT },
+        ],
+        outcome: '冠は頭に吸いつき、体が強くなった。二つの呪いが、静かについてくる。',
+      },
+      {
+        id: 'melt',
+        label: '溶かして金にする',
+        effects: [
+          { kind: 'loseHp', amount: 10 },
+          { kind: 'gainGold', amount: 120 },
+        ],
+        outcome: '冠は熱を持って崩れ、金貨の山になった。手のひらがまだ熱い。',
+      },
+      LEAVE,
+    ],
+  },
+];
+
+/**
+ * 全章に残すのは、回復・強化・少額の取引。
+ * 第 1 章は穏やかな出会い、第 2 章は代償のある取引、第 3 章は重い決断。
+ */
+const CHAPTER_ONLY: Record<string, readonly number[]> = {
+  'fairy-ring': [1],
+  'wandering-bard': [1],
+  'abandoned-camp': [1],
+  'fusion-altar': [1],
+  'grasping-tree': [1],
+  'blood-merchant': [2],
+  'sleeping-guardian': [2],
+  'cursed-tome': [2],
+  'knight-trial': [2],
+  'traveling-alchemist': [2],
+  pitfall: [2],
+  'dragon-hoard': [3],
+  'mirror-lake': [3],
+  'ancient-library': [3],
+};
+
+export const STANDARD_EVENTS: EventDefinition[] = [...EVENT_LIST, ...CHAPTER_EVENTS].map((event) => {
+  const chapters = CHAPTER_ONLY[event.id];
+  return chapters ? { ...event, chapters } : event;
+});
 
 /**
  * 水鏡のノアの出来事だけ。カイルとリーネの候補（STANDARD_EVENTS）には入れない。
