@@ -213,6 +213,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
       gold: gold.value,
       relic: looted.relic,
       next: rank === 'boss' ? 'bossRelic' : 'map',
+      canSkip: true,
     },
   };
 }
@@ -250,8 +251,10 @@ function continueAfterReward(run: RunState): RunState {
 /** card が null ならスキップ。空きがあれば、このあとポーションを 1 つ選ぶ。 */
 export function resolveReward(run: RunState, card: CardDefinition | null): RunState {
   if (run.phase.kind !== 'reward' || run.phase.step !== 'card') return run;
+  if (card === null && run.phase.canSkip === false && run.phase.choices.length > 0) return run;
   const picked: RunState = { ...run, deck: card ? [...run.deck, card] : run.deck };
   if (picked.phase.kind !== 'reward') return picked;
+  if (picked.phase.resume) return { ...picked, phase: picked.phase.resume };
   if (picked.phase.potionChoices.length === 0) return continueAfterReward(picked);
   return { ...picked, phase: { ...picked.phase, step: 'potion' } };
 }

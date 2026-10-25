@@ -29,24 +29,57 @@ export function startEvent(run: RunState): RunState {
 const isAffordable = (run: RunState, option: EventOption) =>
   canMakeChoice(run, option.choice) && option.effects.every((effect) => canApplyRunEffect(run, effect));
 
+/** どれも選べないときだけ足す。普段の出来事にキャンセルは無い。 */
+const FORCED_LEAVE: EventOption = {
+  id: 'leave',
+  label: '立ち去る',
+  effects: [],
+  outcome: 'あなたは先を急いだ。',
+};
+
 /**
  * 払えない代償があったり、選んでも何も起きなかったりする選択肢は選べない。
- * ただし「立ち去る」の無いイベントで 1 つも選べないと先に進めなくなるので、そのときは
- * HP の代償だけが払えない選択肢も選べる（イベントの HP 消費では最低 1 残る）。
+ * 1 つも選べないときは、HP の代償だけが払えない選択肢も選べる（HP は最低 1 残る）。
+ * それでも選べないときだけ、画面側が「立ち去る」を足す。
  */
-export function canChooseEventOption(run: RunState, option: EventOption): boolean {
-  if (isAffordable(run, option)) return true;
-  if (run.phase.kind !== 'event' || run.phase.event.options.some((o) => isAffordable(run, o))) return false;
+function losesOnlyHp(run: RunState, option: EventOption): boolean {
   return (
     canMakeChoice(run, option.choice) &&
     option.effects.every((effect) => effect.kind === 'loseHp' || canApplyRunEffect(run, effect))
   );
 }
 
+/** データに書いてある選択肢のうち、今選べるものがある。立ち去るは数えない。 */
+function hasListedChoice(run: RunState): boolean {
+  if (run.phase.kind !== 'event') return true;
+  const { options } = run.phase.event;
+  if (options.some((option) => isAffordable(run, option))) return true;
+  return options.some((option) => losesOnlyHp(run, option));
+}
+
+export function canChooseEventOption(run: RunState, option: EventOption): boolean {
+  if (option.id === FORCED_LEAVE.id) return !hasListedChoice(run);
+  if (isAffordable(run, option)) return true;
+  if (run.phase.kind !== 'event' || run.phase.event.options.some((candidate) => isAffordable(run, candidate))) {
+    return false;
+  }
+  return losesOnlyHp(run, option);
+}
+
+/** 選べるものが一つも無いときだけ、最後に「立ち去る」を足す。 */
+export function shownEventOptions(run: RunState, event: EventDefinition): EventOption[] {
+  if (event.options.some((option) => canChooseEventOption(run, option))) return event.options;
+  return [...event.options, FORCED_LEAVE];
+}
+
 export function chooseEventOption(run: RunState, optionId: string): RunState {
   if (run.phase.kind !== 'event' || run.phase.outcome !== null) return run;
   const { event } = run.phase;
-  const option = event.options.find((o) => o.id === optionId);
+  const option =
+    event.options.find((o) => o.id === optionId) ??
+    (optionId === FORCED_LEAVE.id && !event.options.some((o) => canChooseEventOption(run, o))
+      ? FORCED_LEAVE
+      : undefined);
   if (!option || !canChooseEventOption(run, option)) return run;
 
   if (option.fight === 'elite') {

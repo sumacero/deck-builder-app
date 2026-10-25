@@ -2,8 +2,6 @@ import type { EventDefinition } from '../domain/event';
 import { DEFEND, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
 import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
-const LEAVE = { id: 'leave', label: '立ち去る', effects: [], outcome: 'あなたは先を急いだ。' };
-
 /**
  * 「？」マスの出来事。1 ランの中では、その章の候補が残っている間は同じものが出ない。
  * chapters が無いものは全章。あるものは、その章だけで出る。
@@ -27,7 +25,6 @@ const EVENT_LIST: EventDefinition[] = [
         effects: [{ kind: 'upgradeRandom', count: 1 }],
         outcome: '静かに手を合わせると、技が少しだけ研ぎ澄まされた気がした。',
       },
-      LEAVE,
     ],
   },
   {
@@ -49,7 +46,6 @@ const EVENT_LIST: EventDefinition[] = [
         choice: 'removeCard',
         outcome: '迷いを一つ、水に流した。',
       },
-      LEAVE,
     ],
   },
   {
@@ -73,7 +69,6 @@ const EVENT_LIST: EventDefinition[] = [
         effects: [{ kind: 'loseMaxHp', amount: 6 }, { kind: 'gainRelic' }],
         outcome: '体の芯が少し冷えた。代わりに、見慣れない宝が手に残る。',
       },
-      LEAVE,
     ],
   },
   {
@@ -98,7 +93,6 @@ const EVENT_LIST: EventDefinition[] = [
         ],
         outcome: '手早い仕事だった。どれが鍛えられたのかは、使ってのお楽しみだ。',
       },
-      LEAVE,
     ],
   },
   {
@@ -123,7 +117,6 @@ const EVENT_LIST: EventDefinition[] = [
         ],
         outcome: '寝返りに巻き込まれて痛い目を見たが、金貨はしっかり握っていた。',
       },
-      LEAVE,
     ],
   },
   {
@@ -167,7 +160,6 @@ const EVENT_LIST: EventDefinition[] = [
         choice: 'removeCard',
         outcome: '炎の中で、何かが一つ消えていった。',
       },
-      LEAVE,
     ],
   },
   {
@@ -188,7 +180,6 @@ const EVENT_LIST: EventDefinition[] = [
         effects: [{ kind: 'fuseCards', from: DEFEND, count: 2, into: ULTIMATE_DEFEND }],
         outcome: '二つの構えが溶け合い、揺るがぬ守りの型となった。',
       },
-      LEAVE,
     ],
   },
   {
@@ -232,7 +223,6 @@ const EVENT_LIST: EventDefinition[] = [
         effects: [{ kind: 'fillPotions' }],
         outcome: '妖精たちはくすくす笑いながら、色とりどりの小瓶を置いていった。',
       },
-      LEAVE,
     ],
   },
   {
@@ -256,7 +246,6 @@ const EVENT_LIST: EventDefinition[] = [
         ],
         outcome: '金貨を見つけたが、余計なガラクタまで鞄に紛れ込んだ。',
       },
-      LEAVE,
     ],
   },
   {
@@ -284,7 +273,6 @@ const EVENT_LIST: EventDefinition[] = [
         ],
         outcome: '竜が寝返りを打った。尻尾に打たれたが、金貨は手放さなかった。',
       },
-      LEAVE,
     ],
   },
   {
@@ -309,7 +297,6 @@ const EVENT_LIST: EventDefinition[] = [
         choice: 'removeCard',
         outcome: '湖面の自分が、迷いを一つ持ち去っていった。',
       },
-      LEAVE,
     ],
   },
   {
@@ -332,7 +319,6 @@ const EVENT_LIST: EventDefinition[] = [
         choice: 'pickCard',
         outcome: '騎士は厳しく、しかし丁寧に技を授けてくれた。',
       },
-      LEAVE,
     ],
   },
   {
@@ -359,7 +345,6 @@ const EVENT_LIST: EventDefinition[] = [
         ],
         outcome: '井戸の底から、ひとつの宝が浮かび上がってきた。',
       },
-      LEAVE,
     ],
   },
   {
@@ -384,7 +369,6 @@ const EVENT_LIST: EventDefinition[] = [
         ],
         outcome: '生命を吸われる感覚と引き換えに、戦場が一手先まで見えるようになった。',
       },
-      LEAVE,
     ],
   },
   {
@@ -412,7 +396,6 @@ const EVENT_LIST: EventDefinition[] = [
         ],
         outcome: '体の芯が凍えたが、なぜか前より丈夫になった気がする。',
       },
-      LEAVE,
     ],
   },
   {
@@ -464,7 +447,6 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         ],
         outcome: '凶の札は胸をえぐった。代わりに、暖かい金貨の袋が渡された。',
       },
-      LEAVE,
     ],
   },
   {
@@ -490,7 +472,6 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         ],
         outcome: '誓いの痛みが走り、体の底に静かな力が宿った。',
       },
-      LEAVE,
     ],
   },
   {
@@ -518,7 +499,6 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         ],
         outcome: '鎖は解けなかった。櫃の脇に置かれた宝だけを、静かに受け取った。',
       },
-      LEAVE,
     ],
   },
   {
@@ -541,7 +521,6 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         effects: [{ kind: 'heal', amount: 18 }],
         outcome: '風の音を聞きながら、傷を休めた。',
       },
-      LEAVE,
     ],
   },
   {
@@ -593,7 +572,6 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         ],
         outcome: '冠は熱を持って崩れ、金貨の山になった。手のひらがまだ熱い。',
       },
-      LEAVE,
     ],
   },
 ];
@@ -682,6 +660,5 @@ export const BASIN_ORACLE: EventDefinition = {
       ],
       outcome: '水盤は氷の結晶だけを映すようになった。印の無い札は、今までどおり浮かぶ。',
     },
-    LEAVE,
   ],
 };

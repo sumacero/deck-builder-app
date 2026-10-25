@@ -69,17 +69,26 @@ export function serializeRun(run: RunState): string {
   return JSON.stringify({ version: SAVE_VERSION, run });
 }
 
-/** 報酬画面にポーションの 3 択を足す前のセーブは、カードだけ選んで進める。 */
+/**
+ * 報酬画面にポーションの 3 択を足す前のセーブは、カードだけ選んで進める。
+ * 取り消せないフラグが無い古いセーブは、これまでどおり受け取らずに進める。
+ */
 function withRewardDefaults(run: RunState): RunState {
-  if (run.phase.kind !== 'reward') return run;
-  return {
-    ...run,
-    phase: {
-      ...run.phase,
-      step: run.phase.step === 'potion' ? 'potion' : 'card',
-      potionChoices: Array.isArray(run.phase.potionChoices) ? run.phase.potionChoices : [],
-    },
-  };
+  if (run.phase.kind === 'reward') {
+    return {
+      ...run,
+      phase: {
+        ...run.phase,
+        step: run.phase.step === 'potion' ? 'potion' : 'card',
+        potionChoices: Array.isArray(run.phase.potionChoices) ? run.phase.potionChoices : [],
+        canSkip: run.phase.canSkip !== false,
+      },
+    };
+  }
+  if (run.phase.kind === 'deckEdit') {
+    return { ...run, phase: { ...run.phase, cancellable: run.phase.cancellable !== false } };
+  }
+  return run;
 }
 
 export function parseSavedRun(raw: string): RunState | null {

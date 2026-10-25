@@ -17,24 +17,27 @@ type DeckEditScreenProps = {
 export function DeckEditScreen({ run, phase, actions }: DeckEditScreenProps) {
   const remarking = phase.mode === 'remark';
   const upgrading = phase.mode === 'upgrade';
+  const stacks = stackCards(upgrading ? run.deck.filter(canUpgrade) : run.deck);
   const title = remarking
     ? `${MARK_NAME[phase.mark]}の印にするカードを選ぶ`
     : upgrading
       ? '強化するカードを選ぶ'
       : '削除するカードを選ぶ';
+  // 出来事はカードを選ばずに抜けられない。選べる札が無いときだけ先へ進める。
+  const canLeave = phase.cancellable !== false || stacks.length === 0;
   return (
     <View style={styles.root}>
       <CardPickerModal
         title={title}
         note={remarking ? '印の無いカードにも押せる。雨はダメージ、波はブロック、氷はエナジー。' : undefined}
-        stacks={stackCards(upgrading ? run.deck.filter(canUpgrade) : run.deck)}
+        stacks={stacks}
         confirmLabel={remarking ? `${MARK_NAME[phase.mark]}にする` : upgrading ? '強化する' : '削除する'}
-        cancelLabel="受け取らない"
+        cancelLabel={phase.cancellable === false ? '先へ進む' : '受け取らない'}
         preview={
           upgrading ? upgradeCard : remarking ? (card) => ({ ...card, mark: phase.mark }) : undefined
         }
         onConfirm={(card) => actions.finishDeckEdit(card)}
-        onCancel={() => actions.finishDeckEdit(null)}
+        onCancel={canLeave ? () => actions.finishDeckEdit(null) : undefined}
       />
     </View>
   );

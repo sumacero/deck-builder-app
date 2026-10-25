@@ -14,7 +14,8 @@ type CardPickerModalProps = {
   /** 渡すと、選んだカードがどう変わるか（変更前 → 変更後）を表示する。 */
   preview?: (card: CardDefinition) => CardDefinition;
   onConfirm: (card: CardDefinition) => void;
-  onCancel: () => void;
+  /** 無いときは、選ばずに戻るボタンを出さない。 */
+  onCancel?: () => void;
 };
 
 /** デッキから 1 枚選ばせるオーバーレイ。誤タップ防止のため、選んでから決定ボタンで確定する。 */
@@ -61,12 +62,14 @@ export function CardPickerModal({
         )}
 
         <View style={styles.buttons}>
-          <Pressable
-            onPress={onCancel}
-            style={({ pressed }) => [styles.button, styles.cancel, pressed && styles.pressed]}
-          >
-            <Text style={styles.cancelText}>{cancelLabel}</Text>
-          </Pressable>
+          {onCancel && (
+            <Pressable
+              onPress={onCancel}
+              style={({ pressed }) => [styles.button, styles.cancel, pressed && styles.pressed]}
+            >
+              <Text style={styles.cancelText}>{cancelLabel}</Text>
+            </Pressable>
+          )}
           <Pressable
             onPress={() => selected && onConfirm(selected)}
             disabled={!selected}
