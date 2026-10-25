@@ -1,7 +1,7 @@
 import type { BlessingDefinition, BlessingGroup } from '../domain/blessing';
 import type { RunState } from '../domain/run';
 import type { CardDefinition } from '../domain/card';
-import { remarkInDeck, removeFromDeck, upgradeInDeck } from './cards';
+import { canUpgrade, remarkInDeck, removeFromDeck, upgradeInDeck } from './cards';
 import { pickOne } from './random';
 import { applyEffectsThenChoice, canApplyRunEffect, canMakeChoice } from './runEffects';
 
@@ -38,12 +38,25 @@ export function chooseBlessing(run: RunState, blessingId: string): RunState {
   return applyEffectsThenChoice(run, blessing.effects, blessing.choice, { kind: 'map' });
 }
 
-/** 恩恵・イベントで選んだカードを強化・削除・印の書き換えしてマップへ。card が null ならやめる。 */
+/** 恩恵・出来事で選んだカードを強化・削除・印の書き換えする。card が null ならやめる。 */
 export function finishDeckEdit(run: RunState, card: CardDefinition | null): RunState {
   if (run.phase.kind !== 'deckEdit') return run;
-  if (card === null) return { ...run, phase: { kind: 'map' } };
   const phase = run.phase;
-  if (phase.mode === 'upgrade') return { ...run, deck: upgradeInDeck(run.deck, card), phase: { kind: 'map' } };
-  if (phase.mode === 'remove') return { ...run, deck: removeFromDeck(run.deck, card), phase: { kind: 'map' } };
-  return { ...run, deck: remarkInDeck(run.deck, card, phase.mark), phase: { kind: 'map' } };
+  if (card === null) {
+    if (phase.cancellable === false && deckEditHasChoice(run, phase)) return run;
+    return { ...run, phase: phase.resume ?? { kind: 'map' } };
+  }
+  const deck =
+    phase.mode === 'upgrade'
+      ? upgradeInDeck(run.deck, card)
+      : phase.mode === 'remove'
+        ? removeFromDeck(run.deck, card)
+        : remarkInDeck(run.deck, card, phase.mark);
+  return { ...run, deck, phase: phase.resume ?? { kind: 'map' } };
+}
+
+function deckEditHasChoice(run: RunState, phase: Extract<RunState['phase'], { kind: 'deckEdit' }>): boolean {
+  if (phase.mode === 'upgrade') return run.deck.some(canUpgrade);
+  if (phase.mode === 'remove') return run.deck.length > 1;
+  return run.deck.length > 0;
 }

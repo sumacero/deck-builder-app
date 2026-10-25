@@ -4,7 +4,7 @@ import type { EventDefinition, EventOption } from '../../domain/event';
 import type { RunState } from '../../domain/run';
 import type { EventActions } from '../../hooks/useRun';
 import { describeEventOption } from '../../logic/describe';
-import { canChooseEventOption } from '../../logic/event';
+import { canChooseEventOption, shownEventOptions } from '../../logic/event';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { RunHud } from '../run/RunHud';
 
@@ -16,9 +16,10 @@ type EventScreenProps = {
   actions: EventActions;
 };
 
-/** 「？」マスのイベント。選択肢を選んで決定し、結末を読んだら先へ進む。 */
+/** 「？」マスの出来事。選択肢を決めたあとは、その画面には戻れない。 */
 export function EventScreen({ run, event, outcome, actions }: EventScreenProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const options = shownEventOptions(run, event);
 
   return (
     <View style={styles.root}>
@@ -33,7 +34,7 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
 
         {outcome === null && (
           <View style={styles.options}>
-            {event.options.map((option) => (
+            {options.map((option) => (
               <EventOptionView
                 key={option.id}
                 option={option}

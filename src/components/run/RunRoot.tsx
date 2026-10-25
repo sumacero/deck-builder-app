@@ -102,6 +102,7 @@ export function RunRoot({ setup, initialRun, onExitToTitle }: RunRootProps) {
           gold={visible.phase.gold}
           relic={visible.phase.relic}
           toBossRelic={visible.phase.next === 'bossRelic'}
+          canSkip={visible.phase.canSkip !== false}
           deck={visible.deck}
           onPick={resolveReward}
           onPickPotion={resolvePotionReward}

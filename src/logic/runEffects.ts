@@ -148,14 +148,16 @@ export function applyEffectsThenChoice(
 ): RunState {
   const applied = effects.reduce(applyRunEffect, run);
   if (choice === undefined) return { ...applied, phase: after };
-  if (choice === 'upgradeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'upgrade' } };
-  if (choice === 'removeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'remove' } };
-  if (choice === 'pickCard') return offerCardPick(applied);
-  return { ...applied, phase: { kind: 'deckEdit', mode: 'remark', mark: choice.mark } };
+  // 出来事の選択肢は、カードを選び終えても選択肢の画面には戻さない。
+  const followUp = after.kind === 'event' ? { cancellable: false, resume: after } : { cancellable: true };
+  if (choice === 'upgradeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'upgrade', ...followUp } };
+  if (choice === 'removeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'remove', ...followUp } };
+  if (choice === 'pickCard') return offerCardPick(applied, after);
+  return { ...applied, phase: { kind: 'deckEdit', mode: 'remark', mark: choice.mark, ...followUp } };
 }
 
 /** 3 枚から 1 枚選んでデッキに加える（ゴールド・レリック無しの報酬画面）。 */
-function offerCardPick(run: RunState): RunState {
+function offerCardPick(run: RunState, after: RunState['phase']): RunState {
   const offered = pickRewardChoices(
     draftPool(run),
     run.deck,
@@ -163,6 +165,8 @@ function offerCardPick(run: RunState): RunState {
     run.rngSeed,
     run.economy.cardTierWeight,
   );
+  const fromEvent = after.kind === 'event';
+  if (offered.items.length === 0) return { ...run, rngSeed: offered.seed, phase: after };
   return {
     ...run,
     rngSeed: offered.seed,
@@ -174,6 +178,8 @@ function offerCardPick(run: RunState): RunState {
       gold: 0,
       relic: null,
       next: 'map',
+      canSkip: !fromEvent,
+      ...(fromEvent ? { resume: after } : {}),
     },
   };
 }

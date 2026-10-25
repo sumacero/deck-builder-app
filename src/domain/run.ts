@@ -39,13 +39,25 @@ export type RunSetup = {
   restHealRatio: number;
 };
 
+/** 出来事の画面。outcome は選択肢を選んだあとの結末。null ならまだ選んでいない。 */
+export type EventPhase = { kind: 'event'; event: EventDefinition; outcome: string | null };
+
+/**
+ * カードを 1 枚選ぶ画面の共通。
+ * 出来事から来たときは取り消せず、選び終えたら結末を見せる。
+ */
+type DeckEditFollowUp = {
+  cancellable: boolean;
+  resume?: EventPhase;
+};
+
 /** ラン全体が今どの画面にいるか。 */
 export type RunPhase =
   | { kind: 'blessing'; options: BlessingDefinition[] }
-  | { kind: 'deckEdit'; mode: 'upgrade' }
-  | { kind: 'deckEdit'; mode: 'remove' }
+  | ({ kind: 'deckEdit'; mode: 'upgrade' } & DeckEditFollowUp)
+  | ({ kind: 'deckEdit'; mode: 'remove' } & DeckEditFollowUp)
   /** 選んだカード 1 枚の印を mark にする（印の無いカードにも押せる）。 */
-  | { kind: 'deckEdit'; mode: 'remark'; mark: CardMark }
+  | ({ kind: 'deckEdit'; mode: 'remark'; mark: CardMark } & DeckEditFollowUp)
   | { kind: 'map' }
   | { kind: 'combat'; nodeId: string; encounter: Encounter; seed: number }
   | {
@@ -60,14 +72,17 @@ export type RunPhase =
       relic: RelicDefinition | null;
       /** 報酬のあとに進む先。ボス撃破後はボスレリックの 3 択へ。 */
       next: 'map' | 'bossRelic';
+      /** カードを受け取らずに進める。出来事でカードを足すときは false。 */
+      canSkip: boolean;
+      /** カードを決めたあとの結末。無いときは next へ進む。 */
+      resume?: EventPhase;
     }
   | { kind: 'bossRelic'; choices: RelicDefinition[] }
   /** 最後の章を終え、ラスボスとの決戦の前。HP は全回復している。 */
   | { kind: 'finale' }
   | { kind: 'rest' }
   | { kind: 'shop'; stock: ShopStock }
-  /** outcome は選択肢を選んだあとの結末。null ならまだ選んでいない。 */
-  | { kind: 'event'; event: EventDefinition; outcome: string | null }
+  | EventPhase
   /** opened までは中身は未定。開けた時点でレリックとゴールドが所持品に入る。 */
   | { kind: 'treasure'; opened: boolean; relic: RelicDefinition | null; gold: number }
   /** atFinale はラスボス戦で力尽きた。 */

@@ -31,6 +31,8 @@ type RewardScreenProps = {
   relic: RelicDefinition | null;
   /** ボス撃破後は、選んだあとボスレリックの 3 択へ進む。 */
   toBossRelic: boolean;
+  /** カードを受け取らずに進める。出来事で足すときは false。 */
+  canSkip: boolean;
   /** 今のデッキ。選ぶ前に見比べられるように。 */
   deck: CardDefinition[];
   onPick: (card: CardDefinition | null) => void;
@@ -47,6 +49,7 @@ export function RewardScreen({
   gold,
   relic,
   toBossRelic,
+  canSkip,
   deck,
   onPick,
   onPickPotion,
@@ -87,12 +90,23 @@ export function RewardScreen({
               </View>
             ))}
           </View>
-          <Pressable
-            onPress={() => onPick(null)}
-            style={({ pressed }) => [styles.skip, pressed && styles.pressed]}
-          >
-            <Text style={styles.skipText}>スキップ</Text>
-          </Pressable>
+          {canSkip ? (
+            <Pressable
+              onPress={() => onPick(null)}
+              style={({ pressed }) => [styles.skip, pressed && styles.pressed]}
+            >
+              <Text style={styles.skipText}>スキップ</Text>
+            </Pressable>
+          ) : (
+            choices.length === 0 && (
+              <Pressable
+                onPress={() => onPick(null)}
+                style={({ pressed }) => [styles.skip, pressed && styles.pressed]}
+              >
+                <Text style={styles.skipText}>先へ進む</Text>
+              </Pressable>
+            )
+          )}
           {potionChoices.length > 0 && (
             <Text style={styles.note}>このあとポーションを 1 つ選べる</Text>
           )}
