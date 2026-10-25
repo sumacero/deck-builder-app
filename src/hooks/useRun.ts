@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import type { CardDefinition, CardMark } from '../domain/card';
+import type { PotionDefinition } from '../domain/potion';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { createRun } from '../logic/run';
 import { createRunStore, runStoreReducer } from '../logic/runEvents';
@@ -32,6 +33,11 @@ export function useRun(setup: RunSetup, initial?: RunState) {
   );
   const resolveReward = useCallback(
     (card: CardDefinition | null) => dispatch({ type: 'resolveReward', card }),
+    [],
+  );
+  const resolvePotionReward = useCallback(
+    (choice: { potion: PotionDefinition; slot: number } | null) =>
+      dispatch({ type: 'resolvePotionReward', choice }),
     [],
   );
   const chooseBossRelic = useCallback(
@@ -102,6 +108,7 @@ export function useRun(setup: RunSetup, initial?: RunState) {
     moveTo,
     finishCombat,
     resolveReward,
+    resolvePotionReward,
     chooseBossRelic,
     startFinalBattle,
     newRun,

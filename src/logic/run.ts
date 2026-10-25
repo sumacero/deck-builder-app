@@ -4,6 +4,7 @@ import type { CardDefinition } from '../domain/card';
 import type { CombatSetup } from '../domain/combat';
 import type { Encounter } from '../domain/enemy';
 import type { GameMap, MapNode } from '../domain/map';
+import type { PotionDefinition } from '../domain/potion';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { generateBlessingOptions } from './blessing';
 import { soloEncounter, startCombat, startRandomCombat } from './encounter';
@@ -162,9 +163,11 @@ export function moveTo(run: RunState, nodeId: string): RunState {
   }
 }
 
+const REWARD_CHOICES = 3;
+
 /**
- * 勝てばゴールドとカード 3 択。エリートはレリックも、ボスはそのあとボスレリックの 3 択。
- * ラスボスを倒したらクリア。
+ * 勝てばゴールドと、カード 3 択、そのあとにポーション 3 択。
+ * エリートはレリックも、ボスはそのあとボスレリックの 3 択。ラスボスを倒したらクリア。
  */
 export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (run.phase.kind !== 'combat') return run;
@@ -194,16 +197,19 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const offered = pickRewardChoices(
     draftPool(looted.run),
     looted.run.deck,
-    3,
+    REWARD_CHOICES,
     looted.run.rngSeed,
     looted.run.economy.cardTierWeight,
   );
+  const potions = pickUnique(looted.run.potionPool, REWARD_CHOICES, offered.seed);
   return {
     ...looted.run,
-    rngSeed: offered.seed,
+    rngSeed: potions.seed,
     phase: {
       kind: 'reward',
+      step: 'card',
       choices: offered.items,
+      potionChoices: potions.items,
       gold: gold.value,
       relic: looted.relic,
       next: rank === 'boss' ? 'bossRelic' : 'map',
@@ -228,18 +234,46 @@ export const FINAL_BATTLE_NODE_ID = 'final';
 
 const BOSS_RELIC_CHOICES = 3;
 
-/** card が null ならスキップ。ボスの報酬ならボスレリックの 3 択へ（候補が無ければ次の章へ）。 */
-export function resolveReward(run: RunState, card: CardDefinition | null): RunState {
+/** カードかポーションを決め終えたあと。ボスの報酬ならボスレリックの 3 択へ。 */
+function continueAfterReward(run: RunState): RunState {
   if (run.phase.kind !== 'reward') return run;
-  const picked: RunState = { ...run, deck: card ? [...run.deck, card] : run.deck };
-  if (run.phase.next === 'map') return { ...picked, phase: { kind: 'map' } };
+  if (run.phase.next === 'map') return { ...run, phase: { kind: 'map' } };
   const offered = pickUnique(
-    unownedRelics(picked, picked.bossRelicPool),
+    unownedRelics(run, run.bossRelicPool),
     BOSS_RELIC_CHOICES,
-    picked.rngSeed,
+    run.rngSeed,
   );
-  if (offered.items.length === 0) return advanceAct({ ...picked, rngSeed: offered.seed });
-  return { ...picked, rngSeed: offered.seed, phase: { kind: 'bossRelic', choices: offered.items } };
+  if (offered.items.length === 0) return advanceAct({ ...run, rngSeed: offered.seed });
+  return { ...run, rngSeed: offered.seed, phase: { kind: 'bossRelic', choices: offered.items } };
+}
+
+/** card が null ならスキップ。空きがあれば、このあとポーションを 1 つ選ぶ。 */
+export function resolveReward(run: RunState, card: CardDefinition | null): RunState {
+  if (run.phase.kind !== 'reward' || run.phase.step !== 'card') return run;
+  const picked: RunState = { ...run, deck: card ? [...run.deck, card] : run.deck };
+  if (picked.phase.kind !== 'reward') return picked;
+  if (picked.phase.potionChoices.length === 0) return continueAfterReward(picked);
+  return { ...picked, phase: { ...picked.phase, step: 'potion' } };
+}
+
+/**
+ * ポーション報酬。choice が null なら受け取らない。
+ * slot が空ならそこへ入れ、埋まっていればその枠と入れ替える。
+ */
+export function resolvePotionReward(
+  run: RunState,
+  choice: { potion: PotionDefinition; slot: number } | null,
+): RunState {
+  if (run.phase.kind !== 'reward' || run.phase.step !== 'potion') return run;
+  if (!choice) return continueAfterReward(run);
+  const offered = run.phase.potionChoices.some((potion) => potion.id === choice.potion.id);
+  const slot = run.potions[choice.slot];
+  if (!offered || slot === undefined) return run;
+  const stored: RunState = {
+    ...run,
+    potions: run.potions.map((current, index) => (index === choice.slot ? choice.potion : current)),
+  };
+  return continueAfterReward(stored);
 }
 
 /** ボスレリックを 1 つ選んで（null なら取らずに）次の章へ。 */

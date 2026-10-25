@@ -6,7 +6,7 @@ import { LANTERN_SPIRIT, STANDARD_BLESSINGS } from './blessings';
 import { CRIMSON_STARTER_DECK, REWARD_CARDS } from './cards';
 import { STANDARD_ECONOMY } from './economy';
 import { BASIN_ORACLE, STANDARD_EVENTS } from './events';
-import { ALL_POTIONS, FIRE_POTION, IRON_POTION, SWIFT_POTION } from './potions';
+import { ALL_POTIONS } from './potions';
 import { MIRROR_CARDS, MIRROR_STARTER_DECK } from './mirrorCards';
 import {
   BOSS_RELIC_POOL,
@@ -111,7 +111,9 @@ const HUNTER_REWARD_CARDS = [
     (!isBlockAxis(card) || HUNTER_BLOCK_CARD_IDS.has(card.id)) && !HUNTER_EXCLUDED_CARD_IDS.has(card.id),
 );
 
-/** レリックはカイルの初期レリック 1 つ、ポーションは 3 つ持って始める。 */
+/** レリックはカイルの初期レリック 1 つ。ポーションの枠は 3 つあるが、中身は空で始める。 */
+const EMPTY_POTION_SLOTS = [null, null, null];
+
 export const STANDARD_RUN: RunSetup = {
   agent: CRIMSON_HERO,
   deck: CRIMSON_STARTER_DECK,
@@ -119,7 +121,7 @@ export const STANDARD_RUN: RunSetup = {
   energyPerTurn: 3,
   drawPerTurn: 5,
   relics: [FIGHTING_SPIRIT],
-  potions: [FIRE_POTION, IRON_POTION, SWIFT_POTION],
+  potions: EMPTY_POTION_SLOTS,
   actChoices: STANDARD_ACT_CHOICES,
   finalBoss: FINAL_BOSS,
   rewardPool: ALL_REWARD_CARDS,
