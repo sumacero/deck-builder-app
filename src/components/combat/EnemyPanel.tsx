@@ -8,6 +8,7 @@ import {
   ATTRIBUTE_ICON,
   describeEnemyAttribute,
   describeIntent,
+  describeRoutine,
   describeTrait,
   ENEMY_RANK_LABEL,
 } from '../../logic/describe';
@@ -72,6 +73,7 @@ export function EnemyPanel({
         }
       : rawMove;
   const attacker = attackerFor(enemy, move);
+  const routine = describeRoutine(enemy.rank);
   const rankLabel = ENEMY_RANK_LABEL[enemy.rank];
   const statuses = enemyStatuses(enemy);
   const vitals = useDisplayedVitals(enemy.uid, events, enemy);
@@ -167,6 +169,7 @@ export function EnemyPanel({
           intent={{ moveName: move.name, keywords: keywordsForIntent(move) }}
           traits={[
             describeEnemyAttribute(enemy.attribute, enemy.weaknesses),
+            ...(routine ? [routine] : []),
             ...enemy.traits
               .filter((trait) => !(trait.kind === 'awaken' && enemy.awakened))
               .map(describeTrait),

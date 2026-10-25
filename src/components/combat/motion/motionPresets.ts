@@ -389,6 +389,13 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
     ],
     burst: { kind: 'spark', on: 'opponent', delay: 120 },
   },
+  bind: {
+    keyframes: [
+      { x: 16, scale: 1.05, duration: 120 },
+      { duration: 200 },
+    ],
+    burst: { kind: 'leaf', on: 'opponent', delay: 120 },
+  },
   charge: {
     keyframes: [
       { scale: 0.9, duration: 160 },
@@ -447,6 +454,7 @@ const TARGETS_PLAYER: ReadonlySet<EnemyAction['kind']> = new Set([
   'paralyze',
   'chill',
   'seal',
+  'bind',
   'debuff',
   'addCard',
 ]);

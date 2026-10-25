@@ -42,7 +42,8 @@ import {
   scaledEffects,
   stackOf,
 } from './marks';
-import { SLEEP_MOVE, traitOf } from './enemyTraits';
+import { SLEEP_MOVE, WINDUP_MOVE, traitOf } from './enemyTraits';
+import { routineAttackMultiplier, routineRank } from './routine';
 import { cardMotion } from './motion';
 import { shuffle } from './random';
 import {
@@ -81,6 +82,7 @@ export function gainBlock<T extends Fighter>(target: T, amount: number): T {
 
 export function currentIntent(enemy: EnemyState): EnemyMove {
   if (enemy.asleep > 0) return SLEEP_MOVE;
+  if (enemy.windup > 0) return WINDUP_MOVE;
   return enemy.moves[enemy.moveIndex % enemy.moves.length];
 }
 
@@ -240,7 +242,7 @@ export function drawCards(state: CombatState, count: number): CombatState {
   });
 }
 
-export const NO_HINDRANCE: Hindrance = { paralysis: 0, chill: 0, seal: false };
+export const NO_HINDRANCE: Hindrance = { paralysis: 0, chill: 0, seal: false, bind: false };
 
 const powerOf = (state: CombatState, power: PowerId): number => state.player.powers[power] ?? 0;
 
@@ -252,6 +254,7 @@ function hindranceLogs(hindrance: Hindrance): string[] {
     ...(hindrance.paralysis > 0 ? [`麻痺でエナジー -${hindrance.paralysis}`] : []),
     ...(hindrance.chill > 0 ? [`凍えで引く枚数 -${hindrance.chill}`] : []),
     ...(hindrance.seal ? ['封印でスキルを使えない'] : []),
+    ...(hindrance.bind ? ['絡めでアタックを使えない'] : []),
   ];
 }
 
@@ -337,6 +340,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
     card,
   }));
   const shuffled = shuffle(instances, seed);
+  const eliteSeen = { count: 0 };
 
   const initial: CombatState = {
     status: 'playerTurn',
@@ -370,7 +374,13 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       fusesThisTurn: 0,
       statuses: {},
     },
-    enemies: setup.enemies.map((enemy, index) => ({
+    enemies: setup.enemies.map((enemy, index) => {
+      // 通常の敵は並び順で開始位置をずらし、同じ行動を一斉にしない。
+      // エリート以上は必ず先頭（いちばん弱い手）から。2 体目は 1 ターン様子を見て、大技が重ならないようにする。
+      const ramping = routineRank(enemy.rank);
+      const windup = ramping && eliteSeen.count > 0 && !traitOf(enemy, 'sleep') ? 1 : 0;
+      if (ramping) eliteSeen.count += 1;
+      return {
       uid: enemyUid(index),
       id: enemy.id,
       name: enemy.name,
@@ -382,8 +392,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       block: 0,
       statuses: {},
       moves: enemy.moves,
-      // 群れで同じ行動を一斉にしないよう、並び順で行動パターンの開始位置をずらす。
-      moveIndex: index % enemy.moves.length,
+      moveIndex: ramping ? 0 : index % enemy.moves.length,
+      windup,
       traits: enemy.traits ?? [],
       asleep: traitOf(enemy, 'sleep')?.turns ?? 0,
       attribute: enemy.attribute ?? null,
@@ -392,7 +402,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       awakened: false,
       frost: 0,
       hitCut: 0,
-    })),
+      };
+    }),
     drawPerTurn: setup.drawPerTurn,
     mysticArte: setup.agent.mysticArte,
     stats: EMPTY_STATS,
@@ -450,7 +461,9 @@ export function canPlayCard(state: CombatState, instanceId: string): boolean {
   if (state.status !== 'playerTurn' || state.pendingFuse || state.pendingHandRemoval) return false;
   const instance = state.hand.find((c) => c.instanceId === instanceId);
   if (!instance || instance.card.unplayable || instance.card.cost > state.player.energy) return false;
-  return !(state.player.hindrance.seal && instance.card.type === 'skill');
+  if (state.player.hindrance.seal && instance.card.type === 'skill') return false;
+  if (state.player.hindrance.bind && instance.card.type === 'attack') return false;
+  return true;
 }
 
 /** strengthMultiplier は大剣のように筋力が何倍で乗るか。 */
@@ -557,6 +570,7 @@ function awakenEnemy(state: CombatState, uid: EnemyUid): CombatState {
     strength: e.strength + awaken.strength,
     moves: awaken.moves,
     moveIndex: 0,
+    windup: 0,
   }));
   const after = findEnemy(awakened, uid);
   const logged = withLog(
@@ -1061,12 +1075,22 @@ const AFFLICTIONS: readonly Affliction[] = [
     present: (p) => p.hindrance.seal,
     clear: (p) => ({ ...p, hindrance: { ...p.hindrance, seal: false } }),
   },
+  {
+    label: '絡め',
+    present: (p) => p.hindrance.bind,
+    clear: (p) => ({ ...p, hindrance: { ...p.hindrance, bind: false } }),
+  },
   { label: '弱体', present: (p) => hasStatus(p.statuses, 'vulnerable'), clear: (p) => withoutStatus(p, 'vulnerable') },
   { label: '衰弱', present: (p) => hasStatus(p.statuses, 'weak'), clear: (p) => withoutStatus(p, 'weak') },
   {
     label: '次のターンの封印',
     present: (p) => p.pendingHindrance.seal,
     clear: (p) => ({ ...p, pendingHindrance: { ...p.pendingHindrance, seal: false } }),
+  },
+  {
+    label: '次のターンの絡め',
+    present: (p) => p.pendingHindrance.bind,
+    clear: (p) => ({ ...p, pendingHindrance: { ...p.pendingHindrance, bind: false } }),
   },
   {
     label: '次のターンの麻痺',
@@ -1522,17 +1546,20 @@ function finishPlay(
     Boolean(follow.sawWeak) ||
     shot.events.slice(eventsBefore).some((event) => event.kind === 'hit' && event.weak);
   const momentum = powerOf(shot, 'momentum');
-  const counted = {
-    ...shot,
-    player: {
-      ...shot.player,
-      cardsThisTurn: shot.player.cardsThisTurn + 1,
-      skillsThisTurn: shot.player.skillsThisTurn + (card.type === 'skill' ? 1 : 0),
-      attacksThisTurn: shot.player.attacksThisTurn + (card.type === 'attack' ? 1 : 0),
-      tempStrength: shot.player.tempStrength + momentum,
-      arrowsSpent: shot.player.arrowsSpent + (card.arrow ? 1 : 0),
+  const counted = applyEnrage(
+    {
+      ...shot,
+      player: {
+        ...shot.player,
+        cardsThisTurn: shot.player.cardsThisTurn + 1,
+        skillsThisTurn: shot.player.skillsThisTurn + (card.type === 'skill' ? 1 : 0),
+        attacksThisTurn: shot.player.attacksThisTurn + (card.type === 'attack' ? 1 : 0),
+        tempStrength: shot.player.tempStrength + momentum,
+        arrowsSpent: shot.player.arrowsSpent + (card.arrow ? 1 : 0),
+      },
     },
-  };
+    card.type === 'skill',
+  );
   const withMomentum =
     momentum > 0 ? withLog(counted, `勢いでこのターンの筋力 +${momentum}`) : counted;
   return settle(grantArteIfReady(recordPlay(withMomentum, card, weakHit)));
@@ -1650,7 +1677,8 @@ export function previewCardDamage(
 /** 敵の攻撃 1 回分のダメージ（筋力・衰弱・あなたの弱体・相性込み）。インテント表示でも使う。 */
 export function enemyAttackDamage(enemy: EnemyState, base: number, player: PlayerState): number {
   const affinity = ENEMY_AFFINITY_MULTIPLIER[enemyAffinity(enemy.attribute, player.attribute)];
-  return modifiedDamage(Math.max(0, base + enemy.strength - enemy.frost), enemy.statuses, player.statuses, affinity);
+  const ramped = Math.round(base * routineAttackMultiplier(enemy.rank, enemy.moveIndex, enemy.moves.length));
+  return modifiedDamage(Math.max(0, ramped + enemy.strength - enemy.frost), enemy.statuses, player.statuses, affinity);
 }
 
 /**
@@ -1737,7 +1765,8 @@ function applyEnemyAction(
     }
     case 'paralyze':
     case 'chill':
-    case 'seal': {
+    case 'seal':
+    case 'bind': {
       const acted = act(state);
       const hindrance = action;
       const pending = addHindrance(acted.player.pendingHindrance, hindrance);
@@ -1793,11 +1822,12 @@ const HINDRANCE_LOG = {
   paralyze: '次のターン、麻痺でエナジーが減る',
   chill: '次のターン、凍えで引く枚数が減る',
   seal: '次のターン、スキルが封印される',
+  bind: '次のターン、アタックが絡められる',
 } as const;
 
 function addHindrance(
   current: Hindrance,
-  action: Extract<EnemyAction, { kind: 'paralyze' | 'chill' | 'seal' }>,
+  action: Extract<EnemyAction, { kind: 'paralyze' | 'chill' | 'seal' | 'bind' }>,
 ): Hindrance {
   switch (action.kind) {
     case 'paralyze':
@@ -1806,7 +1836,22 @@ function addHindrance(
       return { ...current, chill: Math.min(MAX_HINDRANCE_STACK, current.chill + action.amount) };
     case 'seal':
       return { ...current, seal: true };
+    case 'bind':
+      return { ...current, bind: true };
   }
+}
+
+/** 激昂: スキルを使ったとき、その性質を持つ生きている敵の筋力が上がる。一周で戻る火力とは別に残る。 */
+function applyEnrage(state: CombatState, skillPlayed: boolean): CombatState {
+  if (!skillPlayed) return state;
+  return livingEnemies(state).reduce((current, enemy) => {
+    const enrage = traitOf(enemy, 'enrage');
+    if (!enrage || enrage.strength <= 0) return current;
+    return withLog(
+      updateEnemy(current, enemy.uid, (e) => ({ ...e, strength: e.strength + enrage.strength })),
+      `${enemy.name}が激昂した（筋力 +${enrage.strength}）`,
+    );
+  }, state);
 }
 
 function healEnemy(state: CombatState, uid: EnemyUid, amount: number): CombatState {
@@ -1865,6 +1910,7 @@ function advanceEnemy(state: CombatState, uid: EnemyUid): CombatState {
   if (!enemy) return state;
   if (enemy.asleep > 1) return updateEnemy(state, uid, (e) => ({ ...e, asleep: e.asleep - 1 }));
   if (enemy.asleep === 1) return wakeEnemy(state, uid);
+  if (enemy.windup > 0) return updateEnemy(state, uid, (e) => ({ ...e, windup: e.windup - 1 }));
   return updateEnemy(state, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
 }
 
