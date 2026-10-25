@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { ACTOR_FIGURE, COLORS, MARK_COLORS, MOTION } from '../../../theme';
+import { ACTOR_FIGURE, COLORS, LEGACY_BURST, MOTION } from '../../../theme';
 import type { VfxKind } from '../motion/motionPresets';
 
 type CombatVfxProps = {
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     borderWidth: 3,
-    borderColor: MARK_COLORS.ice,
+    borderColor: LEGACY_BURST.ice,
     backgroundColor: 'rgba(223, 246, 255, 0.28)',
   },
   iceShard: {
@@ -458,14 +458,14 @@ const styles = StyleSheet.create({
     width: 8,
     height: 46,
     borderRadius: 4,
-    backgroundColor: MARK_COLORS.ice,
+    backgroundColor: LEGACY_BURST.ice,
   },
   dropRing: {
     width: 64,
     height: 28,
     borderRadius: 16,
     borderWidth: 3,
-    borderColor: MARK_COLORS.drop,
+    borderColor: LEGACY_BURST.drop,
     backgroundColor: 'rgba(61, 139, 255, 0.25)',
   },
   dropOrb: {
@@ -473,13 +473,13 @@ const styles = StyleSheet.create({
     width: 16,
     height: 22,
     borderRadius: 10,
-    backgroundColor: MARK_COLORS.drop,
+    backgroundColor: LEGACY_BURST.drop,
   },
   mistCloud: {
     position: 'absolute',
     width: 84,
     height: 32,
     borderRadius: 16,
-    backgroundColor: MARK_COLORS.mist,
+    backgroundColor: LEGACY_BURST.mist,
   },
 });

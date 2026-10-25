@@ -1,19 +1,9 @@
-import type { CardDefinition, CardInstance, CardMark } from '../domain/card';
+import type { CardDefinition, CardInstance } from '../domain/card';
 import type { Effect } from '../domain/effect';
 import type { PlayerState } from '../domain/combat';
 
-/** 画面とログで出す印の名前。説明文（describe）からも使う。 */
-export const MARK_NAME: Record<CardMark, string> = {
-  ice: '氷',
-  drop: '雫',
-  mist: '霞',
-};
-
 /** 段の上限。1 + 1 で 2、2 + 2 で 4。 */
 export const MAX_STACK = 4;
-
-/** 氷を重ねて消したとき、1 段あたり得る棘（茨の鎧）。戦闘中ずっと残る。 */
-export const FUSE_THORNS_PER_STACK = 1;
 
 /** この札の段（まとまっている枚数）。 */
 export function stackOf(instance: CardInstance): number {
@@ -26,14 +16,13 @@ export function releaseFusion(instance: CardInstance): CardInstance {
   return { instanceId: instance.instanceId, card: instance.card };
 }
 
-/** 重ねられる札。印があり、アタックかスキル。 */
+/** 重ねられる札。水札で、アタックかスキル。 */
 function isStackable(card: CardDefinition): boolean {
-  return card.mark !== undefined && (card.type === 'attack' || card.type === 'skill');
+  return card.water === true && (card.type === 'attack' || card.type === 'skill');
 }
 
 /**
  * この札の上に重ねられる相手。同じ種類・同じ段で、重ねたあとも上限以下。
- * 印は違ってよい。
  */
 export function stackPartners(hand: readonly CardInstance[], instance: CardInstance): CardInstance[] {
   if (!isStackable(instance.card)) return [];
@@ -60,30 +49,20 @@ export function canStackOnto(
 export type MarkLink = {
   fromId: string;
   toId: string;
-  fromMark: CardMark;
-  toMark: CardMark;
 };
 
-/** 手札の波紋。focus があるときはその札と組める相手だけ。 */
+/** 手札で重ねられる組。focus があるときはその札と組める相手だけ。 */
 export function markLinks(hand: readonly CardInstance[], focusId: string | null): MarkLink[] {
   const links: MarkLink[] = [];
   const seen = new Set<string>();
   for (const card of hand) {
     if (focusId && card.instanceId !== focusId) continue;
-    const mark = card.card.mark;
-    if (!mark) continue;
+    if (!isStackable(card.card)) continue;
     for (const partner of stackPartners(hand, card)) {
-      const partnerMark = partner.card.mark;
-      if (!partnerMark) continue;
       const key = [card.instanceId, partner.instanceId].sort().join('|');
       if (seen.has(key)) continue;
       seen.add(key);
-      links.push({
-        fromId: card.instanceId,
-        toId: partner.instanceId,
-        fromMark: mark,
-        toMark: partnerMark,
-      });
+      links.push({ fromId: card.instanceId, toId: partner.instanceId });
     }
   }
   return links;
@@ -104,10 +83,10 @@ const scale = (amount: number, multiplier: number) => Math.floor(amount * multip
 
 /**
  * 段の倍率をかけた効果。ダメージ・ブロック・デバフのターン数・霜・かわす・筋力を消す量・悪い効果を消す数・攻撃回数減。
- * ドローとエナジーは増やさない。印の無いカードはそのまま。
+ * ドローとエナジーは増やさない。水札で無いカードはそのまま。
  */
 export function scaledEffects(card: CardDefinition, multiplier: number): Effect[] {
-  if (multiplier === 1 || card.mark === undefined) return card.effects;
+  if (multiplier === 1 || card.water !== true) return card.effects;
   return card.effects.map((effect) => scaleEffect(effect, multiplier));
 }
 
@@ -145,27 +124,7 @@ function scaleEffect(effect: Effect, multiplier: number): Effect {
   }
 }
 
-/**
- * 重ねた瞬間の効果の狙い。
- * self = 自分、block = ブロックがある敵（複数なら選ぶ）、multiHit = 複数ヒット予告の敵（複数なら選ぶ）。
- */
-export type FuseAim = 'self' | 'block' | 'multiHit';
-
-export type FuseBurst = { effects: Effect[]; aim: FuseAim };
-
-/** 重ねて消える札の印で決まる、重ねた瞬間の効果。量は消える札の段に比例。アタック／スキル共通。 */
-export function fuseBurst(card: CardDefinition, stack: number): FuseBurst | null {
-  switch (card.mark) {
-    case 'ice':
-      return {
-        effects: [{ kind: 'gainPower', power: 'thorns', amount: FUSE_THORNS_PER_STACK * stack }],
-        aim: 'self',
-      };
-    case 'drop':
-      return { effects: [{ kind: 'halveBlock' }], aim: 'block' };
-    case 'mist':
-      return { effects: [{ kind: 'cutHits', amount: 1 }], aim: 'multiHit' };
-    case undefined:
-      return null;
-  }
+/** 重ねて消える札の段に、水面の分を足した水力。 */
+export function waterFromFusion(consumedStack: number, echo: number): number {
+  return consumedStack + echo;
 }

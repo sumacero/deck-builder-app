@@ -2,11 +2,10 @@ import type { CardDefinition } from '../domain/card';
 import { DEFEND, STRIKE } from './cards';
 
 /**
- * 水鏡のノア（水属性）のカード。印は氷・雫・霞。
- * 同じ種類（アタックどうし・スキルどうし）・同じ段の札を手札で重ねると段が上がり、残った札の数値が 1.5 倍・2 倍になる。
- * 氷 = 単体の高火力と大きなブロック、雫 = 全体攻撃とドロー、霞 = ブロック無視・かわす・デバフ・悪い効果を消す。
- * 1 枚の数値はストライク（6）や防御（5）より低めで、重ねて化ける。
- * 2026-10-21 に攻撃・スキル・パワーを足し、水属性の報酬を火・草に近づけた。パワーに印は無い。
+ * 水鏡のノア（水属性）のカード。アタックとスキルは水札。
+ * 同じ種類・同じ段の水札を手札で重ねると段が上がり、残った札の数値が 1.5 倍・2 倍になる。
+ * 消えた下の札の段だけ水力が溜まる。水力を要する札は、足りなければ使えない。
+ * パワーは水札ではなく、重ねられない。
  */
 
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
@@ -17,11 +16,11 @@ const NOA = { attribute: 'water' } as const;
 export const ICICLE: CardDefinition = {
   ...NOA,
   id: 'icicle',
-  name: '氷柱',
+  name: '潮柱',
   rarity: 'common',
   type: 'attack',
-  archetypes: ['ice'],
-  mark: 'ice',
+  archetypes: ['element'],
+  water: true,
   cost: 1,
   target: 'enemy',
   effects: [{ kind: 'damage', amount: 5 }],
@@ -32,11 +31,11 @@ export const ICICLE: CardDefinition = {
 export const THIN_ICE: CardDefinition = {
   ...NOA,
   id: 'thin-ice',
-  name: '薄氷',
+  name: '静波',
   rarity: 'common',
   type: 'skill',
-  archetypes: ['ice'],
-  mark: 'ice',
+  archetypes: ['block'],
+  water: true,
   cost: 1,
   target: 'self',
   effects: [{ kind: 'block', amount: 4 }],
@@ -47,11 +46,12 @@ export const THIN_ICE: CardDefinition = {
 export const DROPLET: CardDefinition = {
   ...NOA,
   id: 'droplet',
-  name: '雫',
+  name: '波紋',
   rarity: 'common',
   type: 'attack',
-  archetypes: ['drop'],
-  mark: 'drop',
+  archetypes: ['element'],
+  water: true,
+  waterCost: 1,
   cost: 1,
   target: 'allEnemies',
   effects: [{ kind: 'damage', amount: 3 }],
@@ -62,11 +62,11 @@ export const DROPLET: CardDefinition = {
 export const MIST_VEIL: CardDefinition = {
   ...NOA,
   id: 'mist-veil',
-  name: '霞隠れ',
+  name: '水隠れ',
   rarity: 'common',
   type: 'skill',
-  archetypes: ['mist'],
-  mark: 'mist',
+  archetypes: ['debuff'],
+  water: true,
   cost: 1,
   target: 'self',
   effects: [{ kind: 'gainEvade', amount: 1 }],
@@ -74,7 +74,7 @@ export const MIST_VEIL: CardDefinition = {
   art: 'rain-steps',
 };
 
-/** ノアの秘奥義。印を待たずに、小さなダメージとブロックとドローをまとめて出す。 */
+/** ノアの秘奥義。水札を待たずに、小さなダメージとブロックとドローをまとめて出す。 */
 export const MIRROR_TRIAD: CardDefinition = {
   id: 'mirror-triad',
   name: '水鏡・三枚',
@@ -95,9 +95,9 @@ export const MIRROR_TRIAD: CardDefinition = {
 
 /**
  * ノアの初期デッキ。ストライクはラン開始時に水属性になる。
- * 印のアタック 2 枚（氷柱・雫）と印のスキル 2 枚（薄氷・霞隠れ）で、最初の戦闘から 1 段どうしを重ねられる。
+ * 水札のアタック 2 枚（潮柱・波紋）とスキル 2 枚（静波・水隠れ）で、最初の戦闘から 1 段どうしを重ねられる。
  */
-/** 初期のストライクは 5、防御は 5。印を重ねなくても、無作為な打ち方で第 1 章を抜けられる。 */
+/** 初期のストライクは 5、防御は 5。水札を重ねなくても、無作為な打ち方で第 1 章を抜けられる。 */
 const MIRROR_STRIKE: CardDefinition = {
   ...STRIKE,
   art: 'strike-azure',
@@ -112,7 +112,7 @@ const MIRROR_DEFEND: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 7 }] },
 };
 
-/** ストライク 4・防御 3 に印 4 枚。無作為に使っても殴りと守りが尽きない。 */
+/** ストライク 4・防御 3 に水札 4 枚。波紋だけ水力 1 を使う。 */
 export const MIRROR_STARTER_DECK: CardDefinition[] = [
   ...copies(MIRROR_STRIKE, 4),
   ...copies(MIRROR_DEFEND, 3),
@@ -127,29 +127,30 @@ export const MIRROR_CARDS: CardDefinition[] = [
   THIN_ICE,
   DROPLET,
   MIST_VEIL,
-  // --- 氷: 単体の高火力・大きなブロック ---
+  // --- 単体の高火力・大きなブロック ---
   {
     ...NOA,
     id: 'ice-lance',
-    name: '氷槍',
+    name: '大波',
     rarity: 'uncommon',
     type: 'attack',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['element'],
+    water: true,
+    waterCost: 2,
     cost: 2,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 11 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 14 }] },
+    effects: [{ kind: 'damage', amount: 16 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 20 }] },
     art: 'crack-tide',
   },
   {
     ...NOA,
     id: 'frost-edge',
-    name: '霜の刃',
+    name: '潮の刃',
     rarity: 'common',
     type: 'attack',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['element'],
+    water: true,
     cost: 1,
     target: 'enemy',
     effects: [
@@ -167,11 +168,11 @@ export const MIRROR_CARDS: CardDefinition[] = [
   {
     ...NOA,
     id: 'ice-wall',
-    name: '氷壁',
+    name: '波壁',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['block'],
+    water: true,
     cost: 2,
     target: 'self',
     effects: [{ kind: 'block', amount: 10 }],
@@ -181,11 +182,11 @@ export const MIRROR_CARDS: CardDefinition[] = [
   {
     ...NOA,
     id: 'ice-mirror',
-    name: '氷鏡',
+    name: '鏡盾',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['block'],
+    water: true,
     cost: 1,
     target: 'allEnemies',
     effects: [
@@ -200,19 +201,20 @@ export const MIRROR_CARDS: CardDefinition[] = [
     },
     art: 'water-mirror',
   },
-  // --- 雫: 全体攻撃・ドロー ---
+  // --- 全体攻撃・ドロー ---
   {
     ...NOA,
     id: 'drop-rain',
-    name: '雫の雨',
+    name: '寄せ波',
     rarity: 'uncommon',
     type: 'attack',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['element'],
+    water: true,
+    waterCost: 2,
     cost: 2,
     target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 7 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 9 }] },
+    effects: [{ kind: 'damage', amount: 10 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 13 }] },
     art: 'drizzle',
   },
   {
@@ -221,8 +223,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '跳ね雫',
     rarity: 'common',
     type: 'attack',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['element'],
+    water: true,
     cost: 1,
     target: 'allEnemies',
     effects: [
@@ -243,8 +245,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '水の膜',
     rarity: 'common',
     type: 'skill',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['tempo'],
+    water: true,
     cost: 1,
     target: 'self',
     effects: [
@@ -265,8 +267,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '雫の帳',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['block'],
+    water: true,
     cost: 2,
     target: 'self',
     effects: [
@@ -281,19 +283,20 @@ export const MIRROR_CARDS: CardDefinition[] = [
     },
     art: 'rain-shelter',
   },
-  // --- 霞: ブロック無視・かわす・デバフ・悪い効果を消す ---
+  // --- ブロック無視・かわす・デバフ・悪い効果を消す ---
   {
     ...NOA,
     id: 'mist-cut',
-    name: '霞斬り',
+    name: '鏡砕き',
     rarity: 'common',
     type: 'attack',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['element'],
+    water: true,
+    waterCost: 2,
     cost: 1,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 4, pierce: true }],
-    upgrade: { effects: [{ kind: 'damage', amount: 6, pierce: true }] },
+    effects: [{ kind: 'damage', amount: 12, pierce: true }],
+    upgrade: { effects: [{ kind: 'damage', amount: 15, pierce: true }] },
     art: 'undertow',
   },
   {
@@ -302,8 +305,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '朧突き',
     rarity: 'uncommon',
     type: 'attack',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['element'],
+    water: true,
     cost: 1,
     target: 'enemy',
     effects: [
@@ -324,8 +327,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '霧散',
     rarity: 'uncommon',
     type: 'attack',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['element'],
+    water: true,
     cost: 1,
     target: 'enemy',
     effects: [
@@ -346,8 +349,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '霧払い',
     rarity: 'common',
     type: 'skill',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['debuff'],
+    water: true,
     cost: 0,
     target: 'self',
     effects: [
@@ -368,15 +371,15 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '夢霧',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['debuff'],
+    water: true,
     cost: 2,
     target: 'allEnemies',
     effects: [{ kind: 'applyDebuff', status: 'weak', turns: 1 }],
     upgrade: { cost: 1 },
     art: 'droplet-chain',
   },
-  // --- パワー（印は無く、重ねられない） ---
+  // --- パワー（水札ではなく、重ねられない） ---
   {
     ...NOA,
     id: 'still-surface',
@@ -407,11 +410,11 @@ export const MIRROR_CARDS: CardDefinition[] = [
   {
     ...NOA,
     id: 'frost-flurry',
-    name: '霜の連撃',
+    name: '波の連撃',
     rarity: 'uncommon',
     type: 'attack',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['element'],
+    water: true,
     cost: 1,
     target: 'enemy',
     effects: [{ kind: 'damage', amount: 4, hits: 2 }],
@@ -421,11 +424,11 @@ export const MIRROR_CARDS: CardDefinition[] = [
   {
     ...NOA,
     id: 'crystal-hail',
-    name: '結晶の雹',
+    name: '潮の塊',
     rarity: 'uncommon',
     type: 'attack',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['element'],
+    water: true,
     cost: 2,
     target: 'enemy',
     effects: [
@@ -446,8 +449,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: 'さざ波',
     rarity: 'common',
     type: 'attack',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['element'],
+    water: true,
     cost: 0,
     target: 'allEnemies',
     effects: [{ kind: 'damage', amount: 2 }],
@@ -460,8 +463,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '満潮',
     rarity: 'rare',
     type: 'attack',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['element'],
+    water: true,
     cost: 3,
     target: 'allEnemies',
     effects: [{ kind: 'damage', amount: 12 }],
@@ -474,8 +477,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '霧槍',
     rarity: 'uncommon',
     type: 'attack',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['element'],
+    water: true,
     cost: 1,
     target: 'enemy',
     effects: [
@@ -493,11 +496,11 @@ export const MIRROR_CARDS: CardDefinition[] = [
   {
     ...NOA,
     id: 'shard-guard',
-    name: '氷片の守り',
+    name: '波の守り',
     rarity: 'common',
     type: 'skill',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['block'],
+    water: true,
     cost: 0,
     target: 'self',
     effects: [{ kind: 'block', amount: 3 }],
@@ -507,11 +510,11 @@ export const MIRROR_CARDS: CardDefinition[] = [
   {
     ...NOA,
     id: 'ice-bind',
-    name: '氷結',
+    name: '潮縛り',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['ice'],
-    mark: 'ice',
+    archetypes: ['debuff'],
+    water: true,
     cost: 1,
     target: 'enemy',
     effects: [
@@ -532,8 +535,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '湧水',
     rarity: 'common',
     type: 'skill',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['tempo'],
+    water: true,
     cost: 1,
     target: 'self',
     effects: [{ kind: 'draw', amount: 2 }],
@@ -546,8 +549,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '潮読み',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['drop'],
-    mark: 'drop',
+    archetypes: ['block'],
+    water: true,
     cost: 1,
     target: 'self',
     effects: [
@@ -568,8 +571,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '霧足',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['debuff'],
+    water: true,
     cost: 1,
     target: 'self',
     effects: [
@@ -590,8 +593,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '霧絡み',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['debuff'],
+    water: true,
     cost: 1,
     target: 'enemy',
     effects: [
@@ -612,8 +615,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '霧祓い',
     rarity: 'rare',
     type: 'skill',
-    archetypes: ['mist'],
-    mark: 'mist',
+    archetypes: ['debuff'],
+    water: true,
     cost: 1,
     target: 'self',
     effects: [
@@ -631,10 +634,10 @@ export const MIRROR_CARDS: CardDefinition[] = [
   {
     ...NOA,
     id: 'frost-pillar',
-    name: '霜柱',
+    name: '潮返し',
     rarity: 'rare',
     type: 'power',
-    archetypes: ['ice'],
+    archetypes: ['block'],
     cost: 1,
     target: 'self',
     effects: [{ kind: 'gainPower', power: 'thorns', amount: 2 }],
@@ -648,7 +651,7 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '連なる波',
     rarity: 'uncommon',
     type: 'power',
-    archetypes: ['ice'],
+    archetypes: ['tempo'],
     cost: 1,
     target: 'self',
     effects: [{ kind: 'gainPower', power: 'flurry', amount: 1 }],
@@ -662,7 +665,7 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '露の鎧',
     rarity: 'uncommon',
     type: 'power',
-    archetypes: ['drop'],
+    archetypes: ['block'],
     cost: 1,
     target: 'self',
     effects: [{ kind: 'gainEndTurnBlock', amount: 3 }],
@@ -676,7 +679,7 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '潮招き',
     rarity: 'rare',
     type: 'power',
-    archetypes: ['drop'],
+    archetypes: ['tempo'],
     cost: 1,
     target: 'self',
     effects: [{ kind: 'gainPower', power: 'tidecall', amount: 1 }],
@@ -690,7 +693,7 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '霧の眼',
     rarity: 'uncommon',
     type: 'power',
-    archetypes: ['mist'],
+    archetypes: ['debuff'],
     cost: 1,
     target: 'self',
     effects: [{ kind: 'gainPower', power: 'sadistic', amount: 2 }],

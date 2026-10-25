@@ -12,7 +12,6 @@ export type CardRarity = 'common' | 'uncommon' | 'rare';
 
 /**
  * デッキ構築の軸。報酬の 3 択で、デッキの軸に合うカードが 1 枚出やすくなる。
- * 氷・雫・霞は水鏡のノアの印で、報酬の軸そのもの。それ以外はカイル・リーネの軸。
  */
 export type Archetype =
   | 'debuff'
@@ -21,13 +20,7 @@ export type Archetype =
   | 'sacrifice'
   | 'growth'
   | 'element'
-  | 'tempo'
-  | 'ice'
-  | 'drop'
-  | 'mist';
-
-/** 手札で重ねる札の印。氷は単体の高火力と大きなブロック、雫は全体攻撃とドロー、霞はすり抜けとデバフ。 */
-export type CardMark = 'ice' | 'drop' | 'mist';
+  | 'tempo';
 
 /** enemy のカードは敵の上までスワイプして使う。それ以外は上にスワイプすれば使える。 */
 export type CardTarget = EffectTarget;
@@ -112,10 +105,12 @@ export type CardDefinition = {
   mysticArte?: boolean;
   archetypes?: Archetype[];
   /**
-   * 手札で重ねる印。同じ種類・同じ段の札どうしを重ねると段が上がり、残った札の数値が増える。
-   * 重ねて消える札の印で、重ねた瞬間の効果が決まる。省略すると印は無い（重ねられない）。
+   * 水札。ノアのアタックとスキル。同じ種類・同じ段の水札どうしを手札で重ねると段が上がり、
+   * 残った札の数値が増える。下の札は廃棄され、その段の数だけ水力が溜まる。
    */
-  mark?: CardMark;
+  water?: boolean;
+  /** 使うときに消費する水力。足りなければ使えない。戦闘のあいだ残り、ターンでは消えない。 */
+  waterCost?: number;
   /** ムチで打つアタック。「ムチで攻撃するたびに宿り木」（宿り木の蔓など）が乗る。 */
   whip?: boolean;
   /** 弓の「矢」（0 コストで廃棄されるアタック）。戦闘中にカードの効果で作られ、矢のパワーで強くなる。 */

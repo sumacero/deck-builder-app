@@ -4,7 +4,7 @@ import type { CardInstance } from '../../domain/card';
 import type { CombatEvent, PlayerState } from '../../domain/combat';
 import { describeHandCard } from '../../logic/describe';
 import { markLinks, stackOf } from '../../logic/marks';
-import { COLORS, HAND_LAYOUT, MARK_COLORS, SPACING } from '../../theme';
+import { ATTRIBUTE_COLORS, COLORS, HAND_LAYOUT, SPACING } from '../../theme';
 import { type CardDragHandlers, DraggableCard } from './DraggableCard';
 import { FuseReveal } from './effects/FuseReveal';
 import { HandFullEffect } from './effects/HandFullEffect';
@@ -97,8 +97,8 @@ export function Hand({
                     dragging={draggingId === instance.instanceId}
                     selected={selectedId === instance.instanceId}
                     linkColor={
-                      instance.card.mark && linkedIds.has(instance.instanceId)
-                        ? MARK_COLORS[instance.card.mark]
+                      instance.card.water && linkedIds.has(instance.instanceId)
+                        ? ATTRIBUTE_COLORS.water
                         : undefined
                     }
                     {...handlers}

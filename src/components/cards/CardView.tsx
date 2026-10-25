@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { cardAttributes } from '../../logic/attribute';
-import { MARK_NAME } from '../../logic/marks';
 import {
   ATTRIBUTE_ICON,
   CARD_RARITY_LABEL,
@@ -17,7 +16,6 @@ import {
   CARD_TYPE_COLORS,
   COLORS,
   HAND_LAYOUT,
-  MARK_COLORS,
   RADIUS,
   RELIC_RARITY_COLORS,
   SPACING,
@@ -170,9 +168,11 @@ export function CardView({
               </Text>
             </View>
           )}
-          {card.mark && (
+          {card.water && (
             <View style={styles.markBadge}>
-              <Text style={[styles.markText, scaled?.emblemText]}>{MARK_NAME[card.mark]}</Text>
+              <Text style={[styles.markText, scaled?.emblemText]}>
+                {card.waterCost ? `水${card.waterCost}` : '水'}
+              </Text>
             </View>
           )}
           <View style={styles.emblem}>
@@ -215,9 +215,9 @@ export function CardView({
           <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
         </View>
         {dimmed && <View pointerEvents="none" style={styles.dimGem} />}
-        {stack > 1 && card.mark && (
+        {stack > 1 && card.water && (
           <View pointerEvents="none" style={styles.fusedBadge}>
-            <FusedBadge count={stack} color={MARK_COLORS[card.mark]} />
+            <FusedBadge count={stack} color={ATTRIBUTE_COLORS.water} />
           </View>
         )}
         {count !== undefined && count > 1 && (
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.round,
     paddingHorizontal: 3,
   },
-  markText: { color: COLORS.gold, fontSize: 10, fontWeight: '800' },
+  markText: { color: ATTRIBUTE_COLORS.water, fontSize: 10, fontWeight: '800' },
   emblem: {
     position: 'absolute',
     right: 1,

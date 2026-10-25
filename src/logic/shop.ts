@@ -1,10 +1,10 @@
-import type { CardDefinition, CardMark } from '../domain/card';
+import type { CardDefinition } from '../domain/card';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { EconomyConfig, ShopOffer, ShopStock } from '../domain/shop';
 import { pickWeightedCards } from './cardRarity';
-import { cardsMatch, remarkInDeck, removeFromDeck } from './cards';
+import { cardsMatch, removeFromDeck } from './cards';
 import { nextRandom, pickUnique } from './random';
 import { isRelicTier, pickWeightedRelics } from './relics';
 import { obtainRelic } from './runEffects';
@@ -79,16 +79,14 @@ export function generateShopStock(
     economy.priceVariance,
     pickedPotions.seed,
   );
-  const remark = jitterPrice(economy.remarkPrice, economy.priceVariance, potions.seed);
   return {
     stock: {
       cards: cards.offers,
       relics: relics.offers,
       potions: potions.offers,
       removal: { price: removalPrice(economy, removalCount), used: false },
-      remark: { price: remark.price, used: false },
     },
-    seed: remark.seed,
+    seed: potions.seed,
   };
 }
 
@@ -146,7 +144,7 @@ export function removeCard(run: RunState, card: CardDefinition): RunState {
   if (run.phase.kind !== 'shop') return run;
   const stock = run.phase.stock;
   const { price, used } = stock.removal;
-  if (used || !canAfford(run, price) || !run.deck.some((item) => item.id === card.id && item.mark === card.mark)) {
+  if (used || !canAfford(run, price) || !run.deck.some((item) => cardsMatch(item, card))) {
     return run;
   }
   return {
@@ -155,22 +153,6 @@ export function removeCard(run: RunState, card: CardDefinition): RunState {
     deck: removeFromDeck(run.deck, card),
     removalCount: run.removalCount + 1,
     phase: { kind: 'shop', stock: { ...stock, removal: { price, used: true } } },
-  };
-}
-
-/** 水鏡のノアの店だけで、カード 1 枚の印を書き換える。1 店につき 1 回。 */
-export function remarkCard(run: RunState, card: CardDefinition, mark: CardMark): RunState {
-  if (run.phase.kind !== 'shop' || run.agent.id !== 'mirror-seer') return run;
-  const stock = run.phase.stock;
-  const { price, used } = stock.remark;
-  if (used || !canAfford(run, price) || card.mark === mark) return run;
-  if (!run.deck.some((item) => cardsMatch(item, card))) return run;
-  const deck = remarkInDeck(run.deck, card, mark);
-  return {
-    ...run,
-    gold: run.gold - price,
-    deck,
-    phase: { kind: 'shop', stock: { ...stock, remark: { price, used: true } } },
   };
 }
 

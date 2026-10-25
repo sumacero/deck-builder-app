@@ -1,6 +1,6 @@
 import type { AgentDefinition } from './agent';
 import type { Attribute } from './attribute';
-import type { CardDefinition, CardInstance, CardMark, CardMotion, CardType } from './card';
+import type { CardDefinition, CardInstance, CardMotion, CardType } from './card';
 import type { Effect } from './effect';
 import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank, EnemyTrait } from './enemy';
 import type { PotionDefinition } from './potion';
@@ -69,6 +69,8 @@ export type PlayerState = Fighter & {
   evade: number;
   /** このターン、手札で札を重ねた回数（水晶の文鎮は最初の 1 回で発動）。 */
   fusesThisTurn: number;
+  /** 水力。水札を重ねると溜まり、水力を要する札を使うと減る。ターンをまたいで残る。 */
+  water: number;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
@@ -128,8 +130,8 @@ export type CombatEventBody =
       targets: EnemyUid[];
       cardType: CardType;
       motion: CardMotion;
-      /** 性質カードの印。水鏡のノアは、この印で戦闘エフェクトを切り替える。 */
-      mark?: CardMark;
+      /** 水札を使った。水鏡のノアは、水のエフェクトに切り替える。 */
+      water?: boolean;
     }
   /** 敵が行動した（攻撃は 1 発ごと）。target は行動した敵。 */
   | { kind: 'enemyAct'; target: EnemyUid; action: EnemyAction['kind'] }
@@ -252,11 +254,6 @@ export type CombatState = {
   events: CombatEvent[];
   nextEventId: number;
   /**
-   * 札を重ねたあと、敵をタップで選ぶ待ち。
-   * ブロック半減・攻撃回数減で、候補が 2 体以上いるときだけ入る。
-   */
-  pendingFuse: PendingFuseAim | null;
-  /**
    * 手札から捨てる・廃棄する札を、プレイヤーがタップで選ぶ待ち。
    * 枚数を選び終わるまで、ターン終了やほかのカードは使えない。
    */
@@ -280,15 +277,6 @@ export type PendingHandRemoval = {
    * sawWeak は、タップでイベントを捨てる前に出ていた弱点ヒット。
    */
   follow: { instance: CardInstance; eventsBefore: number; sawWeak?: boolean } | null;
-};
-
-/** 重ねた瞬間の効果で、敵を選んでもらう待ち。 */
-export type PendingFuseAim = {
-  effects: Effect[];
-  candidates: EnemyUid[];
-  repeats: number;
-  /** 案内文用。block = ブロック半減、multiHit = 攻撃回数を減らす。 */
-  kind: 'block' | 'multiHit';
 };
 
 /** カードを敵の上で離したときに、その敵が受ける実ダメージの予告。 */

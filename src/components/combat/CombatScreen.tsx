@@ -37,6 +37,7 @@ import { ArteCutIn } from './effects/ArteCutIn';
 import { DamageVignette } from './effects/DamageVignette';
 import { EnemyRow } from './EnemyRow';
 import { EnergyOrb } from './EnergyOrb';
+import { WaterGauge } from './WaterGauge';
 import { PileTravel } from './effects/PileTravel';
 import { Hand } from './Hand';
 import { PlayerPanel } from './PlayerPanel';
@@ -86,7 +87,6 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     state,
     playCard,
     fuseInHand,
-    resolveFuseAim,
     resolveHandRemoval,
     drinkPotion,
     discardPotion,
@@ -106,8 +106,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const enemyTurnBusy = useEnemyTurnBusy(state.events);
   const handRemoval = state.pendingHandRemoval;
   const choosingHand = Boolean(handRemoval) && inProgress && !enemyTurnBusy;
-  const canAct = inProgress && !enemyTurnBusy && !state.pendingFuse && !handRemoval;
-  const canPickFuse = inProgress && !enemyTurnBusy && Boolean(state.pendingFuse);
+  const canAct = inProgress && !enemyTurnBusy && !handRemoval;
   const effectsTime = eventsDuration(state.events);
   const ended = state.status !== 'playerTurn';
   // ゲージの残像まで空になってから。先に止めると、減りきる前に勝敗が分かってしまう。
@@ -190,13 +189,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const living = livingEnemies(state).map((enemy) => enemy.uid);
   // 選んでいる最中にポーションが無くなったら、取り消し扱い。
   const activePending = isPendingValid(pending, isDrinkable) ? pending : null;
-  const fusePending = state.pendingFuse;
-  const selectingEnemy = Boolean(fusePending || (activePending && !drag));
-  const selectHighlight = fusePending
-    ? fusePending.candidates
-    : activePending
-      ? living
-      : [];
+  const selectingEnemy = Boolean(activePending && !drag);
+  const selectHighlight = activePending ? living : [];
 
   let previews: DamagePreview[] = [];
   if (drag?.kind === 'card' && hover && hover.kind !== 'self') {
@@ -213,11 +207,6 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     endTurn();
   };
   const onSelectEnemy = (uid: EnemyUid) => {
-    if (fusePending) {
-      if (!canPickFuse || !fusePending.candidates.includes(uid)) return;
-      resolveFuseAim(uid);
-      return;
-    }
     if (!canAct || !activePending) return;
     setPending(null);
     drinkPotion(activePending.slot, uid);
@@ -274,12 +263,6 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       viewRef={bindPlayer}
     />
   );
-  const fuseHint =
-    fusePending?.kind === 'block'
-      ? 'ブロックがある敵をタップ（半分にする）'
-      : fusePending?.kind === 'multiHit'
-        ? '連続攻撃の敵をタップ（回数を減らす）'
-        : null;
   const removalHint = handRemoval
     ? handRemoval.mode === 'exhaust'
       ? `廃棄する札をタップ（あと ${handRemoval.left} 枚）`
@@ -289,10 +272,6 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     removalHint && choosingHand ? (
       <View style={styles.hintRow}>
         <Text style={styles.hint}>{removalHint}</Text>
-      </View>
-    ) : fuseHint && !drag ? (
-      <View style={styles.hintRow}>
-        <Text style={styles.hint}>{fuseHint}</Text>
       </View>
     ) : activePending && !drag ? (
       <View style={styles.hintRow}>
@@ -313,7 +292,12 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
         </View>
       )
     );
-  const energyOrb = <EnergyOrb energy={state.player.energy} maxEnergy={state.player.maxEnergy} />;
+  const energyOrb = (
+    <View style={styles.gauges}>
+      <EnergyOrb energy={state.player.energy} maxEnergy={state.player.maxEnergy} />
+      {setup.agent.id === 'mirror-seer' && <WaterGauge water={state.player.water} />}
+    </View>
+  );
   const turnLabel = <Text style={styles.turn}>TURN {state.turn}</Text>;
   const hand = (
     <Hand
@@ -555,6 +539,7 @@ const styles = StyleSheet.create({
   portraitStage: { flex: 1, justifyContent: 'space-between', paddingBottom: SPACING.sm },
   playerSlot: { alignSelf: 'stretch' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 64 },
+  gauges: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   /** 所持品の説明欄が右の舞台の上に重なって見えるよう、右の列より手前に置く。 */
   side: {
     width: `${COMBAT_LAYOUT.landscapeSideRatio * 100}%`,

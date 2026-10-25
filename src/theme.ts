@@ -1,5 +1,5 @@
 import type { Attribute } from './domain/attribute';
-import type { CardMark, CardType } from './domain/card';
+import type { CardType } from './domain/card';
 import type { MapNodeType } from './domain/map';
 import type { RelicRarity } from './domain/relic';
 
@@ -192,12 +192,12 @@ export const ATTRIBUTE_COLORS: Record<Attribute, string> = {
   water: '#2FB8E8',
 };
 
-/** 印の波紋。雨は明るい雫、波は深い海、氷は白い氷。水属性の枠より明るく、または深くして見分ける。 */
-export const MARK_COLORS: Record<CardMark, string> = {
+/** 使われなくなった印の演出が、まだ種類として残っているときの色。 */
+export const LEGACY_BURST = {
   ice: '#DFF6FF',
   drop: '#3D8BFF',
   mist: '#C9B8F0',
-};
+} as const;
 
 /** 属性カードの本文の背景にうっすら敷く色の不透明度（16 進 2 桁）。 */
 export const ATTRIBUTE_TINT_ALPHA = '22';

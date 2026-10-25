@@ -1,4 +1,7 @@
+import type { CardDefinition } from '../domain/card';
 import type { RunState } from '../domain/run';
+import { ALL_CARDS } from '../data/catalog';
+import { baseCardId, growCard, upgradeCard } from './cards';
 
 /** セーブの形を変えたら上げる。合わないセーブは読み捨てる。 */
 export const SAVE_VERSION = 1;
@@ -70,31 +73,81 @@ export function serializeRun(run: RunState): string {
 }
 
 /**
- * 報酬画面にポーションの 3 択を足す前のセーブは、カードだけ選んで進める。
- * 取り消せないフラグが無い古いセーブは、これまでどおり受け取らずに進める。
+ * 印が付いて保存された水札を、今のカード定義に戻す。
+ * ストライクなど印の無かった札は、属性や成長をそのまま残す。
  */
-function withRewardDefaults(run: RunState): RunState {
+function migrateCard(card: CardDefinition): CardDefinition {
+  const saved = card as CardDefinition & { mark?: unknown };
+  const latest = ALL_CARDS.find((item) => item.id === baseCardId(saved.id));
+  if (!latest?.water) {
+    if (!('mark' in saved)) return card;
+    const { mark: _mark, ...rest } = saved;
+    return rest;
+  }
+  let next = saved.upgraded || saved.id.endsWith('+') ? upgradeCard(latest) : latest;
+  const times = saved.timesGrown ?? 0;
+  for (let i = 0; i < times; i += 1) next = growCard(next);
+  return next;
+}
+
+function migrateCards(run: RunState): RunState {
+  const deck = run.deck.map(migrateCard);
+  const rewardPool = run.rewardPool.map(migrateCard);
   if (run.phase.kind === 'reward') {
+    return { ...run, deck, rewardPool, phase: { ...run.phase, choices: run.phase.choices.map(migrateCard) } };
+  }
+  if (run.phase.kind === 'shop') {
     return {
       ...run,
+      deck,
+      rewardPool,
       phase: {
         ...run.phase,
-        step: run.phase.step === 'potion' ? 'potion' : 'card',
-        potionChoices: Array.isArray(run.phase.potionChoices) ? run.phase.potionChoices : [],
-        canSkip: run.phase.canSkip !== false,
+        stock: {
+          ...run.phase.stock,
+          cards: run.phase.stock.cards.map((offer) => ({ ...offer, item: migrateCard(offer.item) })),
+        },
       },
     };
   }
-  if (run.phase.kind === 'deckEdit') {
-    return { ...run, phase: { ...run.phase, cancellable: run.phase.cancellable !== false } };
+  return { ...run, deck, rewardPool };
+}
+
+/**
+ * 報酬画面にポーションの 3 択を足す前のセーブは、カードだけ選んで進める。
+ * 取り消せないフラグが無い古いセーブは、これまでどおり受け取らずに進める。
+ * 印を書いている途中のセーブは、その画面を閉じてマップへ戻す。
+ */
+function withRewardDefaults(run: RunState): RunState {
+  const migrated = migrateCards(run);
+  if (migrated.phase.kind === 'reward') {
+    return {
+      ...migrated,
+      phase: {
+        ...migrated.phase,
+        step: migrated.phase.step === 'potion' ? 'potion' : 'card',
+        potionChoices: Array.isArray(migrated.phase.potionChoices) ? migrated.phase.potionChoices : [],
+        canSkip: migrated.phase.canSkip !== false,
+      },
+    };
   }
-  return run;
+  if (migrated.phase.kind === 'deckEdit') {
+    return { ...migrated, phase: { ...migrated.phase, cancellable: migrated.phase.cancellable !== false } };
+  }
+  return migrated;
+}
+
+/** 印の書き換え画面はもう無い。読み込んだらマップ（結末が残っていればそこ）へ戻す。 */
+function scrubRetiredPhase(phase: unknown): unknown {
+  if (!isRecord(phase) || phase.kind !== 'deckEdit' || phase.mode !== 'remark') return phase;
+  return isRecord(phase.resume) ? phase.resume : { kind: 'map' };
 }
 
 export function parseSavedRun(raw: string): RunState | null {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed) || parsed.version !== SAVE_VERSION) return null;
+    if (isRecord(parsed.run)) parsed.run.phase = scrubRetiredPhase(parsed.run.phase);
     return isRunState(parsed.run) ? withRewardDefaults(parsed.run) : null;
   } catch {
     return null;

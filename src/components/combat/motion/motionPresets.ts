@@ -1,4 +1,4 @@
-import type { CardMark, CardMotion } from '../../../domain/card';
+import type { CardMotion } from '../../../domain/card';
 import type { ActorId, CombatEvent } from '../../../domain/combat';
 import type { EnemyAction } from '../../../domain/enemy';
 import { MOTION } from '../../../theme';
@@ -476,35 +476,22 @@ export const PLAYER_FLINCH: MotionPreset = {
   burst: { kind: 'impact', on: 'self', delay: 40 },
 };
 
-/** ノアの性質カード。印が無いカードは、動き側に書いた水のエフェクトのまま。 */
-function burstKindForMark(mark: CardMark): VfxKind {
-  switch (mark) {
-    case 'ice':
-      return 'ice';
-    case 'drop':
-      return 'drop';
-    case 'mist':
-      return 'mist';
-  }
-}
-
 /** イベントから「誰が・誰に向けて・どう動くか」を決める。動きの無いイベントは null。 */
 export function motionForEvent(event: CombatEvent, agentId: string): ActorMotionPlan | null {
   switch (event.kind) {
     case 'cardPlayed': {
       const motions = AGENT_MOTIONS[agentId] ?? SWORDSMAN_MOTIONS;
       const base = motions[event.motion];
-      const preset =
-        agentId === 'mirror-seer' && event.mark
-          ? {
-              ...base,
-              burst: {
-                kind: burstKindForMark(event.mark),
-                on: base.burst?.on ?? (event.targets.length > 0 ? 'opponent' : 'self'),
-                delay: base.burst?.delay ?? 80,
-              },
-            }
-          : base;
+      const preset = event.water
+        ? {
+            ...base,
+            burst: {
+              kind: 'water' as const,
+              on: base.burst?.on ?? (event.targets.length > 0 ? 'opponent' : 'self'),
+              delay: base.burst?.delay ?? 80,
+            },
+          }
+        : base;
       return { actor: 'player', opponents: event.targets, preset };
     }
     case 'enemyAct':
