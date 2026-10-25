@@ -25,6 +25,46 @@ export const DEFEND: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 6 }] },
 };
 
+/** カイル初期用。id は共通のまま数値だけ +1（融合の祭壇がストライク／防御として拾える）。 */
+export const CRIMSON_STRIKE: CardDefinition = {
+  ...STRIKE,
+  effects: [{ kind: 'damage', amount: 5 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 7 }] },
+};
+
+export const CRIMSON_DEFEND: CardDefinition = {
+  ...DEFEND,
+  effects: [{ kind: 'block', amount: 5 }],
+  upgrade: { effects: [{ kind: 'block', amount: 7 }] },
+};
+
+/**
+ * カイルの初期固有札。ストライクより火力は控えめだが、このターンの筋力を少し上げる。
+ * 強打（スレスパ鉄甲の入口）にはせず、熱血剣士らしい筋力の入口にする。
+ */
+export const SPIRIT_SLASH: CardDefinition = {
+  id: 'spirit-slash',
+  name: '闘気斬',
+  rarity: 'common',
+  type: 'attack',
+  attribute: 'fire',
+  archetypes: ['strength'],
+  cost: 1,
+  target: 'enemy',
+  effects: [
+    { kind: 'damage', amount: 4 },
+    { kind: 'gainStrength', amount: 1, duration: 'turn' },
+  ],
+  upgrade: {
+    effects: [
+      { kind: 'damage', amount: 5 },
+      { kind: 'gainStrength', amount: 2, duration: 'turn' },
+    ],
+  },
+  /** 専用絵がまだ無いので火炎斬の絵を仮置き。 */
+  art: 'flame-slash',
+};
+
 export const BASH: CardDefinition = {
   id: 'bash',
   name: '強打',
@@ -87,10 +127,11 @@ export const CRIMSON_PHOENIX: CardDefinition = {
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
-/** 紅蓮のカイルの初期デッキ。ストライクはラン開始時にエージェントの属性になる。 */
+/** 紅蓮のカイルの初期デッキ。ストライク／防御はカイルだけ数値 +1。闘気斬で筋力の入口を持たせる。 */
 export const CRIMSON_STARTER_DECK: CardDefinition[] = [
-  ...copies(STRIKE, 4),
-  ...copies(DEFEND, 4),
+  ...copies(CRIMSON_STRIKE, 4),
+  ...copies(CRIMSON_DEFEND, 4),
+  SPIRIT_SLASH,
 ];
 
 /** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。末尾にシナジー札を足す。 */
@@ -761,6 +802,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     upgrade: { effects: [{ kind: 'damagePerSelfHpLost', base: 5, perHp: 3 }] },
   },
   BASH,
+  SPIRIT_SLASH,
 
   // --- 戦闘を通じて強くなる ---
   {

@@ -13,7 +13,7 @@ export const MARK_NAME: Record<CardMark, string> = {
 export const MAX_STACK = 4;
 
 /** 氷を重ねて消したとき、1 段あたり得る棘（茨の鎧）。戦闘中ずっと残る。 */
-export const FUSE_THORNS_PER_STACK = 2;
+export const FUSE_THORNS_PER_STACK = 1;
 
 /** この札の段（まとまっている枚数）。 */
 export function stackOf(instance: CardInstance): number {

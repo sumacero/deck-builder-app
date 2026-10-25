@@ -10,17 +10,30 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/** ノアの初期レリック。毎ターン最初に札を重ねたとき、ブロック 4 を得る。 */
+/** ノアの初期レリック。毎ターン最初に札を重ねたとき、ブロック 3 を得る。 */
 export const CRYSTAL_WEIGHT: RelicDefinition = {
   id: 'crystal-weight',
   name: '水晶の文鎮',
   icon: '💎',
   rarity: 'starter',
   trigger: 'firstFuse',
-  effects: [{ kind: 'block', amount: 4 }],
+  effects: [{ kind: 'block', amount: 3 }],
 };
 
-/** リーネの初期レリック。 */
+/**
+ * ノアの初期レリック。戦闘に勝つたび少し回復する。
+ * 印を重ねなくても届くので、札を無作為に使うだけの戦いでも第 1 章で干上がらない。
+ */
+export const QUIET_TIDE: RelicDefinition = {
+  id: 'quiet-tide',
+  name: '静かな潮',
+  icon: '💧',
+  rarity: 'starter',
+  trigger: 'combatWon',
+  effects: [{ kind: 'heal', amount: 6 }],
+};
+
+/** リーネの初期レリック。戦闘開始時に宿り木を植える。 */
 export const WORLD_TREE_SPROUT: RelicDefinition = {
   id: 'world-tree-sprout',
   name: '世界樹の若葉',

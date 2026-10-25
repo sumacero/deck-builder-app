@@ -8,7 +8,14 @@ import { STANDARD_ECONOMY } from './economy';
 import { BASIN_ORACLE, STANDARD_EVENTS } from './events';
 import { ALL_POTIONS, FIRE_POTION, IRON_POTION, SWIFT_POTION } from './potions';
 import { MIRROR_CARDS, MIRROR_STARTER_DECK } from './mirrorCards';
-import { BOSS_RELIC_POOL, CRYSTAL_WEIGHT, FIGHTING_SPIRIT, RELIC_POOL, WORLD_TREE_SPROUT } from './relics';
+import {
+  BOSS_RELIC_POOL,
+  CRYSTAL_WEIGHT,
+  FIGHTING_SPIRIT,
+  QUIET_TIDE,
+  RELIC_POOL,
+  WORLD_TREE_SPROUT,
+} from './relics';
 import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 
 /**
@@ -112,7 +119,7 @@ const HUNTER_REWARD_CARDS = [
 export const STANDARD_RUN: RunSetup = {
   agent: CRIMSON_HERO,
   deck: CRIMSON_STARTER_DECK,
-  playerMaxHp: 70,
+  playerMaxHp: 72,
   energyPerTurn: 3,
   drawPerTurn: 5,
   relics: [FIGHTING_SPIRIT],
@@ -130,12 +137,12 @@ export const STANDARD_RUN: RunSetup = {
   restHealRatio: 0.3,
 };
 
-/** リーネは HP がやや低いぶん、宿り木の初期レリックで戦闘の立ち上がりから削れる。 */
+/** リーネは HP を抑えてある。宿り木の初期レリックで戦闘の立ち上がりから削れる。 */
 export const VERDANT_RUN: RunSetup = {
   ...STANDARD_RUN,
   agent: VERDANT_ARCHER,
   deck: VERDANT_STARTER_DECK,
-  playerMaxHp: 68,
+  playerMaxHp: 62,
   relics: [WORLD_TREE_SPROUT],
   rewardPool: HUNTER_REWARD_CARDS,
 };
@@ -150,13 +157,13 @@ const MIRROR_REWARD_CARDS = [
   ...MIRROR_CARDS,
 ].filter((card) => !isBlockAxis(card) || (card.attribute !== undefined && card.attribute !== 'water'));
 
-/** ノアは HP が低め。初期レリックは、手札で重ねた印を次のターン 1 枚多く数える。 */
+/** ノアの最大 HP はカイルと同じ 72。文鎮は重ねたとき、静かな潮は勝つたびに 6 回復する。 */
 export const MIRROR_RUN: RunSetup = {
   ...STANDARD_RUN,
   agent: MIRROR_SEER,
   deck: MIRROR_STARTER_DECK,
-  playerMaxHp: 66,
-  relics: [CRYSTAL_WEIGHT],
+  playerMaxHp: 72,
+  relics: [CRYSTAL_WEIGHT, QUIET_TIDE],
   rewardPool: MIRROR_REWARD_CARDS,
   eventPool: [...STANDARD_EVENTS, BASIN_ORACLE],
 };
