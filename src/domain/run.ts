@@ -24,7 +24,7 @@ export type RunSetup = {
   /** 最後の章のボスを倒したあとに戦うラスボス（強さの倍率はかけ済み）。倒したらクリア。 */
   finalBoss: EnemyDefinition;
   rewardPool: CardDefinition[];
-  /** ショップ・恩恵で手に入るポーションの候補。 */
+  /** ショップ・恩恵・戦闘報酬で手に入るポーションの候補。 */
   potionPool: PotionDefinition[];
   /** エリート・宝箱・ショップ・恩恵で手に入るレリックの候補。持っているものは出ない。 */
   relicPool: RelicDefinition[];
@@ -50,7 +50,11 @@ export type RunPhase =
   | { kind: 'combat'; nodeId: string; encounter: Encounter; seed: number }
   | {
       kind: 'reward';
+      /** card のあと、空き枠か入れ替えでポーションを 1 つ選ぶ。 */
+      step: 'card' | 'potion';
       choices: CardDefinition[];
+      /** カードを決めたあとに出す 3 択。空ならポーションの画面は出さない。 */
+      potionChoices: PotionDefinition[];
       gold: number;
       /** すでに所持品に入っている。 */
       relic: RelicDefinition | null;

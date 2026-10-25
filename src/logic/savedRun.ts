@@ -69,12 +69,24 @@ export function serializeRun(run: RunState): string {
   return JSON.stringify({ version: SAVE_VERSION, run });
 }
 
-/** 版が違う、または中身が足りない文字列は null。 */
+/** 報酬画面にポーションの 3 択を足す前のセーブは、カードだけ選んで進める。 */
+function withRewardDefaults(run: RunState): RunState {
+  if (run.phase.kind !== 'reward') return run;
+  return {
+    ...run,
+    phase: {
+      ...run.phase,
+      step: run.phase.step === 'potion' ? 'potion' : 'card',
+      potionChoices: Array.isArray(run.phase.potionChoices) ? run.phase.potionChoices : [],
+    },
+  };
+}
+
 export function parseSavedRun(raw: string): RunState | null {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed) || parsed.version !== SAVE_VERSION) return null;
-    return isRunState(parsed.run) ? parsed.run : null;
+    return isRunState(parsed.run) ? withRewardDefaults(parsed.run) : null;
   } catch {
     return null;
   }

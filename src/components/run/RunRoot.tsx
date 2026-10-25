@@ -47,6 +47,7 @@ export function RunRoot({ setup, initialRun, onExitToTitle }: RunRootProps) {
     moveTo,
     finishCombat,
     resolveReward,
+    resolvePotionReward,
     chooseBossRelic,
     startFinalBattle,
     newRun,
@@ -93,12 +94,17 @@ export function RunRoot({ setup, initialRun, onExitToTitle }: RunRootProps) {
     case 'reward':
       screen = (
         <RewardScreen
+          step={visible.phase.step}
           choices={visible.phase.choices}
+          potionChoices={visible.phase.potionChoices}
+          relics={visible.relics}
+          potions={visible.potions}
           gold={visible.phase.gold}
           relic={visible.phase.relic}
           toBossRelic={visible.phase.next === 'bossRelic'}
           deck={visible.deck}
           onPick={resolveReward}
+          onPickPotion={resolvePotionReward}
         />
       );
       break;

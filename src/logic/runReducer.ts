@@ -1,4 +1,5 @@
 import type { CardDefinition, CardMark } from '../domain/card';
+import type { PotionDefinition } from '../domain/potion';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { chooseBlessing, finishDeckEdit } from './blessing';
 import { chooseEventOption, leaveEvent } from './event';
@@ -9,6 +10,7 @@ import {
   discardPotion,
   finishCombat,
   moveTo,
+  resolvePotionReward,
   resolveReward,
   startFinalBattle,
 } from './run';
@@ -21,6 +23,7 @@ export type RunAction =
   | { type: 'moveTo'; nodeId: string }
   | { type: 'finishCombat'; result: CombatResult }
   | { type: 'resolveReward'; card: CardDefinition | null }
+  | { type: 'resolvePotionReward'; choice: { potion: PotionDefinition; slot: number } | null }
   | { type: 'chooseBossRelic'; relicId: string | null }
   | { type: 'startFinalBattle' }
   | { type: 'rest' }
@@ -50,6 +53,8 @@ export function runReducer(run: RunState, action: RunAction): RunState {
       return finishCombat(run, action.result);
     case 'resolveReward':
       return resolveReward(run, action.card);
+    case 'resolvePotionReward':
+      return resolvePotionReward(run, action.choice);
     case 'chooseBossRelic':
       return chooseBossRelic(run, action.relicId);
     case 'startFinalBattle':
