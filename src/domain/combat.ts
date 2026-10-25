@@ -23,6 +23,8 @@ export type Hindrance = {
   chill: number;
   /** 封印: スキルカードを使えない。 */
   seal: boolean;
+  /** 絡め: アタックカードを使えない。 */
+  bind: boolean;
 };
 
 export type PlayerState = Fighter & {
@@ -86,6 +88,11 @@ export type EnemyState = Fighter & {
   strength: number;
   moves: EnemyMove[];
   moveIndex: number;
+  /**
+   * 同じ戦闘にエリート以上が 2 体いるとき、2 体目が最初の 1 ターンだけ様子を見る。
+   * 0 なら通常の行動。大技の開始位置が揃って、1 ターン目に重なるのを避ける。
+   */
+  windup: number;
   traits: EnemyTrait[];
   /** 眠りの残りターン。0 なら起きている。 */
   asleep: number;

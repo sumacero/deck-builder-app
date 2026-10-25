@@ -15,6 +15,8 @@ export type EnemyAction =
   | { kind: 'chill'; amount: number }
   /** 封印: 次の自分のターン、スキルカードを使えない。 */
   | { kind: 'seal' }
+  /** 絡め: 次の自分のターン、アタックカードを使えない。 */
+  | { kind: 'bind' }
   /** 力を溜める（それ自体は何もしない）。次の行動が大技であることの予告。 */
   | { kind: 'charge' }
   /** プレイヤーに弱体・衰弱をかける。 */
@@ -38,6 +40,11 @@ export type EnemyMove = {
 export type EnemyTrait =
   /** 仇討ち: 仲間が倒れるたびに筋力が上がる。 */
   | { kind: 'vengeance'; strength: number }
+  /**
+   * 激昂: プレイヤーがスキルを使うたびに筋力が上がる。
+   * 行動パターンの火力は一周で戻るが、ここで付いた筋力は戦闘の終わりまで残る。
+   */
+  | { kind: 'enrage'; strength: number }
   /** 眠り: 最初の turns ターンは眠っている。HP にダメージを受けるか、時間が来ると起きて筋力が上がる。 */
   | { kind: 'sleep'; turns: number; wakeStrength: number }
   /**
@@ -69,7 +76,10 @@ export type EnemyDefinition = {
   icon: string;
   rank: EnemyRank;
   maxHp: number;
-  /** 先頭から順に使い、最後まで行ったら先頭に戻る。 */
+  /**
+   * 先頭から順に使い、最後まで行ったら先頭に戻る。
+   * エリート・ボスは先頭が一番弱く、最後の手が一番強い。火力の上がり方は logic/routine.ts。
+   */
   moves: EnemyMove[];
   traits?: EnemyTrait[];
   /**

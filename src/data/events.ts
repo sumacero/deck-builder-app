@@ -1,6 +1,6 @@
 import type { EventDefinition } from '../domain/event';
 import { DEFEND, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
-import { BURN, DOUBT, HEX, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
+import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
 const LEAVE = { id: 'leave', label: '立ち去る', effects: [], outcome: 'あなたは先を急いだ。' };
 
@@ -440,7 +440,7 @@ const EVENT_LIST: EventDefinition[] = [
   },
 ];
 
-/** 章が進むほど代償が重くなる出来事。呪い札はデッキに残り、削除するまで山札に混ざる。 */
+/** 章が進むほど代償が重くなる出来事。絵の無い呪い札は外し、代償は体力にした。 */
 const CHAPTER_EVENTS: EventDefinition[] = [
   {
     id: 'wayside-fortune',
@@ -457,12 +457,12 @@ const CHAPTER_EVENTS: EventDefinition[] = [
       },
       {
         id: 'omen',
-        label: '凶を引き受け、金貨を受け取る',
+        label: '傷を負って、金貨を受け取る',
         effects: [
-          { kind: 'addCard', card: DOUBT },
+          { kind: 'loseHp', amount: 10 },
           { kind: 'gainGold', amount: 70 },
         ],
-        outcome: '札の絵が胸に張りついた。代わりに、暖かい金貨の袋が渡された。',
+        outcome: '凶の札は胸をえぐった。代わりに、暖かい金貨の袋が渡された。',
       },
       LEAVE,
     ],
@@ -483,12 +483,12 @@ const CHAPTER_EVENTS: EventDefinition[] = [
       },
       {
         id: 'vow',
-        label: '迷いを誓い、生命を得る',
+        label: '血を誓って、生命を得る',
         effects: [
-          { kind: 'addCard', card: DOUBT },
+          { kind: 'loseHp', amount: 8 },
           { kind: 'gainMaxHp', amount: 6 },
         ],
-        outcome: '誓いの言葉が胸に残り、体の底に静かな力が宿った。',
+        outcome: '誓いの痛みが走り、体の底に静かな力が宿った。',
       },
       LEAVE,
     ],
@@ -504,10 +504,10 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         id: 'break',
         label: '封を破って中を取る',
         effects: [
+          { kind: 'loseHp', amount: 14 },
           { kind: 'gainRelic', tier: 'uncommon' },
-          { kind: 'addCard', card: HEX },
         ],
-        outcome: '光とともに宝が転がり出た。指先に、黒い文字が残っている。',
+        outcome: '光とともに宝が転がり出た。封の反動で、腕に痛みが残っている。',
       },
       {
         id: 'buy',
@@ -530,10 +530,10 @@ const CHAPTER_EVENTS: EventDefinition[] = [
     options: [
       {
         id: 'arm',
-        label: '武具を受け取り、迷いも抱える',
-        effects: [{ kind: 'addCard', card: DOUBT }],
+        label: '傷を負って武具を受け取る',
+        effects: [{ kind: 'loseHp', amount: 8 }],
         choice: 'pickCard',
-        outcome: '新しい技を得たが、陣幕の影が頭から離れない。',
+        outcome: '新しい技を得たが、陣幕の縁で腕を切った。',
       },
       {
         id: 'rest',
@@ -557,9 +557,8 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         effects: [
           { kind: 'loseMaxHp', amount: 8 },
           { kind: 'changeDrawPerTurn', amount: 1 },
-          { kind: 'addCard', card: HEX },
         ],
-        outcome: '視界が一段広くなった。その代わり、胸の奥で呪いが脈打っている。',
+        outcome: '視界が一段広くなった。その代わり、体の芯が細くなった。',
       },
       {
         id: 'refuse',
@@ -580,11 +579,10 @@ const CHAPTER_EVENTS: EventDefinition[] = [
         id: 'wear',
         label: 'かぶる',
         effects: [
+          { kind: 'loseHp', amount: 16 },
           { kind: 'gainMaxHp', amount: 10 },
-          { kind: 'addCard', card: HEX },
-          { kind: 'addCard', card: DOUBT },
         ],
-        outcome: '冠は頭に吸いつき、体が強くなった。二つの呪いが、静かについてくる。',
+        outcome: '冠は頭に吸いつき、体が強くなった。今の傷だけが、深く残っている。',
       },
       {
         id: 'melt',

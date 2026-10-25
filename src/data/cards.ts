@@ -25,6 +25,46 @@ export const DEFEND: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 6 }] },
 };
 
+/** カイル初期用。id は共通のまま数値だけ +1（融合の祭壇がストライク／防御として拾える）。 */
+export const CRIMSON_STRIKE: CardDefinition = {
+  ...STRIKE,
+  effects: [{ kind: 'damage', amount: 5 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 7 }] },
+};
+
+export const CRIMSON_DEFEND: CardDefinition = {
+  ...DEFEND,
+  effects: [{ kind: 'block', amount: 5 }],
+  upgrade: { effects: [{ kind: 'block', amount: 7 }] },
+};
+
+/**
+ * カイルの初期固有札。ストライクより火力は控えめだが、このターンの筋力を少し上げる。
+ * 強打（スレスパ鉄甲の入口）にはせず、熱血剣士らしい筋力の入口にする。
+ */
+export const SPIRIT_SLASH: CardDefinition = {
+  id: 'spirit-slash',
+  name: '闘気斬',
+  rarity: 'common',
+  type: 'attack',
+  attribute: 'fire',
+  archetypes: ['strength'],
+  cost: 1,
+  target: 'enemy',
+  effects: [
+    { kind: 'damage', amount: 4 },
+    { kind: 'gainStrength', amount: 1, duration: 'turn' },
+  ],
+  upgrade: {
+    effects: [
+      { kind: 'damage', amount: 5 },
+      { kind: 'gainStrength', amount: 2, duration: 'turn' },
+    ],
+  },
+  /** 専用絵がまだ無いので火炎斬の絵を仮置き。 */
+  art: 'flame-slash',
+};
+
 export const BASH: CardDefinition = {
   id: 'bash',
   name: '強打',
@@ -87,10 +127,11 @@ export const CRIMSON_PHOENIX: CardDefinition = {
 const copies = (card: CardDefinition, count: number): CardDefinition[] =>
   Array.from({ length: count }, () => card);
 
-/** 紅蓮のカイルの初期デッキ。ストライクはラン開始時にエージェントの属性になる。 */
+/** 紅蓮のカイルの初期デッキ。ストライク／防御はカイルだけ数値 +1。闘気斬で筋力の入口を持たせる。 */
 export const CRIMSON_STARTER_DECK: CardDefinition[] = [
-  ...copies(STRIKE, 4),
-  ...copies(DEFEND, 4),
+  ...copies(CRIMSON_STRIKE, 4),
+  ...copies(CRIMSON_DEFEND, 4),
+  SPIRIT_SLASH,
 ];
 
 /** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。末尾にシナジー札を足す。 */
@@ -761,6 +802,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     upgrade: { effects: [{ kind: 'damagePerSelfHpLost', base: 5, perHp: 3 }] },
   },
   BASH,
+  SPIRIT_SLASH,
 
   // --- 戦闘を通じて強くなる ---
   {
@@ -1039,173 +1081,6 @@ export const REWARD_CARDS: CardDefinition[] = [
         { kind: 'gainStrength', amount: 5, duration: 'combat' },
         { kind: 'draw', amount: 3 },
       ],
-    },
-  },
-  // --- 筋力だけで戦えるようにする。守りの札と、戦闘が長引くほど伸びる力 ---
-  {
-    id: 'ember-brand',
-    name: '灼き込み',
-    rarity: 'common',
-    type: 'attack',
-    attribute: 'fire',
-    archetypes: ['strength'],
-    cost: 1,
-    target: 'enemy',
-    effects: [
-      { kind: 'damage', amount: 4 },
-      { kind: 'gainStrength', amount: 1, duration: 'combat' },
-    ],
-    upgrade: {
-      effects: [
-        { kind: 'damage', amount: 6 },
-        { kind: 'gainStrength', amount: 1, duration: 'combat' },
-      ],
-    },
-  },
-  {
-    id: 'blood-guard',
-    name: '熱血の守り',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'fire',
-    archetypes: ['strength'],
-    cost: 1,
-    target: 'self',
-    effects: [
-      { kind: 'gainStrength', amount: 1, duration: 'combat' },
-      { kind: 'block', amount: 7 },
-    ],
-    exhaust: true,
-    upgrade: {
-      effects: [
-        { kind: 'gainStrength', amount: 2, duration: 'combat' },
-        { kind: 'block', amount: 9 },
-      ],
-    },
-    motion: 'guard',
-  },
-  {
-    id: 'ember-oath',
-    name: '燃えさかる誓い',
-    rarity: 'uncommon',
-    type: 'power',
-    attribute: 'fire',
-    archetypes: ['strength'],
-    cost: 1,
-    target: 'self',
-    effects: [{ kind: 'gainPower', power: 'demonForm', amount: 1 }],
-    exhaust: true,
-    upgrade: { cost: 0 },
-    motion: 'empower',
-  },
-
-  // --- 自傷だけで戦えるようにする。失った HP が守りと火力になる ---
-  {
-    id: 'cauterize',
-    name: '焼き塞ぎ',
-    rarity: 'common',
-    type: 'skill',
-    attribute: 'fire',
-    archetypes: ['sacrifice'],
-    cost: 1,
-    target: 'self',
-    effects: [
-      { kind: 'loseHp', amount: 2 },
-      { kind: 'block', amount: 9 },
-    ],
-    upgrade: {
-      effects: [
-        { kind: 'loseHp', amount: 2 },
-        { kind: 'block', amount: 13 },
-      ],
-    },
-    motion: 'guard',
-  },
-  {
-    id: 'blood-edge',
-    name: '血刃',
-    rarity: 'uncommon',
-    type: 'attack',
-    attribute: 'fire',
-    archetypes: ['sacrifice'],
-    cost: 1,
-    target: 'enemy',
-    effects: [{ kind: 'damagePerSelfHpLost', base: 5, perHp: 1 }],
-    upgrade: { effects: [{ kind: 'damagePerSelfHpLost', base: 7, perHp: 1 }] },
-  },
-  {
-    id: 'crimson-vow',
-    name: '紅蓮の誓い',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'fire',
-    archetypes: ['sacrifice', 'strength'],
-    cost: 0,
-    target: 'self',
-    effects: [
-      { kind: 'loseHp', amount: 4 },
-      { kind: 'gainStrength', amount: 3, duration: 'combat' },
-      { kind: 'block', amount: 8 },
-    ],
-    exhaust: true,
-    upgrade: {
-      effects: [
-        { kind: 'loseHp', amount: 4 },
-        { kind: 'gainStrength', amount: 4, duration: 'combat' },
-        { kind: 'block', amount: 11 },
-      ],
-    },
-    motion: 'sacrifice',
-  },
-
-  // --- 成長だけで戦えるようにする。序盤から拾えて、倒すほど残る ---
-  {
-    id: 'rising-slash',
-    name: '昇り斬',
-    rarity: 'common',
-    type: 'attack',
-    attribute: 'fire',
-    archetypes: ['growth'],
-    cost: 1,
-    target: 'enemy',
-    effects: [{ kind: 'damage', amount: 5 }],
-    growth: { stat: 'damage', amount: 2, when: 'play', scope: 'combat' },
-    upgrade: {
-      effects: [{ kind: 'damage', amount: 6 }],
-      growth: { stat: 'damage', amount: 3, when: 'play', scope: 'combat' },
-    },
-  },
-  {
-    id: 'living-guard',
-    name: '生きた守り',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'fire',
-    archetypes: ['growth'],
-    cost: 1,
-    target: 'self',
-    effects: [{ kind: 'block', amount: 5 }],
-    growth: { stat: 'block', amount: 2, when: 'play', scope: 'combat' },
-    upgrade: {
-      effects: [{ kind: 'block', amount: 6 }],
-      growth: { stat: 'block', amount: 3, when: 'play', scope: 'combat' },
-    },
-    motion: 'guard',
-  },
-  {
-    id: 'spoils-cut',
-    name: '戦果',
-    rarity: 'uncommon',
-    type: 'attack',
-    attribute: 'fire',
-    archetypes: ['growth'],
-    cost: 1,
-    target: 'enemy',
-    effects: [{ kind: 'damage', amount: 5 }],
-    growth: { stat: 'damage', amount: 3, when: 'kill', scope: 'run' },
-    upgrade: {
-      effects: [{ kind: 'damage', amount: 6 }],
-      growth: { stat: 'damage', amount: 4, when: 'kill', scope: 'run' },
     },
   },
   ...SYNERGY_CARDS,

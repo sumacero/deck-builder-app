@@ -16,6 +16,7 @@ const TONE_COLOR: Record<IntentView['tone'], string> = {
   paralyze: COLORS.hindrance,
   chill: COLORS.hindrance,
   seal: COLORS.hindrance,
+  bind: COLORS.hindrance,
   charge: COLORS.charge,
   debuff: COLORS.hindrance,
   addCard: COLORS.hindrance,

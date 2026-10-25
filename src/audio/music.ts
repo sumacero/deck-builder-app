@@ -1,7 +1,6 @@
 import type { AudioSource } from 'expo-audio';
 import type { Region } from '../domain/act';
 import type { EnemyRank } from '../domain/enemy';
-import { SAMPLE_DRAFT_TRACKS, type SampleDraftId } from './sampleDrafts';
 
 /** 地域ごとの曲は `field:grassland` のように「種類:地域」で表す。 */
 export type MusicId =
@@ -13,8 +12,7 @@ export type MusicId =
   | 'battleFinal'
   | 'shop'
   | `field:${Region}`
-  | `elite:${Region}`
-  | SampleDraftId;
+  | `elite:${Region}`;
 
 /** タイトル画面で流す 3 キャラ分の曲（起動のたびにどれか 1 つ）。 */
 export type TitleMusicId = 'title' | 'titleLene' | 'titleNoa';
@@ -31,13 +29,8 @@ type MusicDef = {
   volume: number;
 };
 
-const SAMPLE_MUSIC = Object.fromEntries(
-  SAMPLE_DRAFT_TRACKS.map((track) => [track.id, { source: track.source, volume: 0.3 }]),
-) as Record<SampleDraftId, MusicDef>;
-
 /** 音源は scripts/generate-bgm.mjs で合成している（npm run bgm）。全曲がメインテーマ「三つの旗」の素材を共有する。 */
 export const MUSIC: Record<MusicId, MusicDef> = {
-  ...SAMPLE_MUSIC,
   title: { source: require('../../assets/music/title.wav'), volume: 0.34 },
   /** 旧【サンプル 2】。翠風のリーネのタイトル。 */
   titleLene: { source: require('../../assets/music/title-lene.wav'), volume: 0.34 },
@@ -110,5 +103,4 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  ...SAMPLE_DRAFT_TRACKS.map(({ id, title, description }) => ({ id, title, description })),
 ];

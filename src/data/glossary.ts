@@ -228,7 +228,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '氷の印',
     icon: '❄️',
     description:
-      '単体への大きなダメージと、大きなブロックの印。氷の札を重ねて消すと、棘（茨の鎧）を 2 × 消えた札の段だけ得る。戦闘中ずっと残り、敵の攻撃を受けるとその敵に同ダメージ。',
+      '単体への大きなダメージと、大きなブロックの印。氷の札を重ねて消すと、棘（茨の鎧）を消えた札の段だけ得る。戦闘中ずっと残り、敵の攻撃を受けるとその敵に同ダメージ。',
   },
   drop: {
     id: 'drop',
@@ -444,6 +444,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '🔒',
     description: 'このターンはスキルカードを使えない。次のターンには元に戻る。',
   },
+  bind: {
+    id: 'bind',
+    name: '絡め',
+    icon: '🌿',
+    description: 'このターンはアタックカードを使えない。次のターンには元に戻る。',
+  },
   intangible: {
     id: 'intangible',
     name: '霊体化',
@@ -463,6 +469,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '仇討ち',
     icon: '😡',
     description: '仲間が倒れるたびに、数値の分だけ筋力が上がる。倒す順番に気をつけよう。',
+  },
+  enrage: {
+    id: 'enrage',
+    name: '激昂',
+    icon: '💢',
+    description:
+      'あなたがスキルを使うたびに、数値の分だけ筋力が上がる。守りを重ねるほど殴りが重くなるので、攻撃で早く倒すか、スキルを絞ろう。',
   },
   artifact: {
     id: 'artifact',
@@ -526,6 +539,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '封印の予告',
     icon: '🔒',
     description: '次の自分のターン、スキルカードを使えなくなる。今のうちにブロックを積んでおこう。',
+  },
+  intentBind: {
+    id: 'intentBind',
+    name: '絡めの予告',
+    icon: '🌿',
+    description: '次の自分のターン、アタックカードを使えなくなる。殴るならこのターンのうちに。',
   },
   intentCharge: {
     id: 'intentCharge',

@@ -23,6 +23,7 @@ function scaleAction(action: EnemyAction, scale: ChapterScale): EnemyAction {
     case 'paralyze':
     case 'chill':
     case 'seal':
+    case 'bind':
     case 'charge':
     case 'debuff':
     case 'addCard':
@@ -41,6 +42,7 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
   const power = (value: number) => Math.round(value * scale.power);
   switch (trait.kind) {
     case 'vengeance':
+    case 'enrage':
       return { ...trait, strength: power(trait.strength) };
     case 'sleep':
       return { ...trait, wakeStrength: power(trait.wakeStrength) };

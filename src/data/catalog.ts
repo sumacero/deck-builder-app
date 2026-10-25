@@ -19,7 +19,14 @@ import { STANDARD_EVENTS } from './events';
 import { MIRROR_CARDS, MIRROR_STARTER_DECK, MIRROR_TRIAD } from './mirrorCards';
 import { STATUS_CARDS } from './statusCards';
 import { ALL_POTIONS } from './potions';
-import { BOSS_RELIC_POOL, FIGHTING_SPIRIT, RELIC_POOL, WORLD_TREE_SPROUT } from './relics';
+import {
+  BOSS_RELIC_POOL,
+  CRYSTAL_WEIGHT,
+  FIGHTING_SPIRIT,
+  QUIET_TIDE,
+  RELIC_POOL,
+  WORLD_TREE_SPROUT,
+} from './relics';
 import { THOUSAND_YEAR_TREE, VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 
 /** 同じ id が複数の一覧に入っていても 1 つにまとめる（最初に出たものを残す）。 */
@@ -59,6 +66,8 @@ export const ALL_CARDS: CardDefinition[] = uniqueById([
 export const ALL_RELICS: RelicDefinition[] = uniqueById([
   FIGHTING_SPIRIT,
   WORLD_TREE_SPROUT,
+  CRYSTAL_WEIGHT,
+  QUIET_TIDE,
   ...RELIC_POOL,
   ...BOSS_RELIC_POOL,
 ]);

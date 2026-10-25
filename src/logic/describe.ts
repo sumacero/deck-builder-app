@@ -427,6 +427,8 @@ export function describeIntent(move: EnemyMove, damageOf: (base: number) => numb
         return { key, tone: action.kind, icon: '❄️', label: `${action.amount}` };
       case 'seal':
         return { key, tone: action.kind, icon: '🔒', label: '' };
+      case 'bind':
+        return { key, tone: action.kind, icon: '🌿', label: '' };
       case 'charge':
         return { key, tone: action.kind, icon: '🔋', label: '' };
       case 'debuff':
@@ -460,6 +462,8 @@ function describeEnemyAction(action: EnemyAction): string {
       return `次のターン、凍え ${action.amount}`;
     case 'seal':
       return '次のターン、スキルを封印';
+    case 'bind':
+      return '次のターン、アタックを絡める';
     case 'charge':
       return '力を溜める';
     case 'debuff':
@@ -480,6 +484,8 @@ export function describeTrait(trait: EnemyTrait): string {
   switch (trait.kind) {
     case 'vengeance':
       return `仇討ち: 仲間が倒れるたびに筋力 +${trait.strength}`;
+    case 'enrage':
+      return `激昂: スキルを使うたびに筋力 +${trait.strength}。早く倒さないと殴りが重くなる`;
     case 'sleep':
       return `眠り: 最初の ${trait.turns} ターンは眠っている。目覚めると筋力 +${trait.wakeStrength}`;
     case 'artifact':
@@ -493,6 +499,12 @@ export function describeTrait(trait: EnemyTrait): string {
     case 'awaken':
       return `覚醒: HP が ${Math.round(trait.threshold * 100)}% になると真の姿を現し、筋力 +${trait.strength}・ブロック +${trait.block}。それまでは HP がそれより減らない`;
   }
+}
+
+/** エリート以上の、一周で戻る火力。タップした詳細に出す。 */
+export function describeRoutine(rank: EnemyRank): string | null {
+  if (rank === 'normal') return null;
+  return '攻勢: 行動が一周するあいだ攻撃が強くなり、先頭に戻るとその火力は元に戻る。戦闘中に上がった筋力は残る。';
 }
 
 export const ENEMY_RANK_LABEL: Record<EnemyRank, string | null> = {

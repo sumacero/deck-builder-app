@@ -158,6 +158,8 @@ function traitViews(enemy: EnemyState): StatusView[] {
         return [{ keyword: 'artifact', value: enemy.artifact }];
       case 'vengeance':
         return [{ keyword: 'vengeance', value: trait.strength }];
+      case 'enrage':
+        return [{ keyword: 'enrage', value: trait.strength }];
       case 'hitCap':
         return [{ keyword: 'hitCap', value: trait.amount }];
       case 'guardian':
@@ -182,6 +184,7 @@ export function playerStatuses(player: PlayerState): StatusView[] {
     { keyword: 'paralysis', value: player.hindrance.paralysis },
     { keyword: 'chill', value: player.hindrance.chill },
     { keyword: 'seal', value: player.hindrance.seal ? 1 : 0, flag: true },
+    { keyword: 'bind', value: player.hindrance.bind ? 1 : 0, flag: true },
     ...statusViews(player.statuses, [...BUFF_IDS, ...DEBUFF_IDS]),
     ...POWER_IDS.map((id) => ({ keyword: id, value: player.powers[id] ?? 0, flag: id === 'barricade' })),
   ]);
@@ -213,6 +216,8 @@ function keywordForIntent(action: EnemyAction): KeywordId {
       return 'intentChill';
     case 'seal':
       return 'intentSeal';
+    case 'bind':
+      return 'intentBind';
     case 'charge':
       return 'intentCharge';
     case 'debuff':

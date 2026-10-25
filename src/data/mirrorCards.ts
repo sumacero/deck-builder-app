@@ -97,9 +97,25 @@ export const MIRROR_TRIAD: CardDefinition = {
  * ノアの初期デッキ。ストライクはラン開始時に水属性になる。
  * 印のアタック 2 枚（氷柱・雫）と印のスキル 2 枚（薄氷・霞隠れ）で、最初の戦闘から 1 段どうしを重ねられる。
  */
+/** 初期のストライクは 5、防御は 5。印を重ねなくても、無作為な打ち方で第 1 章を抜けられる。 */
+const MIRROR_STRIKE: CardDefinition = {
+  ...STRIKE,
+  art: 'strike-azure',
+  effects: [{ kind: 'damage', amount: 5 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 7 }] },
+};
+
+const MIRROR_DEFEND: CardDefinition = {
+  ...DEFEND,
+  art: 'defend-azure',
+  effects: [{ kind: 'block', amount: 5 }],
+  upgrade: { effects: [{ kind: 'block', amount: 7 }] },
+};
+
+/** ストライク 4・防御 3 に印 4 枚。無作為に使っても殴りと守りが尽きない。 */
 export const MIRROR_STARTER_DECK: CardDefinition[] = [
-  ...copies({ ...STRIKE, art: 'strike-azure' }, 3),
-  ...copies({ ...DEFEND, art: 'defend-azure' }, 2),
+  ...copies(MIRROR_STRIKE, 4),
+  ...copies(MIRROR_DEFEND, 3),
   ICICLE,
   DROPLET,
   THIN_ICE,
@@ -621,9 +637,9 @@ export const MIRROR_CARDS: CardDefinition[] = [
     archetypes: ['ice'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'thorns', amount: 3 }],
+    effects: [{ kind: 'gainPower', power: 'thorns', amount: 2 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'thorns', amount: 4 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'thorns', amount: 3 }] },
     motion: 'empower',
   },
   {
@@ -635,9 +651,9 @@ export const MIRROR_CARDS: CardDefinition[] = [
     archetypes: ['ice'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'flurry', amount: 2 }],
+    effects: [{ kind: 'gainPower', power: 'flurry', amount: 1 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'flurry', amount: 3 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'flurry', amount: 2 }] },
     motion: 'empower',
   },
   {
