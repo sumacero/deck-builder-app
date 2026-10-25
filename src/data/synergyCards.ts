@@ -50,7 +50,7 @@ export const SYNERGY_CARDS: CardDefinition[] = [
   },
   {
     id: 'scatter-blade',
-    name: '散札の刃',
+    name: '飛び札',
     rarity: 'common',
     type: 'attack',
     archetypes: ['tempo'],
@@ -70,7 +70,7 @@ export const SYNERGY_CARDS: CardDefinition[] = [
   },
   {
     id: 'offer-ember',
-    name: '捧げる炎',
+    name: '手放し',
     rarity: 'common',
     type: 'skill',
     archetypes: ['tempo', 'sacrifice'],
@@ -89,7 +89,7 @@ export const SYNERGY_CARDS: CardDefinition[] = [
   },
   {
     id: 'ashen-rite',
-    name: '灰の儀式',
+    name: '消しの儀式',
     rarity: 'uncommon',
     type: 'skill',
     archetypes: ['tempo', 'sacrifice'],
@@ -110,7 +110,7 @@ export const SYNERGY_CARDS: CardDefinition[] = [
   },
   {
     id: 'skill-follow',
-    name: '構えからの一閃',
+    name: '継ぎ打ち',
     rarity: 'uncommon',
     type: 'attack',
     archetypes: ['tempo'],
@@ -150,7 +150,7 @@ export const SYNERGY_CARDS: CardDefinition[] = [
   },
   {
     id: 'cinder-form',
-    name: '燃え殻の誓い',
+    name: '消え際の誓い',
     rarity: 'rare',
     type: 'power',
     archetypes: ['tempo', 'sacrifice'],

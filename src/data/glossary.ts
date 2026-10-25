@@ -316,7 +316,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '連閃',
     icon: '⚔️',
     description:
-      '同じ攻撃の 2 ヒット目から、1 ヒットごとにその数値のダメージが加わる。1 ヒットだけの攻撃には乗らない。双撃・旋風・連矢のような多段攻撃で伸びる。',
+      '同じ攻撃の 2 ヒット目から、1 ヒットごとにその数値のダメージが加わる。1 ヒットだけの攻撃には乗らない。二連打・旋風・連矢のような多段攻撃で伸びる。',
   },
   lashSeed: {
     id: 'lashSeed',

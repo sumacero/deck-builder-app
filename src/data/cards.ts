@@ -138,7 +138,7 @@ export const CRIMSON_STARTER_DECK: CardDefinition[] = [
 export const REWARD_CARDS: CardDefinition[] = [
   {
     id: 'twin-strike',
-    name: '双撃',
+    name: '二連打',
     rarity: 'common',
     type: 'attack',
     archetypes: ['strength', 'element'],
@@ -200,7 +200,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'clothesline',
-    name: '剛腕撃',
+    name: '重圧',
     rarity: 'common',
     type: 'attack',
     archetypes: ['debuff'],
@@ -253,7 +253,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'cleave',
-    name: '薙ぎ払い',
+    name: '広打ち',
     rarity: 'common',
     type: 'attack',
     cost: 1,
@@ -329,7 +329,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'seeing-red',
-    name: '闘志',
+    name: '高ぶり',
     rarity: 'uncommon',
     type: 'skill',
     archetypes: ['strength'],
@@ -454,7 +454,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'uppercut',
-    name: '粉砕撃',
+    name: '砕き',
     rarity: 'uncommon',
     type: 'attack',
     archetypes: ['debuff'],
@@ -1008,7 +1008,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'cataclysm',
-    name: '破局の一閃',
+    name: '畳みかけ',
     rarity: 'uncommon',
     type: 'attack',
     archetypes: ['tempo'],
@@ -1020,7 +1020,7 @@ export const REWARD_CARDS: CardDefinition[] = [
   },
   {
     id: 'ashen-tempest',
-    name: '灰燼の嵐',
+    name: '散る渦',
     rarity: 'rare',
     type: 'attack',
     archetypes: ['tempo', 'sacrifice'],
