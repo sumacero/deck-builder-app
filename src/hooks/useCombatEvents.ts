@@ -33,6 +33,75 @@ function eventStartTimes(events: readonly CombatEvent[]): number[] {
 export const eventsDuration = (events: readonly CombatEvent[]) =>
   events.reduce((total, event) => total + gapAfter(event), 0);
 
+/**
+ * HP ゲージが空に見えるまで。
+ * 赤い本体は先に着き、明るい残像が遅れて追いつく。残像が残っているあいだは、まだ減りきっていない。
+ */
+const GAUGE_EMPTY_MS = MOTION.hpTrailDelay + MOTION.hpTrail;
+
+/** この操作で、対象の HP が 0 になった最後の被弾が再生され始める時刻。無ければ null。 */
+function lastLethalStart(events: readonly CombatEvent[], target?: CombatEvent['target']): number | null {
+  const starts = eventStartTimes(events);
+  let lethalAt: number | null = null;
+  for (let index = 0; index < events.length; index++) {
+    const event = events[index];
+    if (event.kind !== 'hit' || event.after.hp > 0) continue;
+    if (target !== undefined && event.target !== target) continue;
+    lethalAt = starts[index];
+  }
+  return lethalAt;
+}
+
+/**
+ * 勝敗を出してよい時刻。
+ * 最後に HP が 0 になったゲージ（残像込み）が空になってから。0 にする被弾が無いときは演出の終わり。
+ */
+export function outcomeRevealMs(events: readonly CombatEvent[]): number {
+  const lethalAt = lastLethalStart(events);
+  return lethalAt === null ? eventsDuration(events) : lethalAt + GAUGE_EMPTY_MS;
+}
+
+/** この対象のゲージが、この操作の被弾で空になる時刻。この操作で倒れていなければ null。 */
+export function gaugeEmptyMs(events: readonly CombatEvent[], target: CombatEvent['target']): number | null {
+  const lethalAt = lastLethalStart(events, target);
+  return lethalAt === null ? null : lethalAt + GAUGE_EMPTY_MS;
+}
+
+/**
+ * 倒れた見た目（次の行動を消すなど）にしてよいか。
+ * この操作で HP が 0 になった相手は、ゲージが空になるまで立てておく。
+ */
+export function useActorDowned(
+  target: CombatEvent['target'],
+  events: readonly CombatEvent[],
+  dead: boolean,
+): boolean {
+  const at = gaugeEmptyMs(events, target);
+  const [shown, setShown] = useState<readonly CombatEvent[] | null>(null);
+  useEffect(() => {
+    if (!dead || at === null) return;
+    const timer = setTimeout(() => setShown(events), at);
+    return () => clearTimeout(timer);
+  }, [at, dead, events]);
+  if (!dead) return false;
+  if (at === null) return true;
+  return shown === events;
+}
+
+/**
+ * 戦闘が終わってから、HP ゲージが 0 に着くまで false。
+ * 着く前に BGM やポーズを変えると、結果が先に分かってしまう。
+ */
+export function useOutcomeRevealed(events: readonly CombatEvent[], ended: boolean): boolean {
+  const [shown, setShown] = useState<readonly CombatEvent[] | null>(null);
+  useEffect(() => {
+    if (!ended) return;
+    const timer = setTimeout(() => setShown(events), outcomeRevealMs(events));
+    return () => clearTimeout(timer);
+  }, [ended, events]);
+  return ended && shown === events;
+}
+
 /** この出来事の絵が、再生し始めてから消えるまで。 */
 function performanceMs(event: CombatEvent): number {
   switch (event.kind) {

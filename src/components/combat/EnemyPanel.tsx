@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
+import { useActorDowned } from '../../hooks/useCombatEvents';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
 import { useHeldWhile } from '../../hooks/useHeldWhile';
 import { attackerFor, currentIntent, enemyAttackDamage, isAlive, pendingSeedLoss } from '../../logic/combat';
@@ -60,6 +61,8 @@ export function EnemyPanel({
 }: EnemyPanelProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   const alive = isAlive(enemy);
+  // 実 HP が先に 0 でも、ゲージが空になるまで次の行動は残す。消えると倒れたことが先に分かる。
+  const downed = useActorDowned(enemy.uid, events, !alive);
   const rawMove = currentIntent(enemy);
   const move =
     enemy.hitCut > 0
@@ -88,7 +91,7 @@ export function EnemyPanel({
         disabled={!alive}
         onPress={onSelect ?? (() => setInfoOpen(true))}
       >
-        <View style={[styles.intent, !alive && styles.hidden]}>
+        <View style={[styles.intent, downed && styles.hidden]}>
           {!compact && (
             <Text style={styles.caption} numberOfLines={1}>
               「{move.name}」

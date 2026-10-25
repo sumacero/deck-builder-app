@@ -15,7 +15,7 @@ import type { CombatResult } from '../../domain/run';
 import { battleMusicFor } from '../../audio/music';
 import { useMusic } from '../../hooks/useMusic';
 import { useCombat } from '../../hooks/useCombat';
-import { eventsDuration, useEnemyTurnBusy } from '../../hooks/useCombatEvents';
+import { eventsDuration, outcomeRevealMs, useEnemyTurnBusy, useOutcomeRevealed } from '../../hooks/useCombatEvents';
 import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
@@ -109,9 +109,12 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const canAct = inProgress && !enemyTurnBusy && !state.pendingFuse && !handRemoval;
   const canPickFuse = inProgress && !enemyTurnBusy && Boolean(state.pendingFuse);
   const effectsTime = eventsDuration(state.events);
+  const ended = state.status !== 'playerTurn';
+  // ゲージの残像まで空になってから。先に止めると、減りきる前に勝敗が分かってしまう。
+  const outcomeRevealed = useOutcomeRevealed(state.events, ended);
+  const defeatDelay = Math.max(effectsTime, outcomeRevealMs(state.events));
   useCombatSounds(state.events);
-  // 決着したら、勝敗の効果音が聞こえるようにフェードアウトする。
-  useMusic(inProgress ? battleMusicFor(setup.rank, region) : null);
+  useMusic(outcomeRevealed ? null : battleMusicFor(setup.rank, region));
 
   const [cardWidth, setCardWidth] = useState(0);
   const handView = useRef<View | null>(null);
@@ -249,7 +252,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       enemies={state.enemies}
       player={state.player}
       events={state.events}
-      defeatDelay={effectsTime}
+      defeatDelay={defeatDelay}
       agentId={setup.agent.id}
       figureSize={figures.enemy}
       compact={figures.compact}
@@ -265,7 +268,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       agent={setup.agent}
       player={state.player}
       events={state.events}
-      defeatDelay={effectsTime}
+      defeatDelay={defeatDelay}
       figureSize={figures.player}
       highlighted={hover?.kind === 'self'}
       viewRef={bindPlayer}
@@ -396,7 +399,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
             </View>
             <View style={styles.infoRow}>
               {energyOrb}
-              <CombatLog entries={state.log} />
+              <CombatLog entries={outcomeLog(state.log, outcomeRevealed)} />
             </View>
             {hand}
             {footer}
@@ -463,7 +466,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
             turn={state.turn}
             hp={state.player.hp}
             maxHp={state.player.maxHp}
-            appearDelay={effectsTime + MOTION.defeat + MOTION.resultExtraDelay}
+            appearDelay={defeatDelay + MOTION.defeat + MOTION.resultExtraDelay}
             onContinue={() =>
               onFinish({
                 status: state.status === 'won' ? 'won' : 'lost',
@@ -490,6 +493,26 @@ function highlightedEnemies(hover: DropTarget | null, living: EnemyUid[]): Enemy
     default:
       return [];
   }
+}
+
+const OUTCOME_LOGS = new Set(['敵を全て倒した！', 'あなたは力尽きた…']);
+
+/**
+ * 勝敗の一文は、HP ゲージが空になるまで出さない。
+ * その直前の「を倒した！」と、そのあとのレリック発動も同じ。
+ */
+function outcomeLog(entries: CombatState['log'], revealed: boolean): CombatState['log'] {
+  if (revealed) return entries;
+  const outcome = entries.findIndex((entry) => OUTCOME_LOGS.has(entry.text));
+  if (outcome < 0) return entries;
+  let cut = outcome;
+  // 死に際のログが間に入っても、直前の撃破だけ隠す。前のターンの撃破までは戻らない。
+  for (let index = outcome - 1; index >= Math.max(0, outcome - 8); index--) {
+    if (!entries[index].text.endsWith('を倒した！')) continue;
+    cut = index;
+    break;
+  }
+  return entries.slice(0, cut);
 }
 
 /** 重ねたあとに残る札（摘んでいた札）の、段が倍になった説明。 */
