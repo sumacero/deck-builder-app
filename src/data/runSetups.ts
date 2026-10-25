@@ -67,8 +67,7 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
 
 /**
- * リーネのブロック軸。盾のカードは出さず、狩人の守りだけ報酬とショップに出す。
- * 樹皮の衣は厚いブロック、茨返しは受けた攻撃を返し、根の打ち据えはブロックをダメージに変える。
+ * リーネのブロック軸。盾のカードは出さず、絵のある狩人の守りだけ報酬とショップに出す。
  * 以前の茨の鎧・茨の垣根・命の芽吹き・大樹の加護・世界樹の種は、ここに無いので出さない。
  */
 const HUNTER_BLOCK_CARD_IDS: ReadonlySet<string> = new Set([
@@ -76,9 +75,6 @@ const HUNTER_BLOCK_CARD_IDS: ReadonlySet<string> = new Set([
   'ring-shield',
   'leaf-nock',
   'whip-check',
-  'bark-mail',
-  'thorn-return',
-  'root-slam',
 ]);
 
 /**
