@@ -11,6 +11,16 @@ export type MusicId =
   | 'battleBoss'
   | 'battleFinal'
   | 'shop'
+  | 'bossSample01'
+  | 'bossSample02'
+  | 'bossSample03'
+  | 'bossSample04'
+  | 'bossSample05'
+  | 'bossSample06'
+  | 'bossSample07'
+  | 'bossSample08'
+  | 'bossSample09'
+  | 'bossSample10'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -48,6 +58,17 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   'elite:grassland': { source: require('../../assets/music/elite-grassland.wav'), volume: 0.32 },
   'elite:sunkenCity': { source: require('../../assets/music/elite-sunken-city.wav'), volume: 0.32 },
   'elite:clockwork': { source: require('../../assets/music/elite-clockwork.wav'), volume: 0.3 },
+  /** 図鑑だけで聴くボス戦の候補。戦闘では流さない。 */
+  bossSample01: { source: require('../../assets/music/boss-sample-01.wav'), volume: 0.28 },
+  bossSample02: { source: require('../../assets/music/boss-sample-02.wav'), volume: 0.28 },
+  bossSample03: { source: require('../../assets/music/boss-sample-03.wav'), volume: 0.28 },
+  bossSample04: { source: require('../../assets/music/boss-sample-04.wav'), volume: 0.28 },
+  bossSample05: { source: require('../../assets/music/boss-sample-05.wav'), volume: 0.28 },
+  bossSample06: { source: require('../../assets/music/boss-sample-06.wav'), volume: 0.28 },
+  bossSample07: { source: require('../../assets/music/boss-sample-07.wav'), volume: 0.28 },
+  bossSample08: { source: require('../../assets/music/boss-sample-08.wav'), volume: 0.28 },
+  bossSample09: { source: require('../../assets/music/boss-sample-09.wav'), volume: 0.28 },
+  bossSample10: { source: require('../../assets/music/boss-sample-10.wav'), volume: 0.28 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -103,4 +124,54 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
+  {
+    id: 'bossSample01',
+    title: '【サンプル 1】鉄門の行進',
+    description: 'ボス戦の候補。金管とツーバス。途中でラスボスの A メロ前半を低い弦、B メロの頭を同じ弦が短く通す。戦闘では流さない。（150 BPM）',
+  },
+  {
+    id: 'bossSample02',
+    title: '【サンプル 2】炉の番',
+    description: 'ボス戦の候補。歪んだギター。A メロと B メロの頭は小さなベル。戦闘では流さない。（138 BPM）',
+  },
+  {
+    id: 'bossSample03',
+    title: '【サンプル 3】号令',
+    description: 'ボス戦の候補。矩形波のリード。A メロと B メロの頭は笛。戦闘では流さない。（144 BPM）',
+  },
+  {
+    id: 'bossSample04',
+    title: '【サンプル 4】風の関',
+    description: 'ボス戦の候補。笛と行進のスネア。A メロと B メロの頭は弦。戦闘では流さない。（132 BPM）',
+  },
+  {
+    id: 'bossSample05',
+    title: '【サンプル 5】低い城壁',
+    description: 'ボス戦の候補。三角波とハーフのドラム。A メロと B メロの頭は柔らかい鍵盤。戦闘では流さない。（126 BPM）',
+  },
+  {
+    id: 'bossSample06',
+    title: '【サンプル 6】押し出す喇叭',
+    description: 'ボス戦の候補。速いシンセブラス。A メロと B メロの頭は低い弦。戦闘では流さない。（156 BPM）',
+  },
+  {
+    id: 'bossSample07',
+    title: '【サンプル 7】砦の鐘',
+    description: 'ボス戦の候補。ティンパニと金管。A メロと B メロの頭はベル。戦闘では流さない。（128 BPM）',
+  },
+  {
+    id: 'bossSample08',
+    title: '【サンプル 8】高所のギター',
+    description: 'ボス戦の候補。高いギター。A メロと B メロの頭はオルガン。戦闘では流さない。（142 BPM）',
+  },
+  {
+    id: 'bossSample09',
+    title: '【サンプル 9】回廊のオルガン',
+    description: 'ボス戦の候補。オルガンのリード。A メロと B メロの頭は笛。戦闘では流さない。（134 BPM）',
+  },
+  {
+    id: 'bossSample10',
+    title: '【サンプル 10】短い呼び声',
+    description: 'ボス戦の候補。矩形波の短いフレーズ。A メロと B メロの頭は弦。戦闘では流さない。（146 BPM）',
+  },
 ];
