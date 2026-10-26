@@ -54,8 +54,8 @@ export const DROPLET: CardDefinition = {
   waterCost: 1,
   cost: 1,
   target: 'allEnemies',
-  effects: [{ kind: 'damage', amount: 3 }],
-  upgrade: { effects: [{ kind: 'damage', amount: 4 }] },
+  effects: [{ kind: 'damage', amount: 5 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 7 }] },
   art: 'raindrop',
 };
 
@@ -139,8 +139,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     waterCost: 2,
     cost: 2,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 16 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 20 }] },
+    effects: [{ kind: 'damage', amount: 20 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 26 }] },
     art: 'crack-tide',
   },
   {
@@ -213,8 +213,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     waterCost: 2,
     cost: 2,
     target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 10 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 13 }] },
+    effects: [{ kind: 'damage', amount: 13 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 17 }] },
     art: 'drizzle',
   },
   {
@@ -295,8 +295,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     waterCost: 2,
     cost: 1,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 12, pierce: true }],
-    upgrade: { effects: [{ kind: 'damage', amount: 15, pierce: true }] },
+    effects: [{ kind: 'damage', amount: 16, pierce: true }],
+    upgrade: { effects: [{ kind: 'damage', amount: 20, pierce: true }] },
     art: 'undertow',
   },
   {
