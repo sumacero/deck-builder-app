@@ -1,4 +1,4 @@
-import type { CardDefinition, CardMark } from '../domain/card';
+import type { CardDefinition } from '../domain/card';
 import type { PotionDefinition } from '../domain/potion';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { chooseBlessing, finishDeckEdit } from './blessing';
@@ -14,7 +14,7 @@ import {
   resolveReward,
   startFinalBattle,
 } from './run';
-import { buyCard, buyPotion, buyRelic, leaveShop, remarkCard, removeCard } from './shop';
+import { buyCard, buyPotion, buyRelic, leaveShop, removeCard } from './shop';
 import { leaveTreasure, openTreasure } from './treasure';
 
 export type RunAction =
@@ -32,7 +32,6 @@ export type RunAction =
   | { type: 'buyRelic'; offerId: string }
   | { type: 'buyPotion'; offerId: string }
   | { type: 'removeCard'; card: CardDefinition }
-  | { type: 'remarkCard'; card: CardDefinition; mark: CardMark }
   | { type: 'leaveShop' }
   | { type: 'chooseEventOption'; optionId: string }
   | { type: 'leaveEvent' }
@@ -71,8 +70,6 @@ export function runReducer(run: RunState, action: RunAction): RunState {
       return buyPotion(run, action.offerId);
     case 'removeCard':
       return removeCard(run, action.card);
-    case 'remarkCard':
-      return remarkCard(run, action.card, action.mark);
     case 'leaveShop':
       return leaveShop(run);
     case 'chooseEventOption':

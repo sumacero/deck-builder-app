@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
-import type { CardDefinition, CardMark } from '../domain/card';
+import type { CardDefinition } from '../domain/card';
 import type { PotionDefinition } from '../domain/potion';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { createRun } from '../logic/run';
@@ -76,7 +76,6 @@ export function useRun(setup: RunSetup, initial?: RunState) {
       buyRelic: (offerId: string) => dispatch({ type: 'buyRelic', offerId }),
       buyPotion: (offerId: string) => dispatch({ type: 'buyPotion', offerId }),
       removeCard: (card: CardDefinition) => dispatch({ type: 'removeCard', card }),
-      remarkCard: (card: CardDefinition, mark: CardMark) => dispatch({ type: 'remarkCard', card, mark }),
       leave: () => dispatch({ type: 'leaveShop' }),
     }),
     [],

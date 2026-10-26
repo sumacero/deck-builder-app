@@ -4,7 +4,7 @@ import type { CardInstance } from '../../../domain/card';
 import type { PlayerState } from '../../../domain/combat';
 import { describeHandCard } from '../../../logic/describe';
 import { stackOf } from '../../../logic/marks';
-import { ATTRIBUTE_COLORS, COLORS, HAND_LAYOUT, MARK_COLORS, MOTION, RADIUS } from '../../../theme';
+import { ATTRIBUTE_COLORS, COLORS, HAND_LAYOUT, MOTION, RADIUS } from '../../../theme';
 import { CardView } from '../../cards/CardView';
 
 type FuseRevealProps = {
@@ -38,10 +38,16 @@ export function FuseReveal({ consumed, kept, player, cardWidth, onDone, children
   const finish = useEffectEvent(onDone);
   const cardHeight = cardWidth * HAND_LAYOUT.aspectRatio;
   const peek = cardHeight * 0.14;
-  const mark = kept.card.mark;
   const rings: readonly RingSpec[] = [
     { color: ATTRIBUTE_COLORS.water, start: 0.04, end: 0.7, from: 0.18, to: 1.25, peak: 0.32 },
-    { color: mark ? MARK_COLORS[mark] : COLORS.gold, start: 0.16, end: 0.86, from: 0.22, to: 1.6, peak: 0.28 },
+    {
+      color: kept.card.water ? ATTRIBUTE_COLORS.water : COLORS.gold,
+      start: 0.16,
+      end: 0.86,
+      from: 0.22,
+      to: 1.6,
+      peak: 0.28,
+    },
     { color: COLORS.gold, start: 0.3, end: 1, from: 0.3, to: 1.9, peak: 0.2 },
   ];
 

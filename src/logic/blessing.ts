@@ -1,7 +1,7 @@
 import type { BlessingDefinition, BlessingGroup } from '../domain/blessing';
 import type { RunState } from '../domain/run';
 import type { CardDefinition } from '../domain/card';
-import { canUpgrade, remarkInDeck, removeFromDeck, upgradeInDeck } from './cards';
+import { canUpgrade, removeFromDeck, upgradeInDeck } from './cards';
 import { pickOne } from './random';
 import { applyEffectsThenChoice, canApplyRunEffect, canMakeChoice } from './runEffects';
 
@@ -38,7 +38,7 @@ export function chooseBlessing(run: RunState, blessingId: string): RunState {
   return applyEffectsThenChoice(run, blessing.effects, blessing.choice, { kind: 'map' });
 }
 
-/** 恩恵・出来事で選んだカードを強化・削除・印の書き換えする。card が null ならやめる。 */
+/** 恩恵・出来事で選んだカードを強化・削除する。card が null ならやめる。 */
 export function finishDeckEdit(run: RunState, card: CardDefinition | null): RunState {
   if (run.phase.kind !== 'deckEdit') return run;
   const phase = run.phase;
@@ -46,17 +46,11 @@ export function finishDeckEdit(run: RunState, card: CardDefinition | null): RunS
     if (phase.cancellable === false && deckEditHasChoice(run, phase)) return run;
     return { ...run, phase: phase.resume ?? { kind: 'map' } };
   }
-  const deck =
-    phase.mode === 'upgrade'
-      ? upgradeInDeck(run.deck, card)
-      : phase.mode === 'remove'
-        ? removeFromDeck(run.deck, card)
-        : remarkInDeck(run.deck, card, phase.mark);
+  const deck = phase.mode === 'upgrade' ? upgradeInDeck(run.deck, card) : removeFromDeck(run.deck, card);
   return { ...run, deck, phase: phase.resume ?? { kind: 'map' } };
 }
 
 function deckEditHasChoice(run: RunState, phase: Extract<RunState['phase'], { kind: 'deckEdit' }>): boolean {
   if (phase.mode === 'upgrade') return run.deck.some(canUpgrade);
-  if (phase.mode === 'remove') return run.deck.length > 1;
-  return run.deck.length > 0;
+  return run.deck.length > 1;
 }

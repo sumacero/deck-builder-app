@@ -1,17 +1,17 @@
-import type { CardDefinition, CardGrowth, CardInstance, CardMark, CardStack, CardUpgrade } from '../domain/card';
+import type { CardDefinition, CardGrowth, CardInstance, CardStack, CardUpgrade } from '../domain/card';
 import type { Effect } from '../domain/effect';
 
-/** 同じカードでも印が違えば別の山。削除・印の書き換えで、どれを選んだか分かるようにする。 */
+/** 同じカードでも成長回数が違えば別の山。削除で、どれを選んだか分かるようにする。 */
 export function cardStackKey(card: CardDefinition): string {
-  return `${card.id}#${card.mark ?? '-'}#${card.timesGrown ?? 0}`;
+  return `${card.id}#${card.timesGrown ?? 0}`;
 }
 
-/** 同じ id・印・成長回数の 1 枚。強化の有無は id の末尾で分かれる。 */
+/** 同じ id・成長回数の 1 枚。強化の有無は id の末尾で分かれる。 */
 export function cardsMatch(a: CardDefinition, b: CardDefinition): boolean {
-  return a.id === b.id && a.mark === b.mark && (a.timesGrown ?? 0) === (b.timesGrown ?? 0);
+  return a.id === b.id && (a.timesGrown ?? 0) === (b.timesGrown ?? 0);
 }
 
-/** 同じ id のカードを枚数付きでまとめる（印か成長量が違えば別扱い）。コスト順。 */
+/** 同じ id のカードを枚数付きでまとめる（成長量が違えば別扱い）。コスト順。 */
 export function stackCards(cards: readonly CardDefinition[]): CardStack[] {
   const stacks = new Map<string, CardStack>();
   for (const card of cards) {
@@ -147,15 +147,4 @@ export function removeFromDeck(deck: readonly CardDefinition[], target: CardDefi
   const index = deck.findIndex((card) => cardsMatch(card, target));
   if (index < 0) return [...deck];
   return deck.filter((_, i) => i !== index);
-}
-
-/** 選んだ 1 枚の印を書き換える。印の無いカードにも押せる。 */
-export function remarkInDeck(
-  deck: readonly CardDefinition[],
-  target: CardDefinition,
-  mark: CardMark,
-): CardDefinition[] {
-  const index = deck.findIndex((card) => cardsMatch(card, target));
-  if (index < 0) return [...deck];
-  return deck.map((card, i) => (i === index ? { ...card, mark } : card));
 }

@@ -1,7 +1,7 @@
 import type { ActConfig } from './act';
 import type { AgentDefinition } from './agent';
 import type { BlessingDefinition, GuideCharacter } from './blessing';
-import type { CardDefinition, CardMark } from './card';
+import type { CardDefinition } from './card';
 import type { CombatStats, PotionSlot } from './combat';
 import type { EnemyDefinition, Encounter } from './enemy';
 import type { EventDefinition } from './event';
@@ -56,8 +56,6 @@ export type RunPhase =
   | { kind: 'blessing'; options: BlessingDefinition[] }
   | ({ kind: 'deckEdit'; mode: 'upgrade' } & DeckEditFollowUp)
   | ({ kind: 'deckEdit'; mode: 'remove' } & DeckEditFollowUp)
-  /** 選んだカード 1 枚の印を mark にする（印の無いカードにも押せる）。 */
-  | ({ kind: 'deckEdit'; mode: 'remark'; mark: CardMark } & DeckEditFollowUp)
   | { kind: 'map' }
   | { kind: 'combat'; nodeId: string; encounter: Encounter; seed: number }
   | {
@@ -136,11 +134,6 @@ export type RunState = {
   restHealRatio: number;
   /** このランでカード削除を使った回数。削除の値段に影響する。 */
   removalCount: number;
-  /**
-   * これからの報酬を、この印か印の無いカードに絞る。
-   * 効果そのものは書き換えない（ブロックのカードを雨のカードにはしない）。
-   */
-  markBias: CardMark | null;
   stats: RunStats;
   rngSeed: number;
 };

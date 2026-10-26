@@ -80,13 +80,12 @@ export function RewardScreen({
             {choices.map((card) => (
               <View key={card.id} style={styles.choice}>
                 <CardView card={card} size="md" onPress={() => onPick(card)} />
-                <ArchetypeChips
-                  archetypes={card.archetypes ?? []}
-                  highlight={archetype}
-                  onSelect={(selected) => {
-                    if (card.mark === selected) setPreview(card);
-                  }}
-                />
+                <ArchetypeChips archetypes={card.archetypes ?? []} highlight={archetype} />
+                {card.water && (
+                  <Pressable onPress={() => setPreview(card)} hitSlop={8}>
+                    <Text style={styles.stackLink}>段の数字</Text>
+                  </Pressable>
+                )}
               </View>
             ))}
           </View>
@@ -236,6 +235,7 @@ const styles = StyleSheet.create({
   archetype: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
   row: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.md, flexWrap: 'wrap' },
   choice: { alignItems: 'center', gap: SPACING.xs },
+  stackLink: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
   list: { alignSelf: 'stretch', gap: SPACING.sm, maxWidth: 420 },
   potion: {
     flexDirection: 'row',

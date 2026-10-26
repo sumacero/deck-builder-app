@@ -1,9 +1,9 @@
 import { useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import type { CardInstance, CardMark } from '../../../domain/card';
+import type { CardInstance } from '../../../domain/card';
 import type { CombatEvent } from '../../../domain/combat';
 import type { MarkLink } from '../../../logic/marks';
-import { MARK_COLORS, MOTION } from '../../../theme';
+import { ATTRIBUTE_COLORS, MOTION } from '../../../theme';
 import { CARD_SELECT_LIFT } from '../DraggableCard';
 import { handCardCenters } from '../handLayout';
 
@@ -20,7 +20,7 @@ type MarkLinkOverlayProps = {
   liftedId: string | null;
 };
 
-type Slot = { x: number; y: number; mark: CardMark | null };
+type Slot = { x: number; y: number };
 
 type Placed = {
   key: string;
@@ -39,7 +39,7 @@ type Burst = { id: number; links: Placed[]; rings: Ring[] };
 type MarksFusedEvent = Extract<CombatEvent, { kind: 'marksFused' }>;
 
 /**
- * 同じ印、または三印で結び付く札のあいだに波紋を出す。
+ * 重ねられる水札のあいだに波紋を出す。
  * 摘む前は結び得る組を薄く、摘んだあいだは今融合する相手だけを明るく、
  * 使った瞬間は消える直前の位置から波紋を広げる。
  */
@@ -116,7 +116,6 @@ function slotMap(
     slots.set(card.instanceId, {
       x: center.x,
       y: center.y + (card.instanceId === liftedId ? CARD_SELECT_LIFT : 0),
-      mark: card.card.mark ?? null,
     });
   });
   return slots;
@@ -134,8 +133,8 @@ function placeLinks(links: readonly MarkLink[], slots: ReadonlyMap<string, Slot>
         y1: from.y,
         x2: to.x,
         y2: to.y,
-        colorA: MARK_COLORS[link.fromMark],
-        colorB: MARK_COLORS[link.toMark],
+        colorA: ATTRIBUTE_COLORS.water,
+        colorB: ATTRIBUTE_COLORS.water,
       },
     ];
   });
@@ -150,8 +149,8 @@ function ringsOf(links: readonly MarkLink[], slots: ReadonlyMap<string, Slot>): 
   const rings: Ring[] = [];
   for (const id of ids) {
     const slot = slots.get(id);
-    if (!slot?.mark) continue;
-    rings.push({ key: id, x: slot.x, y: slot.y, color: MARK_COLORS[slot.mark] });
+    if (!slot) continue;
+    rings.push({ key: id, x: slot.x, y: slot.y, color: ATTRIBUTE_COLORS.water });
   }
   return rings;
 }
@@ -160,13 +159,13 @@ function burstFrom(event: MarksFusedEvent, slots: ReadonlyMap<string, Slot>): Bu
   const origin = slots.get(event.playedId);
   const rings: Ring[] = [];
   const links: Placed[] = [];
-  if (origin?.mark) {
-    rings.push({ key: event.playedId, x: origin.x, y: origin.y, color: MARK_COLORS[origin.mark] });
+  if (origin) {
+    rings.push({ key: event.playedId, x: origin.x, y: origin.y, color: ATTRIBUTE_COLORS.water });
   }
   for (const id of event.materialIds) {
     const slot = slots.get(id);
-    if (!slot?.mark) continue;
-    rings.push({ key: id, x: slot.x, y: slot.y, color: MARK_COLORS[slot.mark] });
+    if (!slot) continue;
+    rings.push({ key: id, x: slot.x, y: slot.y, color: ATTRIBUTE_COLORS.water });
     if (origin) {
       links.push({
         key: `${event.playedId}:${id}`,
@@ -174,8 +173,8 @@ function burstFrom(event: MarksFusedEvent, slots: ReadonlyMap<string, Slot>): Bu
         y1: origin.y,
         x2: slot.x,
         y2: slot.y,
-        colorA: origin.mark ? MARK_COLORS[origin.mark] : MARK_COLORS[slot.mark],
-        colorB: MARK_COLORS[slot.mark],
+        colorA: ATTRIBUTE_COLORS.water,
+        colorB: ATTRIBUTE_COLORS.water,
       });
     }
   }

@@ -7,14 +7,12 @@ import {
   fuseInHand,
   playCard,
   prepareHandRemovalTap,
-  resolveFuseAim,
   resolveHandRemoval,
 } from './combat';
 
 export type CombatAction =
   | { type: 'playCard'; instanceId: string; target?: EnemyUid }
   | { type: 'stackCards'; sourceId: string; targetId: string }
-  | { type: 'resolveFuseAim'; uid: EnemyUid }
   | { type: 'resolveHandRemoval'; instanceId: string }
   | { type: 'drinkPotion'; slot: number; target?: EnemyUid }
   | { type: 'discardPotion'; slot: number }
@@ -27,11 +25,6 @@ export function combatReducer(state: CombatState, action: CombatAction): CombatS
     case 'stackCards': {
       const cleared = clearEvents(state);
       const next = fuseInHand(cleared, action.sourceId, action.targetId);
-      return next === cleared ? state : next;
-    }
-    case 'resolveFuseAim': {
-      const cleared = clearEvents(state);
-      const next = resolveFuseAim(cleared, action.uid);
       return next === cleared ? state : next;
     }
     case 'resolveHandRemoval': {

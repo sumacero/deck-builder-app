@@ -144,7 +144,8 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.ethereal ? (['ethereal'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
-    ...(card.mark ? ([card.mark, 'fuse', 'stack'] as const) : []),
+    ...(card.waterCost ? (['water'] as const) : []),
+    ...(card.water ? (['waterCard', 'fuse', 'stack'] as const) : []),
   ]);
 }
 

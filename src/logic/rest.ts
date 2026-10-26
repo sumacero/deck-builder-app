@@ -1,6 +1,6 @@
 import type { CardDefinition } from '../domain/card';
 import type { RunState } from '../domain/run';
-import { canUpgrade, upgradeInDeck } from './cards';
+import { canUpgrade, cardsMatch, upgradeInDeck } from './cards';
 
 export function restHealAmount(run: RunState): number {
   const amount = Math.floor(run.player.maxHp * run.restHealRatio);
@@ -21,10 +21,10 @@ export function rest(run: RunState): RunState {
   };
 }
 
-/** 鍛える: カードを 1 枚強化してマップへ。印が違う同じカードは、選んだ方だけ強化する。 */
+/** 鍛える: カードを 1 枚強化してマップへ。成長回数が違う同じカードは、選んだ方だけ強化する。 */
 export function smith(run: RunState, card: CardDefinition): RunState {
   if (run.phase.kind !== 'rest') return run;
-  const target = run.deck.find((item) => item.id === card.id && item.mark === card.mark && canUpgrade(item));
+  const target = run.deck.find((item) => cardsMatch(item, card) && canUpgrade(item));
   if (!target) return run;
   return { ...run, deck: upgradeInDeck(run.deck, card), phase: { kind: 'map' } };
 }

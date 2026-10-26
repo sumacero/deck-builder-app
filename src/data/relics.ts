@@ -22,7 +22,7 @@ export const CRYSTAL_WEIGHT: RelicDefinition = {
 
 /**
  * ノアの初期レリック。戦闘に勝つたび少し回復する。
- * 印を重ねなくても届くので、札を無作為に使うだけの戦いでも第 1 章で干上がらない。
+ * 水札を重ねなくても届くので、札を無作為に使うだけの戦いでも第 1 章で干上がらない。
  */
 export const QUIET_TIDE: RelicDefinition = {
   id: 'quiet-tide',
