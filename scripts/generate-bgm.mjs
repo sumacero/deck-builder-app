@@ -1,7 +1,7 @@
 // BGM（タイトル・通常戦闘・ボス戦・ラスボス戦・ショップ + 地域ごとのフィールド曲・エリート戦）を合成して
 // assets/music/*.wav に書き出す。地域の曲は bgm-regions.mjs、ラスボス戦は bgm-final.mjs、主題の素材は bgm-theme.mjs。
 // 実行: npm run bgm（`npm run bgm -- field-` でファイル名がその文字列で始まる曲だけ）
-// ボス戦の候補 30 曲は `npm run bgm -- boss-sample`（図鑑だけで聴く。戦闘では流さない）
+// エリート戦の候補は `npm run bgm -- sample-elite`（図鑑だけで聴く。戦闘では流さない）
 //
 // 全曲がメインテーマ「三つの旗」の素材（導入の動機・A メロ・サビ・オルガンの駆け上がり、ニ短調）を共有する。
 // オーナーの方針:
@@ -13,7 +13,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SAMPLE_RATE, seedNoise, shiftPhrase } from './bgm-engine.mjs';
 import { REGION_SONGS } from './bgm-regions.mjs';
-import { BOSS_SAMPLE_SONGS } from './bgm-boss-samples.mjs';
+import { ELITE_SAMPLE_SONGS } from './bgm-boss-samples.mjs';
 import { CHAPTER_BOSS_SONG, FINAL_BOSS_SONG } from './bgm-final.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
 import {
@@ -196,7 +196,7 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, CHAPTER_BOSS_SONG, FINAL_BOSS_SONG, shop, ...REGION_SONGS, ...BOSS_SAMPLE_SONGS];
+const SONGS = [mainTitle, mainNormal, CHAPTER_BOSS_SONG, FINAL_BOSS_SONG, shop, ...REGION_SONGS, ...ELITE_SAMPLE_SONGS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];

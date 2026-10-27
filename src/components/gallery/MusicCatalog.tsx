@@ -19,7 +19,7 @@ export function MusicCatalog() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
       <Text style={styles.note}>
-        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下の 30 曲はボス戦の候補で、テンポも楽器も旋律も曲ごとに別。戦闘では流れない。
+        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下は各マップのエリート戦の候補。今のそのマップの戦いを少し落ち着かせ、後半で章ボスとラスボスのイントロをかすかに足してある。戦闘にはまだ入れてない。
       </Text>
       {MUSIC_ENTRIES.map((entry) => (
         <MusicRow key={entry.id} entry={entry} playing={playing === entry.id} onPress={() => toggle(entry.id)} />
