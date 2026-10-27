@@ -21,6 +21,26 @@ export type MusicId =
   | 'bossSample08'
   | 'bossSample09'
   | 'bossSample10'
+  | 'bossSample11'
+  | 'bossSample12'
+  | 'bossSample13'
+  | 'bossSample14'
+  | 'bossSample15'
+  | 'bossSample16'
+  | 'bossSample17'
+  | 'bossSample18'
+  | 'bossSample19'
+  | 'bossSample20'
+  | 'bossSample21'
+  | 'bossSample22'
+  | 'bossSample23'
+  | 'bossSample24'
+  | 'bossSample25'
+  | 'bossSample26'
+  | 'bossSample27'
+  | 'bossSample28'
+  | 'bossSample29'
+  | 'bossSample30'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -39,7 +59,7 @@ type MusicDef = {
   volume: number;
 };
 
-/** 音源は scripts/generate-bgm.mjs で合成している（npm run bgm）。全曲がメインテーマ「三つの旗」の素材を共有する。 */
+/** 音源は scripts/generate-bgm.mjs で合成している（npm run bgm）。本編の曲はメインテーマ「三つの旗」の素材を共有する。 */
 export const MUSIC: Record<MusicId, MusicDef> = {
   title: { source: require('../../assets/music/title.wav'), volume: 0.34 },
   /** 旧【サンプル 2】。翠風のリーネのタイトル。 */
@@ -69,6 +89,26 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   bossSample08: { source: require('../../assets/music/boss-sample-08.wav'), volume: 0.28 },
   bossSample09: { source: require('../../assets/music/boss-sample-09.wav'), volume: 0.28 },
   bossSample10: { source: require('../../assets/music/boss-sample-10.wav'), volume: 0.28 },
+  bossSample11: { source: require('../../assets/music/boss-sample-11.wav'), volume: 0.28 },
+  bossSample12: { source: require('../../assets/music/boss-sample-12.wav'), volume: 0.28 },
+  bossSample13: { source: require('../../assets/music/boss-sample-13.wav'), volume: 0.28 },
+  bossSample14: { source: require('../../assets/music/boss-sample-14.wav'), volume: 0.28 },
+  bossSample15: { source: require('../../assets/music/boss-sample-15.wav'), volume: 0.28 },
+  bossSample16: { source: require('../../assets/music/boss-sample-16.wav'), volume: 0.28 },
+  bossSample17: { source: require('../../assets/music/boss-sample-17.wav'), volume: 0.28 },
+  bossSample18: { source: require('../../assets/music/boss-sample-18.wav'), volume: 0.28 },
+  bossSample19: { source: require('../../assets/music/boss-sample-19.wav'), volume: 0.28 },
+  bossSample20: { source: require('../../assets/music/boss-sample-20.wav'), volume: 0.28 },
+  bossSample21: { source: require('../../assets/music/boss-sample-21.wav'), volume: 0.28 },
+  bossSample22: { source: require('../../assets/music/boss-sample-22.wav'), volume: 0.28 },
+  bossSample23: { source: require('../../assets/music/boss-sample-23.wav'), volume: 0.28 },
+  bossSample24: { source: require('../../assets/music/boss-sample-24.wav'), volume: 0.28 },
+  bossSample25: { source: require('../../assets/music/boss-sample-25.wav'), volume: 0.28 },
+  bossSample26: { source: require('../../assets/music/boss-sample-26.wav'), volume: 0.28 },
+  bossSample27: { source: require('../../assets/music/boss-sample-27.wav'), volume: 0.28 },
+  bossSample28: { source: require('../../assets/music/boss-sample-28.wav'), volume: 0.28 },
+  bossSample29: { source: require('../../assets/music/boss-sample-29.wav'), volume: 0.28 },
+  bossSample30: { source: require('../../assets/music/boss-sample-30.wav'), volume: 0.28 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -124,54 +164,34 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  {
-    id: 'bossSample01',
-    title: '【サンプル 1】鉄門のサビ',
-    description: '鉄門の行進（150 BPM、金管・ツーバス）に、抑えたサビ。付点は低いレから開き、頂上はレ。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample02',
-    title: '【サンプル 2】上る付点',
-    description: '同じ編成。サビの付点を下行ではなく上行にした旋律。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample03',
-    title: '【サンプル 3】三度のサビ',
-    description: '同じ編成。鉄門の五度を三度に縮め、サビの付点も三度で積んだ旋律。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample04',
-    title: '【サンプル 4】長いサビ',
-    description: '同じ編成。行進もサビも長い音。付点はサビの頭だけ。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample05',
-    title: '【サンプル 5】休符のサビ',
-    description: '同じ編成。鉄門の音を休符で割り、サビの付点のあとも休む旋律。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample06',
-    title: '【サンプル 6】同じ頭',
-    description: '同じ編成。行進は毎小節レ・ファ・ラ。サビは毎小節レー・ドー・シ♭。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample07',
-    title: '【サンプル 7】五度から',
-    description: '同じ編成。着地の前に五度下から跳ね、サビはそこから付点で落ちる。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample08',
-    title: '【サンプル 8】順次のサビ',
-    description: '同じ編成。跳躍をやめて順次。サビの付点も音階のまま。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample09',
-    title: '【サンプル 9】逆行のサビ',
-    description: '同じ編成。鉄門の音を逆から歌い、サビの後半は前半を折り返す。戦闘では流さない。',
-  },
-  {
-    id: 'bossSample10',
-    title: '【サンプル 10】共通音のサビ',
-    description: '同じ編成。レ・ファ・ラ・シ♭・ド♯だけを使った付点のサビ。戦闘では流さない。',
-  },
+  { id: 'bossSample01', title: '【サンプル 1】黒金の門', description: '156 BPM。金管とツーバスの重い行進。' },
+  { id: 'bossSample02', title: '【サンプル 2】紅蓮の蹄', description: '148 BPM。ギターが駆ける炎のボス。' },
+  { id: 'bossSample03', title: '【サンプル 3】翠の刃', description: '128 BPM。笛と行進のスネア。' },
+  { id: 'bossSample04', title: '【サンプル 4】深海の鐘', description: '92 BPM。ベルがゆっくり鳴る。' },
+  { id: 'bossSample05', title: '【サンプル 5】歯車の王', description: '150 BPM。矩形波が歯車のように回る。' },
+  { id: 'bossSample06', title: '【サンプル 6】王城', description: '78 BPM。オルガンの遅い賛歌。' },
+  { id: 'bossSample07', title: '【サンプル 7】嵐の翼', description: '170 BPM。弦とツーバスの突風。' },
+  { id: 'bossSample08', title: '【サンプル 8】溶岩', description: '120 BPM。タムと低い金管。' },
+  { id: 'bossSample09', title: '【サンプル 9】氷の鏡', description: '104 BPM。ハープが間を空けて鳴る。' },
+  { id: 'bossSample10', title: '【サンプル 10】雷鳴', description: '158 BPM。三角波の細かいリフ。' },
+  { id: 'bossSample11', title: '【サンプル 11】古龍', description: '84 BPM。金管の遅い足音。' },
+  { id: 'bossSample12', title: '【サンプル 12】剣戟', description: '162 BPM。ギターの打ち合い。' },
+  { id: 'bossSample13', title: '【サンプル 13】祝砲', description: '118 BPM。金管のファンファーレ。' },
+  { id: 'bossSample14', title: '【サンプル 14】夜の城壁', description: '108 BPM。弦が低く張ってから立ち上がる。' },
+  { id: 'bossSample15', title: '【サンプル 15】潮の門', description: '134 BPM。ギターのうねり。' },
+  { id: 'bossSample16', title: '【サンプル 16】傀儡', description: '146 BPM。矩形波の歯車。' },
+  { id: 'bossSample17', title: '【サンプル 17】森の王', description: '116 BPM。長調の笛。' },
+  { id: 'bossSample18', title: '【サンプル 18】星の縁', description: '96 BPM。ベルとパッド。' },
+  { id: 'bossSample19', title: '【サンプル 19】鉄騎', description: '152 BPM。金管の突撃。' },
+  { id: 'bossSample20', title: '【サンプル 20】砂の王', description: '114 BPM。シンセブラスと砂漠の太鼓。' },
+  { id: 'bossSample21', title: '【サンプル 21】断崖', description: '142 BPM。ギターが落ちていく。' },
+  { id: 'bossSample22', title: '【サンプル 22】聖歌', description: '80 BPM。オルガンの聖歌。' },
+  { id: 'bossSample23', title: '【サンプル 23】疾風', description: '176 BPM。笛の駆け足。' },
+  { id: 'bossSample24', title: '【サンプル 24】釜', description: '100 BPM。タムと低い金管の連打。' },
+  { id: 'bossSample25', title: '【サンプル 25】双剣', description: '154 BPM。ギターと金管が別の歌を同時に。' },
+  { id: 'bossSample26', title: '【サンプル 26】地下水脈', description: '126 BPM。ハープと沼の拍。' },
+  { id: 'bossSample27', title: '【サンプル 27】王冠', description: '122 BPM。金管の戴冠。' },
+  { id: 'bossSample28', title: '【サンプル 28】影踏み', description: '110 BPM。矩形波が静かに近づいてから叩く。' },
+  { id: 'bossSample29', title: '【サンプル 29】終幕の手前', description: '138 BPM。弦と金管が開いていく。' },
+  { id: 'bossSample30', title: '【サンプル 30】開門', description: '166 BPM。金管が門を開ける。' },
 ];
