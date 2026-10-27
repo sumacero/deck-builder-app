@@ -1,176 +1,170 @@
-// 各マップのエリート戦の候補。マップごとに 10 曲。ゲーム中には流さない。図鑑の BGM で聴く。
-// 今のそのマップのエリート戦（地域のボスの勢い）を少し落ち着かせた編成。
-// 後半 4 小節で、章ボスのイントロ 2 小節とラスボスのイントロ 2 小節を、ベルか弦でかすかに乗せる。
-import { parsePhrase } from './bgm-engine.mjs';
-import { bars, join4, remapPhrase, transposePhrase } from './bgm-song.mjs';
-import { D_MAJOR, introQuote } from './bgm-theme.mjs';
+// エリート戦の候補。マップごとに 5 曲。ゲーム中には流さない。図鑑の BGM で聴く。
+// 出だし（リフ）と地域の旋律は、今のエリート戦のセクションをそのまま使う。
+// 差し替えるのは最後の共通部分（導入の動機の引用）だけ。そこを、章ボスとラスボスの雰囲気で 5 通りにする。
+import { parsePhrase, shiftPhrase } from './bgm-engine.mjs';
+import { INTRO_BARS as FINAL_INTRO_BARS, INTRO_CHORDS as FINAL_INTRO_CHORDS } from './bgm-final.mjs';
+import { REGION_SONGS } from './bgm-regions.mjs';
+import { bars, join4, transposePhrase, transposeSymbols } from './bgm-song.mjs';
+import { CHORUS_BARS, CHORUS_CHORDS, VERSE_BARS, VERSE_CHORDS } from './bgm-theme.mjs';
 
-/** ラスボス戦イントロの頭。付点の「レー・ドー・シ♭」。 */
-const FINAL_INTRO_HEAD = ['D6:1.5 C6:1.5 Bb5:1', 'E6:0.75 D6:0.75 C6:0.5 F6:0.75 E6:0.75 D6:0.5'];
+/** 章ボス B メロ（bgm-final.mjs と同じ音）。本番の曲はここでは書き出さない。 */
+const B_MELODY = ['A5:3 F5:1', 'Bb5:2 A5:1 G5:1', 'G5:2 E5:1 C5:1', 'F5:1 A5:2 C6:1', 'D6:2 C6:1 Bb5:1', 'Bb5:2 G5:1 D5:1', 'E5:1 A5:1 C#6:2', 'E6:2 C#6:1 A5:1'];
+const RUN_CHORDS = ['Dm', 'Gm', 'C', 'F', 'Bb', 'Gm', 'A', 'A'];
 
-const phrase = (lines) => lines.join(' | ');
+const ELITES = [
+  { slug: 'grassland', file: 'elite-grassland', semitones: 5 },
+  { slug: 'volcano', file: 'elite-volcano', semitones: -2 },
+  { slug: 'sunken', file: 'elite-sunken-city', semitones: 4 },
+  { slug: 'clockwork', file: 'elite-clockwork', semitones: 5 },
+];
 
-/** 章ボスのイントロ（導入の動機）2 小節 + ラスボスのイントロ 2 小節。地域の調へ移す。 */
-const faintIntro = ({ major = false, semitones = 0 }) => {
-  const boss = introQuote({ bars: [0, 1], major, semitones });
-  let finalIntro = join4(...FINAL_INTRO_HEAD);
-  if (major) finalIntro = remapPhrase(finalIntro, D_MAJOR);
-  finalIntro = transposePhrase(finalIntro, semitones);
-  return `${boss} | ${finalIntro}`;
+const phrase = (lines) => join4(...lines);
+const moved = (lines, semitones) => transposePhrase(phrase(lines), semitones);
+const chordsOf = (symbols, semitones) => bars(...transposeSymbols(symbols, semitones));
+
+const cloneSection = (section) => ({
+  ...section,
+  chords: [...section.chords],
+  parts: (section.parts ?? []).map((part) => ({ ...part })),
+});
+
+/** 5 通りの差し替え。どれも 8 小節。地域の調へ移す。ラスボスのハモりとツーバスは付けない。 */
+const choruses = (semitones) => {
+  const chorus = moved(CHORUS_BARS, semitones);
+  const verse = moved(VERSE_BARS, semitones);
+  const sing = moved(B_MELODY, semitones);
+  const rush = moved(FINAL_INTRO_BARS, semitones);
+  const chorusChords = chordsOf(CHORUS_CHORDS, semitones);
+  const verseChords = chordsOf(VERSE_CHORDS, semitones);
+  const singChords = chordsOf(RUN_CHORDS, semitones);
+  const rushChords = chordsOf(FINAL_INTRO_CHORDS, semitones);
+  return [
+    {
+      name: 'dotted',
+      sections: [
+        {
+          name: 'chorus',
+          chords: chorusChords,
+          parts: [
+            { inst: 'brassLead', vol: 0.36, notes: chorus },
+            { inst: 'guitarLead', vol: 0.18, notes: shiftPhrase(chorus, -1) },
+          ],
+          comp: ['stabs', 'chug'],
+          bass: 'drive8',
+          drums: 'drive',
+          level: 0.9,
+          fill: 'snare',
+        },
+      ],
+    },
+    {
+      name: 'long',
+      sections: [
+        {
+          name: 'chorus',
+          chords: singChords,
+          parts: [
+            { inst: 'guitarLead', vol: 0.36, notes: sing },
+            { inst: 'strings', vol: 0.14, notes: shiftPhrase(sing, -1) },
+          ],
+          comp: ['organ', 'arp8'],
+          bass: 'sustain',
+          drums: 'half',
+          level: 0.82,
+          fill: 'snare',
+        },
+      ],
+    },
+    {
+      name: 'chug',
+      sections: [
+        {
+          name: 'chorus',
+          chords: verseChords,
+          parts: [{ inst: 'guitarLead', vol: 0.38, notes: verse }],
+          comp: ['chug', 'organ'],
+          bass: 'gallop',
+          drums: 'drive',
+          level: 0.88,
+          fill: 'toms',
+        },
+      ],
+    },
+    {
+      name: 'accel',
+      sections: [
+        {
+          name: 'rush',
+          chords: rushChords,
+          parts: [{ inst: 'brassLead', vol: 0.34, notes: rush }],
+          comp: ['chug', 'strings'],
+          bass: 'gallop',
+          drums: 'rock',
+          level: 0.8,
+        },
+        {
+          name: 'chorus',
+          chords: chorusChords.slice(0, 4),
+          parts: [
+            { inst: 'brassLead', vol: 0.36, notes: moved(CHORUS_BARS.slice(0, 4), semitones) },
+            { inst: 'guitarLead', vol: 0.18, notes: shiftPhrase(moved(CHORUS_BARS.slice(0, 4), semitones), -1) },
+          ],
+          comp: ['stabs', 'chug'],
+          bass: 'drive8',
+          drums: 'drive',
+          level: 0.9,
+          fill: 'snare',
+        },
+      ],
+    },
+    {
+      name: 'hand',
+      sections: [
+        {
+          name: 'brass',
+          chords: chorusChords.slice(0, 4),
+          parts: [{ inst: 'brassLead', vol: 0.36, notes: moved(CHORUS_BARS.slice(0, 4), semitones) }],
+          comp: ['stabs', 'chug'],
+          bass: 'drive8',
+          drums: 'drive',
+          level: 0.88,
+        },
+        {
+          name: 'guitar',
+          chords: singChords.slice(0, 4),
+          parts: [{ inst: 'guitarLead', vol: 0.36, notes: moved(B_MELODY.slice(0, 4), semitones) }],
+          comp: ['organ', 'chug'],
+          bass: 'gallop',
+          drums: 'half',
+          level: 0.84,
+          fill: 'snare',
+        },
+      ],
+    },
+  ];
 };
 
-const REGIONS = {
-  grassland: {
-    slug: 'grassland',
-    bpm: 120,
-    mix: { reverbLevel: 0.55, tone: 0.58, echoLevel: 0.18 },
-    lead: 'flute',
-    leadVol: 0.38,
-    quote: 'bell',
-    comp: ['arp8', 'pad'],
-    bass: 'walk',
-    drums: 'march',
-    chords: ['G', 'D', 'Em', 'C'],
-    later: ['G', 'C', 'D', 'G'],
-    quoteKey: { major: true, semitones: 5 },
-  },
-  volcano: {
-    slug: 'volcano',
-    bpm: 108,
-    mix: { reverbLevel: 0.5, tone: 0.55, echoLevel: 0.16 },
-    lead: 'guitarLead',
-    leadVol: 0.32,
-    quote: 'bell',
-    comp: ['strings', 'pad'],
-    bass: 'sustain',
-    drums: 'tribal',
-    chords: ['Cm', 'Ab', 'Bb', 'G'],
-    later: ['Cm', 'Eb', 'Ab', 'G'],
-    quoteKey: { semitones: -2 },
-  },
-  sunken: {
-    slug: 'sunken',
-    bpm: 100,
-    mix: { reverbLevel: 0.85, tone: 0.48, echoLevel: 0.32 },
-    lead: 'bell',
-    leadVol: 0.32,
-    quote: 'strings',
-    comp: ['arp16', 'pad'],
-    bass: 'sustain',
-    drums: 'half',
-    chords: ['F#m', 'D', 'E', 'C#m'],
-    later: ['F#m', 'Bm', 'E', 'C#'],
-    quoteKey: { semitones: 4 },
-  },
-  clockwork: {
-    slug: 'clockwork',
-    bpm: 108,
-    mix: { reverbLevel: 0.58, tone: 0.52, echoLevel: 0.22 },
-    lead: 'squareLead',
-    leadVol: 0.18,
-    quote: 'bell',
-    comp: ['organ', 'pad'],
-    bass: 'walk',
-    drums: 'light',
-    chords: ['Gm', 'Eb', 'F', 'D'],
-    later: ['Gm', 'Cm', 'Eb', 'D'],
-    quoteKey: { semitones: 5 },
-  },
+const eliteByFile = (file) => {
+  const song = REGION_SONGS.find((item) => item.file === file);
+  if (!song || song.sections[0]?.name !== 'riff' || song.sections[1]?.name !== 'theme') {
+    throw new Error(`エリート戦の出だしが見つからない: ${file}`);
+  }
+  return song;
 };
 
-/** 各曲 8 小節。前半が歌、後半は歌を続けながらイントロをかすかに乗せる。 */
-const MELODIES = {
-  grassland: [
-    ['D5:1 G5:1 A5:0.5 B5:0.5 A5:1', 'G5:1.5 E5:0.5 D5:2', 'C5:1 D5:1 E5:1 G5:1', 'F#5:2 D5:2', 'B5:2 A5:1 G5:1', 'E5:1 G5:1 C6:2', 'A5:1 B5:1 D6:1 B5:1', 'A5:2 G5:2'],
-    ['G5:2 E5:1 D5:1', 'B5:1 A5:1 G5:2', 'D5:0.5 E5:0.5 G5:1 A5:1 B5:1', 'A5:2 G5:2', 'C6:1 B5:1 A5:2', 'G5:1.5 E5:0.5 D5:2', 'F#5:1 A5:1 G5:2', 'D5:4'],
-    ['D5:0.5 G5:0.5 B5:1 A5:1 G5:1', 'E5:2 D5:2', 'C5:1 E5:1 G5:2', 'A5:1 F#5:1 D5:2', 'B5:1 G5:1 D6:1 B5:1', 'A5:2 G5:1 E5:1', 'D6:1 C6:1 B5:2', 'A5:2 G5:2'],
-    ['G5:4', 'A5:2 B5:2', 'G5:1 E5:1 D5:2', 'F#5:4', 'D6:2 B5:2', 'C6:1 A5:1 G5:2', 'E5:1 F#5:1 G5:2', 'D5:4'],
-    ['E5:1 G5:1 B5:1 G5:1', 'A5:1 G5:1 E5:2', 'D5:1 G5:1 A5:2', 'F#5:2 D5:2', 'B5:1 A5:0.5 G5:0.5 E5:2', 'C6:2 B5:1 A5:1', 'G5:1 D5:1 B4:2', 'A4:2 G4:2'],
-    ['D5:1.5 E5:0.5 G5:2', 'A5:1 B5:1 D6:1 B5:1', 'G5:2 E5:2', 'F#5:1 G5:1 A5:2', 'B5:2 A5:1 G5:1', 'E5:2 C5:1 D5:1', 'G5:1 A5:1 B5:2', 'D5:4'],
-    ['G5:0.5 -:0.5 D5:0.5 -:0.5 B5:2', 'A5:1 -:0.5 G5:0.5 E5:2', 'D5:1 G5:1 A5:2', 'F#5:2 -:2', 'B5:1 A5:1 G5:2', 'E5:1 G5:1 D6:2', 'C6:1 B5:1 A5:2', 'G5:4'],
-    ['D5:1 F#5:1 A5:1 D6:1', 'B5:1 G5:1 E5:2', 'C5:1 D5:1 E5:1 G5:1', 'A5:2 F#5:2', 'G5:1 B5:1 D6:2', 'C6:1 A5:1 G5:2', 'E5:1 F#5:1 G5:2', 'D5:4'],
-    ['G4:1 B4:1 D5:1 G5:1', 'A5:2 G5:1 E5:1', 'D5:2 C5:1 D5:1', 'B4:4', 'D5:1 G5:1 B5:2', 'A5:1 G5:1 E5:2', 'F#5:1 A5:1 G5:2', 'D5:4'],
-    ['D5:4', 'G5:2 E5:2', 'A5:2 D5:2', 'B5:2 G5:2', 'D6:4', 'C6:2 B5:2', 'A5:2 G5:2', 'D5:4'],
-  ],
-  volcano: [
-    ['C5:1 G5:1 Ab5:1 G5:1', 'Eb5:1 G5:1 Bb5:2', 'C5:1 G5:1 Ab5:2', 'G5:1 B5:1 D6:2', 'Eb5:2 C5:2', 'Ab5:2 G5:1 Eb5:1', 'F5:1 G5:1 Bb5:2', 'C5:4'],
-    ['G5:2 Eb5:2', 'C5:1 Eb5:1 G5:2', 'Ab5:2 G5:1 F5:1', 'Eb5:4', 'C6:2 Bb5:1 G5:1', 'Ab5:1 G5:1 Eb5:2', 'F5:2 D5:2', 'C5:4'],
-    ['C5:1 Eb5:1 G5:1 Eb5:1', 'Ab5:2 G5:2', 'F5:1 G5:1 Bb5:2', 'G5:2 Eb5:2', 'C5:2 G4:2', 'Eb5:1 F5:1 G5:2', 'Ab5:1 G5:1 F5:2', 'C5:4'],
-    ['C4:4', 'Eb4:2 G4:2', 'Ab4:4', 'G4:2 F4:2', 'C5:2 Eb5:2', 'G5:4', 'Bb5:2 G5:2', 'Eb5:4'],
-    ['Eb5:1.5 G5:0.5 Bb5:2', 'Ab5:2 G5:2', 'F5:1 Eb5:1 C5:2', 'G4:4', 'C5:1 G5:1 Eb6:2', 'D6:1 C6:1 Bb5:2', 'G5:2 F5:2', 'Eb5:4'],
-    ['C5:0.5 -:0.5 G5:0.5 -:0.5 Eb5:2', 'Ab5:1 -:1 G5:2', 'F5:1 Bb5:1 Ab5:2', 'G5:2 -:2', 'C5:1 Eb5:1 G5:2', 'Bb5:2 Ab5:1 G5:1', 'F5:2 Eb5:2', 'C5:4'],
-    ['G5:1 Bb5:1 D6:2', 'C6:1 Bb5:1 Ab5:2', 'G5:2 Eb5:2', 'C5:4', 'Eb5:1 G5:1 Bb5:2', 'Ab5:2 F5:2', 'G5:1 B5:1 D6:2', 'C5:4'],
-    ['C5:1.5 Eb5:0.5 G5:2', 'Ab5:1.5 G5:0.5 Eb5:2', 'F5:2 Bb5:1 G5:1', 'C6:2 G5:2', 'Eb5:2 C5:2', 'G5:1 Ab5:1 Bb5:2', 'D6:2 B5:2', 'C5:4'],
-    ['C4:2 G4:2', 'Ab4:2 Eb4:2', 'F4:2 G4:2', 'C4:4', 'Eb4:1 G4:1 C5:2', 'Bb4:2 Ab4:2', 'G4:2 F4:2', 'C4:4'],
-    ['Eb5:4', 'G5:2 F5:2', 'Ab5:2 G5:2', 'Eb5:4', 'C6:2 G5:2', 'Bb5:2 Ab5:2', 'G5:2 Eb5:2', 'C5:4'],
-  ],
-  sunken: [
-    ['C#5:2 A5:1 F#5:1', 'D6:2 C#6:1 B5:1', 'A5:1 F#5:1 E5:2', 'C#5:4', 'F#5:2 E5:2', 'D5:1 E5:1 F#5:2', 'G#5:2 A5:2', 'F#5:4'],
-    ['F#5:1 A5:1 C#6:2', 'B5:2 A5:2', 'G#5:1 A5:1 B5:2', 'C#6:2 A5:2', 'F#5:2 D5:2', 'E5:1 F#5:1 G#5:2', 'A5:2 E5:2', 'C#5:4'],
-    ['C#6:4', 'B5:2 A5:2', 'F#5:2 E5:2', 'D5:4', 'C#5:2 F#5:2', 'A5:2 G#5:2', 'F#5:2 E5:2', 'C#5:4'],
-    ['C#5:0.5 -:0.5 F#5:0.5 -:0.5 A5:2', 'B5:1 -:1 A5:2', 'G#5:0.5 A5:0.5 B5:1 F#5:2', 'E5:2 -:2', 'C#6:1 A5:1 F#5:2', 'E6:2 C#6:2', 'B5:2 A5:2', 'F#5:4'],
-    ['F#4:2 C#5:2', 'E5:2 D5:2', 'C#5:4', 'B4:2 A4:2', 'F#5:1 A5:1 C#6:2', 'B5:2 A5:1 G#5:1', 'F#5:2 E5:2', 'C#5:4'],
-    ['A5:1 F#5:1 C#5:2', 'D5:1 E5:1 F#5:2', 'G#5:2 A5:2', 'B5:2 F#5:2', 'C#6:2 B5:1 A5:1', 'G#5:2 E5:2', 'F#5:1 A5:1 C#6:2', 'A5:4'],
-    ['F#5:2 A5:2', 'C#6:1 B5:1 A5:2', 'G#5:2 F#5:2', 'E5:4', 'D6:2 C#6:2', 'B5:1 A5:1 F#5:2', 'G#5:2 E5:2', 'C#5:4'],
-    ['C#5:4', 'F#5:4', 'A5:2 G#5:2', 'F#5:4', 'C#6:4', 'B5:2 A5:2', 'G#5:4', 'F#5:4'],
-    ['E5:1 F#5:1 G#5:1 A5:1', 'B5:2 A5:1 F#5:1', 'G#5:2 E5:2', 'C#5:4', 'F#5:1 A5:1 C#6:1 E6:1', 'D6:2 C#6:2', 'B5:2 A5:2', 'F#5:4'],
-    ['A5:2 F#5:2', 'B5:2 A5:1 G#5:1', 'F#5:2 E5:2', 'C#5:4', 'C#6:2 A5:2', 'B5:1 A5:1 F#5:2', 'G#5:2 E5:2', 'F#5:4'],
-  ],
-  clockwork: [
-    ['G4:1 D5:1 G5:2', 'Bb4:1 D5:1 F5:2', 'Eb5:1 G5:1 Bb5:2', 'D5:2 A5:2', 'G5:2 F5:1 D5:1', 'Eb5:2 D5:2', 'C5:1 D5:1 F#5:2', 'G4:4'],
-    ['Bb5:2 G5:2', 'A5:1 F5:1 D5:2', 'Eb5:2 D5:2', 'G4:4', 'D5:1 G5:1 Bb5:2', 'A5:2 G5:2', 'F5:1 Eb5:1 D5:2', 'G5:4'],
-    ['G5:4', 'F5:2 Eb5:2', 'D5:4', 'Bb4:4', 'G4:2 D5:2', 'Eb5:2 F5:2', 'G5:2 A5:2', 'Bb5:2 G5:2'],
-    ['D4:0.5 G4:0.5 Bb4:1 A4:2', 'G4:1 F4:1 D4:2', 'Eb4:2 D4:2', 'G3:4', 'Bb4:1 D5:1 G5:2', 'F5:2 Eb5:2', 'D5:2 C5:2', 'Bb4:4'],
-    ['G5:1 Bb5:1 D6:2', 'C6:1 Bb5:1 A5:2', 'G5:2 F5:2', 'D5:4', 'Eb5:1 G5:1 Bb5:2', 'A5:2 F5:2', 'G5:1 A5:1 Bb5:2', 'G5:4'],
-    ['G4:2 -:2', 'Bb4:2 A4:2', 'G4:1 D5:1 F5:2', 'Eb5:4', 'D5:2 G5:2', 'F5:1 Eb5:1 D5:2', 'C5:2 A4:2', 'G4:4'],
-    ['D5:1 G5:1 A5:0.5 Bb5:0.5 A5:1', 'G5:2 F5:2', 'Eb5:1 D5:1 C5:2', 'Bb4:2 G4:2', 'D6:2 C6:1 Bb5:1', 'A5:2 G5:2', 'F#5:2 D5:2', 'G5:4'],
-    ['Bb5:0.5 A5:0.5 G5:1 D5:2', 'Eb5:1 G5:1 Bb5:2', 'A5:2 F5:2', 'D5:4', 'G5:1 Bb5:1 D6:2', 'C6:2 Bb5:2', 'A5:1 G5:1 F5:2', 'D5:4'],
-    ['G4:1 Bb4:1 D5:1 G5:1', 'F5:2 Eb5:2', 'D5:1 F5:1 A5:2', 'G5:4', 'Bb5:2 A5:1 G5:1', 'Eb5:2 D5:2', 'F5:1 G5:1 A5:2', 'G4:4'],
-    ['D5:4', 'G5:2 Bb5:2', 'A5:4', 'G5:2 F5:2', 'Eb5:4', 'D5:2 C5:2', 'Bb4:2 A4:2', 'G4:4'],
-  ],
-};
-
-const songOf = (region, index, melody) => {
-  const spec = REGIONS[region];
-  const quoteVol = spec.quote === 'strings' ? 0.1 : 0.12;
-  return {
-    file: `sample-elite-${spec.slug}-${String(index + 1).padStart(2, '0')}`,
-    bpm: spec.bpm,
-    mix: spec.mix,
-    sections: [
-      {
-        name: 'verse',
-        chords: bars(...spec.chords),
-        parts: [{ inst: spec.lead, vol: spec.leadVol, notes: phrase(melody.slice(0, 4)) }],
-        comp: spec.comp,
-        bass: spec.bass,
-        drums: spec.drums,
-        energy: 0.7,
-        level: 0.8,
-      },
-      {
-        name: 'hint',
-        chords: bars(...spec.later),
-        parts: [
-          { inst: spec.lead, vol: spec.leadVol * 0.82, notes: phrase(melody.slice(4)) },
-          { inst: spec.quote, vol: quoteVol, send: 0.65, notes: faintIntro(spec.quoteKey) },
-        ],
-        comp: spec.comp,
-        bass: spec.bass,
-        drums: spec.drums,
-        energy: 0.6,
-        level: 0.78,
-        crash: false,
-      },
-    ],
-  };
-};
-
-export const ELITE_SAMPLE_SONGS = Object.keys(MELODIES).flatMap((region) => MELODIES[region].map((melody, index) => songOf(region, index, melody)));
+export const ELITE_SAMPLE_SONGS = ELITES.flatMap((elite) => {
+  const source = eliteByFile(elite.file);
+  return choruses(elite.semitones).map((chorus, index) => ({
+    file: `sample-elite-${elite.slug}-${String(index + 1).padStart(2, '0')}`,
+    bpm: source.bpm,
+    mix: source.mix,
+    sections: [cloneSection(source.sections[0]), cloneSection(source.sections[1]), ...chorus.sections],
+  }));
+});
 
 for (const sample of ELITE_SAMPLE_SONGS) {
   for (const section of sample.sections) {
-    for (const part of section.parts) {
+    for (const part of section.parts ?? []) {
       const barsText = part.notes.split('|');
       if (barsText.length !== section.chords.length) {
         throw new Error(`${sample.file} ${section.name} ${part.inst}: ${barsText.length} 小節`);
@@ -178,7 +172,7 @@ for (const sample of ELITE_SAMPLE_SONGS) {
       barsText.forEach((text, index) => {
         const beats = parsePhrase(text).reduce((sum, [, beats]) => sum + beats, 0);
         if (Math.abs(beats - 4) > 1e-6) {
-          throw new Error(`${sample.file} ${section.name} ${part.inst} の ${index + 1} 小節: ${beats} 拍 「${text.trim()}」`);
+          throw new Error(`${sample.file} ${section.name} ${part.inst} の ${index + 1} 小節: ${beats} 拍`);
         }
       });
     }
