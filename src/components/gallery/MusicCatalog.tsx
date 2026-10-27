@@ -19,7 +19,7 @@ export function MusicCatalog() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
       <Text style={styles.note}>
-        全曲がメインテーマ「三つの旗」の旋律をどこかに持っている。下のサンプルはボス戦の候補で、戦闘では流れない。
+        全曲がメインテーマ「三つの旗」の旋律をどこかに持っている。下のサンプルは鉄門と章ボスの中間の編成で、違うのは旋律だけ。戦闘では流れない。
       </Text>
       {MUSIC_ENTRIES.map((entry) => (
         <MusicRow key={entry.id} entry={entry} playing={playing === entry.id} onPress={() => toggle(entry.id)} />
