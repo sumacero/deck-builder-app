@@ -14,23 +14,15 @@ export type MusicId =
   | 'sampleEliteGrassland01'
   | 'sampleEliteGrassland02'
   | 'sampleEliteGrassland03'
-  | 'sampleEliteGrassland04'
-  | 'sampleEliteGrassland05'
   | 'sampleEliteVolcano01'
   | 'sampleEliteVolcano02'
   | 'sampleEliteVolcano03'
-  | 'sampleEliteVolcano04'
-  | 'sampleEliteVolcano05'
   | 'sampleEliteSunken01'
   | 'sampleEliteSunken02'
   | 'sampleEliteSunken03'
-  | 'sampleEliteSunken04'
-  | 'sampleEliteSunken05'
   | 'sampleEliteClockwork01'
   | 'sampleEliteClockwork02'
   | 'sampleEliteClockwork03'
-  | 'sampleEliteClockwork04'
-  | 'sampleEliteClockwork05'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -72,23 +64,15 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   sampleEliteGrassland01: { source: require('../../assets/music/sample-elite-grassland-01.wav'), volume: 0.28 },
   sampleEliteGrassland02: { source: require('../../assets/music/sample-elite-grassland-02.wav'), volume: 0.28 },
   sampleEliteGrassland03: { source: require('../../assets/music/sample-elite-grassland-03.wav'), volume: 0.28 },
-  sampleEliteGrassland04: { source: require('../../assets/music/sample-elite-grassland-04.wav'), volume: 0.28 },
-  sampleEliteGrassland05: { source: require('../../assets/music/sample-elite-grassland-05.wav'), volume: 0.28 },
   sampleEliteVolcano01: { source: require('../../assets/music/sample-elite-volcano-01.wav'), volume: 0.28 },
   sampleEliteVolcano02: { source: require('../../assets/music/sample-elite-volcano-02.wav'), volume: 0.28 },
   sampleEliteVolcano03: { source: require('../../assets/music/sample-elite-volcano-03.wav'), volume: 0.28 },
-  sampleEliteVolcano04: { source: require('../../assets/music/sample-elite-volcano-04.wav'), volume: 0.28 },
-  sampleEliteVolcano05: { source: require('../../assets/music/sample-elite-volcano-05.wav'), volume: 0.28 },
   sampleEliteSunken01: { source: require('../../assets/music/sample-elite-sunken-01.wav'), volume: 0.28 },
   sampleEliteSunken02: { source: require('../../assets/music/sample-elite-sunken-02.wav'), volume: 0.28 },
   sampleEliteSunken03: { source: require('../../assets/music/sample-elite-sunken-03.wav'), volume: 0.28 },
-  sampleEliteSunken04: { source: require('../../assets/music/sample-elite-sunken-04.wav'), volume: 0.28 },
-  sampleEliteSunken05: { source: require('../../assets/music/sample-elite-sunken-05.wav'), volume: 0.28 },
   sampleEliteClockwork01: { source: require('../../assets/music/sample-elite-clockwork-01.wav'), volume: 0.28 },
   sampleEliteClockwork02: { source: require('../../assets/music/sample-elite-clockwork-02.wav'), volume: 0.28 },
   sampleEliteClockwork03: { source: require('../../assets/music/sample-elite-clockwork-03.wav'), volume: 0.28 },
-  sampleEliteClockwork04: { source: require('../../assets/music/sample-elite-clockwork-04.wav'), volume: 0.28 },
-  sampleEliteClockwork05: { source: require('../../assets/music/sample-elite-clockwork-05.wav'), volume: 0.28 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -144,24 +128,16 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  { id: 'sampleEliteGrassland01', title: '【草原 1】付点', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分はラスボスの付点を金管と低いギターで。ツーバスとハモりは無し。' },
-  { id: 'sampleEliteGrassland02', title: '【草原 2】長い歌', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分は章ボスの B メロ。ギターが長く歌う。' },
-  { id: 'sampleEliteGrassland03', title: '【草原 3】刻み', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分は章ボスの A メロ。ギターと刻み。' },
-  { id: 'sampleEliteGrassland04', title: '【草原 4】加速', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分はラスボスのイントロが速くなり、付点へ入る。' },
-  { id: 'sampleEliteGrassland05', title: '【草原 5】受け渡し', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分は前半は付点の金管、後半は章ボスの長いギター。' },
-  { id: 'sampleEliteVolcano01', title: '【火山 1】付点', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分はラスボスの付点を金管と低いギターで。ツーバスとハモりは無し。' },
-  { id: 'sampleEliteVolcano02', title: '【火山 2】長い歌', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分は章ボスの B メロ。ギターが長く歌う。' },
-  { id: 'sampleEliteVolcano03', title: '【火山 3】刻み', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分は章ボスの A メロ。ギターと刻み。' },
-  { id: 'sampleEliteVolcano04', title: '【火山 4】加速', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分はラスボスのイントロが速くなり、付点へ入る。' },
-  { id: 'sampleEliteVolcano05', title: '【火山 5】受け渡し', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分は前半は付点の金管、後半は章ボスの長いギター。' },
-  { id: 'sampleEliteSunken01', title: '【水の古都 1】付点', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分はラスボスの付点を金管と低いギターで。ツーバスとハモりは無し。' },
-  { id: 'sampleEliteSunken02', title: '【水の古都 2】長い歌', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分は章ボスの B メロ。ギターが長く歌う。' },
-  { id: 'sampleEliteSunken03', title: '【水の古都 3】刻み', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分は章ボスの A メロ。ギターと刻み。' },
-  { id: 'sampleEliteSunken04', title: '【水の古都 4】加速', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分はラスボスのイントロが速くなり、付点へ入る。' },
-  { id: 'sampleEliteSunken05', title: '【水の古都 5】受け渡し', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分は前半は付点の金管、後半は章ボスの長いギター。' },
-  { id: 'sampleEliteClockwork01', title: '【歯車塔 1】付点', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分はラスボスの付点を金管と低いギターで。ツーバスとハモりは無し。' },
-  { id: 'sampleEliteClockwork02', title: '【歯車塔 2】長い歌', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分は章ボスの B メロ。ギターが長く歌う。' },
-  { id: 'sampleEliteClockwork03', title: '【歯車塔 3】刻み', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分は章ボスの A メロ。ギターと刻み。' },
-  { id: 'sampleEliteClockwork04', title: '【歯車塔 4】加速', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分はラスボスのイントロが速くなり、付点へ入る。' },
-  { id: 'sampleEliteClockwork05', title: '【歯車塔 5】受け渡し', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分は前半は付点の金管、後半は章ボスの長いギター。' },
+  { id: 'sampleEliteGrassland01', title: '【草原 1】同じ声', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分は地域の旋律と同じ楽器・同じ伴奏のまま、ラスボスの A メロへ続く。入りのシンバルは鳴らさない。' },
+  { id: 'sampleEliteGrassland02', title: '【草原 2】低くから', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分は同じ伴奏のまま、ラスボスの A メロの前半を 1 オクターブ下で歌い、後半で元の高さに戻る。' },
+  { id: 'sampleEliteGrassland03', title: '【草原 3】橋', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後の共通部分は地域の旋律の最後の和音を 2 小節伸ばしてから、同じ声でラスボスの A メロに入る。' },
+  { id: 'sampleEliteVolcano01', title: '【火山 1】同じ声', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分は地域の旋律と同じ楽器・同じ伴奏のまま、ラスボスの A メロへ続く。入りのシンバルは鳴らさない。' },
+  { id: 'sampleEliteVolcano02', title: '【火山 2】低くから', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分は同じ伴奏のまま、ラスボスの A メロの前半を 1 オクターブ下で歌い、後半で元の高さに戻る。' },
+  { id: 'sampleEliteVolcano03', title: '【火山 3】橋', description: '132 BPM。出だしと地域の旋律は今の火山エリートのまま。最後の共通部分は地域の旋律の最後の和音を 2 小節伸ばしてから、同じ声でラスボスの A メロに入る。' },
+  { id: 'sampleEliteSunken01', title: '【水の古都 1】同じ声', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分は地域の旋律と同じ楽器・同じ伴奏のまま、ラスボスの A メロへ続く。入りのシンバルは鳴らさない。' },
+  { id: 'sampleEliteSunken02', title: '【水の古都 2】低くから', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分は同じ伴奏のまま、ラスボスの A メロの前半を 1 オクターブ下で歌い、後半で元の高さに戻る。' },
+  { id: 'sampleEliteSunken03', title: '【水の古都 3】橋', description: '114 BPM。出だしと地域の旋律は今の水の古都エリートのまま。最後の共通部分は地域の旋律の最後の和音を 2 小節伸ばしてから、同じ声でラスボスの A メロに入る。' },
+  { id: 'sampleEliteClockwork01', title: '【歯車塔 1】同じ声', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分は地域の旋律と同じ楽器・同じ伴奏のまま、ラスボスの A メロへ続く。入りのシンバルは鳴らさない。' },
+  { id: 'sampleEliteClockwork02', title: '【歯車塔 2】低くから', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分は同じ伴奏のまま、ラスボスの A メロの前半を 1 オクターブ下で歌い、後半で元の高さに戻る。' },
+  { id: 'sampleEliteClockwork03', title: '【歯車塔 3】橋', description: '122 BPM。出だしと地域の旋律は今の歯車塔エリートのまま。最後の共通部分は地域の旋律の最後の和音を 2 小節伸ばしてから、同じ声でラスボスの A メロに入る。' },
 ];
