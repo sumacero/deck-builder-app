@@ -19,7 +19,7 @@ export function MusicCatalog() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
       <Text style={styles.note}>
-        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下は各マップのエリート戦の候補。出だしと地域の旋律は今のエリート戦のまま。最後の共通部分は、伴奏を変えずにラスボスの A メロへつないである。つなぎ方は 3 通り。戦闘にはまだ入れてない。
+        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下は各マップのエリート戦の候補。出だしと地域の旋律は今のエリート戦のまま。最後はラスボスの A メロで、地域の最後の音から階段で入る。つなぎ方は 5 通り。戦闘にはまだ入れてない。
       </Text>
       {MUSIC_ENTRIES.map((entry) => (
         <MusicRow key={entry.id} entry={entry} playing={playing === entry.id} onPress={() => toggle(entry.id)} />
