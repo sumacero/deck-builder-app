@@ -15,6 +15,32 @@ export type MusicId =
   | 'sampleFinal02'
   | 'sampleFinal03'
   | 'sampleFinal04'
+  | 'sampleFinal05'
+  | 'sampleFinal06'
+  | 'sampleFinal07'
+  | 'sampleFinal08'
+  | 'sampleFinal09'
+  | 'sampleFinal10'
+  | 'sampleFinal11'
+  | 'sampleFinal12'
+  | 'sampleFinal13'
+  | 'sampleFinal14'
+  | 'sampleFinal15'
+  | 'sampleFinal16'
+  | 'sampleFinal17'
+  | 'sampleFinal18'
+  | 'sampleFinal19'
+  | 'sampleFinal20'
+  | 'sampleFinal21'
+  | 'sampleFinal22'
+  | 'sampleFinal23'
+  | 'sampleFinal24'
+  | 'sampleFinal25'
+  | 'sampleFinal26'
+  | 'sampleFinal27'
+  | 'sampleFinal28'
+  | 'sampleFinal29'
+  | 'sampleFinal30'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -57,6 +83,32 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   sampleFinal02: { source: require('../../assets/music/sample-final-02.wav'), volume: 0.32 },
   sampleFinal03: { source: require('../../assets/music/sample-final-03.wav'), volume: 0.32 },
   sampleFinal04: { source: require('../../assets/music/sample-final-04.wav'), volume: 0.32 },
+  sampleFinal05: { source: require('../../assets/music/sample-final-05.wav'), volume: 0.32 },
+  sampleFinal06: { source: require('../../assets/music/sample-final-06.wav'), volume: 0.32 },
+  sampleFinal07: { source: require('../../assets/music/sample-final-07.wav'), volume: 0.32 },
+  sampleFinal08: { source: require('../../assets/music/sample-final-08.wav'), volume: 0.32 },
+  sampleFinal09: { source: require('../../assets/music/sample-final-09.wav'), volume: 0.32 },
+  sampleFinal10: { source: require('../../assets/music/sample-final-10.wav'), volume: 0.32 },
+  sampleFinal11: { source: require('../../assets/music/sample-final-11.wav'), volume: 0.32 },
+  sampleFinal12: { source: require('../../assets/music/sample-final-12.wav'), volume: 0.32 },
+  sampleFinal13: { source: require('../../assets/music/sample-final-13.wav'), volume: 0.32 },
+  sampleFinal14: { source: require('../../assets/music/sample-final-14.wav'), volume: 0.32 },
+  sampleFinal15: { source: require('../../assets/music/sample-final-15.wav'), volume: 0.32 },
+  sampleFinal16: { source: require('../../assets/music/sample-final-16.wav'), volume: 0.32 },
+  sampleFinal17: { source: require('../../assets/music/sample-final-17.wav'), volume: 0.32 },
+  sampleFinal18: { source: require('../../assets/music/sample-final-18.wav'), volume: 0.32 },
+  sampleFinal19: { source: require('../../assets/music/sample-final-19.wav'), volume: 0.32 },
+  sampleFinal20: { source: require('../../assets/music/sample-final-20.wav'), volume: 0.32 },
+  sampleFinal21: { source: require('../../assets/music/sample-final-21.wav'), volume: 0.32 },
+  sampleFinal22: { source: require('../../assets/music/sample-final-22.wav'), volume: 0.32 },
+  sampleFinal23: { source: require('../../assets/music/sample-final-23.wav'), volume: 0.32 },
+  sampleFinal24: { source: require('../../assets/music/sample-final-24.wav'), volume: 0.32 },
+  sampleFinal25: { source: require('../../assets/music/sample-final-25.wav'), volume: 0.32 },
+  sampleFinal26: { source: require('../../assets/music/sample-final-26.wav'), volume: 0.32 },
+  sampleFinal27: { source: require('../../assets/music/sample-final-27.wav'), volume: 0.32 },
+  sampleFinal28: { source: require('../../assets/music/sample-final-28.wav'), volume: 0.32 },
+  sampleFinal29: { source: require('../../assets/music/sample-final-29.wav'), volume: 0.32 },
+  sampleFinal30: { source: require('../../assets/music/sample-final-30.wav'), volume: 0.32 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -112,8 +164,34 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  { id: 'sampleFinal01', title: '【ラスボス 1】2小節前', description: '156 BPM。ためからサビの 1 回目まで。上がり坂の前半が終わったところ（およそ 9 秒）から、章ボスのイントロの頭を 2 小節。そのあとサビ。' },
-  { id: 'sampleFinal02', title: '【ラスボス 2】4小節前', description: '156 BPM。ためからサビの 1 回目まで。ためのギターが伸びきったあと（およそ 6 秒）から、イントロを 4 小節。終わると同時にサビ。' },
-  { id: 'sampleFinal03', title: '【ラスボス 3】6小節前', description: '156 BPM。ためからサビの 1 回目まで。ための前半がミで着地したあと（およそ 3 秒）から。イントロを一周して、締めをもう一度。そのあとサビ。' },
-  { id: 'sampleFinal04', title: '【ラスボス 4】ための頭', description: '156 BPM。ためからサビの 1 回目まで。ための最初（B メロの直後）から、イントロを二周。二周目の締めのあとサビ。' },
+  { id: 'sampleFinal01', title: '【1】薄い弦', description: '4小節前から。イントロを1オクターブ下の弦で、小さく重ねる。' },
+  { id: 'sampleFinal02', title: '【2】鐘', description: '4小節前から。イントロを鐘でそのまま。' },
+  { id: 'sampleFinal03', title: '【3】伸ばすパッド', description: '4小節前から。各小節の頭の音だけを、パッドの長い音にする。' },
+  { id: 'sampleFinal04', title: '【4】半分のギター', description: '4小節前から。イントロをギターで、元の上がり坂より小さく。' },
+  { id: 'sampleFinal05', title: '【5】上のオルガン', description: '4小節前から。イントロを1オクターブ上のオルガンで。' },
+  { id: 'sampleFinal06', title: '【6】細い矩形', description: '4小節前から。イントロを、ごく細い矩形波で。' },
+  { id: 'sampleFinal07', title: '【7】ハープ', description: '4小節前から。イントロをハープで。' },
+  { id: 'sampleFinal08', title: '【8】低い金管', description: '4小節前から。イントロを1オクターブ下の金管で。' },
+  { id: 'sampleFinal09', title: '【9】半音上の笛', description: '4小節前から。イントロを半音上げて、笛で。' },
+  { id: 'sampleFinal10', title: '【10】半音下の弦', description: '4小節前から。イントロを半音下げ、さらに1オクターブ下の弦で。' },
+  { id: 'sampleFinal11', title: '【11】全音上の鐘', description: '4小節前から。イントロを全音上げて、鐘で。' },
+  { id: 'sampleFinal12', title: '【12】全音下のギター', description: '4小節前から。イントロを全音下げて、ギターで。' },
+  { id: 'sampleFinal13', title: '【13】短三度上', description: '4小節前から。イントロを短三度上げて、オルガンで。' },
+  { id: 'sampleFinal14', title: '【14】同主長調', description: '4小節前から。イントロのシ♭とファをナチュラルにして、ギターで。' },
+  { id: 'sampleFinal15', title: '【15】五度上', description: '4小節前から。イントロを五度上げて、鍵盤で。' },
+  { id: 'sampleFinal16', title: '【16】四度下', description: '4小節前から。イントロを四度下げて、金管で。' },
+  { id: 'sampleFinal17', title: '【17】骨だけ', description: '4小節前から。各小節の頭の音だけを、弦の長い音にする。' },
+  { id: 'sampleFinal18', title: '【18】レ・レが続く', description: '4小節前から。イントロの頭「レ・レ」だけを、4小節鐘で繰り返す。' },
+  { id: 'sampleFinal19', title: '【19】締めが二度', description: '4小節前から。イントロの後半（ラ・ラと、シ♭からド♯）を二度、シンセ金管で。' },
+  { id: 'sampleFinal20', title: '【20】頭と締め', description: '4小節前から。頭と締めの小節を交互に、三角波で。' },
+  { id: 'sampleFinal21', title: '【21】逆から', description: '4小節前から。イントロを後ろの小節から、ギターで。' },
+  { id: 'sampleFinal22', title: '【22】三度下でハモる', description: '4小節前から。ギターのイントロに、短三度下の弦を重ねる。' },
+  { id: 'sampleFinal23', title: '【23】ボスの鳴らし方', description: '4小節前から。章ボスと同じくギターと上のオルガン。音は小さめ。' },
+  { id: 'sampleFinal24', title: '【24】だんだん大きく', description: '4小節前から。鐘のイントロが、サビに向かって大きくなる。' },
+  { id: 'sampleFinal25', title: '【25】2小節・鐘の頭', description: '2小節前から。イントロの頭を鐘で。' },
+  { id: 'sampleFinal26', title: '【26】2小節・低い弦', description: '2小節前から。イントロの頭を、1オクターブ下の弦で。' },
+  { id: 'sampleFinal27', title: '【27】2小節・締めの金管', description: '2小節前から。イントロの締め（シ♭からド♯）を金管で。' },
+  { id: 'sampleFinal28', title: '【28】2小節・半音上', description: '2小節前から。イントロの頭を半音上げて、ギターで。' },
+  { id: 'sampleFinal29', title: '【29】2小節・五度の締め', description: '2小節前から。イントロの締めを五度上げて、鍵盤で。' },
+  { id: 'sampleFinal30', title: '【30】2小節・伸ばすパッド', description: '2小節前から。締めの頭の音だけを、パッドの長い音にする。' },
 ];
