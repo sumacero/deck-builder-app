@@ -11,11 +11,6 @@ export type MusicId =
   | 'battleBoss'
   | 'battleFinal'
   | 'shop'
-  | 'sampleEliteGrassland01'
-  | 'sampleEliteGrassland02'
-  | 'sampleEliteGrassland03'
-  | 'sampleEliteGrassland04'
-  | 'sampleEliteGrassland05'
   | 'sampleFinal01'
   | 'sampleFinal02'
   | 'sampleFinal03'
@@ -58,12 +53,6 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   'elite:grassland': { source: require('../../assets/music/elite-grassland.wav'), volume: 0.32 },
   'elite:sunkenCity': { source: require('../../assets/music/elite-sunken-city.wav'), volume: 0.32 },
   'elite:clockwork': { source: require('../../assets/music/elite-clockwork.wav'), volume: 0.3 },
-  /** 図鑑だけで聴くエリート戦の候補。戦闘では流さない。 */
-  sampleEliteGrassland01: { source: require('../../assets/music/sample-elite-grassland-01.wav'), volume: 0.28 },
-  sampleEliteGrassland02: { source: require('../../assets/music/sample-elite-grassland-02.wav'), volume: 0.28 },
-  sampleEliteGrassland03: { source: require('../../assets/music/sample-elite-grassland-03.wav'), volume: 0.28 },
-  sampleEliteGrassland04: { source: require('../../assets/music/sample-elite-grassland-04.wav'), volume: 0.28 },
-  sampleEliteGrassland05: { source: require('../../assets/music/sample-elite-grassland-05.wav'), volume: 0.28 },
   /** 図鑑だけで聴くラスボス戦の候補。戦闘では流さない。 */
   sampleFinal01: { source: require('../../assets/music/sample-final-01.wav'), volume: 0.32 },
   sampleFinal02: { source: require('../../assets/music/sample-final-02.wav'), volume: 0.32 },
@@ -125,14 +114,9 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  { id: 'sampleEliteGrassland01', title: '【草原 1】予告', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。地域の旋律をもう一度。そのあいだ A メロを小さく下に重ね、次の 4 小節で笛が同じ拍を歌う。' },
-  { id: 'sampleEliteGrassland02', title: '【草原 2】追いつき', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。前半は地域の旋律、後半 2 小節だけ同じ拍。下では最初から A メロが小さく流れている。' },
-  { id: 'sampleEliteGrassland03', title: '【草原 3】二周目の後半', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。地域の旋律をもう一周。二周目は後半 2 小節だけ同じ拍。' },
-  { id: 'sampleEliteGrassland04', title: '【草原 4】影がついてくる', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。もう一周のあいだ A メロを小さく重ね続ける。笛が同じ拍になるのは最後の 2 小節だけ。' },
-  { id: 'sampleEliteGrassland05', title: '【草原 5】受け渡し', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。前半は笛が地域の旋律で、下が A メロ。後半 2 小節で入れ替わる。' },
-  { id: 'sampleFinal01', title: '【ラスボス 1】鐘で頭', description: '156 BPM。今のラスボス戦のまま。サビ直前の 1 小節だけ、章ボスのイントロの頭を小さい鐘で鳴らす。' },
-  { id: 'sampleFinal02', title: '【ラスボス 2】低い弦', description: '156 BPM。今のラスボス戦のまま。サビ前の 2 小節に、章ボスのイントロの前半を 1 オクターブ下の弦で重ねる。' },
-  { id: 'sampleFinal03', title: '【ラスボス 3】上り坂の下', description: '156 BPM。今のラスボス戦のまま。サビへ上がる 4 小節のあいだ、章ボスのイントロを小さい鐘で通す。' },
-  { id: 'sampleFinal04', title: '【ラスボス 4】ためのうち', description: '156 BPM。今のラスボス戦のまま。サビ前の静かな 4 小節に、章ボスのイントロを笛で置く。' },
-  { id: 'sampleFinal05', title: '【ラスボス 5】章の締め', description: '156 BPM。今のラスボス戦のまま。サビ直前の 1 小節だけ、章ボスのイントロの最後（シ♭からド♯へ）を低いギターで鳴らす。' },
+  { id: 'sampleFinal01', title: '【ラスボス 1】鐘で頭', description: '156 BPM。ためからサビの 1 回目まで。サビ直前の 1 小節に、章ボスのイントロの頭を鐘で乗せる。' },
+  { id: 'sampleFinal02', title: '【ラスボス 2】低い弦', description: '156 BPM。ためからサビの 1 回目まで。サビ前の 2 小節に、章ボスのイントロの前半を 1 オクターブ下の弦で乗せる。' },
+  { id: 'sampleFinal03', title: '【ラスボス 3】上り坂の下', description: '156 BPM。ためからサビの 1 回目まで。サビへ上がる 4 小節のあいだ、章ボスのイントロを鐘で通す。' },
+  { id: 'sampleFinal04', title: '【ラスボス 4】ためのうち', description: '156 BPM。ためからサビの 1 回目まで。静かな 4 小節に、章ボスのイントロを笛で置く。' },
+  { id: 'sampleFinal05', title: '【ラスボス 5】章の締め', description: '156 BPM。ためからサビの 1 回目まで。サビ直前の 1 小節に、章ボスのイントロの最後（シ♭からド♯へ）を低いギターで乗せる。' },
 ];

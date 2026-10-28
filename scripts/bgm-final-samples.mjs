@@ -1,5 +1,5 @@
 // ラスボス戦の候補。5 曲。ゲーム中には流さない。図鑑の BGM で聴く。
-// 今のラスボス戦はそのまま。サビの直前に、章ボスのイントロを小さい音で足すだけ。
+// 今のラスボス戦の、ためからサビの 1 回目まで。サビの直前に章ボスのイントロを足す。
 // 本番の battle-final.wav はここでは書き出さない。
 import { parsePhrase, shiftPhrase } from './bgm-engine.mjs';
 import { FINAL_BOSS_SONG } from './bgm-final.mjs';
@@ -36,10 +36,13 @@ const hinted = (place) => {
     throw new Error('サビ前の並びが変わっている');
   }
   place({ sections, calm, rise });
+  const from = sections.findIndex((section) => section.name === 'build');
+  const to = sections.findIndex((section) => section.name === 'chorus1');
+  if (from < 0 || to < from) throw new Error('サビ前の範囲が取れない');
   return {
     bpm: FINAL_BOSS_SONG.bpm,
     mix: FINAL_BOSS_SONG.mix,
-    sections,
+    sections: sections.slice(from, to + 1),
   };
 };
 
@@ -51,37 +54,37 @@ const onRise = (sections, rise, from, notes, { inst, vol, octaves = 0 }) => {
 
 export const FINAL_SAMPLE_SONGS = [
   {
-    // サビ直前の 1 小節。章ボスのイントロの頭だけを、鐘で。
+    // サビ直前の 1 小節。章ボスのイントロの頭だけを、鐘で前に出す。
     ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 3, [CHAPTER_INTRO[0]], { inst: 'bell', vol: 0.09 });
+      onRise(sections, rise, 3, [CHAPTER_INTRO[0]], { inst: 'bell', vol: 0.2 });
     }),
     file: 'sample-final-01',
   },
   {
     // サビ前の 2 小節。イントロの前半を、1 オクターブ下の弦で。
     ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 2, CHAPTER_INTRO.slice(0, 2), { inst: 'strings', vol: 0.11, octaves: -1 });
+      onRise(sections, rise, 2, CHAPTER_INTRO.slice(0, 2), { inst: 'strings', vol: 0.28, octaves: -1 });
     }),
     file: 'sample-final-02',
   },
   {
-    // サビへ上がる 4 小節のあいだ。章ボスのイントロを、小さい鐘で通す。
+    // サビへ上がる 4 小節のあいだ。章ボスのイントロを、鐘で通す。
     ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 0, CHAPTER_INTRO, { inst: 'bell', vol: 0.06 });
+      onRise(sections, rise, 0, CHAPTER_INTRO, { inst: 'bell', vol: 0.16 });
     }),
     file: 'sample-final-03',
   },
   {
     // サビ前の静かな 4 小節。上がり坂の手前に、笛でイントロを置く。
     ...hinted(({ sections, calm }) => {
-      sections[calm] = layer(sections[calm], voice('flute', 0.1, join4(...CHAPTER_INTRO)));
+      sections[calm] = layer(sections[calm], voice('flute', 0.24, join4(...CHAPTER_INTRO)));
     }),
     file: 'sample-final-04',
   },
   {
     // サビ直前の 1 小節。章ボスだけの最後の小節を、低いギターで。
     ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 3, [CHAPTER_INTRO[3]], { inst: 'guitarLead', vol: 0.08, octaves: -1 });
+      onRise(sections, rise, 3, [CHAPTER_INTRO[3]], { inst: 'guitarLead', vol: 0.22, octaves: -1 });
     }),
     file: 'sample-final-05',
   },
@@ -90,8 +93,9 @@ export const FINAL_SAMPLE_SONGS = [
 const beatsOf = (text) => parsePhrase(text).reduce((sum, [, beats]) => sum + beats, 0);
 
 for (const song of FINAL_SAMPLE_SONGS) {
-  const base = FINAL_BOSS_SONG.sections.length;
-  if (song.sections.length !== base) throw new Error(`${song.file} の構成がラスボス戦と違う`);
+  if (song.sections[0]?.name !== 'build' || song.sections.at(-1)?.name !== 'chorus1') {
+    throw new Error(`${song.file} はためからサビまでになっていない`);
+  }
   for (const section of song.sections) {
     for (const part of section.parts ?? []) {
       const bars = part.notes.split('|');
