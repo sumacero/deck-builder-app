@@ -12,6 +12,9 @@ export type MusicId =
   | 'battleFinal'
   | 'shop'
   | 'sampleFinal01'
+  | 'sampleFinal02'
+  | 'sampleFinal03'
+  | 'sampleFinal04'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -51,6 +54,9 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   'elite:clockwork': { source: require('../../assets/music/elite-clockwork.wav'), volume: 0.3 },
   /** 図鑑だけで聴くラスボス戦の候補。戦闘では流さない。 */
   sampleFinal01: { source: require('../../assets/music/sample-final-01.wav'), volume: 0.32 },
+  sampleFinal02: { source: require('../../assets/music/sample-final-02.wav'), volume: 0.32 },
+  sampleFinal03: { source: require('../../assets/music/sample-final-03.wav'), volume: 0.32 },
+  sampleFinal04: { source: require('../../assets/music/sample-final-04.wav'), volume: 0.32 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -106,5 +112,8 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  { id: 'sampleFinal01', title: '【ラスボス】サビの直前', description: '156 BPM。サビへ上がるところから、サビの 1 回目まで。直前の 1 小節で章ボスのイントロ（ギターとオルガン）が入って、そのあとサビが来る。' },
+  { id: 'sampleFinal01', title: '【ラスボス 1】2小節前', description: '156 BPM。ためからサビの 1 回目まで。上がり坂の前半が終わったところ（およそ 9 秒）から、章ボスのイントロの頭を 2 小節。そのあとサビ。' },
+  { id: 'sampleFinal02', title: '【ラスボス 2】4小節前', description: '156 BPM。ためからサビの 1 回目まで。ためのギターが伸びきったあと（およそ 6 秒）から、イントロを 4 小節。終わると同時にサビ。' },
+  { id: 'sampleFinal03', title: '【ラスボス 3】6小節前', description: '156 BPM。ためからサビの 1 回目まで。ための前半がミで着地したあと（およそ 3 秒）から。イントロを一周して、締めをもう一度。そのあとサビ。' },
+  { id: 'sampleFinal04', title: '【ラスボス 4】ための頭', description: '156 BPM。ためからサビの 1 回目まで。ための最初（B メロの直後）から、イントロを二周。二周目の締めのあとサビ。' },
 ];
