@@ -19,7 +19,7 @@ export function MusicCatalog() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
       <Text style={styles.note}>
-        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下はラスボス戦のサビだけ。1 回目はそのまま、2 回目の頭から章ボスのイントロを乗せる。笛は使っていない。10 曲。戦闘にはまだ入れてない。
+        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下はラスボス戦のサビ直前。上がりきった 1 小節で章ボスのイントロが入り、そのあとサビが来る。1 曲。戦闘にはまだ入れてない。
       </Text>
       {MUSIC_ENTRIES.map((entry) => (
         <MusicRow key={entry.id} entry={entry} playing={playing === entry.id} onPress={() => toggle(entry.id)} />

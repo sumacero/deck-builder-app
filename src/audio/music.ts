@@ -12,15 +12,6 @@ export type MusicId =
   | 'battleFinal'
   | 'shop'
   | 'sampleFinal01'
-  | 'sampleFinal02'
-  | 'sampleFinal03'
-  | 'sampleFinal04'
-  | 'sampleFinal05'
-  | 'sampleFinal06'
-  | 'sampleFinal07'
-  | 'sampleFinal08'
-  | 'sampleFinal09'
-  | 'sampleFinal10'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -60,15 +51,6 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   'elite:clockwork': { source: require('../../assets/music/elite-clockwork.wav'), volume: 0.3 },
   /** 図鑑だけで聴くラスボス戦の候補。戦闘では流さない。 */
   sampleFinal01: { source: require('../../assets/music/sample-final-01.wav'), volume: 0.32 },
-  sampleFinal02: { source: require('../../assets/music/sample-final-02.wav'), volume: 0.32 },
-  sampleFinal03: { source: require('../../assets/music/sample-final-03.wav'), volume: 0.32 },
-  sampleFinal04: { source: require('../../assets/music/sample-final-04.wav'), volume: 0.32 },
-  sampleFinal05: { source: require('../../assets/music/sample-final-05.wav'), volume: 0.32 },
-  sampleFinal06: { source: require('../../assets/music/sample-final-06.wav'), volume: 0.32 },
-  sampleFinal07: { source: require('../../assets/music/sample-final-07.wav'), volume: 0.32 },
-  sampleFinal08: { source: require('../../assets/music/sample-final-08.wav'), volume: 0.32 },
-  sampleFinal09: { source: require('../../assets/music/sample-final-09.wav'), volume: 0.32 },
-  sampleFinal10: { source: require('../../assets/music/sample-final-10.wav'), volume: 0.32 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -124,14 +106,5 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  { id: 'sampleFinal01', title: '【ラスボス 1】鐘で一遍', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭から、章ボスのイントロを鐘で一遍。' },
-  { id: 'sampleFinal02', title: '【ラスボス 2】低い鐘', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭から、イントロを 1 オクターブ下の鐘で一遍。' },
-  { id: 'sampleFinal03', title: '【ラスボス 3】弦で一遍', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭から、イントロを弦で一遍。' },
-  { id: 'sampleFinal04', title: '【ラスボス 4】低い弦', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭から、イントロを 1 オクターブ下の弦で一遍。' },
-  { id: 'sampleFinal05', title: '【ラスボス 5】ギター', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭から、イントロをギターで一遍。' },
-  { id: 'sampleFinal06', title: '【ラスボス 6】金管の頭', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭の 1 小節だけ、イントロの出だしを金管で。' },
-  { id: 'sampleFinal07', title: '【ラスボス 7】オルガンの前半', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭から 2 小節、イントロの前半をオルガンで。' },
-  { id: 'sampleFinal08', title: '【ラスボス 8】鍵盤', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目の頭から、イントロを鍵盤で一遍。' },
-  { id: 'sampleFinal09', title: '【ラスボス 9】鐘が二周', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目は頭から終わりまで、イントロを鐘で二遍。' },
-  { id: 'sampleFinal10', title: '【ラスボス 10】矩形が二周', description: '156 BPM。サビの 2 回だけ。1 回目はそのまま。2 回目は頭から終わりまで、イントロを矩形波で二遍。' },
+  { id: 'sampleFinal01', title: '【ラスボス】サビの直前', description: '156 BPM。サビへ上がるところから、サビの 1 回目まで。直前の 1 小節で章ボスのイントロ（ギターとオルガン）が入って、そのあとサビが来る。' },
 ];
