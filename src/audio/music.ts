@@ -16,6 +16,11 @@ export type MusicId =
   | 'sampleEliteGrassland03'
   | 'sampleEliteGrassland04'
   | 'sampleEliteGrassland05'
+  | 'sampleFinal01'
+  | 'sampleFinal02'
+  | 'sampleFinal03'
+  | 'sampleFinal04'
+  | 'sampleFinal05'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -59,6 +64,12 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   sampleEliteGrassland03: { source: require('../../assets/music/sample-elite-grassland-03.wav'), volume: 0.28 },
   sampleEliteGrassland04: { source: require('../../assets/music/sample-elite-grassland-04.wav'), volume: 0.28 },
   sampleEliteGrassland05: { source: require('../../assets/music/sample-elite-grassland-05.wav'), volume: 0.28 },
+  /** 図鑑だけで聴くラスボス戦の候補。戦闘では流さない。 */
+  sampleFinal01: { source: require('../../assets/music/sample-final-01.wav'), volume: 0.32 },
+  sampleFinal02: { source: require('../../assets/music/sample-final-02.wav'), volume: 0.32 },
+  sampleFinal03: { source: require('../../assets/music/sample-final-03.wav'), volume: 0.32 },
+  sampleFinal04: { source: require('../../assets/music/sample-final-04.wav'), volume: 0.32 },
+  sampleFinal05: { source: require('../../assets/music/sample-final-05.wav'), volume: 0.32 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -119,4 +130,9 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'sampleEliteGrassland03', title: '【草原 3】二周目の後半', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。地域の旋律をもう一周。二周目は後半 2 小節だけ同じ拍。' },
   { id: 'sampleEliteGrassland04', title: '【草原 4】影がついてくる', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。もう一周のあいだ A メロを小さく重ね続ける。笛が同じ拍になるのは最後の 2 小節だけ。' },
   { id: 'sampleEliteGrassland05', title: '【草原 5】受け渡し', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。前半は笛が地域の旋律で、下が A メロ。後半 2 小節で入れ替わる。' },
+  { id: 'sampleFinal01', title: '【ラスボス 1】鐘で頭', description: '156 BPM。今のラスボス戦のまま。サビ直前の 1 小節だけ、章ボスのイントロの頭を小さい鐘で鳴らす。' },
+  { id: 'sampleFinal02', title: '【ラスボス 2】低い弦', description: '156 BPM。今のラスボス戦のまま。サビ前の 2 小節に、章ボスのイントロの前半を 1 オクターブ下の弦で重ねる。' },
+  { id: 'sampleFinal03', title: '【ラスボス 3】上り坂の下', description: '156 BPM。今のラスボス戦のまま。サビへ上がる 4 小節のあいだ、章ボスのイントロを小さい鐘で通す。' },
+  { id: 'sampleFinal04', title: '【ラスボス 4】ためのうち', description: '156 BPM。今のラスボス戦のまま。サビ前の静かな 4 小節に、章ボスのイントロを笛で置く。' },
+  { id: 'sampleFinal05', title: '【ラスボス 5】章の締め', description: '156 BPM。今のラスボス戦のまま。サビ直前の 1 小節だけ、章ボスのイントロの最後（シ♭からド♯へ）を低いギターで鳴らす。' },
 ];

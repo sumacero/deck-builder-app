@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { SAMPLE_RATE, seedNoise, shiftPhrase } from './bgm-engine.mjs';
 import { REGION_SONGS } from './bgm-regions.mjs';
 import { ELITE_SAMPLE_SONGS } from './bgm-boss-samples.mjs';
+import { FINAL_SAMPLE_SONGS } from './bgm-final-samples.mjs';
 import { CHAPTER_BOSS_SONG, FINAL_BOSS_SONG } from './bgm-final.mjs';
 import { bars, join4, remapPhrase, renderSong, stretchPhrase } from './bgm-song.mjs';
 import {
@@ -196,7 +197,7 @@ const shop = {
   ],
 };
 
-const SONGS = [mainTitle, mainNormal, CHAPTER_BOSS_SONG, FINAL_BOSS_SONG, shop, ...REGION_SONGS, ...ELITE_SAMPLE_SONGS];
+const SONGS = [mainTitle, mainNormal, CHAPTER_BOSS_SONG, FINAL_BOSS_SONG, shop, ...REGION_SONGS, ...ELITE_SAMPLE_SONGS, ...FINAL_SAMPLE_SONGS];
 
 /** `npm run bgm -- field-` のように渡すと、ファイル名がその文字列で始まる曲だけ作る。 */
 const only = process.argv[2];

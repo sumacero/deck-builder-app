@@ -19,7 +19,7 @@ export function MusicCatalog() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
       <Text style={styles.note}>
-        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下は草原エリートの候補。出だしと地域の旋律は今のまま。もう一周、影、後半の三つを混ぜた 5 曲。戦闘にはまだ入れてない。
+        本編の曲はメインテーマ「三つの旗」の旋律をどこかに持っている。下は草原エリートの候補。出だしと地域の旋律は今のまま。もう一周、影、後半の三つを混ぜた 5 曲。その下はラスボス戦の候補。今の曲のサビの直前に、章ボスのイントロを小さい音で足した 5 曲。どちらも戦闘にはまだ入れてない。
       </Text>
       {MUSIC_ENTRIES.map((entry) => (
         <MusicRow key={entry.id} entry={entry} playing={playing === entry.id} onPress={() => toggle(entry.id)} />
