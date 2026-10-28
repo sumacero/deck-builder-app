@@ -16,11 +16,6 @@ export type MusicId =
   | 'sampleEliteGrassland03'
   | 'sampleEliteGrassland04'
   | 'sampleEliteGrassland05'
-  | 'sampleEliteGrassland06'
-  | 'sampleEliteGrassland07'
-  | 'sampleEliteGrassland08'
-  | 'sampleEliteGrassland09'
-  | 'sampleEliteGrassland10'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -64,11 +59,6 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   sampleEliteGrassland03: { source: require('../../assets/music/sample-elite-grassland-03.wav'), volume: 0.28 },
   sampleEliteGrassland04: { source: require('../../assets/music/sample-elite-grassland-04.wav'), volume: 0.28 },
   sampleEliteGrassland05: { source: require('../../assets/music/sample-elite-grassland-05.wav'), volume: 0.28 },
-  sampleEliteGrassland06: { source: require('../../assets/music/sample-elite-grassland-06.wav'), volume: 0.28 },
-  sampleEliteGrassland07: { source: require('../../assets/music/sample-elite-grassland-07.wav'), volume: 0.28 },
-  sampleEliteGrassland08: { source: require('../../assets/music/sample-elite-grassland-08.wav'), volume: 0.28 },
-  sampleEliteGrassland09: { source: require('../../assets/music/sample-elite-grassland-09.wav'), volume: 0.28 },
-  sampleEliteGrassland10: { source: require('../../assets/music/sample-elite-grassland-10.wav'), volume: 0.28 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -124,14 +114,9 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
-  { id: 'sampleEliteGrassland01', title: '【草原 1】和音そのまま', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は同じ拍のまま。和音だけ地域の旋律の最後のままで、A メロのコードには移らない。' },
-  { id: 'sampleEliteGrassland02', title: '【草原 2】もう一周', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は地域の旋律の最後 4 小節をもう一度弾いてから、同じ拍に入る。' },
-  { id: 'sampleEliteGrassland03', title: '【草原 3】頭だけ', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は地域の旋律のまま。各小節の最初の音だけ A メロの高さにする。' },
-  { id: 'sampleEliteGrassland04', title: '【草原 4】語尾だけ', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は地域の旋律のまま。各小節の最後の音だけ A メロの高さにする。' },
-  { id: 'sampleEliteGrassland05', title: '【草原 5】半分', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は地域の音と A メロの音の、真ん中の高さにする。リズムと和音は地域のまま。' },
-  { id: 'sampleEliteGrassland06', title: '【草原 6】交互', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は、1 小節は地域の旋律、次の 1 小節は同じ拍、を繰り返す。' },
-  { id: 'sampleEliteGrassland07', title: '【草原 7】二段', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は、最初の 4 小節は半分だけ寄せ、次の 4 小節で同じ拍にする。' },
-  { id: 'sampleEliteGrassland08', title: '【草原 8】近い音', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は、A メロの音が地域の音から全音以内のときだけ、その音に替える。' },
-  { id: 'sampleEliteGrassland09', title: '【草原 9】影', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は、笛は地域の旋律の繰り返し。同じリズムの A メロを、小さい音で 1 オクターブ下に重ねる。' },
-  { id: 'sampleEliteGrassland10', title: '【草原 10】後半', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。最後は、4 小節の前半は地域の旋律、後半の 2 小節だけ同じ拍にする。' },
+  { id: 'sampleEliteGrassland01', title: '【草原 1】予告', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。地域の旋律をもう一度。そのあいだ A メロを小さく下に重ね、次の 4 小節で笛が同じ拍を歌う。' },
+  { id: 'sampleEliteGrassland02', title: '【草原 2】追いつき', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。前半は地域の旋律、後半 2 小節だけ同じ拍。下では最初から A メロが小さく流れている。' },
+  { id: 'sampleEliteGrassland03', title: '【草原 3】二周目の後半', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。地域の旋律をもう一周。二周目は後半 2 小節だけ同じ拍。' },
+  { id: 'sampleEliteGrassland04', title: '【草原 4】影がついてくる', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。もう一周のあいだ A メロを小さく重ね続ける。笛が同じ拍になるのは最後の 2 小節だけ。' },
+  { id: 'sampleEliteGrassland05', title: '【草原 5】受け渡し', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。前半は笛が地域の旋律で、下が A メロ。後半 2 小節で入れ替わる。' },
 ];
