@@ -1,7 +1,7 @@
 // ラスボス戦「三つの旗 −試− 改」（battle-final.wav、156 BPM・約 74 秒）。3 つの章を終えたあとの、星喰みの魔皇ノクスとの決戦で流れる。
 // 元はタイトル曲の候補探し 第 8 弾（2026-10-06）の【試作 1】統合版: 「三つの旗 −試− 改」の改善案のうち、オーナーが気に入った
 // 1（8 小節の上り坂 × イントロのドラムも加速）・6（刻みで溜める × サビの最後をレに解決）・9（ギターの泣き × 解決）を統合した版。
-// 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 8（後半は G→A→B♭→C と上がる）/ サビ 20（2 回目はハモり、締めに後半 4 小節を回してレに解決）。
+// 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 8（後半は G→A→B♭→C と上がる。サビの 2 小節前に章ボスのイントロの締めを金管で重ねる）/ サビ 20（2 回目はハモり、締めに後半 4 小節を回してレに解決）。
 // 章のボス戦「三つの旗 −試−」（battle-boss.wav）もこの台本から作る（CHAPTER_BOSS_SONG、サビ抜き・楽器を減らし・140 BPM）。
 // ほかの曲が引用している素材（bgm-theme.mjs）は変えない。
 import { BOSS_AFTER_INTRO, BOSS_BPM, BOSS_MIX, bossIntroSection } from './bgm-boss.mjs';
@@ -143,6 +143,12 @@ export const [buildCalm, buildRise] = [
   },
 ];
 const build = [buildCalm, ...rampBars(buildRise, BUILD_RAMP)];
+// 図鑑サンプル 27。上がり坂の最後の 2 小節は残し、章ボスのイントロの締めを金管で重ねてからサビへ入る。
+const CHAPTER_INTRO_TAIL = [THEME_INTRO_BARS[2], 'E5:0.5 F5:0.5 G5:0.5 Bb5:0.5 C#6:1 A5:1'];
+for (const [index, notes] of CHAPTER_INTRO_TAIL.entries()) {
+  const section = build[build.length - CHAPTER_INTRO_TAIL.length + index];
+  section.parts = [...section.parts, { inst: 'brassLead', vol: 0.2, notes }];
+}
 
 /**
  * サビ（20 小節）: 1 回目は今のサビ（最後は高いラのまま 2 回目へ）。ドラムは 8 ビートで少し余力を残す。
