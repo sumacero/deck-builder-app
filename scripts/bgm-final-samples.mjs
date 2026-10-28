@@ -1,5 +1,5 @@
-// ラスボス戦の候補。5 曲。ゲーム中には流さない。図鑑の BGM で聴く。
-// 今のラスボス戦の、ためからサビの 1 回目まで。サビの直前に章ボスのイントロを足す。
+// ラスボス戦の候補。10 曲。ゲーム中には流さない。図鑑の BGM で聴く。
+// サビの 1 回目はそのまま。2 回目の頭から、章ボスのイントロを乗せる。笛は使わない。
 // 本番の battle-final.wav はここでは書き出さない。
 import { parsePhrase, shiftPhrase } from './bgm-engine.mjs';
 import { FINAL_BOSS_SONG } from './bgm-final.mjs';
@@ -8,6 +8,7 @@ import { INTRO_BARS as THEME_INTRO_BARS } from './bgm-theme.mjs';
 
 /** 章ボスのイントロ。最後の小節だけ、シ♭を経由してド♯へ上がる。 */
 const CHAPTER_INTRO = [...THEME_INTRO_BARS.slice(0, 3), 'E5:0.5 F5:0.5 G5:0.5 Bb5:0.5 C#6:1 A5:1'];
+const REST = '-:4';
 
 const cloneSections = (sections) =>
   sections.map((section) => ({
@@ -25,77 +26,55 @@ const voice = (inst, vol, notes, octaves = 0) => ({
   notes: octaves === 0 ? notes : shiftPhrase(notes, octaves),
 });
 
-/** サビの直前へ、章ボスのイントロを足したラスボス戦を返す。 */
+/** 8 小節のサビに、短いフレーズを頭から乗せる。余った小節は休符。 */
+const fit = (bars) => join4(...[...bars, ...Array(8).fill(REST)].slice(0, 8));
+
+/** サビの 2 回目の頭からイントロを足し、サビ 2 回分だけを返す。 */
 const hinted = (place) => {
   const sections = cloneSections(FINAL_BOSS_SONG.sections);
-  const chorusAt = sections.findIndex((section) => section.name === 'chorus1');
-  if (chorusAt < 0) throw new Error('ラスボス戦のサビが見つからない');
-  const calm = chorusAt - 5;
-  const rise = [chorusAt - 4, chorusAt - 3, chorusAt - 2, chorusAt - 1];
-  if (sections[calm]?.name !== 'build' || sections[rise[0]]?.chords.length !== 1) {
-    throw new Error('サビ前の並びが変わっている');
-  }
-  place({ sections, calm, rise });
-  const from = sections.findIndex((section) => section.name === 'build');
-  const to = sections.findIndex((section) => section.name === 'chorus1');
-  if (from < 0 || to < from) throw new Error('サビ前の範囲が取れない');
+  const first = sections.findIndex((section) => section.name === 'chorus1');
+  const second = sections.findIndex((section) => section.name === 'chorus2');
+  if (first < 0 || second !== first + 1) throw new Error('サビの 2 回目が見つからない');
+  place(sections[second], (part) => {
+    sections[second] = layer(sections[second], part);
+  });
   return {
     bpm: FINAL_BOSS_SONG.bpm,
     mix: FINAL_BOSS_SONG.mix,
-    sections: sections.slice(from, to + 1),
+    sections: sections.slice(first, second + 1),
   };
 };
 
-const onRise = (sections, rise, from, notes, { inst, vol, octaves = 0 }) => {
-  notes.forEach((bar, index) => {
-    sections[rise[from + index]] = layer(sections[rise[from + index]], voice(inst, vol, bar, octaves));
-  });
+const sing = (inst, vol, bars, octaves = 0) => (section, add) => {
+  if (section.name !== 'chorus2' || section.chords.length !== 8) throw new Error('2 回目のサビが 8 小節ではない');
+  add(voice(inst, vol, fit(bars), octaves));
 };
 
 export const FINAL_SAMPLE_SONGS = [
-  {
-    // サビ直前の 1 小節。章ボスのイントロの頭だけを、鐘で前に出す。
-    ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 3, [CHAPTER_INTRO[0]], { inst: 'bell', vol: 0.2 });
-    }),
-    file: 'sample-final-01',
-  },
-  {
-    // サビ前の 2 小節。イントロの前半を、1 オクターブ下の弦で。
-    ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 2, CHAPTER_INTRO.slice(0, 2), { inst: 'strings', vol: 0.28, octaves: -1 });
-    }),
-    file: 'sample-final-02',
-  },
-  {
-    // サビへ上がる 4 小節のあいだ。章ボスのイントロを、鐘で通す。
-    ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 0, CHAPTER_INTRO, { inst: 'bell', vol: 0.16 });
-    }),
-    file: 'sample-final-03',
-  },
-  {
-    // サビ前の静かな 4 小節。上がり坂の手前に、笛でイントロを置く。
-    ...hinted(({ sections, calm }) => {
-      sections[calm] = layer(sections[calm], voice('flute', 0.24, join4(...CHAPTER_INTRO)));
-    }),
-    file: 'sample-final-04',
-  },
-  {
-    // サビ直前の 1 小節。章ボスだけの最後の小節を、低いギターで。
-    ...hinted(({ sections, rise }) => {
-      onRise(sections, rise, 3, [CHAPTER_INTRO[3]], { inst: 'guitarLead', vol: 0.22, octaves: -1 });
-    }),
-    file: 'sample-final-05',
-  },
+  { ...hinted(sing('bell', 0.24, CHAPTER_INTRO)), file: 'sample-final-01' },
+  { ...hinted(sing('bell', 0.26, CHAPTER_INTRO, -1)), file: 'sample-final-02' },
+  { ...hinted(sing('strings', 0.32, CHAPTER_INTRO)), file: 'sample-final-03' },
+  { ...hinted(sing('strings', 0.34, CHAPTER_INTRO, -1)), file: 'sample-final-04' },
+  { ...hinted(sing('guitarLead', 0.28, CHAPTER_INTRO)), file: 'sample-final-05' },
+  { ...hinted(sing('brassLead', 0.2, [CHAPTER_INTRO[0]])), file: 'sample-final-06' },
+  { ...hinted(sing('organ', 0.26, CHAPTER_INTRO.slice(0, 2))), file: 'sample-final-07' },
+  { ...hinted(sing('softKey', 0.24, CHAPTER_INTRO)), file: 'sample-final-08' },
+  { ...hinted(sing('bell', 0.2, [...CHAPTER_INTRO, ...CHAPTER_INTRO])), file: 'sample-final-09' },
+  { ...hinted(sing('squareLead', 0.14, [...CHAPTER_INTRO, ...CHAPTER_INTRO])), file: 'sample-final-10' },
 ];
 
 const beatsOf = (text) => parsePhrase(text).reduce((sum, [, beats]) => sum + beats, 0);
+const baseChorus = (name) => FINAL_BOSS_SONG.sections.find((section) => section.name === name);
 
 for (const song of FINAL_SAMPLE_SONGS) {
-  if (song.sections[0]?.name !== 'build' || song.sections.at(-1)?.name !== 'chorus1') {
-    throw new Error(`${song.file} はためからサビまでになっていない`);
+  if (song.sections.length !== 2 || song.sections[0]?.name !== 'chorus1' || song.sections[1]?.name !== 'chorus2') {
+    throw new Error(`${song.file} はサビの 2 回になっていない`);
   }
+  if (song.sections[0].parts.length !== baseChorus('chorus1').parts.length) {
+    throw new Error(`${song.file} の 1 回目にイントロが乗っている`);
+  }
+  const added = song.sections[1].parts.at(-1);
+  if (!added || added.inst === 'flute') throw new Error(`${song.file} の音色が笛になっている`);
   for (const section of song.sections) {
     for (const part of section.parts ?? []) {
       const bars = part.notes.split('|');
@@ -108,4 +87,4 @@ for (const song of FINAL_SAMPLE_SONGS) {
   }
 }
 
-if (FINAL_BOSS_SONG.sections[11].parts.length !== 2) throw new Error('本番のラスボス戦にサンプルが混ざった');
+if (baseChorus('chorus2').parts.length !== 4) throw new Error('本番のラスボス戦にサンプルが混ざった');
