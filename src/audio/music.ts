@@ -11,6 +11,11 @@ export type MusicId =
   | 'battleBoss'
   | 'battleFinal'
   | 'shop'
+  | 'sampleEliteGrassland01'
+  | 'sampleEliteGrassland02'
+  | 'sampleEliteGrassland03'
+  | 'sampleEliteGrassland04'
+  | 'sampleEliteGrassland05'
   | `field:${Region}`
   | `elite:${Region}`;
 
@@ -29,7 +34,7 @@ type MusicDef = {
   volume: number;
 };
 
-/** 音源は scripts/generate-bgm.mjs で合成している（npm run bgm）。全曲がメインテーマ「三つの旗」の素材を共有する。 */
+/** 音源は scripts/generate-bgm.mjs で合成している（npm run bgm）。本編の曲はメインテーマ「三つの旗」の素材を共有する。 */
 export const MUSIC: Record<MusicId, MusicDef> = {
   title: { source: require('../../assets/music/title.wav'), volume: 0.34 },
   /** 旧【サンプル 2】。翠風のリーネのタイトル。 */
@@ -48,6 +53,12 @@ export const MUSIC: Record<MusicId, MusicDef> = {
   'elite:grassland': { source: require('../../assets/music/elite-grassland.wav'), volume: 0.32 },
   'elite:sunkenCity': { source: require('../../assets/music/elite-sunken-city.wav'), volume: 0.32 },
   'elite:clockwork': { source: require('../../assets/music/elite-clockwork.wav'), volume: 0.3 },
+  /** 図鑑だけで聴くエリート戦の候補。戦闘では流さない。 */
+  sampleEliteGrassland01: { source: require('../../assets/music/sample-elite-grassland-01.wav'), volume: 0.28 },
+  sampleEliteGrassland02: { source: require('../../assets/music/sample-elite-grassland-02.wav'), volume: 0.28 },
+  sampleEliteGrassland03: { source: require('../../assets/music/sample-elite-grassland-03.wav'), volume: 0.28 },
+  sampleEliteGrassland04: { source: require('../../assets/music/sample-elite-grassland-04.wav'), volume: 0.28 },
+  sampleEliteGrassland05: { source: require('../../assets/music/sample-elite-grassland-05.wav'), volume: 0.28 },
 };
 
 /** 通常戦闘・ボス戦・ラスボス戦はどの地域でも共通、エリート戦は地域ごとの曲。 */
@@ -103,4 +114,9 @@ export const MUSIC_ENTRIES: MusicEntry[] = [
   { id: 'elite:sunkenCity', title: '沈む都の守護者', description: 'エリート戦（水の古都）。三角波のリフと笛、反響するベル。' },
   { id: 'field:clockwork', title: '雷鳴の歯車塔', description: 'フィールド（電・機械）。歯車のように刻む分散和音と矩形波の電子音。' },
   { id: 'elite:clockwork', title: '機巧の雷鳴', description: 'エリート戦（歯車塔）。矩形波のリフと金管、締めはギターで導入の動機。' },
+  { id: 'sampleEliteGrassland01', title: '【草原 1】予告', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。地域の旋律をもう一度。そのあいだ A メロを小さく下に重ね、次の 4 小節で笛が同じ拍を歌う。' },
+  { id: 'sampleEliteGrassland02', title: '【草原 2】追いつき', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。前半は地域の旋律、後半 2 小節だけ同じ拍。下では最初から A メロが小さく流れている。' },
+  { id: 'sampleEliteGrassland03', title: '【草原 3】二周目の後半', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。地域の旋律をもう一周。二周目は後半 2 小節だけ同じ拍。' },
+  { id: 'sampleEliteGrassland04', title: '【草原 4】影がついてくる', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。もう一周のあいだ A メロを小さく重ね続ける。笛が同じ拍になるのは最後の 2 小節だけ。' },
+  { id: 'sampleEliteGrassland05', title: '【草原 5】受け渡し', description: '116 BPM。出だしと地域の旋律は今の草原エリートのまま。前半は笛が地域の旋律で、下が A メロ。後半 2 小節で入れ替わる。' },
 ];
