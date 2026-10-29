@@ -1,7 +1,7 @@
-// ラスボス戦「三つの旗 −試− 改」（battle-final.wav、156 BPM・約 74 秒）。3 つの章を終えたあとの、星喰みの魔皇ノクスとの決戦で流れる。
+// ラスボス戦「三つの旗 −試− 改」（battle-final.wav、156 BPM・約 86 秒）。3 つの章を終えたあとの、星喰みの魔皇ノクスとの決戦で流れる。
 // 元はタイトル曲の候補探し 第 8 弾（2026-10-06）の【試作 1】統合版: 「三つの旗 −試− 改」の改善案のうち、オーナーが気に入った
 // 1（8 小節の上り坂 × イントロのドラムも加速）・6（刻みで溜める × サビの最後をレに解決）・9（ギターの泣き × 解決）を統合した版。
-// 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 8（後半は G→A→B♭→C と上がる。サビの 2 小節前に章ボスのイントロの締めを金管で重ねる）/ サビ 20（2 回目はハモり、締めに後半 4 小節を回してレに解決）。
+// 構成: イントロ 4（ドラムも加速）/ A メロ 8（前半は低く）/ B メロ 8（五度圏を巡る）/ ため 16（旋律とコードだけ 2 倍。サビの 4 小節前から主題の導入を鐘で小さく入れ、最後のド♯だけ強くする）/ サビ 20（2 回目はハモり、締めに後半 4 小節を回してレに解決）。
 // 章のボス戦「三つの旗 −試−」（battle-boss.wav）もこの台本から作る（CHAPTER_BOSS_SONG、サビ抜き・楽器を減らし・140 BPM）。
 // ほかの曲が引用している素材（bgm-theme.mjs）は変えない。
 import { BOSS_AFTER_INTRO, BOSS_BPM, BOSS_MIX, bossIntroSection } from './bgm-boss.mjs';
@@ -33,7 +33,12 @@ const strings = (vol, ...barsText) => ({ inst: 'strings', vol, notes: join4(...b
 const VERSE_LOW_LEVEL = 0.72;
 const VERSE_HIGH_LEVEL = 0.84;
 const RUN_LEVEL = 0.78;
-const BUILD_RAMP = [0.85, 1.0, 1.1, 1.28];
+/** ため前半。歌を 2 小節ずつ少しずつ上げる。 */
+const CALM_LEVELS = [0.66, 0.68, 0.7, 0.72, 0.74, 0.76, 0.78, 0.8];
+/** ため後半。サビの方が大きく残るよう、ロールの小節もサビの段差を超えない。 */
+const RISE_LEVELS = [0.84, 0.88, 0.92, 0.96, 1.0, 1.04, 1.08, 1.12];
+/** 図鑑サンプル 20。サビの 4 小節前から主題の導入を鐘で。最後のド♯だけ強くして、サビのレを指す。 */
+const INTRO_WHISPER = [0.09, 0.09, 0.09, 0.24];
 
 /**
  * イントロ: サビ頭の「レー・ドー・シ♭」の形を、小節ごとに倍の速さにしていく。
@@ -115,9 +120,9 @@ const rampBars = (section, levels) => {
 };
 
 /**
- * ため（8 小節）: 前半はギターが歌い（案 9）、低い金管が支える。
- * 後半は金管の長い音が 1 段ずつ高く上がり（案 1）、ギターが同じ音を 8 分 → 16 分で刻んで行進のスネアと前へ押す（案 6）。
- * 後半はコードが Gm→A→B♭→C→A と 1 段ずつ上がり、1 小節ずつ音量を上げ、ロールの小節を一番大きくしてサビへ飛び込む。
+ * ための元の 8 小節。章のボス戦は前半だけを使う。ラスボス戦はこれを 2 倍にしてからサビへ進む。
+ * 前半はギターが歌い（案 9）、低い金管が支える。
+ * 後半は金管の長い音が 1 段ずつ高く上がり（案 1）、ギターが同じ音を 8 分 → 16 分で刻む（案 6）。
  */
 export const [buildCalm, buildRise] = [
   {
@@ -142,13 +147,63 @@ export const [buildCalm, buildRise] = [
     fill: 'roll',
   },
 ];
-const build = [buildCalm, ...rampBars(buildRise, BUILD_RAMP)];
-// 図鑑サンプル 27。上がり坂の最後の 2 小節は残し、章ボスのイントロの締めを金管で重ねてからサビへ入る。
-const CHAPTER_INTRO_TAIL = [THEME_INTRO_BARS[2], 'E5:0.5 F5:0.5 G5:0.5 Bb5:0.5 C#6:1 A5:1'];
-for (const [index, notes] of CHAPTER_INTRO_TAIL.entries()) {
-  const section = build[build.length - CHAPTER_INTRO_TAIL.length + index];
-  section.parts = [...section.parts, { inst: 'brassLead', vol: 0.2, notes }];
-}
+/**
+ * ラスボス戦のため（16 小節、図鑑サンプル 20）。
+ * 旋律とコードだけを 2 倍にし、ドラムとギターの刻みは元の速さのまま 2 小節ずつ続ける。
+ * サビの 4 小節前から、主題の導入を鐘で小さく入れる。最後の小節のド♯だけ強くして、サビのレへ渡す。
+ */
+const repeat = (name, times) => Array.from({ length: times }, () => name).join(' ');
+const calmNotes = [
+  ['G5:3 A5:1', 'G4:4', 'Gm'],
+  ['Bb5:4', 'G4:4', 'Gm'],
+  ['A5:4', 'A4:4', 'A'],
+  ['A5:2 E5:2', 'A4:4', 'A'],
+  ['F5:3 G5:1', 'Bb4:4', 'Bb'],
+  ['A5:4', 'Bb4:4', 'Bb'],
+  ['C#6:4', 'C#5:4', 'A'],
+  ['C#6:4', 'C#5:4', 'A'],
+];
+const riseNotes = [
+  ['D6:4', x8(repeat('G5', 8)), 'Gm'],
+  ['D6:4', x8(repeat('G5', 8)), 'Gm'],
+  ['E6:4', x8(repeat('A5', 8)), 'A'],
+  ['E6:4', x8(repeat('A5', 8)), 'A'],
+  ['F6:4', x16(repeat('Bb5', 16)), 'Bb'],
+  ['F6:4', x16(repeat('Bb5', 16)), 'Bb'],
+  ['E6:4', x16(repeat('C6', 16)), 'C'],
+  ['C#6:4', x16(repeat('C#6', 16)), 'A'],
+];
+const doubledCalm = calmNotes.map(([guitarNotes, brassNotes, chord], i) => ({
+  name: `build-${i + 1}`,
+  chords: bars(chord),
+  parts: [
+    { inst: 'guitarLead', vol: 0.38, notes: guitarNotes },
+    { inst: 'brassLead', vol: 0.24, notes: brassNotes },
+  ],
+  comp: ['strings'],
+  bass: 'sustain',
+  drums: 'half',
+  crash: i === 0,
+  level: CALM_LEVELS[i],
+}));
+const doubledRise = riseNotes.map(([brassNotes, guitarNotes, chord], i) => ({
+  name: `build2-${i + 1}`,
+  chords: bars(chord),
+  parts: [
+    { inst: 'brassLead', vol: 0.38, notes: brassNotes },
+    { inst: 'guitarLead', vol: 0.2, notes: guitarNotes },
+    ...(i >= riseNotes.length - INTRO_WHISPER.length
+      ? [{ inst: 'bell', vol: INTRO_WHISPER[i - (riseNotes.length - INTRO_WHISPER.length)], notes: THEME_INTRO_BARS[i - (riseNotes.length - INTRO_WHISPER.length)] }]
+      : []),
+  ],
+  comp: ['strings', 'brassHits'],
+  bass: 'drive8',
+  drums: 'march',
+  fill: i === riseNotes.length - 1 ? 'roll' : undefined,
+  crash: false,
+  level: RISE_LEVELS[i],
+}));
+const build = [...doubledCalm, ...doubledRise];
 
 /**
  * サビ（20 小節）: 1 回目は今のサビ（最後は高いラのまま 2 回目へ）。ドラムは 8 ビートで少し余力を残す。
