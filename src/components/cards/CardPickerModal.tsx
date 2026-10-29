@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition, CardStack } from '../../domain/card';
 import { cardStackKey } from '../../logic/cards';
@@ -31,35 +31,59 @@ export function CardPickerModal({
 }: CardPickerModalProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = stacks.find((stack) => cardStackKey(stack.card) === selectedKey)?.card;
+  const listRef = useRef<{ scrollToEnd: (options?: { animated?: boolean }) => void } | null>(null);
+
+  // 強化前と強化後を一覧の下に出す。ボタンは一覧の外に固定し、選んでも画面の外へ押し出さない。
+  useEffect(() => {
+    if (selectedKey === null) return;
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [selectedKey]);
 
   return (
     <View style={styles.overlay}>
       <View style={styles.sheet}>
         <Text style={styles.title}>{title}</Text>
         {note ? <Text style={styles.note}>{note}</Text> : null}
-        <ScrollView contentContainerStyle={styles.grid}>
+        <ScrollView
+          ref={(node) => {
+            listRef.current = node;
+          }}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+        >
           {stacks.length === 0 ? (
             <Text style={styles.empty}>選べるカードがありません</Text>
           ) : (
-            stacks.map((stack) => (
-              <CardView
-                key={cardStackKey(stack.card)}
-                card={stack.card}
-                count={stack.count}
-                selected={cardStackKey(stack.card) === selectedKey}
-                onPress={() => setSelectedKey(cardStackKey(stack.card))}
-              />
-            ))
+            <View style={styles.grid}>
+              {stacks.map((stack) => {
+                const key = cardStackKey(stack.card);
+                return (
+                  <CardView
+                    key={key}
+                    card={stack.card}
+                    count={stack.count}
+                    selected={key === selectedKey}
+                    onPress={() => setSelectedKey((current) => (current === key ? null : key))}
+                  />
+                );
+              })}
+            </View>
+          )}
+          {selected && preview && (
+            <View style={styles.preview}>
+              <CardView card={selected} detailOnHold={false} />
+              <Text style={styles.arrow}>→</Text>
+              <CardView card={preview(selected)} detailOnHold={false} />
+            </View>
           )}
         </ScrollView>
-
-        {selected && preview && (
-          <View style={styles.preview}>
-            <CardView card={selected} />
-            <Text style={styles.arrow}>→</Text>
-            <CardView card={preview(selected)} />
-          </View>
-        )}
 
         <View style={styles.buttons}>
           {onCancel && (
@@ -102,6 +126,7 @@ const styles = StyleSheet.create({
   sheet: {
     flex: 1,
     maxHeight: '92%',
+    overflow: 'hidden',
     backgroundColor: COLORS.panel,
     borderColor: COLORS.gold,
     borderWidth: 1,
@@ -111,12 +136,13 @@ const styles = StyleSheet.create({
   },
   title: { color: COLORS.gold, fontSize: 18, fontWeight: '800', textAlign: 'center' },
   note: { color: COLORS.textMuted, fontSize: 12, textAlign: 'center' },
+  list: { flex: 1, minHeight: 0 },
+  listContent: { gap: SPACING.md, paddingVertical: SPACING.md },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: SPACING.md,
-    paddingVertical: SPACING.md,
   },
   empty: { color: COLORS.textMuted, textAlign: 'center', paddingVertical: SPACING.xl },
   preview: {
@@ -129,7 +155,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.panelBorder,
   },
   arrow: { color: COLORS.gold, fontSize: 22, fontWeight: '800' },
-  buttons: { flexDirection: 'row', gap: SPACING.md },
+  buttons: { flexDirection: 'row', flexShrink: 0, gap: SPACING.md },
   button: {
     flex: 1,
     borderRadius: RADIUS.md,

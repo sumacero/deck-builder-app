@@ -8,6 +8,7 @@ import type { EventDefinition } from './event';
 import type { GameMap } from './map';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
+import type { RunEffect } from './runEffect';
 import type { EconomyConfig, ShopStock } from './shop';
 
 /** 1 回の挑戦（ラン）を始めるための設定。 */
@@ -44,11 +45,14 @@ export type EventPhase = { kind: 'event'; event: EventDefinition; outcome: strin
 
 /**
  * カードを 1 枚選ぶ画面の共通。
- * 出来事から来たときは取り消せず、選び終えたら結末を見せる。
+ * 出来事の強化は、カードを決めるまで held の効果をかけず、選択肢へ戻れる。
+ * 削除など、それ以外の出来事は取り消せず、選び終えたら結末を見せる。
  */
 type DeckEditFollowUp = {
   cancellable: boolean;
   resume?: EventPhase;
+  /** 強化を決めたときにかける効果と、そのあとに見せる結末。戻るときは使わない。 */
+  held?: { effects: readonly RunEffect[]; outcome: string };
 };
 
 /** ラン全体が今どの画面にいるか。 */
