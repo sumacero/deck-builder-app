@@ -136,16 +136,31 @@ export function canMakeChoice(run: RunState, choice: RunChoice | undefined): boo
   return run.deck.length > 1;
 }
 
-/** 効果をかけ、choice があればカードを選ぶ画面へ。無ければ after の画面へ。 */
+/**
+ * 効果をかけ、choice があればカードを選ぶ画面へ。無ければ after の画面へ。
+ * 出来事の強化だけは、カードを決めるまで効果をかけない。選んだだけでは終わらず、戻れる。
+ * それ以外の出来事は、カードを選び終えても選択肢の画面には戻さない。
+ */
 export function applyEffectsThenChoice(
   run: RunState,
   effects: readonly RunEffect[],
   choice: RunChoice | undefined,
   after: RunState['phase'],
 ): RunState {
+  if (choice === 'upgradeCard' && after.kind === 'event' && after.outcome !== null) {
+    return {
+      ...run,
+      phase: {
+        kind: 'deckEdit',
+        mode: 'upgrade',
+        cancellable: true,
+        resume: { kind: 'event', event: after.event, outcome: null },
+        held: { effects, outcome: after.outcome },
+      },
+    };
+  }
   const applied = effects.reduce(applyRunEffect, run);
   if (choice === undefined) return { ...applied, phase: after };
-  // 出来事の選択肢は、カードを選び終えても選択肢の画面には戻さない。
   const followUp = after.kind === 'event' ? { cancellable: false, resume: after } : { cancellable: true };
   if (choice === 'upgradeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'upgrade', ...followUp } };
   if (choice === 'removeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'remove', ...followUp } };
