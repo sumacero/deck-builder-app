@@ -36,6 +36,7 @@ export const THIN_ICE: CardDefinition = {
   type: 'skill',
   archetypes: ['block'],
   water: true,
+  waterCost: 1,
   cost: 1,
   target: 'self',
   effects: [{ kind: 'block', amount: 4 }],
@@ -112,7 +113,7 @@ const MIRROR_DEFEND: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 7 }] },
 };
 
-/** ストライク 4・防御 3 に水札 4 枚。波紋だけ水力 1 を使う。 */
+/** ストライク 4・防御 3 に水札 4 枚。波紋は攻撃の水力 1、静波は守りの水力 1 を使う。 */
 export const MIRROR_STARTER_DECK: CardDefinition[] = [
   ...copies(MIRROR_STRIKE, 4),
   ...copies(MIRROR_DEFEND, 3),
@@ -135,6 +136,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     rarity: 'uncommon',
     type: 'attack',
     archetypes: ['element'],
+    minAct: 2,
+    archetypePayoff: true,
     water: true,
     waterCost: 2,
     cost: 2,
@@ -171,8 +174,11 @@ export const MIRROR_CARDS: CardDefinition[] = [
     name: '波壁',
     rarity: 'uncommon',
     type: 'skill',
-    archetypes: ['block'],
+    archetypes: ['element'],
+    minAct: 2,
+    archetypePayoff: true,
     water: true,
+    waterCost: 2,
     cost: 2,
     target: 'self',
     effects: [{ kind: 'block', amount: 10 }],
@@ -209,6 +215,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     rarity: 'uncommon',
     type: 'attack',
     archetypes: ['element'],
+    minAct: 2,
+    archetypePayoff: true,
     water: true,
     waterCost: 2,
     cost: 2,
@@ -291,6 +299,8 @@ export const MIRROR_CARDS: CardDefinition[] = [
     rarity: 'common',
     type: 'attack',
     archetypes: ['element'],
+    minAct: 2,
+    archetypePayoff: true,
     water: true,
     waterCost: 2,
     cost: 1,

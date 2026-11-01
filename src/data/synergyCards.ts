@@ -54,6 +54,8 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     rarity: 'common',
     type: 'attack',
     archetypes: ['tempo'],
+    minAct: 2,
+    archetypePayoff: true,
     cost: 1,
     target: 'enemy',
     // 自分の捨て込みだけでもストライク相当になるよう底上げ。
@@ -93,6 +95,8 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     rarity: 'uncommon',
     type: 'skill',
     archetypes: ['tempo', 'sacrifice'],
+    minAct: 2,
+    archetypePayoff: true,
     cost: 1,
     target: 'enemy',
     // 廃棄 1 枚だけでも 9 ダメ。燃え殻と組むとさらに伸びる。
@@ -114,6 +118,8 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     rarity: 'uncommon',
     type: 'attack',
     archetypes: ['tempo'],
+    minAct: 2,
+    archetypePayoff: true,
     cost: 1,
     target: 'enemy',
     // スキル 0 でも 6。スキルを積むほど伸びる。
@@ -166,6 +172,8 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     rarity: 'rare',
     type: 'attack',
     archetypes: ['tempo'],
+    minAct: 2,
+    archetypePayoff: true,
     cost: 2,
     target: 'enemy',
     effects: [{ kind: 'damagePerCardPlayed', base: 6, perCard: 4 }],

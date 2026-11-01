@@ -16,6 +16,7 @@ export const STANDARD_ECONOMY: EconomyConfig = {
   relicPrice: { common: 120, uncommon: 170, rare: 240 },
   relicTierWeight: { common: 60, uncommon: 30, rare: 10 },
   potionPrice: 50,
+  growthGold: 35,
   priceVariance: 0.1,
   removalBasePrice: 75,
   removalPriceStep: 25,

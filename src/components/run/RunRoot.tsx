@@ -47,6 +47,7 @@ export function RunRoot({ setup, initialRun, onExitToTitle }: RunRootProps) {
     moveTo,
     finishCombat,
     resolveReward,
+    resolveGrowthReward,
     resolvePotionReward,
     chooseBossRelic,
     startFinalBattle,
@@ -104,8 +105,11 @@ export function RunRoot({ setup, initialRun, onExitToTitle }: RunRootProps) {
           toBossRelic={visible.phase.next === 'bossRelic'}
           canSkip={visible.phase.canSkip !== false}
           deck={visible.deck}
+          growthGold={visible.phase.growthGold ?? 0}
           onPick={resolveReward}
           onPickPotion={resolvePotionReward}
+          onUpgrade={(card) => resolveGrowthReward('upgrade', card)}
+          onTakeGold={() => resolveGrowthReward('gold')}
         />
       );
       break;

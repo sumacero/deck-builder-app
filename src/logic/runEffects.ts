@@ -2,7 +2,7 @@ import type { RelicDefinition, RelicTier } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
 import { canUpgrade, countBase, fuseInDeck, upgradeCard } from './cards';
-import { draftPool, pickRewardChoices } from './archetype';
+import { pickRewardChoices, rewardCandidates } from './archetype';
 import { attuneDeck } from './attribute';
 import { pickOne, shuffle } from './random';
 import { pickWeightedRelic, weightsFor } from './relics';
@@ -155,7 +155,7 @@ export function applyEffectsThenChoice(
 /** 3 枚から 1 枚選んでデッキに加える（ゴールド・レリック無しの報酬画面）。 */
 function offerCardPick(run: RunState, after: RunState['phase']): RunState {
   const offered = pickRewardChoices(
-    draftPool(run),
+    rewardCandidates(run),
     run.deck,
     3,
     run.rngSeed,

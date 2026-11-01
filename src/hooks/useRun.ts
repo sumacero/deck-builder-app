@@ -35,6 +35,11 @@ export function useRun(setup: RunSetup, initial?: RunState) {
     (card: CardDefinition | null) => dispatch({ type: 'resolveReward', card }),
     [],
   );
+  const resolveGrowthReward = useCallback(
+    (choice: 'gold' | 'upgrade', card?: CardDefinition) =>
+      dispatch({ type: 'resolveGrowthReward', choice, card }),
+    [],
+  );
   const resolvePotionReward = useCallback(
     (choice: { potion: PotionDefinition; slot: number } | null) =>
       dispatch({ type: 'resolvePotionReward', choice }),
@@ -107,6 +112,7 @@ export function useRun(setup: RunSetup, initial?: RunState) {
     moveTo,
     finishCombat,
     resolveReward,
+    resolveGrowthReward,
     resolvePotionReward,
     chooseBossRelic,
     startFinalBattle,

@@ -3,7 +3,7 @@ import type { CardDefinition } from './card';
 import type { DebuffId } from './status';
 
 export type EnemyAction =
-  | { kind: 'attack'; damage: number; hits: number }
+  | { kind: 'attack'; damage: number; hits: number; /** 章の攻撃倍率と一周の火力上昇を受けない。ギミック側の攻撃。 */ flat?: boolean }
   | { kind: 'block'; amount: number }
   /** 戦闘中ずっと筋力が上がり、以降の攻撃 1 回ごとのダメージが増える。 */
   | { kind: 'buff'; strength: number }
@@ -13,8 +13,11 @@ export type EnemyAction =
   | { kind: 'paralyze'; amount: number }
   /** 凍え: 次の自分のターン、引く枚数が amount 減る。 */
   | { kind: 'chill'; amount: number }
-  /** 封印: 次の自分のターン、スキルカードを使えない。 */
-  | { kind: 'seal' }
+  /**
+   * 封印。charges が無いときは次の自分のターンだけスキルを使えない。
+   * charges があるときは、スキル以外をその枚数使うまで解けない。
+   */
+  | { kind: 'seal'; charges?: number }
   /** 絡め: 次の自分のターン、アタックカードを使えない。 */
   | { kind: 'bind' }
   /** 力を溜める（それ自体は何もしない）。次の行動が大技であることの予告。 */
@@ -23,8 +26,12 @@ export type EnemyAction =
   | { kind: 'debuff'; status: DebuffId; turns: number }
   /** プレイヤーの捨て札にお邪魔カードを混ぜる。 */
   | { kind: 'addCard'; card: CardDefinition; count: number }
-  /** 霊体化: 次のプレイヤーのターンの間、攻撃 1 回で受けるダメージが最大 1。 */
-  | { kind: 'intangible' }
+  /** 霊体化: 次のプレイヤーのターンの間、攻撃 1 回で受けるダメージが最大 1。turns はそのターン数。 */
+  | { kind: 'intangible'; turns?: number }
+  /** デッキ（手札・山札・捨て札）にある火傷を、今すぐまとめて発動して廃棄する。 */
+  | { kind: 'detonateBurns' }
+  /** 今かかっている凍えを、戦闘が終わるまで残す。かかっていなければ 1 から始まる。 */
+  | { kind: 'lockChill' }
   /** 旗を掲げる: 自分の属性（と弱点）が変わる。同じ行動のあとの攻撃から新しい属性になる。 */
   | { kind: 'shiftAttribute'; attribute: Attribute }
   /** 眠っていて何もしない（行動パターンには書かない。状態から自動で決まる）。 */
@@ -65,7 +72,12 @@ export type EnemyTrait =
    * 覚醒: HP が最大 HP の threshold 倍以下になると、筋力とブロックを得て行動パターンが moves に替わる（1 回だけ）。
    * 覚醒する前は HP がその値より下がらない（倒しきれず、余ったダメージは消える）。
    */
-  | { kind: 'awaken'; threshold: number; strength: number; block: number; moves: EnemyMove[] };
+  | { kind: 'awaken'; threshold: number; strength: number; block: number; moves: EnemyMove[] }
+  /**
+   * 局面の変化: HP が最大 HP の threshold 倍以下になると、行動が moves に替わる（1 回だけ）。
+   * 覚醒と違い、HP は止めず、筋力やブロックは足さない。ルールが変わるだけ。
+   */
+  | { kind: 'phase'; threshold: number; moves: EnemyMove[] };
 
 /** 通常敵 / エリート / ボス / 最後の章のあとに戦うラスボス。報酬や BGM が変わる。 */
 export type EnemyRank = 'normal' | 'elite' | 'boss' | 'final';

@@ -155,7 +155,7 @@ const MIRROR_REWARD_CARDS = [
   ...MIRROR_CARDS,
 ].filter((card) => !isBlockAxis(card) || (card.attribute !== undefined && card.attribute !== 'water'));
 
-/** ノアの最大 HP はカイルと同じ 72。文鎮は重ねたとき、静かな潮は勝つたびに 6 回復する。 */
+/** ノアの最大 HP はカイルと同じ 72。文鎮は最初の重ねで水力を足し、静かな潮は勝つたびに 6 回復する。 */
 export const MIRROR_RUN: RunSetup = {
   ...STANDARD_RUN,
   agent: MIRROR_SEER,

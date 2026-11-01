@@ -32,5 +32,7 @@ export type RelicDefinition = {
   trigger?: RelicTrigger;
   condition?: RelicCondition;
   effects: Effect[];
+  /** 効果の並びだけでは書けない説明。あるときは、こちらをそのまま出す。 */
+  summary?: string;
   onObtain?: RunEffect[];
 };

@@ -77,6 +77,7 @@ export type KeywordId =
   | 'guardian'
   | 'deathThroes'
   | 'awaken'
+  | 'phase'
   | 'intentAttack'
   | 'intentBlock'
   | 'intentBuff'
@@ -91,7 +92,8 @@ export type KeywordId =
   | 'intentAddCard'
   | 'intentIntangible'
   | 'intentBanner'
-  | 'intentSleep';
+  | 'intentSleep'
+  | 'intentDetonate';
 
 export type KeywordDefinition = {
   id: KeywordId;

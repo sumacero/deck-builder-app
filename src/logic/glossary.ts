@@ -168,6 +168,8 @@ function traitViews(enemy: EnemyState): StatusView[] {
         return [{ keyword: trait.kind, value: 1, flag: true }];
       case 'awaken':
         return enemy.awakened ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
+      case 'phase':
+        return enemy.phased ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
     }
   });
 }
@@ -184,7 +186,11 @@ export function playerStatuses(player: PlayerState): StatusView[] {
     { keyword: 'evade', value: player.evade },
     { keyword: 'paralysis', value: player.hindrance.paralysis },
     { keyword: 'chill', value: player.hindrance.chill },
-    { keyword: 'seal', value: player.hindrance.seal ? 1 : 0, flag: true },
+    {
+      keyword: 'seal',
+      value: player.sealCharges > 0 ? player.sealCharges : player.hindrance.seal ? 1 : 0,
+      flag: player.sealCharges === 0,
+    },
     { keyword: 'bind', value: player.hindrance.bind ? 1 : 0, flag: true },
     ...statusViews(player.statuses, [...BUFF_IDS, ...DEBUFF_IDS]),
     ...POWER_IDS.map((id) => ({ keyword: id, value: player.powers[id] ?? 0, flag: id === 'barricade' })),
@@ -227,6 +233,10 @@ function keywordForIntent(action: EnemyAction): KeywordId {
       return 'intentAddCard';
     case 'intangible':
       return 'intentIntangible';
+    case 'detonateBurns':
+      return 'intentDetonate';
+    case 'lockChill':
+      return 'intentChill';
     case 'shiftAttribute':
       return 'intentBanner';
     case 'idle':

@@ -171,7 +171,7 @@ export function CardView({
           {card.water && (
             <View style={styles.markBadge}>
               <Text style={[styles.markText, scaled?.emblemText]}>
-                {card.waterCost ? `水${card.waterCost}` : '水'}
+                {card.waterCost ? `${card.type === 'skill' ? '守' : '攻'}${card.waterCost}` : '水'}
               </Text>
             </View>
           )}

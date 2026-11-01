@@ -5,9 +5,11 @@ import type { PotionSlot } from '../../domain/combat';
 import type { PotionDefinition } from '../../domain/potion';
 import type { RelicDefinition } from '../../domain/relic';
 import { mainArchetype } from '../../logic/archetype';
+import { canUpgrade, stackCards, upgradeCard } from '../../logic/cards';
 import { ARCHETYPE_LABEL, describePotion } from '../../logic/describe';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { ArchetypeChips } from '../cards/ArchetypeChips';
+import { CardPickerModal } from '../cards/CardPickerModal';
 import { CardView } from '../cards/CardView';
 import { MarkPreviewSheet } from '../cards/MarkPreviewSheet';
 import { DeckButton } from '../cards/DeckButton';
@@ -19,7 +21,7 @@ import { ScreenScroll } from '../layout/ScreenScroll';
 type PotionChoice = { potion: PotionDefinition; slot: number };
 
 type RewardScreenProps = {
-  step: 'card' | 'potion';
+  step: 'card' | 'potion' | 'growth';
   choices: CardDefinition[];
   potionChoices: PotionDefinition[];
   /** 今の所持品。ポーションはここへ飛び、枠が埋まっていれば入れ替える。 */
@@ -35,9 +37,13 @@ type RewardScreenProps = {
   canSkip: boolean;
   /** 今のデッキ。選ぶ前に見比べられるように。 */
   deck: CardDefinition[];
+  /** 通常戦で、強化の代わりにもらえるゴールド。 */
+  growthGold: number;
   onPick: (card: CardDefinition | null) => void;
   /** null はポーションを受け取らない。 */
   onPickPotion: (choice: PotionChoice | null) => void;
+  onUpgrade: (card: CardDefinition) => void;
+  onTakeGold: () => void;
 };
 
 export function RewardScreen({
@@ -51,13 +57,18 @@ export function RewardScreen({
   toBossRelic,
   canSkip,
   deck,
+  growthGold,
   onPick,
   onPickPotion,
+  onUpgrade,
+  onTakeGold,
 }: RewardScreenProps) {
   const archetype = mainArchetype(deck);
   const [preview, setPreview] = useState<CardDefinition | null>(null);
   const [replacing, setReplacing] = useState<PotionDefinition | null>(null);
+  const [pickingUpgrade, setPickingUpgrade] = useState(false);
   const emptySlot = potions.findIndex((slot) => slot === null);
+  const upgradable = deck.some(canUpgrade);
   return (
     <ScreenScroll contentStyle={styles.root}>
       <View style={styles.bar}>
@@ -69,7 +80,46 @@ export function RewardScreen({
       </View>
       {gold > 0 && <Text style={styles.gold}>🪙 +{gold} ゴールド</Text>}
       {relic && <RelicCard relic={relic} caption="レリック獲得" />}
-      {step === 'card' ? (
+      {step === 'growth' ? (
+        <>
+          <Text style={styles.title}>戦果</Text>
+          <Text style={styles.subtitle}>カードは増えない。1 枚強化するか、ゴールドをもらう</Text>
+          {upgradable ? (
+            <Pressable
+              onPress={() => setPickingUpgrade(true)}
+              style={({ pressed }) => [styles.potion, pressed && styles.pressed]}
+            >
+              <Text style={styles.potionIcon}>⚒️</Text>
+              <View style={styles.potionBody}>
+                <Text style={styles.potionName}>カードを強化する</Text>
+                <Text style={styles.potionText}>デッキから 1 枚選ぶ</Text>
+              </View>
+            </Pressable>
+          ) : (
+            <Text style={styles.note}>強化できるカードがない</Text>
+          )}
+          <Pressable
+            onPress={onTakeGold}
+            style={({ pressed }) => [styles.potion, pressed && styles.pressed]}
+          >
+            <Text style={styles.potionIcon}>🪙</Text>
+            <View style={styles.potionBody}>
+              <Text style={styles.potionName}>ゴールド +{growthGold}</Text>
+              <Text style={styles.potionText}>強化の代わりに受け取る</Text>
+            </View>
+          </Pressable>
+          {pickingUpgrade && (
+            <CardPickerModal
+              title="強化するカードを選ぶ"
+              stacks={stackCards(deck.filter(canUpgrade))}
+              confirmLabel="強化する"
+              preview={upgradeCard}
+              onConfirm={onUpgrade}
+              onCancel={() => setPickingUpgrade(false)}
+            />
+          )}
+        </>
+      ) : step === 'card' ? (
         <>
           <Text style={styles.title}>カード報酬</Text>
           <Text style={styles.subtitle}>1 枚選んでデッキに加える</Text>

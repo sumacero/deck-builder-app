@@ -35,6 +35,8 @@ export type EconomyConfig = {
   /** レリックのレア度の出現しやすさ（重み）。エリート・宝箱・ショップ・イベントで共通。 */
   relicTierWeight: Record<RelicTier, number>;
   potionPrice: number;
+  /** 通常戦の報酬で、強化の代わりにもらえるゴールド。 */
+  growthGold: number;
   /** 0.1 なら基準価格の ±10% の範囲でばらつく。 */
   priceVariance: number;
   /** カード削除は使うたびに removalPriceStep ずつ値上がりする（ランを通して）。 */

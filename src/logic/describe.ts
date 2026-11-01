@@ -284,7 +284,9 @@ export function describeCard(card: CardDefinition): string {
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
     card.exhaust ? '廃棄。' : '',
   ].join('');
-  const waterCost = card.waterCost ? `水力 ${card.waterCost}。` : '';
+  const waterCost = card.waterCost
+    ? `水力 ${card.waterCost}（${card.type === 'skill' ? '守り' : '攻撃'}）。`
+    : '';
   return waterCost + (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
 }
 
@@ -308,7 +310,13 @@ export function markPreviewLines(card: CardDefinition): MarkPreviewLine[] {
     { label: 'そのまま', text: describeCard(card) },
     atStack(2),
     atStack(MAX_STACK),
-    { label: '重ねて消えるとき', text: '消えた札の段だけ水力が溜まる。水面があると、その分多い。' },
+    {
+      label: '重ねて消えるとき',
+      text:
+        card.type === 'skill'
+          ? '消えた札の段だけ、守りの水力が溜まる。水面があると、その分多い。'
+          : '消えた札の段だけ、攻撃の水力が溜まる。水面があると、その分多い。',
+    },
   ];
 }
 
@@ -343,6 +351,7 @@ function relicTiming(relic: RelicDefinition): string {
 }
 
 export function describeRelic(relic: RelicDefinition): string {
+  if (relic.summary) return relic.summary;
   // レリックは対象を選べないので、ダメージは敵全体に当たる。
   const triggered = relic.trigger
     ? relicTiming(relic) + describeEffects(relic.effects, 'allEnemies')
@@ -373,12 +382,15 @@ export type IntentView = {
 };
 
 /** damageOf は攻撃 1 回分の実ダメージ（筋力・衰弱・弱体込み）を求める関数。攻撃の数値は実ダメージで見せる。 */
-export function describeIntent(move: EnemyMove, damageOf: (base: number) => number): IntentView[] {
+export function describeIntent(
+  move: EnemyMove,
+  damageOf: (base: number, flat: boolean) => number,
+): IntentView[] {
   return move.actions.map((action, index) => {
     const key = `${move.id}-${index}`;
     switch (action.kind) {
       case 'attack': {
-        const damage = damageOf(action.damage);
+        const damage = damageOf(action.damage, action.flat === true);
         return {
           key,
           tone: action.kind,
@@ -397,7 +409,7 @@ export function describeIntent(move: EnemyMove, damageOf: (base: number) => numb
       case 'chill':
         return { key, tone: action.kind, icon: '❄️', label: `${action.amount}` };
       case 'seal':
-        return { key, tone: action.kind, icon: '🔒', label: '' };
+        return { key, tone: action.kind, icon: '🔒', label: action.charges ? `${action.charges}` : '' };
       case 'bind':
         return { key, tone: action.kind, icon: '🌿', label: '' };
       case 'charge':
@@ -407,7 +419,11 @@ export function describeIntent(move: EnemyMove, damageOf: (base: number) => numb
       case 'addCard':
         return { key, tone: action.kind, icon: '🃏', label: `${action.count}` };
       case 'intangible':
-        return { key, tone: action.kind, icon: '👻', label: '' };
+        return { key, tone: action.kind, icon: '👻', label: action.turns && action.turns > 1 ? `${action.turns}` : '' };
+      case 'detonateBurns':
+        return { key, tone: action.kind, icon: '🔥', label: '' };
+      case 'lockChill':
+        return { key, tone: action.kind, icon: '❄️', label: '' };
       case 'shiftAttribute':
         return { key, tone: action.kind, icon: '🚩', label: ATTRIBUTE_ICON[action.attribute] };
       case 'idle':
@@ -432,7 +448,9 @@ function describeEnemyAction(action: EnemyAction): string {
     case 'chill':
       return `次のターン、凍え ${action.amount}`;
     case 'seal':
-      return '次のターン、スキルを封印';
+      return action.charges
+        ? `スキル以外を ${action.charges} 枚使うまで封印`
+        : '次のターン、スキルを封印';
     case 'bind':
       return '次のターン、アタックを絡める';
     case 'charge':
@@ -442,7 +460,11 @@ function describeEnemyAction(action: EnemyAction): string {
     case 'addCard':
       return `捨て札に「${action.card.name}」を ${action.count} 枚混ぜる`;
     case 'intangible':
-      return '霊体化する';
+      return action.turns && action.turns > 1 ? `${action.turns} ターン霊体化する` : '霊体化する';
+    case 'detonateBurns':
+      return 'デッキにある火傷をまとめて発動する';
+    case 'lockChill':
+      return '凍えを戦闘の終わりまで残す';
     case 'shiftAttribute':
       return `${ATTRIBUTE_LABEL[action.attribute]}属性になる`;
     case 'idle':
@@ -469,13 +491,15 @@ export function describeTrait(trait: EnemyTrait): string {
       return `死に際: 倒れると${describeEnemyAction(trait.action)}`;
     case 'awaken':
       return `覚醒: HP が ${Math.round(trait.threshold * 100)}% になると真の姿を現し、筋力 +${trait.strength}・ブロック +${trait.block}。それまでは HP がそれより減らない`;
+    case 'phase':
+      return `局面の変化: HP が ${Math.round(trait.threshold * 100)}% 以下になると、戦い方が変わる`;
   }
 }
 
 /** エリート以上の、一周で戻る火力。タップした詳細に出す。 */
 export function describeRoutine(rank: EnemyRank): string | null {
   if (rank === 'normal') return null;
-  return '攻勢: 行動が一周するあいだ攻撃が強くなり、先頭に戻るとその火力は元に戻る。戦闘中に上がった筋力は残る。';
+  return '攻勢: 大技の攻撃は一周するあいだ強くなり、先頭に戻ると戻る。ギミックの攻撃は数字が変わらない。戦闘中に上がった筋力は残る。';
 }
 
 export const ENEMY_RANK_LABEL: Record<EnemyRank, string | null> = {
