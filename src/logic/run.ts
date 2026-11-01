@@ -10,8 +10,9 @@ import { generateBlessingOptions } from './blessing';
 import { soloEncounter, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
-import { draftPool, pickRewardChoices } from './archetype';
+import { actNumber, cardsForAct, draftPool, pickRewardChoices, rewardCandidates } from './archetype';
 import { attuneDeck, isDraftable, regionDisadvantagesPlayer } from './attribute';
+import { canUpgrade, upgradeInDeck } from './cards';
 import { pickOne, pickUnique, randomInt } from './random';
 import { grantRandomRelic, obtainRelic, unownedRelics } from './runEffects';
 import { generateShopStock } from './shop';
@@ -124,7 +125,9 @@ export function reachedFloor(run: RunState): number {
 function openShop(run: RunState): RunState {
   const generated = generateShopStock(
     draftPool(run),
-    run.rewardPool.filter((card) => !isDraftable(card, run.agent)),
+    cardsForAct(run.rewardPool, actNumber(run)).filter(
+      (card) => !isDraftable(card, run.agent) && !card.archetypePayoff,
+    ),
     unownedRelics(run, run.relicPool),
     run.potionPool,
     run.economy,
@@ -165,8 +168,9 @@ export function moveTo(run: RunState, nodeId: string): RunState {
 const REWARD_CHOICES = 3;
 
 /**
- * 勝てばゴールドと、カード 3 択、そのあとにポーション 3 択。
- * エリートはレリックも、ボスはそのあとボスレリックの 3 択。ラスボスを倒したらクリア。
+ * 勝てばゴールド。通常戦はそのあと、カードを 1 枚強化するかゴールドを追加でもらう。
+ * エリートとボスはカード 3 択のあとポーション 3 択。エリートはレリックも、ボスはそのあとボスレリック。
+ * ラスボスを倒したらクリア。
  */
 export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (run.phase.kind !== 'combat') return run;
@@ -192,9 +196,25 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const { min, max } = run.economy.encounterGold[rank];
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
+  if (rank === 'normal') {
+    return {
+      ...withGold,
+      phase: {
+        kind: 'reward',
+        step: 'growth',
+        choices: [],
+        growthGold: run.economy.growthGold,
+        potionChoices: [],
+        gold: gold.value,
+        relic: null,
+        next: 'map',
+        canSkip: true,
+      },
+    };
+  }
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
   const offered = pickRewardChoices(
-    draftPool(looted.run),
+    rewardCandidates(looted.run),
     looted.run.deck,
     REWARD_CHOICES,
     looted.run.rngSeed,
@@ -245,6 +265,26 @@ function continueAfterReward(run: RunState): RunState {
   );
   if (offered.items.length === 0) return advanceAct({ ...run, rngSeed: offered.seed });
   return { ...run, rngSeed: offered.seed, phase: { kind: 'bossRelic', choices: offered.items } };
+}
+
+/**
+ * 通常戦の報酬。強化するか、強化の代わりにゴールドをもらう。
+ * 強化できる札が無いときはゴールドだけ。
+ */
+export function resolveGrowthReward(
+  run: RunState,
+  choice: 'gold' | 'upgrade',
+  card?: CardDefinition,
+): RunState {
+  if (run.phase.kind !== 'reward' || run.phase.step !== 'growth') return run;
+  if (choice === 'gold') {
+    const amount = run.phase.growthGold ?? run.economy.growthGold;
+    return { ...run, gold: run.gold + amount, phase: { kind: 'map' } };
+  }
+  if (!card || !canUpgrade(card)) return run;
+  const deck = upgradeInDeck(run.deck, card);
+  if (deck.every((next, index) => next === run.deck[index])) return run;
+  return { ...run, deck, phase: { kind: 'map' } };
 }
 
 /** card が null ならスキップ。空きがあれば、このあとポーションを 1 つ選ぶ。 */

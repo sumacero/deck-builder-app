@@ -295,7 +295,9 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const energyOrb = (
     <View style={styles.gauges}>
       <EnergyOrb energy={state.player.energy} maxEnergy={state.player.maxEnergy} />
-      {setup.agent.id === 'mirror-seer' && <WaterGauge water={state.player.water} />}
+      {setup.agent.id === 'mirror-seer' && (
+        <WaterGauge attackWater={state.player.attackWater} guardWater={state.player.guardWater} />
+      )}
     </View>
   );
   const turnLabel = <Text style={styles.turn}>TURN {state.turn}</Text>;

@@ -427,6 +427,20 @@ const ENEMY_MOTIONS: Record<EnemyAction['kind'], MotionPreset> = {
     ],
     burst: { kind: 'spark', on: 'self', delay: 120 },
   },
+  detonateBurns: {
+    keyframes: [
+      { y: -8, scale: 1.12, duration: 160 },
+      { duration: 220 },
+    ],
+    burst: { kind: 'impact', on: 'opponent', delay: 140 },
+  },
+  lockChill: {
+    keyframes: [
+      { x: 16, scale: 1.05, duration: 120 },
+      { duration: 200 },
+    ],
+    burst: { kind: 'guard', on: 'opponent', delay: 120 },
+  },
   shiftAttribute: {
     keyframes: [
       { y: -14, scale: 1.2, duration: 220 },
@@ -457,6 +471,8 @@ const TARGETS_PLAYER: ReadonlySet<EnemyAction['kind']> = new Set([
   'bind',
   'debuff',
   'addCard',
+  'detonateBurns',
+  'lockChill',
 ]);
 
 export type ActorMotionPlan = {

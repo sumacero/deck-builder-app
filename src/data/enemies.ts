@@ -16,6 +16,8 @@ import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
  */
 
 const atk = (damage: number, hits = 1): EnemyAction => ({ kind: 'attack', damage, hits });
+/** 章の攻撃倍率も、一周で上がる火力も受けない。ギミック側の小ダメージ。 */
+const flat = (damage: number, hits = 1): EnemyAction => ({ kind: 'attack', damage, hits, flat: true });
 const blk = (amount: number): EnemyAction => ({ kind: 'block', amount });
 const buff = (strength: number): EnemyAction => ({ kind: 'buff', strength });
 const heal = (amount: number): EnemyAction => ({ kind: 'heal', amount });
@@ -23,11 +25,17 @@ const healAll = (amount: number): EnemyAction => ({ kind: 'heal', amount, allies
 const paralyze = (amount = 1): EnemyAction => ({ kind: 'paralyze', amount });
 const chill = (amount = 1): EnemyAction => ({ kind: 'chill', amount });
 const SEAL: EnemyAction = { kind: 'seal' };
+/** スキル以外を charges 枚使うまで解けない封印。 */
+const sealFor = (charges: number): EnemyAction => ({ kind: 'seal', charges });
 const BIND: EnemyAction = { kind: 'bind' };
 const CHARGE: EnemyAction = { kind: 'charge' };
 const debuff = (status: DebuffId, turns = 1): EnemyAction => ({ kind: 'debuff', status, turns });
 const addCard = (card: CardDefinition, count = 1): EnemyAction => ({ kind: 'addCard', card, count });
 const INTANGIBLE: EnemyAction = { kind: 'intangible' };
+/** プレイヤーのターン turns 回のあいだ、受けるダメージが 1 ヒットにつき最大 1。 */
+const intangibleFor = (turns: number): EnemyAction => ({ kind: 'intangible', turns });
+const DETONATE: EnemyAction = { kind: 'detonateBurns' };
+const LOCK_CHILL: EnemyAction = { kind: 'lockChill' };
 const shift = (attribute: Attribute): EnemyAction => ({ kind: 'shiftAttribute', attribute });
 
 // ==================== 火・岩（紅蓮の火山） ====================
@@ -101,14 +109,14 @@ export const MAGMA_HYDRA: EnemyDefinition = {
   maxHp: 62,
   attribute: 'fire',
   moves: [
-    { id: 'spit', name: '火を吐く', actions: [atk(4, 2), addCard(BURN)] },
+    { id: 'spit', name: '火を吐く', actions: [flat(4, 2), addCard(BURN)] },
     { id: 'grow-heads', name: '頭を増やす', actions: [buff(1), blk(8)] },
-    { id: 'crunch', name: '噛み砕き', actions: [atk(11)] },
+    { id: 'crunch', name: '噛み砕き', actions: [flat(5)] },
   ],
   traits: [{ kind: 'enrage', strength: 1 }],
 };
 
-/** 2 ターン眠る。起きてから一周ごとに筋力が残り、放置すると巨拳が止まらなくなる。 */
+/** 2 ターン眠る。起きてから一周ごとに筋力が残る。ダメージそのものは小さい。 */
 export const BASALT_COLOSSUS: EnemyDefinition = {
   id: 'basalt-colossus',
   name: '玄武岩の巨像',
@@ -117,14 +125,17 @@ export const BASALT_COLOSSUS: EnemyDefinition = {
   maxHp: 69,
   attribute: 'fire',
   moves: [
-    { id: 'rock-wall', name: '岩壁', actions: [blk(12), atk(4)] },
+    { id: 'rock-wall', name: '岩壁', actions: [blk(12), flat(4)] },
     { id: 'settle', name: '地を溜める', actions: [buff(1), blk(8)] },
-    { id: 'giant-fist', name: '巨拳', actions: [atk(13)] },
+    { id: 'tremor', name: '地鳴り', actions: [flat(5)] },
   ],
   traits: [{ kind: 'sleep', turns: 2, wakeStrength: 2 }, { kind: 'artifact', charges: 2 }],
 };
 
-/** 咆哮のたびに筋力が残り、息で火傷がデッキに積もる。長引くほど手が焼け、殴りが重くなる。 */
+/**
+ * 前半は息で火傷をデッキに積む。HP が半分を切ると、積んだ火傷を一気に燃やし、新しい火傷は足さない。
+ * HP は止まらない。倒し切ればそのまま終わる。
+ */
 export const FLAME_DRAGON: EnemyDefinition = {
   id: 'flame-dragon',
   name: '紅蓮竜',
@@ -134,9 +145,17 @@ export const FLAME_DRAGON: EnemyDefinition = {
   attribute: 'fire',
   moves: [
     { id: 'roar', name: '咆哮', actions: [buff(1), blk(10)] },
-    { id: 'breath', name: '炎の息', actions: [atk(3, 3), addCard(BURN)] },
-    { id: 'crunch', name: '噛み砕き', actions: [atk(10)] },
-    { id: 'volcanic-bomb', name: '火山弾', actions: [atk(14)] },
+    { id: 'breath', name: '炎の息', actions: [flat(3, 3), addCard(BURN)] },
+  ],
+  traits: [
+    {
+      kind: 'phase',
+      threshold: 0.5,
+      moves: [
+        { id: 'detonate', name: '燃え上がり', actions: [DETONATE] },
+        { id: 'ember-claw', name: '残り火', actions: [flat(5)] },
+      ],
+    },
   ],
 };
 
@@ -184,19 +203,18 @@ export const GRASS_WOLF: EnemyDefinition = {
   ],
 };
 
-/** 回復しながら蔦でデッキを埋め、次のターンのアタックを絡める。殴れないあいだに花が戻る。 */
+/** 回復しながら蔦でデッキを埋め、次のターンのアタックを絡める。殴りは無い。蔦を放置すると手が止まる。 */
 export const BRIAR_MAW: EnemyDefinition = {
   id: 'briar-maw',
   name: '茨の大花',
   icon: '🌺',
   rank: 'elite',
-  maxHp: 56,
+  maxHp: 42,
   attribute: 'grass',
   moves: [
     { id: 'bud', name: '蕾', actions: [heal(8), blk(6)] },
-    { id: 'vines', name: '蔦', actions: [atk(4), addCard(TANGLING_VINE, 2)] },
-    { id: 'snare', name: '絡め取り', actions: [BIND, atk(5)] },
-    { id: 'bloom', name: '花弁', actions: [atk(8)] },
+    { id: 'vines', name: '蔦', actions: [addCard(TANGLING_VINE, 2)] },
+    { id: 'snare', name: '絡め取り', actions: [BIND] },
   ],
 };
 
@@ -210,13 +228,15 @@ export const GREAT_TREANT: EnemyDefinition = {
   attribute: 'grass',
   moves: [
     { id: 'blessing', name: '大地の恵み', actions: [healAll(10), blk(6)] },
-    { id: 'root-whip', name: '根の鞭', actions: [atk(4, 2)] },
-    { id: 'branch-sweep', name: '枝の薙ぎ払い', actions: [atk(12)] },
+    { id: 'root-whip', name: '根の鞭', actions: [flat(4, 2)] },
   ],
   traits: [{ kind: 'guardian' }],
 };
 
-/** 霊体化しているターンはほぼ削れない。衣が切れたあとの急降下が本番なので、そこを守って殴る。 */
+/**
+ * 2 ターン霊体化し、そのあいだの旋回では殴らない。衣のあいだに積んだブロックが、次の急降下まで残る。
+ * 急降下そのものは小さい。削れないあいだに守るかが勝負。
+ */
 export const STORM_GRIFFIN: EnemyDefinition = {
   id: 'storm-griffin',
   name: '嵐のグリフォン',
@@ -225,11 +245,9 @@ export const STORM_GRIFFIN: EnemyDefinition = {
   maxHp: 70,
   attribute: 'grass',
   moves: [
-    { id: 'wind-grace', name: '風の加護', actions: [heal(8)] },
-    { id: 'wind-veil', name: '風の衣', actions: [INTANGIBLE, debuff('weak')] },
-    { id: 'storm-claws', name: '嵐の爪', actions: [atk(3, 3)] },
-    { id: 'tornado', name: '竜巻', actions: [atk(4, 3)] },
-    { id: 'dive', name: '急降下', actions: [atk(14)] },
+    { id: 'wind-veil', name: '風の衣', actions: [intangibleFor(2), debuff('weak')] },
+    { id: 'circle', name: '旋回', actions: [blk(8)] },
+    { id: 'dive', name: '急降下', actions: [flat(8)] },
   ],
 };
 
@@ -279,7 +297,7 @@ export const MIST_SIREN: EnemyDefinition = {
   ],
 };
 
-/** 灯で誘い、スキルを封印し、使えない氷をデッキに混ぜる。火力より、打てる札を奪う。 */
+/** 灯で誘い、スキル以外を 3 枚使うまで封印し、使えない氷をデッキに混ぜる。火力より、打てる札を奪う。 */
 export const FROST_ANGLER: EnemyDefinition = {
   id: 'frost-angler',
   name: '深氷のアンコウ',
@@ -288,14 +306,13 @@ export const FROST_ANGLER: EnemyDefinition = {
   maxHp: 59,
   attribute: 'water',
   moves: [
-    { id: 'lure', name: '灯', actions: [blk(8), atk(4)] },
-    { id: 'sealing-light', name: '封印の光', actions: [SEAL, addCard(ICE_SHARD, 2)] },
-    { id: 'gulp', name: '丸呑み', actions: [atk(12)] },
+    { id: 'lure', name: '灯', actions: [blk(8), flat(4)] },
+    { id: 'sealing-light', name: '封印の光', actions: [sealFor(3), addCard(ICE_SHARD, 2)] },
   ],
   traits: [{ kind: 'artifact', charges: 2 }],
 };
 
-/** 一周ごとに凍えと筋力が残る。引ける枚数が減ったまま放置すると、締め上げが止まらなくなる。 */
+/** 一周ごとに凍えと筋力が残る。殴りは小さく、放置すると引けないまま筋力が伸びる。 */
 export const ABYSS_SERPENT: EnemyDefinition = {
   id: 'abyss-serpent',
   name: '深淵の水竜',
@@ -305,12 +322,15 @@ export const ABYSS_SERPENT: EnemyDefinition = {
   attribute: 'water',
   moves: [
     { id: 'water-armor', name: '水の鎧', actions: [blk(12)] },
-    { id: 'whirlpool', name: '渦潮', actions: [atk(4, 2), chill()] },
-    { id: 'coil', name: '締め上げ', actions: [atk(11), buff(1)] },
+    { id: 'whirlpool', name: '渦潮', actions: [flat(4, 2), chill()] },
+    { id: 'coil', name: '締め上げ', actions: [buff(1), chill()] },
   ],
 };
 
-/** 引く枚数とスキルを交互に奪い、氷をデッキに混ぜる。絶対零度は一周の最後で、最初からは来ない。 */
+/**
+ * 前半は次のターンだけの凍えと封印。HP が半分を切ると凍えが戦闘の終わりまで残り、
+ * 封印はスキル以外を数枚使うまで解けない。大技の一撃は無い。
+ */
 export const ICE_LEVIATHAN: EnemyDefinition = {
   id: 'ice-leviathan',
   name: '氷冠のレヴィアタン',
@@ -319,12 +339,22 @@ export const ICE_LEVIATHAN: EnemyDefinition = {
   maxHp: 72,
   attribute: 'water',
   moves: [
-    { id: 'tide', name: '凍てつく潮', actions: [atk(4), chill(), blk(8)] },
+    { id: 'tide', name: '凍てつく潮', actions: [flat(4), chill(), blk(8)] },
     { id: 'seal-sea', name: '封印の海', actions: [SEAL, addCard(ICE_SHARD, 2)] },
-    { id: 'icicle-rain', name: '氷柱の雨', actions: [atk(3, 4)] },
-    { id: 'absolute-zero', name: '絶対零度', actions: [atk(14)] },
+    { id: 'icicle-rain', name: '氷柱の雨', actions: [flat(3, 4)] },
   ],
-  traits: [{ kind: 'artifact', charges: 3 }],
+  traits: [
+    { kind: 'artifact', charges: 3 },
+    {
+      kind: 'phase',
+      threshold: 0.5,
+      moves: [
+        { id: 'lock', name: '冠氷', actions: [LOCK_CHILL] },
+        { id: 'deep-seal', name: '底の封印', actions: [sealFor(3), addCard(ICE_SHARD, 2)] },
+        { id: 'icicle-rain', name: '氷柱の雨', actions: [flat(4), chill()] },
+      ],
+    },
+  ],
 };
 
 /** 霊体化 → 攻撃 → 攻撃の順なので、1 体目に置くと最初のターンに霊体化する。 */
@@ -386,7 +416,7 @@ export const IRON_HOUND: EnemyDefinition = {
   traits: [{ kind: 'vengeance', strength: 3 }],
 };
 
-/** ガラクタでデッキを埋め、チャージの次に麻痺させる。大技の前に予告がある。 */
+/** 噛むときはガラクタだけ。チャージの次の放電だけが殴りで、麻痺もする。 */
 export const GEAR_BEETLE: EnemyDefinition = {
   id: 'gear-beetle',
   name: '歯車の大甲虫',
@@ -394,13 +424,13 @@ export const GEAR_BEETLE: EnemyDefinition = {
   rank: 'elite',
   maxHp: 63,
   moves: [
-    { id: 'gnaw', name: '噛む', actions: [atk(5), addCard(SCRAP)] },
+    { id: 'gnaw', name: '噛む', actions: [addCard(SCRAP)] },
     { id: 'recharge', name: '充電', actions: [CHARGE, blk(8)] },
-    { id: 'discharge', name: '放電', actions: [atk(12), paralyze()] },
+    { id: 'discharge', name: '放電', actions: [atk(8), paralyze()] },
   ],
 };
 
-/** 2 ターンは眠って動かない。起きたあとは麻痺させ、チャージの次に雷鎚を振る。眠っているうちに削る。 */
+/** 2 ターンは眠って動かない。起きたあとの放電は麻痺だけ。雷鎚は蓄電の次。 */
 export const THUNDER_GOLEM: EnemyDefinition = {
   id: 'thunder-golem',
   name: '雷鳴のゴーレム',
@@ -408,14 +438,14 @@ export const THUNDER_GOLEM: EnemyDefinition = {
   rank: 'elite',
   maxHp: 71,
   moves: [
-    { id: 'discharge', name: '放電', actions: [atk(3, 3), paralyze()] },
+    { id: 'discharge', name: '放電', actions: [paralyze()] },
     { id: 'store', name: '蓄電', actions: [CHARGE, blk(10)] },
-    { id: 'thunder-hammer', name: '雷鎚', actions: [atk(14)] },
+    { id: 'thunder-hammer', name: '雷鎚', actions: [atk(10)] },
   ],
   traits: [{ kind: 'sleep', turns: 2, wakeStrength: 2 }],
 };
 
-/** エナジーを奪い、ガラクタを混ぜ続ける。雷神砲はフルチャージの次、一周の最後にだけ撃つ。 */
+/** 短路は麻痺、歯車の嵐はガラクタ。雷神砲はフルチャージの次だけで、ここを止めないと当たる。 */
 export const ENGINE_BEAST: EnemyDefinition = {
   id: 'engine-beast',
   name: '炉心獣',
@@ -424,10 +454,10 @@ export const ENGINE_BEAST: EnemyDefinition = {
   maxHp: 78,
   moves: [
     { id: 'boot', name: '起動', actions: [blk(10), addCard(SCRAP)] },
-    { id: 'short', name: '短路', actions: [atk(5), paralyze()] },
-    { id: 'gear-storm', name: '歯車の嵐', actions: [atk(3, 4), addCard(SCRAP)] },
+    { id: 'short', name: '短路', actions: [paralyze()] },
+    { id: 'gear-storm', name: '歯車の嵐', actions: [addCard(SCRAP)] },
     { id: 'full-charge', name: 'フルチャージ', actions: [CHARGE, blk(12)] },
-    { id: 'thunder-cannon', name: '雷神砲', actions: [atk(16)] },
+    { id: 'thunder-cannon', name: '雷神砲', actions: [atk(10)] },
   ],
   traits: [{ kind: 'artifact', charges: 2 }],
 };
@@ -436,8 +466,8 @@ export const ENGINE_BEAST: EnemyDefinition = {
 
 /**
  * 各地の魔力を奪った三つの旗（火・水・草）を掲げ替えて戦う。旗を掲げるたびに属性と弱点が変わるので、
- * どの属性のデッキにも突ける番と突かれる番がある。HP が半分になると覚醒し、旗を掲げながら殴ってくる。
- * 数値は他の敵と同じく第 1 章の強さで書き、data/acts.ts で第 3 章の倍率をかける。
+ * どの属性のデッキにも突ける番と突かれる番がある。HP が半分になると覚醒し、筋力を得て封印が重くなる。
+ * 殴りは小さく、章の攻撃倍率では増えない。増えるのは覚醒の筋力と、旗がかける火傷・凍え・封印。
  */
 export const STAR_DEVOURER: EnemyDefinition = {
   id: 'star-devourer',
@@ -448,11 +478,11 @@ export const STAR_DEVOURER: EnemyDefinition = {
   attribute: 'fire',
   moves: [
     { id: 'crimson-banner', name: '紅の旗', actions: [shift('fire'), blk(12)] },
-    { id: 'crimson-blade', name: '紅蓮の剣', actions: [atk(6, 2), addCard(BURN)] },
+    { id: 'crimson-blade', name: '紅蓮の剣', actions: [flat(6), addCard(BURN)] },
     { id: 'azure-banner', name: '蒼の旗', actions: [shift('water'), SEAL, blk(12)] },
-    { id: 'ice-lance', name: '氷の槍', actions: [atk(12), chill()] },
+    { id: 'ice-lance', name: '氷の槍', actions: [flat(6), chill()] },
     { id: 'verdant-banner', name: '翠の旗', actions: [shift('grass'), heal(8), debuff('weak')] },
-    { id: 'gale-flurry', name: '疾風の連撃', actions: [atk(4, 4)] },
+    { id: 'gale-flurry', name: '疾風の連撃', actions: [flat(6)] },
   ],
   traits: [
     { kind: 'artifact', charges: 2 },
@@ -462,11 +492,11 @@ export const STAR_DEVOURER: EnemyDefinition = {
       strength: 3,
       block: 20,
       moves: [
-        { id: 'crimson-storm', name: '紅蓮の旗', actions: [shift('fire'), atk(5, 3), addCard(BURN)] },
-        { id: 'azure-frost', name: '蒼氷の旗', actions: [shift('water'), atk(10), SEAL] },
-        { id: 'verdant-gale', name: '翠嵐の旗', actions: [shift('grass'), atk(4, 3), heal(8)] },
+        { id: 'crimson-storm', name: '紅蓮の旗', actions: [shift('fire'), flat(6), addCard(BURN)] },
+        { id: 'azure-frost', name: '蒼氷の旗', actions: [shift('water'), flat(6), sealFor(3)] },
+        { id: 'verdant-gale', name: '翠嵐の旗', actions: [shift('grass'), flat(6), chill()] },
         { id: 'devour-light', name: '星を喰らう', actions: [CHARGE, blk(16)] },
-        { id: 'star-eater', name: '星喰み', actions: [atk(18)] },
+        { id: 'star-eater', name: '星喰み', actions: [flat(6), sealFor(3)] },
       ],
     },
   ],

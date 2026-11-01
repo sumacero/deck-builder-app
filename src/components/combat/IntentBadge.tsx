@@ -21,6 +21,8 @@ const TONE_COLOR: Record<IntentView['tone'], string> = {
   debuff: COLORS.hindrance,
   addCard: COLORS.hindrance,
   intangible: COLORS.spirit,
+  detonateBurns: COLORS.hp,
+  lockChill: COLORS.hindrance,
   shiftAttribute: COLORS.gold,
   idle: COLORS.idle,
 };

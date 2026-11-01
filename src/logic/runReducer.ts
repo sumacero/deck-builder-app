@@ -10,6 +10,7 @@ import {
   discardPotion,
   finishCombat,
   moveTo,
+  resolveGrowthReward,
   resolvePotionReward,
   resolveReward,
   startFinalBattle,
@@ -23,6 +24,7 @@ export type RunAction =
   | { type: 'moveTo'; nodeId: string }
   | { type: 'finishCombat'; result: CombatResult }
   | { type: 'resolveReward'; card: CardDefinition | null }
+  | { type: 'resolveGrowthReward'; choice: 'gold' | 'upgrade'; card?: CardDefinition }
   | { type: 'resolvePotionReward'; choice: { potion: PotionDefinition; slot: number } | null }
   | { type: 'chooseBossRelic'; relicId: string | null }
   | { type: 'startFinalBattle' }
@@ -52,6 +54,8 @@ export function runReducer(run: RunState, action: RunAction): RunState {
       return finishCombat(run, action.result);
     case 'resolveReward':
       return resolveReward(run, action.card);
+    case 'resolveGrowthReward':
+      return resolveGrowthReward(run, action.choice, action.card);
     case 'resolvePotionReward':
       return resolvePotionReward(run, action.choice);
     case 'chooseBossRelic':

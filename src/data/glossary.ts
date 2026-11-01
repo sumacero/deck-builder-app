@@ -228,7 +228,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '水力',
     icon: '💧',
     description:
-      '水札を重ねると溜まる。消えた下の札の段だけ増え、水面があるとさらに増える。ターンが終わっても残り、水力を要する札を使うと減る。',
+      '水札を重ねると溜まる。消した札がアタックなら攻撃の水力、スキルなら守りの水力。段の数だけ増え、水面があるとさらに増える。ターンが終わっても残り、同じ種類の水力を要する札を使うと減る。',
   },
   waterCard: {
     id: 'waterCard',
@@ -242,7 +242,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '重ねる',
     icon: '🔮',
     description:
-      '水札を、手札の同じ種類（アタックどうし・スキルどうし）で同じ段の札の上にドラッグして重ねる。エナジーは要らない。摘んでいた札が残って段が上がる。置き場所は下の札があった位置のまま。下の札は廃棄札へ行き、その段だけ水力が溜まる。',
+      '水札を、手札の同じ種類（アタックどうし・スキルどうし）で同じ段の札の上にドラッグして重ねる。エナジーは要らない。摘んでいた札が残って段が上がる。置き場所は下の札があった位置のまま。下の札は廃棄札へ行き、その種類の水力が段の数だけ溜まる。',
   },
   stack: {
     id: 'stack',
@@ -430,13 +430,15 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'chill',
     name: '凍え',
     icon: '❄️',
-    description: 'このターンに引いたカードが、その数値の分だけ少ない。次のターンには元に戻る。',
+    description:
+      'このターンに引くカードが、その数値の分だけ少ない。ふつうは次のターンに戻る。戦闘の終わりまで残る凍えは、数値が消えずに残る。',
   },
   seal: {
     id: 'seal',
     name: '封印',
     icon: '🔒',
-    description: 'このターンはスキルカードを使えない。次のターンには元に戻る。',
+    description:
+      'スキルカードを使えない。次のターンだけのときと、数値が付いてスキル以外をその枚数使うまで続くときがある。数値は残り枚数。',
   },
   bind: {
     id: 'bind',
@@ -562,7 +564,8 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'intentIntangible',
     name: '霊体化',
     icon: '👻',
-    description: '霊体化する。次のあなたのターンの間、攻撃 1 回で受けるダメージが最大 1 になる。',
+    description:
+      '霊体化する。続くあいだ、あなたのターンの攻撃 1 回で受けるダメージが最大 1 になる。数値が付いていれば、そのターン数続く。',
   },
   intentBanner: {
     id: 'intentBanner',
@@ -575,5 +578,17 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '眠っている',
     icon: '💤',
     description: '眠っていて何もしない。HP にダメージを与えると目を覚ます。',
+  },
+  intentDetonate: {
+    id: 'intentDetonate',
+    name: '燃え移り',
+    icon: '🔥',
+    description: '手札・山札・捨て札にある火傷を、今すぐまとめて発動して廃棄する。新しい火傷は足さない。',
+  },
+  phase: {
+    id: 'phase',
+    name: '局面の変化',
+    icon: '🔄',
+    description: 'HP が半分以下になると、戦い方が変わる。筋力やブロックは増えない。',
   },
 };

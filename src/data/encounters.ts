@@ -97,11 +97,11 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
     ],
     // 大樹はかばう性質で、木の葉の精への攻撃を引き受ける。
     elite: [
-      group('maw-and-wolf', [GRASS_WOLF, withHp(BRIAR_MAW, 40)], 'elite'),
+      group('maw-and-wolf', [GRASS_WOLF, withHp(BRIAR_MAW, 32)], 'elite'),
       group('treant-grove', [LEAF_FAIRY, withHp(GREAT_TREANT, 60)], 'elite'),
-      group('maw-pair', [withHp(BRIAR_MAW, 34), withHp(BRIAR_MAW, 34)], 'elite'),
+      group('maw-pair', [withHp(BRIAR_MAW, 28), withHp(BRIAR_MAW, 28)], 'elite'),
     ],
-    boss: [group('griffin-and-hawk', [withHp(WIND_HAWK, 32), withHp(STORM_GRIFFIN, 66)], 'boss')],
+    boss: [group('griffin-and-hawk', [withHp(WIND_HAWK, 32), withHp(STORM_GRIFFIN, 48)], 'boss')],
   },
   sunkenCity: {
     normal: [

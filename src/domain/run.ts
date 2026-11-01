@@ -60,9 +60,14 @@ export type RunPhase =
   | { kind: 'combat'; nodeId: string; encounter: Encounter; seed: number }
   | {
       kind: 'reward';
-      /** card のあと、空き枠か入れ替えでポーションを 1 つ選ぶ。 */
-      step: 'card' | 'potion';
+      /**
+       * card はカード 3 択。potion はそのあと。
+       * growth は通常戦。カードは増やさず、強化するかゴールドを追加でもらう。
+       */
+      step: 'card' | 'potion' | 'growth';
       choices: CardDefinition[];
+      /** growth のとき、強化の代わりにもらえるゴールド。 */
+      growthGold?: number;
       /** カードを決めたあとに出す 3 択。空ならポーションの画面は出さない。 */
       potionChoices: PotionDefinition[];
       gold: number;

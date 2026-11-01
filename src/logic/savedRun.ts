@@ -125,7 +125,10 @@ function withRewardDefaults(run: RunState): RunState {
       ...migrated,
       phase: {
         ...migrated.phase,
-        step: migrated.phase.step === 'potion' ? 'potion' : 'card',
+        step:
+          migrated.phase.step === 'potion' || migrated.phase.step === 'growth'
+            ? migrated.phase.step
+            : 'card',
         potionChoices: Array.isArray(migrated.phase.potionChoices) ? migrated.phase.potionChoices : [],
         canSkip: migrated.phase.canSkip !== false,
       },

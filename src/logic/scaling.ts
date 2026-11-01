@@ -13,7 +13,7 @@ function scaleAction(action: EnemyAction, scale: ChapterScale): EnemyAction {
   const power = (value: number) => Math.round(value * scale.power);
   switch (action.kind) {
     case 'attack':
-      return { ...action, damage: power(action.damage) };
+      return action.flat ? action : { ...action, damage: power(action.damage) };
     case 'block':
       return { ...action, amount: power(action.amount) };
     case 'buff':
@@ -28,6 +28,8 @@ function scaleAction(action: EnemyAction, scale: ChapterScale): EnemyAction {
     case 'debuff':
     case 'addCard':
     case 'intangible':
+    case 'detonateBurns':
+    case 'lockChill':
     case 'shiftAttribute':
     case 'idle':
       return action;
@@ -55,6 +57,8 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
         block: power(trait.block),
         moves: scaleMoves(trait.moves, scale),
       };
+    case 'phase':
+      return { ...trait, moves: scaleMoves(trait.moves, scale) };
     case 'artifact':
     case 'hitCap':
     case 'guardian':

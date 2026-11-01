@@ -98,7 +98,7 @@ export function EnemyPanel({
             </Text>
           )}
           <View style={styles.badges}>
-            {describeIntent(move, (base) => enemyAttackDamage(attacker, base, player)).map((intent) => (
+            {describeIntent(move, (base, flat) => enemyAttackDamage(attacker, base, player, flat)).map((intent) => (
               <IntentBadge key={intent.key} intent={intent} compact={compact} />
             ))}
           </View>

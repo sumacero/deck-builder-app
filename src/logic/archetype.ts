@@ -3,9 +3,26 @@ import type { RunState } from '../domain/run';
 import { isDraftable } from './attribute';
 import { pickWeightedCards, shuffleCards } from './cardRarity';
 
-/** 戦闘報酬・カード選択イベントの候補（違う属性のカードはショップ限定なので除く）。 */
+/** 今の章（1 始まり）。 */
+export const actNumber = (run: RunState): number => run.actIndex + 1;
+
+/** この章で出してよいカード。minAct より前の札はまだ出ていない。 */
+export function cardsForAct(pool: readonly CardDefinition[], act: number): CardDefinition[] {
+  return pool.filter((card) => (card.minAct ?? 1) <= act);
+}
+
+/**
+ * ショップと、軸が決まっていないときの候補。
+ * 違う属性はショップ限定なので除く。軸の決め手（archetypePayoff）も除く。
+ */
 export const draftPool = (run: RunState): CardDefinition[] =>
-  run.rewardPool.filter((card) => isDraftable(card, run.agent));
+  cardsForAct(run.rewardPool, actNumber(run)).filter(
+    (card) => isDraftable(card, run.agent) && !card.archetypePayoff,
+  );
+
+/** 戦闘報酬・出来事の 3 択。軸の決め手も、その章になっていれば含む。 */
+export const rewardCandidates = (run: RunState): CardDefinition[] =>
+  cardsForAct(run.rewardPool, actNumber(run)).filter((card) => isDraftable(card, run.agent));
 
 export type ArchetypeCount = { archetype: Archetype; count: number };
 
@@ -41,12 +58,18 @@ export function pickRewardChoices(
   seed: number,
   weights: Record<CardRarity, number>,
 ): { items: CardDefinition[]; seed: number } {
+  const filler = pool.filter((card) => !card.archetypePayoff);
+  const source = filler.length > 0 ? filler : pool;
   const archetype = mainArchetype(deck);
-  const matching = archetype ? pool.filter((card) => card.archetypes?.includes(archetype)) : [];
-  if (matching.length === 0) return pickWeightedCards(pool, count, weights, seed);
-  const synergy = pickWeightedCards(matching, 1, weights, seed);
+  const payoffs = archetype
+    ? pool.filter((card) => card.archetypePayoff && card.archetypes?.includes(archetype))
+    : [];
+  const matching = archetype ? source.filter((card) => card.archetypes?.includes(archetype)) : [];
+  const synergyPool = payoffs.length > 0 ? payoffs : matching;
+  if (synergyPool.length === 0) return pickWeightedCards(source, count, weights, seed);
+  const synergy = pickWeightedCards(synergyPool, 1, weights, seed);
   const rest = pickWeightedCards(
-    pool.filter((card) => !synergy.items.includes(card)),
+    source.filter((card) => !synergy.items.includes(card)),
     count - synergy.items.length,
     weights,
     synergy.seed,

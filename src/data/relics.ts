@@ -10,14 +10,18 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
   effects: [{ kind: 'heal', amount: 6 }],
 };
 
-/** ノアの初期レリック。毎ターン最初に札を重ねたとき、ブロック 3 を得る。 */
+/**
+ * ノアの初期レリック。毎ターン最初の重ねで、消した札の段と同じだけ水力が余分に入る。
+ * 入る先は消した札の種類（アタックなら攻撃、スキルなら守り）。効果の適用は戦闘の重ね処理。
+ */
 export const CRYSTAL_WEIGHT: RelicDefinition = {
   id: 'crystal-weight',
   name: '水晶の文鎮',
   icon: '💎',
   rarity: 'starter',
-  trigger: 'firstFuse',
-  effects: [{ kind: 'block', amount: 3 }],
+  summary:
+    '毎ターン最初に札を重ねたとき、消した札の段と同じだけ、その種類の水力が余分に溜まる。アタックを消すと攻撃の水力、スキルを消すと守りの水力。',
+  effects: [],
 };
 
 /**
