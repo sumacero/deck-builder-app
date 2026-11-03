@@ -135,15 +135,19 @@ export const CRIMSON_STARTER_DECK: CardDefinition[] = [
 ];
 
 /**
- * 手札の扱い（幻影・保留・先制・Xコスト・再演）。
- * 無属性で、ブロック軸にはしない。盾のフィルターでノアから消えないようにするため。
- * 絵はまだ無いので、種類の色の枠で出す。
+ * 手札の扱い（幻影・保留・先制・Xコスト・再演・昇華）。
+ * 無属性のまま共通へ置くと一覧が溢れるので、戦い方の合うキャラの属性にする。
+ * 数字は前の札と同じ。ブロック軸にはしない（盾のフィルターで消えないようにするため）。
+ * ノアのアタックとスキルは、ほかの水札と同じく重ねられる。
  */
-export const HEAT_HAZE: CardDefinition = {
+export const MIST_MIRROR: CardDefinition = {
   id: 'heat-haze',
-  name: '陽炎',
+  name: '霧鏡',
   rarity: 'common',
   type: 'skill',
+  attribute: 'water',
+  archetypes: ['element'],
+  water: true,
   cost: 1,
   target: 'self',
   ethereal: true,
@@ -151,11 +155,13 @@ export const HEAT_HAZE: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 11 }] },
 };
 
-export const FADING_BLADE: CardDefinition = {
+export const CINDER_BLADE: CardDefinition = {
   id: 'fading-blade',
-  name: '消えゆく刃',
+  name: '燼刃',
   rarity: 'uncommon',
   type: 'attack',
+  attribute: 'fire',
+  archetypes: ['element'],
   cost: 1,
   target: 'enemy',
   ethereal: true,
@@ -163,11 +169,13 @@ export const FADING_BLADE: CardDefinition = {
   upgrade: { effects: [{ kind: 'damage', amount: 13 }] },
 };
 
-export const LINGERING_GUARD: CardDefinition = {
+export const ROOTED_GUARD: CardDefinition = {
   id: 'lingering-guard',
-  name: '残心',
+  name: '根張り',
   rarity: 'uncommon',
   type: 'skill',
+  attribute: 'grass',
+  archetypes: ['element'],
   cost: 1,
   target: 'self',
   retain: true,
@@ -175,11 +183,13 @@ export const LINGERING_GUARD: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 8 }] },
 };
 
-export const BULWARK_X: CardDefinition = {
+export const THORN_FORT: CardDefinition = {
   id: 'bulwark-x',
-  name: '堅陣',
+  name: '茨砦',
   rarity: 'uncommon',
   type: 'skill',
+  attribute: 'grass',
+  archetypes: ['element'],
   cost: 0,
   target: 'self',
   xCost: true,
@@ -188,11 +198,13 @@ export const BULWARK_X: CardDefinition = {
   upgrade: { effects: [{ kind: 'blockPerX', amount: 6 }] },
 };
 
-export const BARRAGE_X: CardDefinition = {
+export const WILDFIRE: CardDefinition = {
   id: 'barrage-x',
-  name: '掃射',
+  name: '燎原',
   rarity: 'uncommon',
   type: 'attack',
+  attribute: 'fire',
+  archetypes: ['element'],
   cost: 0,
   target: 'allEnemies',
   xCost: true,
@@ -201,11 +213,13 @@ export const BARRAGE_X: CardDefinition = {
   motion: 'sweep',
 };
 
-export const ENCORE_STRIKE: CardDefinition = {
+export const LINGERING_FLAME: CardDefinition = {
   id: 'encore-strike',
-  name: '追憶打ち',
+  name: '残焔',
   rarity: 'uncommon',
   type: 'attack',
+  attribute: 'fire',
+  archetypes: ['element'],
   cost: 1,
   target: 'enemy',
   effects: [
@@ -220,11 +234,14 @@ export const ENCORE_STRIKE: CardDefinition = {
   },
 };
 
-export const DOUBLE_CALL: CardDefinition = {
+export const DOUBLE_REFLECTION: CardDefinition = {
   id: 'double-call',
-  name: '二重の号令',
+  name: '二重映し',
   rarity: 'rare',
   type: 'skill',
+  attribute: 'water',
+  archetypes: ['element'],
+  water: true,
   cost: 1,
   target: 'self',
   exhaust: true,
@@ -232,11 +249,13 @@ export const DOUBLE_CALL: CardDefinition = {
   upgrade: { cost: 0 },
 };
 
-export const OPENING_STRIKE: CardDefinition = {
+export const OPENING_FLAME: CardDefinition = {
   id: 'opening-strike',
-  name: '先陣打ち',
+  name: '火蓋',
   rarity: 'uncommon',
   type: 'attack',
+  attribute: 'fire',
+  archetypes: ['element'],
   cost: 1,
   target: 'enemy',
   innate: true,
@@ -245,11 +264,13 @@ export const OPENING_STRIKE: CardDefinition = {
 };
 
 /** 使えば捨て札に戻り、後から引ける。使わずに残すと、そのターンの終わりに幻影で廃棄される。 */
-export const OPENING_GUARD: CardDefinition = {
+export const MORNING_DEW: CardDefinition = {
   id: 'opening-guard',
-  name: '幕開け',
+  name: '朝露',
   rarity: 'uncommon',
   type: 'skill',
+  attribute: 'grass',
+  archetypes: ['element'],
   cost: 0,
   target: 'self',
   innate: true,
@@ -258,25 +279,14 @@ export const OPENING_GUARD: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 8 }] },
 };
 
-export const HAND_MECHANIC_CARDS: CardDefinition[] = [
-  HEAT_HAZE,
-  FADING_BLADE,
-  LINGERING_GUARD,
-  BULWARK_X,
-  BARRAGE_X,
-  ENCORE_STRIKE,
-  DOUBLE_CALL,
-  OPENING_STRIKE,
-  OPENING_GUARD,
-];
-
 /** 選んで 1 枚捨て、1 枚引く。昇華を狙って手放せる。 */
-export const GAP_STEP: CardDefinition = {
+export const ARROW_MEASURE: CardDefinition = {
   id: 'gap-step',
-  name: '間合い',
+  name: '矢尺',
   rarity: 'common',
   type: 'skill',
-  archetypes: ['tempo'],
+  attribute: 'grass',
+  archetypes: ['element', 'tempo'],
   cost: 0,
   target: 'self',
   effects: [
@@ -292,12 +302,14 @@ export const GAP_STEP: CardDefinition = {
 };
 
 /** 選んだ札を捨ててから打つ。捨てた札が昇華なら、その効果も出る。 */
-export const FLING_STRIKE: CardDefinition = {
+export const SPRAY_STRIKE: CardDefinition = {
   id: 'fling-strike',
-  name: '投げ打ち',
+  name: 'しぶき打ち',
   rarity: 'common',
   type: 'attack',
-  archetypes: ['tempo'],
+  attribute: 'water',
+  archetypes: ['element', 'tempo'],
+  water: true,
   cost: 1,
   target: 'enemy',
   effects: [
@@ -313,12 +325,13 @@ export const FLING_STRIKE: CardDefinition = {
 };
 
 /** 手札を 2 枚無作為に捨てて、3 枚引く。 */
-export const CARD_FLOW: CardDefinition = {
+export const RESTRING: CardDefinition = {
   id: 'card-flow',
-  name: '札流し',
+  name: '弦替え',
   rarity: 'uncommon',
   type: 'skill',
-  archetypes: ['tempo'],
+  attribute: 'grass',
+  archetypes: ['element', 'tempo'],
   cost: 1,
   target: 'self',
   effects: [
@@ -333,12 +346,13 @@ export const CARD_FLOW: CardDefinition = {
   },
 };
 
-export const SLY_SHOT: CardDefinition = {
+export const FALLING_EMBER: CardDefinition = {
   id: 'sly-shot',
-  name: '捨て撃ち',
+  name: '落ち火',
   rarity: 'uncommon',
   type: 'attack',
-  archetypes: ['tempo'],
+  attribute: 'fire',
+  archetypes: ['element', 'tempo'],
   cost: 1,
   target: 'enemy',
   sly: true,
@@ -346,12 +360,14 @@ export const SLY_SHOT: CardDefinition = {
   upgrade: { effects: [{ kind: 'damage', amount: 9 }] },
 };
 
-export const SLY_WARD: CardDefinition = {
+export const RETURNING_WAVE: CardDefinition = {
   id: 'sly-ward',
-  name: '捨て盾',
+  name: '返し波',
   rarity: 'uncommon',
   type: 'skill',
-  archetypes: ['tempo'],
+  attribute: 'water',
+  archetypes: ['element', 'tempo'],
+  water: true,
   cost: 1,
   target: 'self',
   sly: true,
@@ -359,12 +375,14 @@ export const SLY_WARD: CardDefinition = {
   upgrade: { effects: [{ kind: 'block', amount: 8 }] },
 };
 
-export const SLY_READ: CardDefinition = {
+export const EBB_TIDE: CardDefinition = {
   id: 'sly-read',
-  name: '捨て読み',
+  name: '引き潮',
   rarity: 'uncommon',
   type: 'skill',
-  archetypes: ['tempo'],
+  attribute: 'water',
+  archetypes: ['element', 'tempo'],
+  water: true,
   cost: 1,
   target: 'self',
   sly: true,
@@ -372,13 +390,34 @@ export const SLY_READ: CardDefinition = {
   upgrade: { effects: [{ kind: 'draw', amount: 3 }] },
 };
 
-export const DISCARD_PLAY_CARDS: CardDefinition[] = [
-  GAP_STEP,
-  FLING_STRIKE,
-  CARD_FLOW,
-  SLY_SHOT,
-  SLY_WARD,
-  SLY_READ,
+export const KYLE_TECHNIQUE_CARDS: CardDefinition[] = [
+  CINDER_BLADE,
+  OPENING_FLAME,
+  LINGERING_FLAME,
+  WILDFIRE,
+  FALLING_EMBER,
+];
+
+export const RINE_TECHNIQUE_CARDS: CardDefinition[] = [
+  ROOTED_GUARD,
+  THORN_FORT,
+  MORNING_DEW,
+  ARROW_MEASURE,
+  RESTRING,
+];
+
+export const NOAH_TECHNIQUE_CARDS: CardDefinition[] = [
+  MIST_MIRROR,
+  SPRAY_STRIKE,
+  RETURNING_WAVE,
+  EBB_TIDE,
+  DOUBLE_REFLECTION,
+];
+
+export const HAND_MECHANIC_CARDS: CardDefinition[] = [
+  ...KYLE_TECHNIQUE_CARDS,
+  ...RINE_TECHNIQUE_CARDS,
+  ...NOAH_TECHNIQUE_CARDS,
 ];
 
 /** カイル専用。2 回まで強く打てて、使い切るとその戦闘では廃棄される。強化で 3 回。 */
@@ -1369,6 +1408,5 @@ export const REWARD_CARDS: CardDefinition[] = [
     },
   },
   ...HAND_MECHANIC_CARDS,
-  ...DISCARD_PLAY_CARDS,
   ...SYNERGY_CARDS,
 ];

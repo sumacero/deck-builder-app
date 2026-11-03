@@ -5,7 +5,13 @@ import { CRIMSON_HERO, MIRROR_SEER, VERDANT_ARCHER } from './agents';
 import { LANTERN_SPIRIT, STANDARD_BLESSINGS } from './blessings';
 import { CRIMSON_STARTER_DECK, REWARD_CARDS } from './cards';
 import { STANDARD_ECONOMY } from './economy';
-import { BASIN_ORACLE, STANDARD_EVENTS } from './events';
+import {
+  BASIN_ORACLE,
+  KYLE_TECHNIQUE_EVENTS,
+  NOAH_TECHNIQUE_EVENTS,
+  RINE_TECHNIQUE_EVENTS,
+  STANDARD_EVENTS,
+} from './events';
 import { ALL_POTIONS } from './potions';
 import { MIRROR_CARDS, MIRROR_STARTER_DECK } from './mirrorCards';
 import {
@@ -61,23 +67,6 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'cataclysm',
   'ashen-tempest',
   'discard-judgment',
-  // 手札の扱い（幻影・保留・先制・X・再演）。ブロック軸にはしていない。
-  'heat-haze',
-  'fading-blade',
-  'lingering-guard',
-  'bulwark-x',
-  'barrage-x',
-  'encore-strike',
-  'double-call',
-  'opening-strike',
-  'opening-guard',
-  // 手札から捨てる・捨てて引く・昇華。ブロック軸にはしていない。
-  'gap-step',
-  'fling-strike',
-  'card-flow',
-  'sly-shot',
-  'sly-ward',
-  'sly-read',
 ]);
 
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;
@@ -144,7 +133,7 @@ export const STANDARD_RUN: RunSetup = {
   potionPool: ALL_POTIONS,
   relicPool: RELIC_POOL,
   bossRelicPool: BOSS_RELIC_POOL,
-  eventPool: STANDARD_EVENTS,
+  eventPool: [...STANDARD_EVENTS, ...KYLE_TECHNIQUE_EVENTS],
   blessingPool: STANDARD_BLESSINGS,
   guide: LANTERN_SPIRIT,
   economy: STANDARD_ECONOMY,
@@ -159,6 +148,7 @@ export const VERDANT_RUN: RunSetup = {
   playerMaxHp: 62,
   relics: [WORLD_TREE_SPROUT],
   rewardPool: HUNTER_REWARD_CARDS,
+  eventPool: [...STANDARD_EVENTS, ...RINE_TECHNIQUE_EVENTS],
 };
 
 /**
@@ -179,7 +169,7 @@ export const MIRROR_RUN: RunSetup = {
   playerMaxHp: 72,
   relics: [CRYSTAL_WEIGHT],
   rewardPool: MIRROR_REWARD_CARDS,
-  eventPool: [...STANDARD_EVENTS, BASIN_ORACLE],
+  eventPool: [...STANDARD_EVENTS, BASIN_ORACLE, ...NOAH_TECHNIQUE_EVENTS],
 };
 
 /** タイトルで選べるエージェント。並び順がそのまま選択画面の並び順。 */
