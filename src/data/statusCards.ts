@@ -27,7 +27,7 @@ export const TANGLING_VINE: CardDefinition = {
   exhaust: true,
 };
 
-/** 水・氷: 使えないが、ターンの終わりに溶けて消える。 */
+/** 水・氷: 使えないが、幻影でターンの終わりに廃棄される。 */
 export const ICE_SHARD: CardDefinition = {
   id: 'ice-shard',
   name: '氷のかけら',

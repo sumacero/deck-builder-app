@@ -62,7 +62,7 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'cataclysm',
   'ashen-tempest',
   'discard-judgment',
-  // 手札の扱い（消える・保留・天賦・X・再演）。ブロック軸にはしていない。
+  // 手札の扱い（幻影・保留・先制・X・再演）。ブロック軸にはしていない。
   'heat-haze',
   'fading-blade',
   'lingering-guard',
@@ -72,6 +72,13 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'double-call',
   'opening-strike',
   'opening-guard',
+  // 手札から捨てる・捨てて引く・昇華。ブロック軸にはしていない。
+  'gap-step',
+  'fling-strike',
+  'card-flow',
+  'sly-shot',
+  'sly-ward',
+  'sly-read',
 ]);
 
 const isBlockAxis = (card: CardDefinition) => card.archetypes?.includes('block') ?? false;

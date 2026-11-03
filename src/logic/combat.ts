@@ -233,7 +233,7 @@ export function drawCards(state: CombatState, count: number): CombatState {
   });
 }
 
-/** 戦闘の最初だけ。天賦の札を、通常のドローの前に手札へ移す。 */
+/** 戦闘の最初だけ。先制の札を、通常のドローの前に手札へ移す。 */
 function drawInnate(state: CombatState): CombatState {
   const innate: CardInstance[] = [];
   const rest: CardInstance[] = [];
@@ -245,7 +245,7 @@ function drawInnate(state: CombatState): CombatState {
   const next: CombatState = { ...state, drawPile: rest, hand: [...state.hand, ...innate] };
   const logged = withLog(
     next,
-    innate.length === 1 ? `天賦で${innate[0].card.name}が手札にある` : `天賦の札が ${innate.length} 枚、手札にある`,
+    innate.length === 1 ? `先制で${innate[0].card.name}が手札にある` : `先制の札が ${innate.length} 枚、手札にある`,
   );
   return innate.reduce(
     (current, card, index) =>
@@ -780,7 +780,13 @@ function consumeArtifact(state: CombatState, enemy: EnemyState): CombatState {
   );
 }
 
-function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitKind = NO_ATTRIBUTE): CombatState {
+function applyEffect(
+  state: CombatState,
+  effect: Effect,
+  aim: Aim,
+  hitKind: HitKind = NO_ATTRIBUTE,
+  depth = 0,
+): CombatState {
   switch (effect.kind) {
     case 'gainEnergy':
       return withLog(
@@ -996,7 +1002,7 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
         const enemy = findEnemy(state, uid);
         return enemy !== undefined && hasStatus(enemy.statuses, effect.status);
       });
-      return met ? applyEffects(state, effect.effects, aim, hitKind) : state;
+      return met ? applyEffects(state, effect.effects, aim, hitKind, depth) : state;
     }
     case 'consumeBlock': {
       const block = state.player.block;
@@ -1061,7 +1067,7 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
     case 'blockPerCardPlayed':
       return gainPlayerBlock(state, effect.base + state.player.cardsThisTurn * effect.perCard);
     case 'discardFromHand':
-      return effect.choose ? state : discardFromHand(state, effect.amount);
+      return effect.choose ? state : discardFromHand(state, effect.amount, aim, depth);
     case 'exhaustFromHand':
       return effect.choose ? state : exhaustFromHand(state, effect.amount);
     case 'gainLashSeed':
@@ -1075,16 +1081,127 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
   }
 }
 
-/** 手札からランダムに捨てる。拾い集めがあればその枚数分引く。 */
-function discardFromHand(state: CombatState, amount: number): CombatState {
+/** 昇華がこの回数まで続いたら止める。捨てた札がまた捨てる、の無限ループを切る。 */
+const MAX_SLY_CHAIN = 8;
+
+/**
+ * 昇華の狙い。敵を指定する札は、捨てさせた技の狙いを優先する。
+ * 狙いが無ければ、生きている敵から無作為に 1 体。
+ */
+function aimForSly(
+  state: CombatState,
+  card: CardDefinition,
+  suggested: Aim | undefined,
+): { state: CombatState; aim: Aim } {
+  if (card.target === 'allEnemies') return { state, aim: 'all' };
+  if (card.target !== 'enemy') return { state, aim: suggested && suggested !== 'all' ? suggested : 'all' };
+  if (suggested && suggested !== 'all') {
+    const enemy = findEnemy(state, suggested);
+    if (enemy && isAlive(enemy)) return { state, aim: resolveAim(state, 'enemy', suggested) };
+  }
+  const living = livingEnemies(state);
+  if (living.length === 0) return { state, aim: enemyUid(0) };
+  const { items, seed } = shuffle(living, state.rngSeed);
+  const rolled: CombatState = { ...state, rngSeed: seed };
+  return { state: rolled, aim: resolveAim(rolled, 'enemy', items[0].uid) };
+}
+
+/** すでに捨て札へ移した札を、エナジーを払わずに使う。 */
+function playSly(state: CombatState, instance: CardInstance, suggested: Aim | undefined, depth: number): CombatState {
+  const { card } = instance;
+  if (depth >= MAX_SLY_CHAIN) return withLog(state, '昇華が続きすぎて止まった');
+  if (card.unplayable) return withLog(state, `${card.name}は使えなかった`);
+  if (skillSealed(state.player) && card.type === 'skill') return withLog(state, `封印で${card.name}を使えなかった`);
+  if (state.player.hindrance.bind && card.type === 'attack') return withLog(state, `絡めで${card.name}を使えなかった`);
+  const aimed = aimForSly(state, card, suggested);
+  if (card.target === 'enemy' && livingEnemies(aimed.state).length === 0) {
+    return withLog(aimed.state, `${card.name}の狙う敵がいなかった`);
+  }
+  const breakingSeal = card.type !== 'skill' && aimed.state.player.sealCharges > 0;
+  const sealCharges = breakingSeal ? aimed.state.player.sealCharges - 1 : aimed.state.player.sealCharges;
+  const moved = card.exhaust
+    ? {
+        ...aimed.state,
+        discardPile: aimed.state.discardPile.filter((item) => item.instanceId !== instance.instanceId),
+        exhaustPile: [...aimed.state.exhaustPile, instance],
+      }
+    : aimed.state;
+  const sealed = breakingSeal ? { ...moved, player: { ...moved.player, sealCharges } } : moved;
+  const announced = withEvent(withLog(sealed, `昇華で${card.name}を使った`), {
+    kind: 'cardPlayed',
+    target: 'player',
+    targets: card.target === 'self' ? [] : aimedUids(sealed, aimed.aim),
+    cardType: card.type,
+    motion: cardMotion(card),
+    ...(card.water ? { water: true } : {}),
+  });
+  const told = breakingSeal && sealCharges === 0 ? withLog(announced, '根強い封印が解けた') : announced;
+  const multiplier = handMultiplier(instance, told.player);
+  const boosted =
+    card.water && multiplier > 1 ? withLog(told, `水札の ${stackOf(instance)} 段で ${multiplier} 倍`) : told;
+  const savedX = boosted.xEnergy;
+  const eventsBefore = boosted.events.length;
+  const follow = { instance, eventsBefore };
+  const repeats = boosted.player.replayCharges > 0 ? 1 : 0;
+  const charged =
+    repeats > 0
+      ? { ...boosted, xEnergy: 0, player: { ...boosted.player, replayCharges: boosted.player.replayCharges - 1 } }
+      : { ...boosted, xEnergy: 0 };
+  const effects = scaledEffects(card, multiplier);
+  const hit = { attributes: playedAttributes(boosted, card) };
+  const resolved = applyEffects(charged, effects, aimed.aim, hit, depth + 1);
+  if (resolved.pendingHandRemoval) {
+    return {
+      ...resolved,
+      xEnergy: savedX,
+      pendingHandRemoval: { ...resolved.pendingHandRemoval, follow },
+    };
+  }
+  const replayed =
+    repeats > 0 && resolved.status === 'playerTurn'
+      ? applyEffects(withLog(resolved, `${card.name}の効果をもう一度`), effects, aimed.aim, hit, depth + 1)
+      : resolved;
+  if (replayed.pendingHandRemoval) {
+    return {
+      ...replayed,
+      xEnergy: savedX,
+      pendingHandRemoval: { ...replayed.pendingHandRemoval, follow },
+    };
+  }
+  return { ...finishPlay(replayed, follow, aimed.aim), xEnergy: savedX };
+}
+
+function playSlyCards(
+  state: CombatState,
+  picked: readonly CardInstance[],
+  aim: Aim | undefined,
+  depth: number,
+): CombatState {
+  let next = state;
+  for (const instance of picked) {
+    if (!instance.card.sly) continue;
+    if (next.status !== 'playerTurn' || next.pendingHandRemoval) return next;
+    next = playSly(next, instance, aim, depth);
+  }
+  return next;
+}
+
+/** 手札からランダムに捨てる。拾い集めがあればその枚数分引く。昇華は捨てた直後に使う。 */
+function discardFromHand(state: CombatState, amount: number, aim: Aim | undefined, depth: number): CombatState {
   if (amount <= 0 || state.hand.length === 0) return state;
   const n = Math.min(amount, state.hand.length);
   const { items: order, seed } = shuffle(state.hand, state.rngSeed);
-  return discardSpecific({ ...state, rngSeed: seed }, order.slice(0, n), true);
+  return discardSpecific({ ...state, rngSeed: seed }, order.slice(0, n), true, aim, depth);
 }
 
 /** 指定した札を捨てる。drawScavenge は、選び終わったあとにまとめて引くとき false。 */
-function discardSpecific(state: CombatState, picked: readonly CardInstance[], drawScavenge: boolean): CombatState {
+function discardSpecific(
+  state: CombatState,
+  picked: readonly CardInstance[],
+  drawScavenge: boolean,
+  aim: Aim | undefined,
+  depth: number,
+): CombatState {
   if (picked.length === 0) return state;
   const pickedIds = new Set(picked.map((card) => card.instanceId));
   let next: CombatState = {
@@ -1101,9 +1218,10 @@ function discardSpecific(state: CombatState, picked: readonly CardInstance[], dr
     next,
     picked.length === 1 ? `手札から${picked[0].card.name}を捨てた` : `手札から ${picked.length} 枚捨てた`,
   );
-  if (!drawScavenge) return logged;
-  const scavenge = powerOf(logged, 'scavenge') * picked.length;
-  return scavenge > 0 ? drawCards(withLog(logged, `拾い集めで ${scavenge} 枚引く`), scavenge) : logged;
+  const sly = playSlyCards(logged, picked, aim, depth);
+  if (!drawScavenge || sly.pendingHandRemoval || sly.status !== 'playerTurn') return sly;
+  const scavenge = powerOf(sly, 'scavenge') * picked.length;
+  return scavenge > 0 ? drawCards(withLog(sly, `拾い集めで ${scavenge} 枚引く`), scavenge) : sly;
 }
 
 /** 手札からランダムに廃棄する。 */
@@ -1297,6 +1415,7 @@ const applyEffects = (
   effects: readonly Effect[],
   aim: Aim,
   hitKind: HitKind = NO_ATTRIBUTE,
+  depth = 0,
 ): CombatState => {
   let current = state;
   for (let index = 0; index < effects.length; index += 1) {
@@ -1310,7 +1429,7 @@ const applyEffects = (
       if (current.hand.length <= effect.amount) {
         current =
           mode === 'discard'
-            ? discardSpecific(current, current.hand, true)
+            ? discardSpecific(current, current.hand, true, aim, depth)
             : exhaustSpecific(current, current.hand);
         continue;
       }
@@ -1329,7 +1448,7 @@ const applyEffects = (
         },
       };
     }
-    current = applyEffect(current, effect, aim, hitKind);
+    current = applyEffect(current, effect, aim, hitKind, depth);
   }
   return current;
 };
@@ -1366,7 +1485,7 @@ export function resolveHandRemoval(state: CombatState, instanceId: string): Comb
   if (!instance) return state;
   const removed =
     pending.mode === 'discard'
-      ? discardSpecific({ ...state, pendingHandRemoval: null }, [instance], false)
+      ? discardSpecific({ ...state, pendingHandRemoval: null }, [instance], false, pending.aim, 0)
       : exhaustSpecific({ ...state, pendingHandRemoval: null }, [instance]);
   const taken = pending.taken + 1;
   const left = pending.left - 1;
@@ -1374,7 +1493,7 @@ export function resolveHandRemoval(state: CombatState, instanceId: string): Comb
     if (removed.hand.length <= left) {
       const swept =
         pending.mode === 'discard'
-          ? discardSpecific(removed, removed.hand, false)
+          ? discardSpecific(removed, removed.hand, false, pending.aim, 0)
           : exhaustSpecific(removed, removed.hand);
       return continueAfterRemoval(swept, { ...pending, taken: taken + removed.hand.length, left: 0 });
     }
@@ -2118,7 +2237,7 @@ function advanceEnemy(state: CombatState, uid: EnemyUid): CombatState {
   return updateEnemy(state, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
 }
 
-/** 手札に残ったお邪魔カードの効果をかけ、消えるカードは廃棄する。保留は残し、残りは捨て札へ。 */
+/** 手札に残ったお邪魔カードの効果をかけ、幻影のカードは廃棄する。保留は残し、残りは捨て札へ。 */
 function discardHand(state: CombatState): CombatState {
   const afterEffects = state.hand.reduce((current, { card }) => {
     if (!card.turnEndInHand) return current;
@@ -2154,7 +2273,7 @@ function discardHand(state: CombatState): CombatState {
       discardsThisTurn: next.player.discardsThisTurn + kept.length,
     },
   };
-  return onExhausted(piled, vanishing.length);
+  return playSlyCards(onExhausted(piled, vanishing.length), kept, undefined, 0);
 }
 
 export function endTurn(state: CombatState): CombatState {
@@ -2165,7 +2284,7 @@ export function endTurn(state: CombatState): CombatState {
       ? applyEffect(afterRelics, { kind: 'block', amount: afterRelics.player.endTurnBlock }, 'all')
       : afterRelics;
   const discarded = settle(withLog(discardHand(afterMetal), 'ターン終了'));
-  if (discarded.status !== 'playerTurn') return discarded;
+  if (discarded.pendingHandRemoval || discarded.status !== 'playerTurn') return discarded;
   const afterEnemy = runEnemyTurn(withEvent(discarded, { kind: 'enemyTurnStart', target: 'player' }));
   if (afterEnemy.status !== 'playerTurn') return afterEnemy;
   const started = triggerRelics(

@@ -135,7 +135,7 @@ export const CRIMSON_STARTER_DECK: CardDefinition[] = [
 ];
 
 /**
- * 手札の扱い（消える・保留・天賦・Xコスト・再演）。
+ * 手札の扱い（幻影・保留・先制・Xコスト・再演）。
  * 無属性で、ブロック軸にはしない。盾のフィルターでノアから消えないようにするため。
  * 絵はまだ無いので、種類の色の枠で出す。
  */
@@ -244,7 +244,7 @@ export const OPENING_STRIKE: CardDefinition = {
   upgrade: { effects: [{ kind: 'damage', amount: 11 }] },
 };
 
-/** 使えば捨て札に戻り、後から引ける。使わずに残すと、そのターンの終わりに消える。 */
+/** 使えば捨て札に戻り、後から引ける。使わずに残すと、そのターンの終わりに幻影で廃棄される。 */
 export const OPENING_GUARD: CardDefinition = {
   id: 'opening-guard',
   name: '幕開け',
@@ -268,6 +268,117 @@ export const HAND_MECHANIC_CARDS: CardDefinition[] = [
   DOUBLE_CALL,
   OPENING_STRIKE,
   OPENING_GUARD,
+];
+
+/** 選んで 1 枚捨て、1 枚引く。昇華を狙って手放せる。 */
+export const GAP_STEP: CardDefinition = {
+  id: 'gap-step',
+  name: '間合い',
+  rarity: 'common',
+  type: 'skill',
+  archetypes: ['tempo'],
+  cost: 0,
+  target: 'self',
+  effects: [
+    { kind: 'discardFromHand', amount: 1, choose: true },
+    { kind: 'draw', amount: 1 },
+  ],
+  upgrade: {
+    effects: [
+      { kind: 'discardFromHand', amount: 1, choose: true },
+      { kind: 'draw', amount: 2 },
+    ],
+  },
+};
+
+/** 選んだ札を捨ててから打つ。捨てた札が昇華なら、その効果も出る。 */
+export const FLING_STRIKE: CardDefinition = {
+  id: 'fling-strike',
+  name: '投げ打ち',
+  rarity: 'common',
+  type: 'attack',
+  archetypes: ['tempo'],
+  cost: 1,
+  target: 'enemy',
+  effects: [
+    { kind: 'discardFromHand', amount: 1, choose: true },
+    { kind: 'damage', amount: 5 },
+  ],
+  upgrade: {
+    effects: [
+      { kind: 'discardFromHand', amount: 1, choose: true },
+      { kind: 'damage', amount: 8 },
+    ],
+  },
+};
+
+/** 手札を 2 枚無作為に捨てて、3 枚引く。 */
+export const CARD_FLOW: CardDefinition = {
+  id: 'card-flow',
+  name: '札流し',
+  rarity: 'uncommon',
+  type: 'skill',
+  archetypes: ['tempo'],
+  cost: 1,
+  target: 'self',
+  effects: [
+    { kind: 'discardFromHand', amount: 2 },
+    { kind: 'draw', amount: 3 },
+  ],
+  upgrade: {
+    effects: [
+      { kind: 'discardFromHand', amount: 2 },
+      { kind: 'draw', amount: 4 },
+    ],
+  },
+};
+
+export const SLY_SHOT: CardDefinition = {
+  id: 'sly-shot',
+  name: '捨て撃ち',
+  rarity: 'uncommon',
+  type: 'attack',
+  archetypes: ['tempo'],
+  cost: 1,
+  target: 'enemy',
+  sly: true,
+  effects: [{ kind: 'damage', amount: 6 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 9 }] },
+};
+
+export const SLY_WARD: CardDefinition = {
+  id: 'sly-ward',
+  name: '捨て盾',
+  rarity: 'uncommon',
+  type: 'skill',
+  archetypes: ['tempo'],
+  cost: 1,
+  target: 'self',
+  sly: true,
+  effects: [{ kind: 'block', amount: 5 }],
+  upgrade: { effects: [{ kind: 'block', amount: 8 }] },
+};
+
+export const SLY_READ: CardDefinition = {
+  id: 'sly-read',
+  name: '捨て読み',
+  rarity: 'uncommon',
+  type: 'skill',
+  archetypes: ['tempo'],
+  cost: 1,
+  target: 'self',
+  sly: true,
+  effects: [{ kind: 'draw', amount: 2 }],
+  upgrade: { effects: [{ kind: 'draw', amount: 3 }] },
+};
+
+export const DISCARD_PLAY_CARDS: CardDefinition[] = [
+  GAP_STEP,
+  FLING_STRIKE,
+  CARD_FLOW,
+  SLY_SHOT,
+  SLY_WARD,
+  SLY_READ,
 ];
 
 /** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。末尾にシナジー札を足す。 */
@@ -1242,5 +1353,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     },
   },
   ...HAND_MECHANIC_CARDS,
+  ...DISCARD_PLAY_CARDS,
   ...SYNERGY_CARDS,
 ];

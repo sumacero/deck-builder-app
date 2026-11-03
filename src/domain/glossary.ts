@@ -11,6 +11,7 @@ export type KeywordId =
   | 'xCost'
   | 'replay'
   | 'innate'
+  | 'sly'
   | 'damage'
   | 'areaAttack'
   | 'block'
