@@ -11,7 +11,7 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
 
 ## 2. 技術スタック & 開発方針
 
-- Expo SDK 57 / React Native / TypeScript（`strict: true`）
+- Expo SDK 58 / React Native / TypeScript（`strict: true`）
 - 将来の PHP/Laravel API・AWS インフラ連携を前提に設計する。
   - ドメインの型（カード、クラス、レリック、ラン、バトルログ等）は UI から独立させ、API のリクエスト/レスポンスにそのまま対応付けられる形にする。
   - ID は文字列で扱い、サーバー側の採番に置き換えられるようにする。
@@ -73,7 +73,11 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 ## Commands
 
 - オーナーに「ローカル開発環境の立ち上げコマンド」と聞かれたら、説明より先に次の 2 つをそのまま答える（ターミナル 2 つで実行。詳細は `docs/KNOWLEDGE.md` の環境の節）:
+<<<<<<< Updated upstream
   1. `cd ~/projects/deck-builder-app && npx expo start --tunnel ngrok`（WSL なので `--tunnel` 必須。無いと Expo Go が「Something went wrong」。Expo アカウントに入っていないので、トンネルは `ngrok` を指定する）
+=======
+  1. `cd ~/projects/deck-builder-app && npx expo start --tunnel ngrok`（WSL なので tunnel 必須。未ログイン時は `ngrok` 付き。無いと Expo Go が「Something went wrong」）
+>>>>>>> Stashed changes
   2. `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`（スマホから指示するための My Machines ワーカー）
 
 Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
@@ -109,8 +113,8 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Cursor Cloud specific instructions
 
-- デフォルトイメージの Node.js 22.14 で足りる（SDK 57 の下限は 22.13）。パッケージマネージャは npm（`package-lock.json`）。bun は使わない。
-- `npm ci` だけでは Web 用の peer（`react-dom` / `react-native-web` / `@expo/metro-runtime`）は入らない。Cloud Agent の install は `npm ci` のあとに `npm install --no-save --no-package-lock react-dom@19.2.3 react-native-web@0.21.3 @expo/metro-runtime@57.0.16` を実行する。実機確認は Expo Go なので、これらのパッケージは `package.json` には入れない。自分で `npm ci` したあとに Web を起動するときは、同じ `npm install` を続けないと `react-dom` を解決できない。
+- デフォルトイメージの Node.js 22.14 で足りる（SDK 58 の下限も Node 22 系）。パッケージマネージャは npm（`package-lock.json`）。bun は使わない。
+- `react-dom` / `react-native-web` は SDK 58 移行時に `package.json` に入った。Cloud Agent で Web を起動するときは `npm ci` のあと、足りなければ `@expo/metro-runtime` を `--no-save` で足す。
 - 開発サーバ（ポート 8081）: `EXPO_NO_TELEMETRY=1 BROWSER=none npx expo start --web --host lan`。`CI=1` は付けない（Metro の watch が止まる）。ブラウザは http://localhost:8081 。起動確認はタイトルの「冒険を始める」。
 - 品質チェックは `npx tsc --noEmit` と `npx expo lint`。自動テストランナーはない。
 - ローカルプロトタイプにシークレット、データベース、外部サービスは不要。

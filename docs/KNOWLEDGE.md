@@ -56,7 +56,7 @@
 
 | フェーズ | 内容 | 状態 |
 | --- | --- | --- |
-| Phase 1: フロントエンド | Expo (SDK 57) + TypeScript。ドメインモデル（Card, Deck, Relic, RunLog 等）の型定義と UI からの分離。ローカルステート + Custom Hooks で状態管理 | **進行中** |
+| Phase 1: フロントエンド | Expo (SDK 58) + TypeScript。ドメインモデル（Card, Deck, Relic, RunLog 等）の型定義と UI からの分離。ローカルステート + Custom Hooks で状態管理 | **進行中** |
 | Phase 2: バックエンド | PHP (Laravel REST API)、Clean Architecture、TDD | 未着手 |
 | Phase 3: インフラ | AWS: CloudFront + S3（カード・レリック画像配信）、App Runner / ECS Fargate（コンテナ API）、RDS（PostgreSQL または MySQL）、Secrets Manager（機密情報） | 未着手 |
 | 将来 | AI によるデッキシナジー解析 | 構想 |
@@ -105,7 +105,12 @@
   1. ゲームの開発サーバー（スマホの Expo Go で QR を読む）: `cd ~/projects/deck-builder-app && npx expo start --tunnel ngrok`
   2. スマホから指示するためのワーカー（My Machines）: `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`
   - `--tunnel` を付けないと QR が WSL 内部のアドレス（`exp://172.x.x.x:8081`）になり、Expo Go が「Something went wrong」になる（2026-10-13 に実際に起きた）。起動ログの `libasound.so.2` のエラーは PC 用デバッグツールのもので、実機確認には関係ない。
+<<<<<<< Updated upstream
 - 実機確認: Android 端末の Expo Go。`npx expo start --tunnel ngrok` で起動（WSL のネットワーク分離のため tunnel を使用。`@expo/ngrok` はグローバルにインストール済み）。`--tunnel` だけだと Expo アカウント未ログインで署名付きトンネルが作れず止まる（2026-11-04）。
+=======
+  - SDK 58 以降、素の `--tunnel` は Expo ログインが必要なことがある。未ログインなら `npx expo start --tunnel ngrok`（2026-10-24 確認）。
+- 実機確認: Android 端末の Expo Go（SDK 58 対応版）。WSL のため tunnel 必須。
+>>>>>>> Stashed changes
 - **スマホ（Android）から指示する（2026-10-06）**: Cursor の **My Machines**（自分の PC で動くクラウドエージェント）。作業はこの PC のフォルダで直接行われる。全体図と仕組みは `docs/DEV_ENVIRONMENT.md`。
   - Cursor CLI を `~/.local/bin/agent` に導入（PATH は `~/.bashrc`）。`agent login` 済み（`agent status` で確認）。
   - ワーカー起動: `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`。動かしている間だけ受け付ける。Windows がスリープすると止まる。
@@ -114,21 +119,22 @@
 
 - Cloud Agent（2026-10-06）: ブラウザ検証は `npx expo start --web`（ポート 8081）。Web 用の `react-dom` / `react-native-web` / `@expo/metro-runtime` は `package.json` に入れず、環境の install で `--no-save` する。手順は `AGENTS.md` の「Cursor Cloud specific instructions」。
 
-## 6. 技術スタック（2026-10-03 時点）
+## 6. 技術スタック（2026-10-24 時点）
 
 | 項目 | バージョン |
 | --- | --- |
-| expo | ~57.0.26（SDK 57） |
-| react-native | 0.86.3 |
-| react | 19.2.3 |
+| expo | ^58.0.0（SDK 58） |
+| react-native | 0.88.0 |
+| react | 19.3.0 |
 | typescript | ~6.0.3（`strict: true`） |
-| expo-status-bar | ~57.0.1 |
-| react-native-safe-area-context | ~5.7.0（Expo Go 同梱。2026-10-03 追加） |
-| expo-audio | ~57.0.5（Expo Go 同梱。効果音用。2026-10-03 承認のうえ追加） |
-| expo-gl | ~57.0.2（Expo Go 同梱。3D 描画用。2026-10-04 承認のうえ追加） |
-| three | ^0.186.1（3D ライブラリ。純 JS。2026-10-04 承認のうえ追加） |
-| @types/three | ^0.186.0（devDependencies。three の型定義） |
-| eslint / eslint-config-expo | ^9.0.0 / ~57.0.2（devDependencies） |
+| expo-status-bar | ~58.0.4 |
+| expo-asset | ~58.0.18 |
+| react-native-safe-area-context | ~5.10.1（Expo Go 同梱） |
+| expo-audio | ~58.0.10（Expo Go 同梱。効果音用） |
+| expo-gl | ~58.0.3（現状未使用寄り。敵は 2D 切り絵に移行済み。削除は要承認） |
+| three | ^0.186.1（同上。3D 削除済みだが依存は残存） |
+| @types/three | ^0.186.0（devDependencies） |
+| eslint / eslint-config-expo | ^9.0.0 / ~58.0.4（devDependencies） |
 
 - ナビゲーション: まだ Expo Router は未導入。エントリは `index.ts` → `App.tsx`。画面が増えたら Expo Router（`src/app/`）への移行を検討。
 - ESLint 導入済み（`eslint.config.js`）。`npx expo lint` の初回実行時のセットアップで追加された。2026-10-03 時点で App.tsx はリント・型チェックともにエラーなし。
@@ -380,7 +386,8 @@
   - 「デバフの無効化」はまだ無い。下の「バフ・デバフ」でプレイヤーが敵にかけるデバフができたので、水・氷の敵の性質として次に検討できる。
   - `SceneBackground` が `ImageBackground`（RN 標準。追加パッケージなし）で敷く。~~2026-10-18: `blurRadius`＋霞 `sceneMist`＋薄い紺ヴェールで奥に下げる~~（変更: 同日夜。Style B 背景＋プレイヤー立ち絵に合わせ、**ぼかしと霞は廃止**。文字用の薄い `sceneShade` だけ残す）。敵パネルは `COLORS.panelTranslucent`。
   - **Style B 背景差し替え（2026-10-18）**: 火山・草原・水の古都・歯車塔の map/combat 計 8 枚を切り紙調（Style B）で再生成して `assets/backgrounds/` に取り込み済み。見本は `assets/style-samples/`。
-  - **プレイヤーは切り紙立ち絵、敵は 3D のまま（2026-10-18）**: カイル／リーネ／ノアを Style B で生成（`assets/agents/`、`AgentPortrait`）。タイトル・選択・戦闘・図鑑のエージェント表示は 2D。敵・ラスボス予告は従来の `ActorFigure`（3D）。`AGENT_MODELS` は残しているがプレイヤー表示では使わない。
+  - ~~**プレイヤーは切り紙立ち絵、敵は 3D のまま（2026-10-18）**~~（変更: 2026-10-20）。敵も Style B 切り紙 PNG（`assets/enemies/`、`EnemyPortrait`）。戦闘・図鑑・ラスボス予告はすべて 2D。`src/components/combat/model3d/` は削除済み。`expo-gl` / `three` は未使用のまま `package.json` に残っている（削除は要承認）。
+  - **敵立ち絵の取り込み**: 生成画像は黒背景。`node scripts/cutout-enemy.mjs <フォルダ>` で `enemy-<id>.*` → `assets/enemies/<id>.png`（360×480・透過）。`enemyArt.ts` に require を足す。
   - **カイル強化（2026-10-19）**: カイル用カード絵を Style B に揃え（報酬プール＋スターター＋秘奥義）。立ち絵は黒縁切り抜き PNG（`crimson-hero.png`、正方形枠なし）。2D 向けに剣士モーションの踏み込みを強化し、待機の上下揺れと被弾ののけぞりを追加。防御カードは文字だけだったのを盾イラストに差し替え。戦闘エフェクトは絵文字ではなく `CombatVfx`（斬撃ライン・衝撃波・盾の光など）に変更。
   - **カイル紙人形ポーズ（2026-10-19）**: 動画ではなくポーズ絵のカクカク切り替え（実装が軽く Expo Go 向き）。`idle` / `guard` / `slash` / `downed` / `victory`（`assets/agents/crimson-hero-*.png`）。`useAgentPose` が `cardPlayed`・敗北・勝利で切替。
   - **リーネ／ノアも同仕様（2026-10-19）**: 立ち絵＋ポーズ 5 種を黒縁切り抜き PNG（`verdant-archer-*.png` / `mirror-seer-*.png`）。カード絵も Style B に揃え（リーネ報酬プール＋スターター＋秘奥義、ノア報酬プール＋スターター＋秘奥義）。`agentArt` / `agentPoses` / `ARCHER_MOTIONS`（矢・葉 VFX）/ `MAGE_MOTIONS`（水 VFX）で配線済み。
@@ -912,6 +919,27 @@
 - 攻撃を 1 回まるごと消すと強すぎた。同じ自動プレイ・マスター側の難易度で、何でも 100 ラン: 行動ごと全部消すと 58%、最初の 1 ヒットだけ消すと 27%。弱体をターン中ずっと残すと、ブロックのすき間を埋めるだけでも 12%（200 ラン）まで上がり、ラスボスが易しくなった。
 - 今の水分身は、上のキャラ節のとおり。ブロックの有無と、水分身が 2 つかを見れば足りる。引き算はしない。200 ラン（マスター側の難易度を重ねて測り、戻した）: 何でも 7%（14）/ 雨 2%（4）。何でものボス 70.5 / 73.4 / 84.6%、ラスボス 63.6%（到達 22）。6 と 12 の節の 3.2% と同じ自動プレイ。500 ランにはしていない。
 
+### 3 キャラ何でも方針のクリア率（2026-10-24、カイル初期調整後）
+
+- 計測: `/tmp/sim/axisrun.ts`、`AXIS=any`、各 500 ラン。上手い自動プレイ（1 手先評価）。カイルはストライク／防御 +1（初期のみ）＋闘気斬 1 枚。
+- クリア率（ノア弱体**前**）:
+
+| キャラ | クリア | ボス勝率（1/2/3章） | フィナーレ勝率 | 1章通過 |
+| --- | --- | --- | --- | --- |
+| カイル | **2.0%**（10/500） | 70 / 56 / 65% | 38.5%（10/26） | 50.8% |
+| リーネ | **2.4%**（12/500） | 70 / 65 / 75% | 57.1%（12/21） | 48.6% |
+| ノア | **6.6%**（33/500） | 67 / 64 / 77% | 70.2%（33/47） | 52.4% |
+
+### ノアを約 2% に寄せる（2026-10-24）
+
+- **方針**: 何でも方針でカイル／リーネ（約 2%）に揃える。段倍率（1.5／2）は据え置き。
+- **変更**:
+  - 氷を重ねたときの棘: 2 × 段 → **1 × 段**
+  - 水晶の文鎮: ブロック 4 → **3**
+  - 霜柱: 棘 3／4 → **2／3**
+  - 連なる波: 連閃 2／3 → **1／2**
+- **計測**（同スクリプト・何でも・500 ラン）: ノア **2.2%**（11/500）、ボス勝 56／50／84%、フィナーレ 52.4%（11/21）、1 章通過 39%。段倍率まで落とした試走は 0.6% まで落ちたので戻した。
+
 ### ランダムプレイのクリア率シミュレーション（2026-10-05）
 
 - ゲームのロジック（`createRun` → `moveTo` / `finishCombat` / `resolveReward` …）をそのまま使い、ラン全体を自動で進めるスクリプトを `/tmp/sim/fullrun.ts` に作成（リポジトリ外。`POLICY=random|smart RUNS=10000`）。進路・報酬・イベント・ショップ・休憩所・ボスレリックはすべてランダム。
@@ -953,7 +981,8 @@
   - 結果（各 3000 ラン、カイル / リーネ）: 上手い方針 クリア率 5.7 / 3.2%、道中の脱落 18〜19 / 30〜40 / 41〜55%、ボス勝率 77〜83 / 63 / 67〜69%、ラスボス勝率 52 / 41%。完全ランダム クリア率 0.6 / 0.6%。死因は道中（通常 + エリート）とボスがほぼ半々になった。ラスボスは今も一番勝ちにくい 1 戦（最後の山場）。
   - シミュレーションの集計の不具合を修正: 第 3 章のボス勝率が「第 3 章のボスとラスボスの両方に勝った割合」になっていた（`/tmp/sim/axisrun.ts` の `actClear` に `x.finale` を追加）。それまでの記録の第 3 章のボス勝率（7〜10% など）は低く出ている。
 - **初期デッキ 8 枚と、HP の近い敵の組（2026-10-08、オーナーの要望）**: 「2 層目の終わりでデッキが完成することが多い」「エリート戦の取り巻きの HP が低く、全体攻撃 1 ターンで倒せて有用性が低い。同じ HP くらいのエリートが複数体（1:1〜1:2）」。
-  - 初期デッキ: カイル ストライク 4 + 防御 4、リーネ ストライク 4 + 防御 4 + 宿り木の矢 1（1 枚ずつのカードが回ってくるのが遅くなり、デッキの完成が遅れる）。
+  - 初期デッキ: カイル ストライク 4 + 防御 4 + 闘気斬 1、リーネ ストライク 4 + 防御 4 + 宿り木の矢 1（1 枚ずつのカードが回ってくるのが遅くなり、デッキの完成が遅れる）。
+  - **カイルだけストライク／防御 +1（2026-10-24）**: 共通札は 4 のまま。カイル初期だけ `CRIMSON_STRIKE` / `CRIMSON_DEFEND`（5／強化 7、id は strike/defend のまま）。固有は**闘気斬**（1 コスト・4 ダメ＋このターン筋力 1。強打はスレスパ寄せなので使わない）。
   - エリート（各地域 3 種）: 地域の通常の強い敵（HP 30〜44）+ HP を下げたエリート（1:1.2〜1:2）が 2 種、HP 34〜36 のエリート 2 体（1:1）が 1 種。例: 火山 = サラマンダー 34 + 獄炎の騎士 44 / 岩の兵士 42 + 玄武岩の巨像 50 / 獄炎の騎士 34 + 玄武岩の巨像 36。草原の大樹（かばう）は木の葉の精 32 と組む。HP は `encounters.ts` の `withHp` で組ごとに上書きする（単体の定義は変えない）。
   - ボス: 取り巻き 2 体（HP 12〜13）をやめ、HP が約半分の通常の敵 1 体と組む（1:2）。紅蓮竜 70 + 溶岩スライム 34 / 嵐のグリフォン 66 + 疾風の鷹 32 / 凍れる女王 68 + 沈都の衛兵 34 / 歯車の機皇 72 + 歯車の兵 34。
   - 倍率も調整: 道中 1.2・1.15 / 1.7・1.45 / 2.7・2.1、ボス 1・1 / 1.4・1.25 / 1.75・1.5（ラスボスは 2・1.6 のまま）。
@@ -1356,13 +1385,14 @@
 - ~~Git の `user.name` / `user.email` が未設定で、まだ 1 つもコミットできていない~~（2026-10-04 解消。このリポジトリのローカル設定に sumacero を登録し、最初のコミットを作成）。
   - リモートは `origin` = https://github.com/sumacero/deck-builder-app （Public）。メールアドレスを公開しないよう、コミットの作者メールは GitHub の noreply アドレス（`74171078+sumacero@users.noreply.github.com`）にしている。
   - Agent シェルのサンドボックスでは `.git` に書き込めないため、コミット系は権限を外して実行する。
-- `npx expo-doctor` で「`expo-audio` の peer dependency `expo-asset` が未インストール」と指摘あり。Expo Go では動くが、ネイティブビルドではクラッシュの恐れ。追加は承認待ち（2026-10-03）。
+- ~~`npx expo-doctor` で「`expo-audio` の peer dependency `expo-asset` が未インストール」~~（2026-10-24: SDK 58 移行時に `expo-asset` を追加し解消）。
 - Agent シェル（PowerShell → `wsl bash -lc`）では、`|` や入れ子のクォートを含むコマンドが崩れやすい。複雑な処理はファイル編集ツールかスクリプトファイルで行う。
 - 敵のバランスは仮の数値。1 章の通常敵は初期デッキで余裕を持って勝てる程度。エリート・ボスは自動プレイで粗く調整しただけ（2026-10-04）。
 - 2026-10-10、潮の水キャラ（蒼雨のノエル）は削除し、水鏡のノアに差し替えた。印は手札で重ねて捨て札に戻し、水分身が 2 つ以上のときブロックを超えた 1 ヒットの HP を消して、その敵の次の一撃を弱体にする。手札には重ねられる印の波紋を出す。カード本文は印の説明を繰り返さず、報酬の印チップでその札の重ね方を見る。6 と 12 の肩代わりのクリア率は「融合と水分身のクリア率」、受け流しの数字は「波紋と受け流し」。潮バージョンは「キャラと軸のクリア率」、留め版は「水鏡のノアのクリア率」に残している。
-- 3D 表示（`GLView`）は 2026-10-04 にオーナーのスマホ（Expo Go）で表示を確認済み。戦闘中は 2 体ぶん毎フレーム描画するので、長時間プレイ時の電池・発熱は引き続き様子見。
+- ~~3D 表示（`GLView`）~~（2026-10-24: 敵・フィナーレを Style B の 2D 切り絵に切り替え。`model3d` コードは削除。`expo-gl` / `three` 依存は残存・削除は要承認）。
+- Expo SDK 58 へ移行（2026-10-24）。Expo Go が SDK 58 になったため。RN 0.88 では View / ScrollView の ref は `ViewInstance` / `ScrollViewInstance`。`AnimatedSubtraction` は非ジェネリック。
 - Agent シェルで `npx prettier` を使うと、プロジェクトに設定ファイルが無いためダブルクォートに整形される。使うなら `--single-quote --print-width 100` を付ける。
-- React Native 0.86 では `StyleSheet.absoluteFillObject` が無い（型エラーになる）。`position: 'absolute'` と上下左右 0 を明示する。
+- React Native では `StyleSheet.absoluteFillObject` が無いことがある（型エラーになる）。`position: 'absolute'` と上下左右 0 を明示する。
 - React Native DevTools が起動時にエラー（`libasound.so.2` / `libnspr4.so` 不足）。アプリ動作には影響なし。対処案: `sudo apt install -y libasound2t64 libnspr4 libnss3`（Ubuntu の新しい版では `libasound2` が `libasound2t64` に改名）。
 
 ## 10. 次の候補（未着手）

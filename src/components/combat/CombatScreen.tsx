@@ -7,6 +7,7 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type ViewInstance,
 } from 'react-native';
 import type { Region } from '../../domain/act';
 import type { CardInstance } from '../../domain/card';
@@ -116,8 +117,8 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   useMusic(outcomeRevealed ? null : battleMusicFor(setup.rank, region));
 
   const [cardWidth, setCardWidth] = useState(0);
-  const handView = useRef<View | null>(null);
-  const pileViews = useRef<Partial<Record<CombatPile, View | null>>>({});
+  const handView = useRef<ViewInstance | null>(null);
+  const pileViews = useRef<Partial<Record<CombatPile, ViewInstance | null>>>({});
   const [shownTravels, setShownTravels] = useState<{ events: CombatEvent[]; ids: ReadonlySet<number> }>({
     events: state.events,
     ids: NO_REVEALED,
@@ -137,7 +138,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       return { events: state.events, ids };
     });
   };
-  const bindPile = useCallback((pile: CombatPile, node: View | null) => {
+  const bindPile = useCallback((pile: CombatPile, node: ViewInstance | null) => {
     pileViews.current[pile] = node;
   }, []);
   const {
@@ -174,7 +175,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     },
   });
   const bindHandNode = useCallback(
-    (node: View | null) => {
+    (node: ViewInstance | null) => {
       handView.current = node;
       bindHand(node);
     },

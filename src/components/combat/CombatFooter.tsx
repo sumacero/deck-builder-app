@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 
 export type CombatPile = 'draw' | 'discard' | 'exhaust';
@@ -14,7 +14,7 @@ type CombatFooterProps = {
   onOpenDiscard: () => void;
   onOpenExhaust: () => void;
   /** 札が飛んでいく先を測るため、山札・捨て札・廃棄札の枠を渡す。 */
-  onPileRef: (pile: CombatPile, node: View | null) => void;
+  onPileRef: (pile: CombatPile, node: ViewInstance | null) => void;
   /** 横向きでは手札の横に置くので、ボタンの下に山札・捨て札・廃棄札を並べる。 */
   vertical?: boolean;
 };
@@ -105,9 +105,9 @@ function PileCounter({
   onPress: () => void;
   /** 横向きの狭い列では幅を固定せず、3 つで均等に分ける。 */
   fill: boolean;
-  onPileRef: (pile: CombatPile, node: View | null) => void;
+  onPileRef: (pile: CombatPile, node: ViewInstance | null) => void;
 }) {
-  const viewRef = useCallback((node: View | null) => onPileRef(pile, node), [onPileRef, pile]);
+  const viewRef = useCallback((node: ViewInstance | null) => onPileRef(pile, node), [onPileRef, pile]);
   return (
     <View ref={viewRef} collapsable={false} style={[styles.pile, fill && styles.pileFill]}>
       <Pressable onPress={onPress} style={({ pressed }) => [styles.pileHit, pressed && styles.pressed]}>

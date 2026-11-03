@@ -2,7 +2,27 @@ import type { CardMotion } from '../../../domain/card';
 import type { ActorId, CombatEvent } from '../../../domain/combat';
 import type { EnemyAction } from '../../../domain/enemy';
 import { MOTION } from '../../../theme';
-import type { ActorAction } from '../model3d/actorActions';
+
+/**
+ * カード演出のラベル（かつての 3D 腕振り名）。2D ではキーフレームと VFX の同期にだけ使う。
+ */
+export type ActorAction =
+  | 'slash'
+  | 'cast'
+  | 'combo'
+  | 'cleave'
+  | 'spin'
+  | 'charge'
+  | 'shoot'
+  | 'rapid'
+  | 'volley'
+  | 'aim'
+  | 'lash'
+  | 'whirlLash'
+  | 'guard'
+  | 'hopBack'
+  | 'raise'
+  | 'wince';
 
 /**
  * 動きの 1 コマ。x は「相手に向かう方向」への踏み込み量（向きの反転と斜めの移動は描画側で行う）。
@@ -37,8 +57,8 @@ export type VfxKind =
 export type Burst = { kind: VfxKind; on: 'self' | 'opponent'; delay: number };
 
 /**
- * keyframes は絵（3D の描画面ごと）の移動、action は 3D モデル自身の動き（腕・武器を振る）。
- * action が無い動き（敵）は、3D では相手の方へ体を傾けるだけ。
+ * keyframes は立ち絵ごと（ActorMotion）の移動。
+ * action は演出ラベル（VFX や旧 3D との対応用。描画には使わない）。
  */
 export type MotionPreset = {
   keyframes: Keyframe[];

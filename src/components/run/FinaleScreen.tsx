@@ -1,11 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { CombatEvent } from '../../domain/combat';
 import type { RunState } from '../../domain/run';
 import { currentAct } from '../../logic/run';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
-import { ActorFigure } from '../combat/model3d/ActorFigure';
-import { ENEMY_MODELS } from '../combat/model3d/actorModels';
+import { EnemyPortrait } from '../enemies/EnemyPortrait';
 import { ScreenScroll } from '../layout/ScreenScroll';
 import { RunHud } from './RunHud';
 
@@ -13,8 +11,6 @@ type FinaleScreenProps = {
   run: RunState;
   onStart: () => void;
 };
-
-const NO_EVENTS: CombatEvent[] = [];
 
 /** 最後の章を終えたあと。案内役がラスボスのことを告げ、決戦に挑む。 */
 export function FinaleScreen({ run, onStart }: FinaleScreenProps) {
@@ -33,14 +29,7 @@ export function FinaleScreen({ run, onStart }: FinaleScreenProps) {
           <View style={styles.bubble}>
             <Text style={styles.line}>{run.guide.finaleLine}</Text>
           </View>
-          <ActorFigure
-            model={ENEMY_MODELS[boss.id]}
-            icon={boss.icon}
-            actorId="enemy-0"
-            events={NO_EVENTS}
-            agentId={run.agent.id}
-            size={ACTOR_FIGURE.finaleSize}
-          />
+          <EnemyPortrait enemyId={boss.id} icon={boss.icon} size={ACTOR_FIGURE.finaleSize} />
           <Text style={styles.bossName}>{boss.name}</Text>
         </View>
 

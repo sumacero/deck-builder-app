@@ -1,5 +1,5 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import type { SoundId } from '../../../audio/sounds';
 import { playSound } from '../../../audio/soundPlayer';
 import type { CardDefinition } from '../../../domain/card';
@@ -41,7 +41,7 @@ const readingTime = (text: string) =>
  */
 export function AcquireFlyer({ item, targetKey, sound, onDone }: AcquireFlyerProps) {
   const { measureSlot, land } = useContext(AcquireContext);
-  const origin = useRef<View>(null);
+  const origin = useRef<ViewInstance>(null);
   const skipReading = useRef<(() => void) | null>(null);
   const [appear] = useState(() => new Animated.Value(0));
   const [info] = useState(() => new Animated.Value(0));

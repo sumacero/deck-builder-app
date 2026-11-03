@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { type LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type LayoutChangeEvent, ScrollView, type ScrollViewInstance, StyleSheet, Text, View } from 'react-native';
 import { playSound } from '../../audio/soundPlayer';
 import type { GameMap } from '../../domain/map';
 import type { RunState } from '../../domain/run';
@@ -38,7 +38,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
   const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [contentSize, setContentSize] = useState<Size>({ width: 0, height: 0 });
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const ended = run.phase.kind === 'gameOver' || run.phase.kind === 'cleared';
   const act = currentAct(run);
 

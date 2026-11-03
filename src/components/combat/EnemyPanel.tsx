@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, PlayerState } from '../../domain/combat';
 import { useActorDowned } from '../../hooks/useCombatEvents';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
@@ -20,8 +20,7 @@ import { FighterEffects } from './effects/FighterEffects';
 import { FighterInfoSheet } from './FighterInfoSheet';
 import { HpBar } from './HpBar';
 import { IntentBadge } from './IntentBadge';
-import { ActorFigure } from './model3d/ActorFigure';
-import { ENEMY_MODELS } from './model3d/actorModels';
+import { EnemyPortrait } from '../enemies/EnemyPortrait';
 import { ActorMotion } from './motion/ActorMotion';
 import { StatusRow } from './StatusRow';
 
@@ -42,7 +41,7 @@ type EnemyPanelProps = {
   /** 指定するとタップで状態の解説ではなくこちらを呼ぶ（ポーションの対象選び）。 */
   onSelect?: () => void;
   /** カードを離した位置がこの敵の上かを判定するため、外枠の View を渡す。 */
-  viewRef: (node: View | null) => void;
+  viewRef: (node: ViewInstance | null) => void;
 };
 
 /** 舞台の上側に並ぶ敵 1 体。上に次の行動、中央に敵、下に HP。タップで状態と次の行動の解説。 */
@@ -115,13 +114,10 @@ export function EnemyPanel({
             <View style={figureSize > 0 ? { width: figureSize, height: figureSize } : undefined}>
               <ActorMotion actorId={enemy.uid} events={events} agentId={agentId}>
                 {figureSize > 0 ? (
-                  <ActorFigure
+                  <EnemyPortrait
                     key={`${enemy.uid}-${figureSize}`}
-                    model={ENEMY_MODELS[enemy.id]}
+                    enemyId={enemy.id}
                     icon={enemy.icon}
-                    actorId={enemy.uid}
-                    events={events}
-                    agentId={agentId}
                     size={figureSize}
                   />
                 ) : (

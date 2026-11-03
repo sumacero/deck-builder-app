@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type ViewInstance } from 'react-native';
 import type { CombatEvent, DamagePreview, EnemyState, EnemyUid, PlayerState } from '../../domain/combat';
 import { SPACING } from '../../theme';
 import { EnemyPanel } from './EnemyPanel';
@@ -18,7 +18,7 @@ type EnemyRowProps = {
   highlighted: readonly EnemyUid[];
   /** ポーションの対象を選んでいる間だけ渡す。 */
   onSelect?: (uid: EnemyUid) => void;
-  registerView: (uid: EnemyUid, node: View | null) => void;
+  registerView: (uid: EnemyUid, node: ViewInstance | null) => void;
 };
 
 /** 敵を左から順に横一列に並べる。1 体なら右に寄せ、自分と斜めに向かい合う。 */

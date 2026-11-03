@@ -15,8 +15,9 @@ type HpBarProps = {
   incoming?: number;
 };
 
-const toWidth = (value: Animated.Value | Animated.AnimatedInterpolation<number> | Animated.AnimatedSubtraction<number>) =>
-  value.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
+/** RN 0.88 では Animated ノード同士の interpolate シグネチャが合わないため Value に寄せる。 */
+const toWidth = (value: Animated.Value | Animated.AnimatedInterpolation<number> | ReturnType<typeof Animated.subtract>) =>
+  (value as Animated.Value).interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
 /** 減った分は明るい残像が少し遅れて追いかける。宿り木の予定ダメージは、今の HP の右側を緑にする。 */
 export function HpBar({ hp, maxHp, block, compact = false, incoming = 0 }: HpBarProps) {
