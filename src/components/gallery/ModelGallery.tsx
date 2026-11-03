@@ -1,14 +1,11 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { ALL_AGENTS, CRIMSON_HERO } from '../../data/agents';
+import { ALL_AGENTS } from '../../data/agents';
 import { ALL_ENEMIES } from '../../data/bestiary';
-import type { ActorId, CombatEvent } from '../../domain/combat';
 import { ENEMY_RANK_LABEL } from '../../logic/describe';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { AgentPortrait } from '../agents/AgentPortrait';
-import { ActorFigure } from '../combat/model3d/ActorFigure';
-import { ENEMY_MODELS } from '../combat/model3d/actorModels';
-import type { ActorModel } from '../combat/model3d/modelTypes';
+import { EnemyPortrait } from '../enemies/EnemyPortrait';
 
 type GalleryEntry = {
   key: string;
@@ -17,12 +14,10 @@ type GalleryEntry = {
   /** エージェント / エリート / ボスなど。通常の敵は null。 */
   label: string | null;
   hp: number | null;
-  /** 敵の 3D。エージェントは立ち絵なので undefined。 */
-  model: ActorModel | undefined;
-  /** エージェントなら id（立ち絵用）。 */
+  /** エージェントなら id。敵なら null。 */
   agentId: string | null;
-  /** 向きを決めるため（自分は右向き、敵は左向き）。 */
-  actorId: ActorId;
+  /** 敵なら id。エージェントなら null。 */
+  enemyId: string | null;
 };
 
 const ENTRIES: GalleryEntry[] = [
@@ -33,9 +28,8 @@ const ENTRIES: GalleryEntry[] = [
       icon: agent.icon,
       label: 'エージェント',
       hp: null,
-      model: undefined,
       agentId: agent.id,
-      actorId: 'player',
+      enemyId: null,
     }),
   ),
   ...ALL_ENEMIES.map(
@@ -45,18 +39,16 @@ const ENTRIES: GalleryEntry[] = [
       icon: enemy.icon,
       label: ENEMY_RANK_LABEL[enemy.rank],
       hp: enemy.maxHp,
-      model: ENEMY_MODELS[enemy.id],
       agentId: null,
-      actorId: 'enemy-0',
+      enemyId: enemy.id,
     }),
   ),
 ];
 
-/** 3D は 1 体ごとに GL の描画面を使い、端末ごとに同時に持てる数に上限があるので、ページに分ける。 */
+/** 一度に全部並べると重いのでページ送りする。 */
 const PER_PAGE = 6;
-const NO_EVENTS: CombatEvent[] = [];
 
-/** エージェントは切り紙立ち絵、敵は 3D。図鑑の「キャラ」タブ。 */
+/** エージェント・敵とも切り紙立ち絵。図鑑の「キャラ」タブ。 */
 export function ModelGallery() {
   const [page, setPage] = useState(0);
   const { width, height } = useWindowDimensions();
@@ -75,21 +67,13 @@ export function ModelGallery() {
             {entry.agentId ? (
               <AgentPortrait agentId={entry.agentId} icon={entry.icon} size={size} />
             ) : (
-              <ActorFigure
-                model={entry.model}
-                icon={entry.icon}
-                actorId={entry.actorId}
-                events={NO_EVENTS}
-                agentId={CRIMSON_HERO.id}
-                size={size}
-              />
+              <EnemyPortrait enemyId={entry.enemyId!} icon={entry.icon} size={size} />
             )}
             {entry.label && <Text style={styles.label}>{entry.label}</Text>}
             <Text style={styles.name} numberOfLines={1}>
               {entry.icon} {entry.name}
             </Text>
             {entry.hp !== null && <Text style={styles.hp}>HP {entry.hp}</Text>}
-            {!entry.agentId && !entry.model && <Text style={styles.noModel}>3D なし</Text>}
           </View>
         ))}
       </View>
@@ -147,7 +131,6 @@ const styles = StyleSheet.create({
   label: { color: COLORS.danger, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
   name: { color: COLORS.text, fontSize: 12, fontWeight: '700', paddingHorizontal: SPACING.xs },
   hp: { color: COLORS.textMuted, fontSize: 11 },
-  noModel: { color: COLORS.textMuted, fontSize: 10 },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.md },
   page: { color: COLORS.text, fontSize: 14, fontWeight: '800', minWidth: 56, textAlign: 'center' },
   pageButton: {

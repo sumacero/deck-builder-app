@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, type View } from 'react-native';
+import { Animated, type ViewInstance } from 'react-native';
 import type { CardDefinition, CardInstance } from '../../domain/card';
 import type { EnemyState, EnemyUid, PotionSlot } from '../../domain/combat';
 import type { PotionDefinition } from '../../domain/potion';
@@ -87,10 +87,10 @@ export function useCardDrag({
   const [lifted, setLifted] = useState(false);
   const [ghost] = useState(() => new Animated.ValueXY());
 
-  const containerView = useRef<View | null>(null);
-  const handView = useRef<View | null>(null);
-  const enemyViews = useRef(new Map<EnemyUid, View>());
-  const playerView = useRef<View | null>(null);
+  const containerView = useRef<ViewInstance | null>(null);
+  const handView = useRef<ViewInstance | null>(null);
+  const enemyViews = useRef(new Map<EnemyUid, ViewInstance>());
+  const playerView = useRef<ViewInstance | null>(null);
   const layout = useRef<Layout>({
     origin: { x: 0, y: 0 },
     handRect: null,
@@ -299,17 +299,17 @@ export function useCardDrag({
     return { cardHandlers: cards, potionHandlers: potionDrag };
   }, [ghost, measureContainer]);
 
-  const bindContainer = useCallback((node: View | null) => {
+  const bindContainer = useCallback((node: ViewInstance | null) => {
     containerView.current = node;
   }, []);
-  const bindHand = useCallback((node: View | null) => {
+  const bindHand = useCallback((node: ViewInstance | null) => {
     handView.current = node;
   }, []);
-  const bindEnemy = useCallback((uid: EnemyUid, node: View | null) => {
+  const bindEnemy = useCallback((uid: EnemyUid, node: ViewInstance | null) => {
     if (node) enemyViews.current.set(uid, node);
     else enemyViews.current.delete(uid);
   }, []);
-  const bindPlayer = useCallback((node: View | null) => {
+  const bindPlayer = useCallback((node: ViewInstance | null) => {
     playerView.current = node;
   }, []);
 

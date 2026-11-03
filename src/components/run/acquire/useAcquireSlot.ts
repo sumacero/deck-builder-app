@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { Animated, type View } from 'react-native';
+import { Animated, type ViewInstance } from 'react-native';
 import { MOTION } from '../../../theme';
 import { AcquireContext } from './AcquireContext';
 
@@ -15,7 +15,7 @@ export function useAcquireSlot(key: string) {
   const [bounce] = useState(() => new Animated.Value(0));
   const landCount = landCounts.get(key) ?? 0;
 
-  const bindView = useCallback((node: View | null) => registerSlot(key, node), [registerSlot, key]);
+  const bindView = useCallback((node: ViewInstance | null) => registerSlot(key, node), [registerSlot, key]);
 
   useEffect(() => {
     if (landCount === 0) return;

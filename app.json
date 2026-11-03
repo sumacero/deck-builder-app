@@ -29,7 +29,9 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      "expo-status-bar",
+      "expo-asset"
     ]
   }
 }

@@ -183,6 +183,22 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   'dew-mail': require('../../../assets/cards/dew-mail.jpg'),
   'tide-call': require('../../../assets/cards/tide-call.jpg'),
   'mist-eye': require('../../../assets/cards/mist-eye.jpg'),
+  // キャラに振り分けた手札の札（2026-11-04）
+  'heat-haze': require('../../../assets/cards/heat-haze.jpg'),
+  'fading-blade': require('../../../assets/cards/fading-blade.jpg'),
+  'lingering-guard': require('../../../assets/cards/lingering-guard.jpg'),
+  'bulwark-x': require('../../../assets/cards/bulwark-x.jpg'),
+  'barrage-x': require('../../../assets/cards/barrage-x.jpg'),
+  'encore-strike': require('../../../assets/cards/encore-strike.jpg'),
+  'double-call': require('../../../assets/cards/double-call.jpg'),
+  'opening-strike': require('../../../assets/cards/opening-strike.jpg'),
+  'opening-guard': require('../../../assets/cards/opening-guard.jpg'),
+  'gap-step': require('../../../assets/cards/gap-step.jpg'),
+  'fling-strike': require('../../../assets/cards/fling-strike.jpg'),
+  'card-flow': require('../../../assets/cards/card-flow.jpg'),
+  'sly-shot': require('../../../assets/cards/sly-shot.jpg'),
+  'sly-ward': require('../../../assets/cards/sly-ward.jpg'),
+  'sly-read': require('../../../assets/cards/sly-read.jpg'),
 };
 
 /** イラストの隅に重ねる種類の紋章。小さな手札でも種類がひと目で分かるように。 */

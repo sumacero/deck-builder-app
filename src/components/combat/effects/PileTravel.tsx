@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState, type RefObject } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View, type ViewInstance } from 'react-native';
 import type { CardInstance } from '../../../domain/card';
 import type { CombatEvent, PlayerState } from '../../../domain/combat';
 import { describeHandCard } from '../../../logic/describe';
@@ -15,8 +15,8 @@ type PileTravelProps = {
   hand: CardInstance[];
   player: PlayerState;
   cardWidth: number;
-  handView: RefObject<View | null>;
-  pileViews: RefObject<Partial<Record<PileName, View | null>>>;
+  handView: RefObject<ViewInstance | null>;
+  pileViews: RefObject<Partial<Record<PileName, ViewInstance | null>>>;
   /** 山札から来た札が着地したら、手札の本体を見せる。 */
   onReveal: (eventId: number) => void;
 };
@@ -44,7 +44,7 @@ const ARC_STEPS = [0, 0.25, 0.5, 0.75, 1];
 /** 融合で溶けた札は、残った札の上に重ねず、少し進んだ位置から廃棄札へ飛ばす。 */
 const FUSE_DEPART = 0.22;
 
-const measureView = (view: View | null): Promise<Rect | null> => {
+const measureView = (view: ViewInstance | null): Promise<Rect | null> => {
   if (!view) return Promise.resolve(null);
   return new Promise((resolve) => {
     view.measureInWindow((x, y, width, height) => {
@@ -103,7 +103,7 @@ const arcRange = (delta: number, perpendicular: number) =>
  * 枚数はすでに更新済み。引いた札の本体は、着地を onReveal で知らせるまで手札側が隠す。
  */
 export function PileTravel({ events, hand, player, cardWidth, handView, pileViews, onReveal }: PileTravelProps) {
-  const layerRef = useRef<View>(null);
+  const layerRef = useRef<ViewInstance>(null);
   const [flight, setFlight] = useState<{ events: CombatEvent[]; cardWidth: number; ghosts: Ghost[] } | null>(
     null,
   );

@@ -1,18 +1,25 @@
 import type { CardDefinition } from '../domain/card';
 import type { EventDefinition } from '../domain/event';
 import {
-  BULWARK_X,
+  CINDER_BLADE,
   DEFEND,
-  DOUBLE_CALL,
-  ENCORE_STRIKE,
-  FADING_BLADE,
-  HEAT_HAZE,
-  LINGERING_GUARD,
-  OPENING_GUARD,
-  OPENING_STRIKE,
+  DOUBLE_REFLECTION,
+  EBB_TIDE,
+  FALLING_EMBER,
+  LINGERING_FLAME,
+  MIST_MIRROR,
+  MORNING_DEW,
+  OPENING_FLAME,
+  RESTRING,
+  RETURNING_WAVE,
+  ROOTED_GUARD,
+  SPRAY_STRIKE,
   STRIKE,
+  THORN_FORT,
   ULTIMATE_DEFEND,
   ULTIMATE_STRIKE,
+  WILDFIRE,
+  ARROW_MEASURE,
 } from './cards';
 import { MIRROR_CARDS } from './mirrorCards';
 import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
@@ -595,138 +602,6 @@ const CHAPTER_EVENTS: EventDefinition[] = [
       },
     ],
   },
-  {
-    id: 'roadside-rehearsal',
-    title: '路傍の稽古',
-    icon: '🥋',
-    chapters: [1],
-    text: '道端で、旅の武芸者が素振りをしている。「少し付き合わないか。技を一つ、残していく」',
-    options: [
-      {
-        id: 'haze',
-        label: 'HP を 6 払い、陽炎を受け取る',
-        effects: [
-          { kind: 'loseHp', amount: 6 },
-          { kind: 'addCard', card: HEAT_HAZE },
-        ],
-        outcome: 'かげろうのような受けを、一度だけ教わった。',
-      },
-      {
-        id: 'linger',
-        label: 'HP を 6 払い、残心を受け取る',
-        effects: [
-          { kind: 'loseHp', amount: 6 },
-          { kind: 'addCard', card: LINGERING_GUARD },
-        ],
-        outcome: '打ち終えたあとも、構えを解かない型を覚えた。',
-      },
-      {
-        id: 'leave',
-        label: '傷を癒して離れる',
-        effects: [{ kind: 'heal', amount: 8 }],
-        outcome: '素振りを見ているうちに、息が整った。',
-      },
-    ],
-  },
-  {
-    id: 'gate-warrior',
-    title: '門前の武者',
-    icon: '⚔️',
-    chapters: [1],
-    text: '門の前で、武者が朝の型を繰り返している。「最初の一手は、考える前に出るものだ」',
-    options: [
-      {
-        id: 'strike',
-        label: 'HP を 5 払い、先陣打ちを受け取る',
-        effects: [
-          { kind: 'loseHp', amount: 5 },
-          { kind: 'addCard', card: OPENING_STRIKE },
-        ],
-        outcome: '戦いの最初に出す一撃を、体が覚えた。',
-      },
-      {
-        id: 'guard',
-        label: 'HP を 5 払い、幕開けを受け取る',
-        effects: [
-          { kind: 'loseHp', amount: 5 },
-          { kind: 'addCard', card: OPENING_GUARD },
-        ],
-        outcome: '幕が開く瞬間の受けを、一つ教わった。',
-      },
-      {
-        id: 'leave',
-        label: '傷を癒して離れる',
-        effects: [{ kind: 'heal', amount: 6 }],
-        outcome: '門の陰で一息つき、軽い傷が閉じた。',
-      },
-    ],
-  },
-  {
-    id: 'forgotten-stage',
-    title: '忘れられた舞台',
-    icon: '🎭',
-    chapters: [2],
-    text: '誰もいない舞台に、書きかけの台本と、光る武具が残されている。',
-    options: [
-      {
-        id: 'blade',
-        label: 'HP を 8 払い、消えゆく刃を受け取る',
-        effects: [
-          { kind: 'loseHp', amount: 8 },
-          { kind: 'addCard', card: FADING_BLADE },
-        ],
-        outcome: '光の刃は手の中で薄れ、一度きりの斬撃になった。',
-      },
-      {
-        id: 'bulwark',
-        label: 'HP を 8 払い、堅陣を受け取る',
-        effects: [
-          { kind: 'loseHp', amount: 8 },
-          { kind: 'addCard', card: BULWARK_X },
-        ],
-        outcome: '舞台の盾は、残した力の分だけ厚くなる型だった。',
-      },
-      {
-        id: 'leave',
-        label: '金貨を 25 受け取って離れる',
-        effects: [{ kind: 'gainGold', amount: 25 }],
-        outcome: '客席に落ちていた金貨を拾い、舞台を後にした。',
-      },
-    ],
-  },
-  {
-    id: 'encore-wing',
-    title: '袖の合図',
-    icon: '🎬',
-    chapters: [3],
-    text: '幕の袖から、小さな鈴の音がする。もう一度、同じ技を見せてほしいという合図だ。',
-    options: [
-      {
-        id: 'encore',
-        label: 'HP を 10 払い、追憶打ちを受け取る',
-        effects: [
-          { kind: 'loseHp', amount: 10 },
-          { kind: 'addCard', card: ENCORE_STRIKE },
-        ],
-        outcome: '直前の技が、もう一度舞台に戻ってくる打ち方を覚えた。',
-      },
-      {
-        id: 'call',
-        label: '最大 HP を 4 払い、二重の号令を受け取る',
-        effects: [
-          { kind: 'loseMaxHp', amount: 4 },
-          { kind: 'addCard', card: DOUBLE_CALL },
-        ],
-        outcome: '体の芯が細くなった代わりに、次の一手を二度行う号令が残った。',
-      },
-      {
-        id: 'leave',
-        label: '傷を癒して離れる',
-        effects: [{ kind: 'heal', amount: 10 }],
-        outcome: '袖の暗がりで息を整え、舞台には上がらなかった。',
-      },
-    ],
-  },
 ];
 
 /**
@@ -749,6 +624,289 @@ const CHAPTER_ONLY: Record<string, readonly number[]> = {
   'mirror-lake': [3],
   'ancient-library': [3],
 };
+
+/**
+ * 手札の札を教える出来事。共通の出来事に戻すと、他のキャラの属性札が混ざるので、
+ * そのキャラの候補だけに足す。
+ */
+export const KYLE_TECHNIQUE_EVENTS: readonly EventDefinition[] = [
+  {
+    id: 'cinder-practice',
+    title: '火蓋の稽古',
+    icon: '🔥',
+    chapters: [1],
+    text: '焼けた石の広場で、剣士が炎の素振りをしている。「最初の一振りは、考える前に出せ」',
+    options: [
+      {
+        id: 'blade',
+        label: 'HP を 6 払い、燼刃を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: CINDER_BLADE },
+        ],
+        outcome: '炎の刃は、振らなければその場で消えると教わった。',
+      },
+      {
+        id: 'open',
+        label: 'HP を 6 払い、火蓋を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: OPENING_FLAME },
+        ],
+        outcome: '戦いの最初に出す炎の一撃を、体が覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 8 }],
+        outcome: '炎の熱を背に、息を整えた。',
+      },
+    ],
+  },
+  {
+    id: 'wildfire-stage',
+    title: '燎原の舞台',
+    icon: '🎭',
+    chapters: [2],
+    text: '誰もいない舞台の床が、まだ熱い。炎の型を書いた台本が、端から焦げている。',
+    options: [
+      {
+        id: 'sweep',
+        label: 'HP を 8 払い、燎原を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: WILDFIRE },
+        ],
+        outcome: '残した力の分だけ、炎が舞台いっぱいに走る型を覚えた。',
+      },
+      {
+        id: 'echo',
+        label: 'HP を 8 払い、残焔を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: LINGERING_FLAME },
+        ],
+        outcome: '一度振った炎が、もう一度だけ燃え残る打ち方を覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '金貨を 25 受け取って離れる',
+        effects: [{ kind: 'gainGold', amount: 25 }],
+        outcome: '客席に落ちていた金貨を拾い、熱い舞台を後にした。',
+      },
+    ],
+  },
+  {
+    id: 'falling-ember-wing',
+    title: '落ち火の合図',
+    icon: '✨',
+    chapters: [3],
+    text: '幕の袖で、小さな火の粉が床に落ちても、まだ赤く光っている。',
+    options: [
+      {
+        id: 'ember',
+        label: 'HP を 8 払い、落ち火を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: FALLING_EMBER },
+        ],
+        outcome: '手放した火の粉が、落ちた先でもう一度燃える型を覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 10 }],
+        outcome: '袖の暗がりで息を整え、舞台には上がらなかった。',
+      },
+    ],
+  },
+];
+
+export const RINE_TECHNIQUE_EVENTS: readonly EventDefinition[] = [
+  {
+    id: 'dew-footing',
+    title: '朝露の足場',
+    icon: '🌿',
+    chapters: [1],
+    text: '森の入り口で、狩人が葉の上の露を指で弾いている。「残す露と、すぐ消える露がある」',
+    options: [
+      {
+        id: 'dew',
+        label: 'HP を 6 払い、朝露を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: MORNING_DEW },
+        ],
+        outcome: '朝いちばんの露の受けを教わった。使わなければ、その場で消える。',
+      },
+      {
+        id: 'roots',
+        label: 'HP を 6 払い、根張りを受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: ROOTED_GUARD },
+        ],
+        outcome: '打ち終えたあとも根を解かない構えを覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 8 }],
+        outcome: '葉の匂いを吸っているうちに、息が整った。',
+      },
+    ],
+  },
+  {
+    id: 'thorn-stage',
+    title: '茨の舞台',
+    icon: '🎭',
+    chapters: [2],
+    text: '茨に囲まれた空き地に、弓と、厚さの違う枝の壁が残されている。',
+    options: [
+      {
+        id: 'fort',
+        label: 'HP を 8 払い、茨砦を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: THORN_FORT },
+        ],
+        outcome: '残した力の分だけ厚くなる、茨の壁の型を覚えた。',
+      },
+      {
+        id: 'measure',
+        label: 'HP を 8 払い、矢尺を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: ARROW_MEASURE },
+        ],
+        outcome: '一本を外して、次の矢を番える間合いを教わった。',
+      },
+      {
+        id: 'leave',
+        label: '金貨を 25 受け取って離れる',
+        effects: [{ kind: 'gainGold', amount: 25 }],
+        outcome: '茨の根元に落ちていた金貨を拾い、空き地を出た。',
+      },
+    ],
+  },
+  {
+    id: 'restring-signal',
+    title: '弦の合図',
+    icon: '🍃',
+    chapters: [3],
+    text: '木の陰で、予備の弦が風に鳴っている。今の弦を捨てて、張り直せという合図だ。',
+    options: [
+      {
+        id: 'restring',
+        label: 'HP を 8 払い、弦替えを受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: RESTRING },
+        ],
+        outcome: '手元の矢を二本外し、新しい矢を三本番える手順を覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 10 }],
+        outcome: '木陰で息を整え、弦には触れなかった。',
+      },
+    ],
+  },
+];
+
+export const NOAH_TECHNIQUE_EVENTS: readonly EventDefinition[] = [
+  {
+    id: 'mist-basin',
+    title: '霧の水鏡',
+    icon: '💧',
+    chapters: [1],
+    text: '朝の水盤に霧がかかっている。占い師が水面を一度だけ叩く。「残すと、霧は消える」',
+    options: [
+      {
+        id: 'mirror',
+        label: 'HP を 6 払い、霧鏡を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: MIST_MIRROR },
+        ],
+        outcome: '霧の受けを教わった。手に残したままにすると、その霧は消える。',
+      },
+      {
+        id: 'spray',
+        label: 'HP を 6 払い、しぶき打ちを受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: SPRAY_STRIKE },
+        ],
+        outcome: '一枚を水面へ落としてから、しぶきを飛ばす打ち方を覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 8 }],
+        outcome: '霧の冷たさで熱が引き、軽い傷が閉じた。',
+      },
+    ],
+  },
+  {
+    id: 'returning-stage',
+    title: '返し波の舞台',
+    icon: '🎭',
+    chapters: [2],
+    text: '水を張った舞台で、一度引いた波が、岸へ戻ってきている。',
+    options: [
+      {
+        id: 'ward',
+        label: 'HP を 8 払い、返し波を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: RETURNING_WAVE },
+        ],
+        outcome: '手放した水が、戻るときに身を守る型を覚えた。',
+      },
+      {
+        id: 'ebb',
+        label: 'HP を 8 払い、引き潮を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: EBB_TIDE },
+        ],
+        outcome: '引いていく潮が、次の札を二枚連れて戻る読み方を覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '金貨を 25 受け取って離れる',
+        effects: [{ kind: 'gainGold', amount: 25 }],
+        outcome: '水底で光っていた金貨を拾い、舞台を後にした。',
+      },
+    ],
+  },
+  {
+    id: 'double-reflection-wing',
+    title: '映しの合図',
+    icon: '🔮',
+    chapters: [3],
+    text: '幕の袖の水盤が、同じ波紋を二つ映している。次の一手を、水面がもう一度なぞれという合図だ。',
+    options: [
+      {
+        id: 'reflect',
+        label: '最大 HP を 4 払い、二重映しを受け取る',
+        effects: [
+          { kind: 'loseMaxHp', amount: 4 },
+          { kind: 'addCard', card: DOUBLE_REFLECTION },
+        ],
+        outcome: '体の芯が細くなった代わりに、次の一手を水面がもう一度映す札が残った。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 10 }],
+        outcome: '袖の暗がりで息を整え、水盤には触れなかった。',
+      },
+    ],
+  },
+];
 
 export const STANDARD_EVENTS: EventDefinition[] = [...EVENT_LIST, ...CHAPTER_EVENTS].map((event) => {
   const chapters = CHAPTER_ONLY[event.id];

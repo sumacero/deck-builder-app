@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type ViewInstance, type StyleProp, type ViewStyle } from 'react-native';
 import type { CardInstance } from '../../domain/card';
 import type { CombatEvent, PlayerState } from '../../domain/combat';
 import { describeHandCard } from '../../logic/describe';
@@ -29,7 +29,7 @@ type HandProps = CardDragHandlers & {
   /** 少し浮かしている札。波紋の起点も同じだけ上がる。 */
   selectedId: string | null;
   /** カードを離した位置が手札より上かを判定するため、外枠の View を渡す。 */
-  viewRef: (node: View | null) => void;
+  viewRef: (node: ViewInstance | null) => void;
   /** カード幅が決まったら知らせる（持ち上げたカードを同じ大きさで描くため）。 */
   onCardWidth: (width: number) => void;
   /** カードの高さの上限（横向きで画面が低いとき）。 */

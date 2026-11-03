@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import type { AgentDefinition } from '../../domain/agent';
 import type { CombatEvent, PlayerState } from '../../domain/combat';
 import { useDisplayedVitals } from '../../hooks/useDisplayedVitals';
@@ -23,7 +23,7 @@ type PlayerPanelProps = {
   /** 自分に使うカードの指が、自分の範囲にある（ここで離すと使う）。 */
   highlighted: boolean;
   /** 自分の範囲を測るため、外枠の View を渡す（縦向きでは下段を横いっぱいに使う）。 */
-  viewRef: (node: View | null) => void;
+  viewRef: (node: ViewInstance | null) => void;
 };
 
 /** 舞台の下段。体は名前・HP の背景。タップでかかっている状態の解説。 */
