@@ -19,6 +19,12 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['damage', 'loseHp'];
     case 'damageFromBlock':
       return ['damage', 'block'];
+    case 'damageFromAttackWater':
+      return ['damage', 'water'];
+    case 'blockFromGuardWater':
+      return ['block', 'water'];
+    case 'damageByExhaustCount':
+      return ['damage', 'exhaust'];
     case 'block':
     case 'doubleBlock':
       return ['block'];

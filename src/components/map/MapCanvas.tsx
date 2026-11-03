@@ -1,11 +1,14 @@
 import { View } from 'react-native';
+import type { MapNode } from '../../domain/map';
 import type { RunState } from '../../domain/run';
 import { findNode, reachableNodeIds } from '../../logic/run';
-import { MAP_LAYOUT } from '../../theme';
+import { COLORS, MAP_LAYOUT, RADIUS } from '../../theme';
 import { MapCurrentMarker } from './MapCurrentMarker';
 import { MapEdge } from './MapEdge';
 import type { MapLayout } from './mapLayout';
 import { MapNodeView } from './MapNodeView';
+
+const nodeRadius = (node: MapNode) => (node.type === 'boss' ? MAP_LAYOUT.bossSize : MAP_LAYOUT.nodeSize) / 2;
 
 type MapCanvasProps = {
   run: RunState;
@@ -25,17 +28,33 @@ export function MapCanvas({ run, layout, ended, selectedId, onMove }: MapCanvasP
   const currentPosition = current ? layout.positions[current.id] : undefined;
   return (
     <View style={{ width: layout.width, height: layout.height }}>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: layout.width,
+          height: layout.height,
+          borderRadius: RADIUS.lg,
+          backgroundColor: COLORS.mapScrim,
+        }}
+      />
       {run.map.nodes.flatMap((node) =>
         node.next.map((toId) => {
           const to = findNode(run.map, toId);
           const fromPos = layout.positions[node.id];
           const toPos = layout.positions[toId];
           if (!to || !fromPos || !toPos) return null;
+          const fromCurrent = current?.id === node.id;
           return (
             <MapEdge
               key={`${node.id}->${toId}`}
               from={fromPos}
               to={toPos}
+              fromRadius={nodeRadius(node)}
+              toRadius={nodeRadius(to)}
+              next={fromCurrent && reachable.has(toId)}
               traveled={visited.has(node.id) && visited.has(toId)}
             />
           );

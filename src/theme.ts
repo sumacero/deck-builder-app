@@ -49,6 +49,8 @@ export const COLORS = {
   flash: '#FFF4D6',
   /** 画面切り替えの暗転。 */
   fade: '#0A0E1C',
+  /** マップの絵の上に敷く下地。道とマスが絵に溶けない程度に残す。 */
+  mapScrim: 'rgba(10, 14, 28, 0.72)',
   /** カードのイラストの隅に重ねる、種類の紋章の下地。 */
   cardEmblemBg: 'rgba(10, 14, 30, 0.7)',
   /** 弱点を突いたときの文字と、敵の弱点の表示。 */
@@ -78,15 +80,28 @@ export const MAP_NODE_COLORS: Record<MapNodeType, string> = {
   boss: '#C2364F',
 };
 
+/** マップの道。まだ選んでいない道も、通った道も、次の一手も、絵の上で追える明るさにする。 */
+export const MAP_PATH = {
+  ahead: COLORS.text,
+  taken: COLORS.gold,
+  next: COLORS.flash,
+  outline: COLORS.fade,
+} as const;
+
 export const MAP_LAYOUT = {
-  rowHeight: 76,
+  rowHeight: 96,
   nodeSize: 42,
   bossSize: 68,
-  verticalPadding: 48,
-  /** マスの位置を少しずらして手描きっぽく見せる幅。 */
-  jitter: 8,
-  dotSpacing: 9,
-  dotSize: 4,
+  verticalPadding: 64,
+  /** マスの位置のずれ。道が折れ曲がって見えなくならないよう、小さく留める。 */
+  jitter: 3,
+  /** 道の線の太さ。次に進める道だけ太くする。 */
+  lineWidth: 4,
+  lineOutline: 8,
+  nextLineWidth: 6,
+  nextLineOutline: 11,
+  /** 線をマスの縁からどれだけ離すか。 */
+  lineInset: 6,
   /** マップを開いたとき、今いるマスを表示領域の上からこの割合の位置に置く（上の、この先のマスを広く見せる）。 */
   currentNodeViewportRatio: 0.7,
   /** 今いるマスの目印: 輪とマスの隙間、ピンの大きさ・マスとの隙間・弾む高さ。 */

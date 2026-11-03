@@ -82,8 +82,8 @@ export function handMultiplier(instance: CardInstance, player: PlayerState): num
 const scale = (amount: number, multiplier: number) => Math.floor(amount * multiplier);
 
 /**
- * 段の倍率をかけた効果。ダメージ・ブロック・デバフのターン数・霜・かわす・筋力を消す量・悪い効果を消す数・攻撃回数減。
- * ドローとエナジーは増やさない。水札で無いカードはそのまま。
+ * 段の倍率をかけた効果。ダメージ・ブロック・デバフのターン数・霜・かわす・筋力を消す量・悪い効果を消す数・攻撃回数減・廃棄札の回数ダメージ。
+ * 水力そのものをダメージやブロックにする効果は、今の水力に同じ倍率をかける。ドローとエナジーは増やさない。水札で無いカードはそのまま。
  */
 export function scaledEffects(card: CardDefinition, multiplier: number): Effect[] {
   if (multiplier === 1 || card.water !== true) return card.effects;
@@ -101,7 +101,11 @@ function scaleEffect(effect: Effect, multiplier: number): Effect {
     case 'cutHits':
     case 'discardFromHand':
     case 'exhaustFromHand':
+    case 'damageByExhaustCount':
       return { ...effect, amount: scale(effect.amount, multiplier) };
+    case 'damageFromAttackWater':
+    case 'blockFromGuardWater':
+      return { ...effect, stackScale: multiplier };
     case 'damagePerCardPlayed':
     case 'damagePerSkillPlayed':
     case 'damagePerAttackPlayed':
