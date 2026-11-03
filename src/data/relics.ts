@@ -11,30 +11,21 @@ export const FIGHTING_SPIRIT: RelicDefinition = {
 };
 
 /**
- * ノアの初期レリック。毎ターン最初の重ねで、消した札の段と同じだけ水力が余分に入る。
- * 入る先は消した札の種類（アタックなら攻撃、スキルなら守り）。効果の適用は戦闘の重ね処理。
+ * ノアの初期レリック。戦闘の最初から水力があり、廃棄するたびに盾になる。
+ * 重ねて消した下の札も廃棄なので、水札を重ねる戦いそのものが守りになる。
  */
 export const CRYSTAL_WEIGHT: RelicDefinition = {
   id: 'crystal-weight',
   name: '水晶の文鎮',
   icon: '💎',
   rarity: 'starter',
+  trigger: 'combatStart',
+  effects: [
+    { kind: 'gainWater', pool: 'attack', amount: 1 },
+    { kind: 'gainWater', pool: 'guard', amount: 1 },
+  ],
   summary:
-    '毎ターン最初に札を重ねたとき、消した札の段と同じだけ、その種類の水力が余分に溜まる。アタックを消すと攻撃の水力、スキルを消すと守りの水力。',
-  effects: [],
-};
-
-/**
- * ノアの初期レリック。戦闘に勝つたび少し回復する。
- * 水札を重ねなくても届くので、札を無作為に使うだけの戦いでも第 1 章で干上がらない。
- */
-export const QUIET_TIDE: RelicDefinition = {
-  id: 'quiet-tide',
-  name: '静かな潮',
-  icon: '💧',
-  rarity: 'starter',
-  trigger: 'combatWon',
-  effects: [{ kind: 'heal', amount: 6 }],
+    '戦闘開始時、攻撃の水力と守りの水力を 1 ずつ得る。カードが廃棄されるたび、ブロック 2 を得る。重ねて消した下の札も廃棄なので、重ねるたびに盾になる。',
 };
 
 /** リーネの初期レリック。戦闘開始時に宿り木を植える。 */

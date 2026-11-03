@@ -107,6 +107,75 @@ export const ECHO_WAVE: CardDefinition = {
   art: 'drizzle',
 };
 
+/** 手札を 1 枚廃棄して、攻撃と守りの水力を両方足す。廃棄札を増やす入口。 */
+export const DRAW_TIDE: CardDefinition = {
+  ...NOA,
+  id: 'draw-tide',
+  name: '潮汲み',
+  rarity: 'uncommon',
+  type: 'skill',
+  archetypes: ['element'],
+  water: true,
+  cost: 1,
+  target: 'self',
+  effects: [
+    { kind: 'exhaustFromHand', amount: 1, choose: true },
+    { kind: 'gainWater', pool: 'attack', amount: 1 },
+    { kind: 'gainWater', pool: 'guard', amount: 1 },
+  ],
+  upgrade: { cost: 0 },
+  art: 'shoreline',
+};
+
+/** 廃棄札が増えるほどブロックが増える。空でも 1 回分は出る。ブロック軸にはしない。 */
+export const DEPTH_CALM: CardDefinition = {
+  ...NOA,
+  id: 'depth-calm',
+  name: '底凪',
+  rarity: 'uncommon',
+  type: 'skill',
+  archetypes: ['element'],
+  water: true,
+  cost: 1,
+  target: 'self',
+  effects: [{ kind: 'blockByExhaustCount', amount: 4 }],
+  upgrade: { effects: [{ kind: 'blockByExhaustCount', amount: 5 }] },
+  art: 'tide-sense',
+};
+
+/** この戦闘で廃棄した枚数だけ大きくなる一撃。残波の連打とは別に、1 発でまとめて当てる。 */
+export const BACKFLOW: CardDefinition = {
+  ...NOA,
+  id: 'backflow',
+  name: '澪返し',
+  rarity: 'uncommon',
+  type: 'attack',
+  archetypes: ['element'],
+  water: true,
+  cost: 1,
+  target: 'enemy',
+  effects: [{ kind: 'damagePerExhaust', base: 4, perCard: 3 }],
+  upgrade: { effects: [{ kind: 'damagePerExhaust', base: 6, perCard: 3 }] },
+  art: 'drizzle',
+};
+
+/** ノア専用の回数札。水札なので重ねられる。2 回使うと廃棄。強化で 3 回。 */
+export const MIRROR_WAVE: CardDefinition = {
+  ...NOA,
+  id: 'mirror-wave',
+  name: '写し波',
+  rarity: 'uncommon',
+  type: 'attack',
+  archetypes: ['element'],
+  water: true,
+  cost: 1,
+  target: 'enemy',
+  uses: 2,
+  effects: [{ kind: 'damage', amount: 8 }],
+  upgrade: { uses: 3 },
+  art: 'raindrop',
+};
+
 /** 溜めた守りの水力を、減らさずにブロックへ変える。ブロック軸にはせず、水の報酬に残す。 */
 export const GUARD_TIDE: CardDefinition = {
   ...NOA,
@@ -179,6 +248,10 @@ export const MIRROR_CARDS: CardDefinition[] = [
   TIDE_STRIKE,
   ECHO_WAVE,
   GUARD_TIDE,
+  DRAW_TIDE,
+  DEPTH_CALM,
+  BACKFLOW,
+  MIRROR_WAVE,
   // --- 単体の高火力・大きなブロック ---
   {
     ...NOA,

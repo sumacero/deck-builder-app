@@ -24,7 +24,10 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'blockFromGuardWater':
       return ['block', 'water'];
     case 'damageByExhaustCount':
-      return ['damage', 'exhaust'];
+    case 'blockByExhaustCount':
+      return effect.kind === 'blockByExhaustCount' ? ['block', 'exhaust'] : ['damage', 'exhaust'];
+    case 'gainWater':
+      return ['water'];
     case 'block':
     case 'doubleBlock':
       return ['block'];
@@ -159,6 +162,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.innate ? (['innate'] as const) : []),
     ...(card.xCost ? (['xCost'] as const) : []),
     ...(card.sly ? (['sly'] as const) : []),
+    ...(card.uses !== undefined ? (['uses'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
     ...(card.waterCost ? (['water'] as const) : []),

@@ -47,4 +47,9 @@ export type EconomyConfig = {
   shopPotionCount: number;
   /** 宝箱に入っているゴールド（レリックと一緒にもらえる）。 */
   treasureGold: { min: number; max: number };
+  /**
+   * エリート・ボスに勝ったとき、ポーションの 3 択が出る確率。
+   * 0.3 なら 10 戦中およそ 3 戦。通常戦はカードの強化かゴールドだけで、ここには入らない。
+   */
+  potionDropChance: number;
 };

@@ -12,7 +12,6 @@ import {
   BOSS_RELIC_POOL,
   CRYSTAL_WEIGHT,
   FIGHTING_SPIRIT,
-  QUIET_TIDE,
   RELIC_POOL,
   WORLD_TREE_SPROUT,
 } from './relics';
@@ -24,7 +23,7 @@ import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
  * 2026-10-07 時点では各 38 種、共通 8 種。2026-10-08 にブロックを足した。
  * リーネのブロックは蔦の受け・年輪の盾・葉の番え・鞭の牽制・樹皮の衣・茨返し・根の打ち据え。
  * 2026-10-10 のノアは印のカード。波はブロック軸ではなく波の印なので、盾のフィルタには掛からない。
- * エージェントと違う属性のカードは報酬に出ず、ショップでだけ買える（`isDraftable`）ので、候補には入れておく。
+ * エージェントと違う属性のカードは、報酬にもショップにも出ない。候補には残しているが、抽選では除く。
  */
 const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS, ...MIRROR_CARDS];
 
@@ -116,7 +115,7 @@ const HUNTER_EXCLUDED_CARD_IDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * リーネの候補: 属性カード（草は報酬、火・水はショップ限定）と、共通の無属性カードだけ。
+ * リーネの候補: 草属性と、共通の無属性カード。火・水は報酬にもショップにも出ない。
  * ブロック軸は、狩人の 7 種だけ出す。カイルの盾や以前の茨の守りは出さない。
  */
 const HUNTER_REWARD_CARDS = [
@@ -164,7 +163,7 @@ export const VERDANT_RUN: RunSetup = {
 
 /**
  * ノアの候補。盾や蔦は出さない。波の印はブロック軸ではないので、ここには残る。
- * 火・草のブロックカードはショップの別属性枠に残す。
+ * 火・草のカードはプールに残るが、抽選では除く。
  */
 const MIRROR_REWARD_CARDS = [
   ...REWARD_CARDS.filter((card) => card.attribute !== undefined || SHARED_NEUTRAL_CARD_IDS.has(card.id)),
@@ -172,13 +171,13 @@ const MIRROR_REWARD_CARDS = [
   ...MIRROR_CARDS,
 ].filter((card) => !isBlockAxis(card) || (card.attribute !== undefined && card.attribute !== 'water'));
 
-/** ノアの最大 HP はカイルと同じ 72。文鎮は最初の重ねで水力を足し、静かな潮は勝つたびに 6 回復する。 */
+/** ノアの最大 HP はカイルと同じ 72。初期レリックは水晶の文鎮だけ。 */
 export const MIRROR_RUN: RunSetup = {
   ...STANDARD_RUN,
   agent: MIRROR_SEER,
   deck: MIRROR_STARTER_DECK,
   playerMaxHp: 72,
-  relics: [CRYSTAL_WEIGHT, QUIET_TIDE],
+  relics: [CRYSTAL_WEIGHT],
   rewardPool: MIRROR_REWARD_CARDS,
   eventPool: [...STANDARD_EVENTS, BASIN_ORACLE],
 };

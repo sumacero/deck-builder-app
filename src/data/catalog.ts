@@ -23,7 +23,6 @@ import {
   BOSS_RELIC_POOL,
   CRYSTAL_WEIGHT,
   FIGHTING_SPIRIT,
-  QUIET_TIDE,
   RELIC_POOL,
   WORLD_TREE_SPROUT,
 } from './relics';
@@ -67,7 +66,6 @@ export const ALL_RELICS: RelicDefinition[] = uniqueById([
   FIGHTING_SPIRIT,
   WORLD_TREE_SPROUT,
   CRYSTAL_WEIGHT,
-  QUIET_TIDE,
   ...RELIC_POOL,
   ...BOSS_RELIC_POOL,
 ]);

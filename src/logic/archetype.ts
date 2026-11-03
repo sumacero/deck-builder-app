@@ -13,7 +13,7 @@ export function cardsForAct(pool: readonly CardDefinition[], act: number): CardD
 
 /**
  * ショップと、軸が決まっていないときの候補。
- * 違う属性はショップ限定なので除く。軸の決め手（archetypePayoff）も除く。
+ * 違う属性のカードは出さない。軸の決め手（archetypePayoff）も除く。
  */
 export const draftPool = (run: RunState): CardDefinition[] =>
   cardsForAct(run.rewardPool, actNumber(run)).filter(

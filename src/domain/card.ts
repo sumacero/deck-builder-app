@@ -58,6 +58,8 @@ export type CardUpgrade = {
   effects?: Effect[];
   exhaust?: boolean;
   growth?: CardGrowth;
+  /** 戦闘中に使える回数。強化すると 1 回増やす。 */
+  uses?: number;
 };
 
 export type CardDefinition = {
@@ -102,13 +104,18 @@ export type CardDefinition = {
    * ターンの終わりに手札を捨てるときも使う。
    */
   sly?: boolean;
+  /**
+   * 回数。1 戦闘で使える回数。使い切ると廃棄札へ行き、その戦闘では戻ってこない。
+   * 捨て札や山札に戻っても、残りの回数は残る。強化すると 1 回増える。
+   */
+  uses?: number;
   /** ターン終了時に手札にあるとかかる効果。 */
   turnEndInHand?: Effect[];
   growth?: CardGrowth;
   /** 攻撃の属性。アタックで省略すると斬。秘奥義は全属性を持つ。 */
   /**
    * カードの属性。省略で無属性（誰でも報酬で手に入る）。
-   * エージェントと違う属性のカードは通常の報酬に出ず、ショップでのみ買える。
+   * エージェントと違う属性のカードは、報酬にもショップにも出ない。
    */
   attribute?: Attribute;
   /** ストライクのように、エージェントの属性を受け継ぐ初期カード。 */
@@ -147,6 +154,8 @@ export type CardDefinition = {
 export type CardInstance = {
   instanceId: string;
   card: CardDefinition;
+  /** 回数札の、この戦闘でまだ使える回数。省略は card.uses（まだ使っていない）。 */
+  usesLeft?: number;
   /**
    * 段（この札にまとまっている枚数）。省略は 1。重ねるたびに倍になり、2・4 と上がる。
    * 捨て札・山札・廃棄に移っても、その戦闘のあいだは残る。

@@ -78,6 +78,12 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
         : '今の守りの水力と同じブロックを得る。水力は減らない。';
     case 'damageByExhaustCount':
       return `${target === 'allEnemies' ? '敵全体に' : ''}${effect.amount} ダメージ。廃棄札 1 枚につき 1 回（最低 1 回）。`;
+    case 'blockByExhaustCount':
+      return `ブロック ${effect.amount}。廃棄札 1 枚につき 1 回（最低 1 回）。`;
+    case 'gainWater':
+      return effect.pool === 'attack'
+        ? `攻撃の水力 ${effect.amount} を得る。`
+        : `守りの水力 ${effect.amount} を得る。`;
     case 'doubleBlock':
       return '今のブロック値を 2 倍にする。';
     case 'applyDebuff':
@@ -301,6 +307,7 @@ export function describeCard(card: CardDefinition): string {
     card.innate ? '先制。戦闘開始時、手札にある。' : '',
     card.xCost ? 'Xコスト。残っているエナジーをすべて払う。' : '',
     card.sly ? '昇華。捨てられたとき、コストを払わずに使う。' : '',
+    card.uses !== undefined ? `${card.uses} 回使える。使い切ると、その戦闘では廃棄される。` : '',
     card.growth ? describeGrowth(card.growth) : '',
     card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
@@ -315,8 +322,12 @@ export function describeCard(card: CardDefinition): string {
 /** 手札の札。段と深みが入った、いま使うと出る数字。 */
 export function describeHandCard(instance: CardInstance, player: PlayerState): string {
   const multiplier = handMultiplier(instance, player);
-  if (multiplier === 1) return describeCard(instance.card);
-  return describeCard({ ...instance.card, effects: scaledEffects(instance.card, multiplier) });
+  const shown =
+    instance.usesLeft !== undefined && instance.card.uses !== undefined
+      ? { ...instance.card, uses: instance.usesLeft }
+      : instance.card;
+  if (multiplier === 1) return describeCard(shown);
+  return describeCard({ ...shown, effects: scaledEffects(shown, multiplier) });
 }
 
 export type MarkPreviewLine = { label: string; text: string };

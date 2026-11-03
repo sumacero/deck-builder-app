@@ -22,6 +22,10 @@ export type Effect =
   | { kind: 'blockFromGuardWater'; stackScale?: number }
   /** 廃棄札 1 枚につき 1 回、amount ダメージ（最低 1 回）。使っているこの札は、まだ廃棄札に無いので数えない。 */
   | { kind: 'damageByExhaustCount'; amount: number }
+  /** 廃棄札 1 枚につき amount のブロック（最低 1 回分）。使っているこの札は数えない。 */
+  | { kind: 'blockByExhaustCount'; amount: number }
+  /** 水力を得る。attack は攻撃の水力、guard は守りの水力。ターンでは消えない。 */
+  | { kind: 'gainWater'; pool: 'attack' | 'guard'; amount: number }
   | { kind: 'block'; amount: number }
   /** 今のブロック値を 2 倍にする。 */
   | { kind: 'doubleBlock' }
