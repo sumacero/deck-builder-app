@@ -41,6 +41,7 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
   - 1 つのコンポーネントは 1 つの責務に保ち、肥大化したら分割する。
   - 状態の更新はイミュータブルに行う。
 - コンポーネントを追加・修正したら、`npx tsc --noEmit`（型チェック）と `npx expo lint` がエラーなしで通ることを確認してから完了とする。
+- 指示を処理している間は、1分おきにチャットへ日本語で一言だけ進捗を書く。いま何をしているかでよい。作業が無いときは「待機しています」。
 
 ## 4. エンジニアの学習戦略
 
