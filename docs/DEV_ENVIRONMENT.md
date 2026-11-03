@@ -87,7 +87,7 @@ WSL のターミナルを 2 つ開き、それぞれで起動して開いたま�
 cd ~/projects/deck-builder-app && agent worker start --name deck-pc
 
 # 2. Expo 開発サーバー（Expo Go で確認する）。出た QR コードを Expo Go で読む
-cd ~/projects/deck-builder-app && npx expo start --tunnel
+cd ~/projects/deck-builder-app && npx expo start --tunnel ngrok
 ```
 
 - PC は電源につなぐ。Windows の設定で「電源接続時はスリープしない」「カバーを閉じても何もしない」にしてある（2026-10-06 設定済み）。
