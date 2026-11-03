@@ -10,10 +10,10 @@ import { generateBlessingOptions } from './blessing';
 import { soloEncounter, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
-import { actNumber, cardsForAct, draftPool, pickRewardChoices, rewardCandidates } from './archetype';
-import { attuneDeck, isDraftable, regionDisadvantagesPlayer } from './attribute';
+import { draftPool, pickRewardChoices, rewardCandidates } from './archetype';
+import { attuneDeck, regionDisadvantagesPlayer } from './attribute';
 import { canUpgrade, upgradeInDeck } from './cards';
-import { pickOne, pickUnique, randomInt } from './random';
+import { nextRandom, pickOne, pickUnique, randomInt } from './random';
 import { grantRandomRelic, obtainRelic, unownedRelics } from './runEffects';
 import { generateShopStock } from './shop';
 import { EMPTY_RUN_STATS, mergeStats } from './stats';
@@ -125,9 +125,7 @@ export function reachedFloor(run: RunState): number {
 function openShop(run: RunState): RunState {
   const generated = generateShopStock(
     draftPool(run),
-    cardsForAct(run.rewardPool, actNumber(run)).filter(
-      (card) => !isDraftable(card, run.agent) && !card.archetypePayoff,
-    ),
+    [],
     unownedRelics(run, run.relicPool),
     run.potionPool,
     run.economy,
@@ -220,7 +218,11 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
     looted.run.rngSeed,
     looted.run.economy.cardTierWeight,
   );
-  const potions = pickUnique(looted.run.potionPool, REWARD_CHOICES, offered.seed);
+  const potionRoll = nextRandom(offered.seed);
+  const dropPotion = potionRoll.value < (looted.run.economy.potionDropChance ?? 0.3);
+  const potions = dropPotion
+    ? pickUnique(looted.run.potionPool, REWARD_CHOICES, potionRoll.seed)
+    : { items: [], seed: potionRoll.seed };
   return {
     ...looted.run,
     rngSeed: potions.seed,

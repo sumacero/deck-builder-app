@@ -72,7 +72,7 @@ export function cardAttributes(card: CardDefinition): Attribute[] {
   return card.attribute ? [card.attribute] : [];
 }
 
-/** 通常の報酬に出せるか（無属性か、エージェントと同じ属性）。違う属性はショップ限定。 */
+/** 通常の報酬とショップに出せるか（無属性か、エージェントと同じ属性）。 */
 export const isDraftable = (card: CardDefinition, agent: AgentDefinition) =>
   card.attribute === undefined || card.attribute === agent.attribute;
 

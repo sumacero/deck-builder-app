@@ -2,7 +2,7 @@ import type { CardDefinition } from '../domain/card';
 import { DEFEND, STRIKE } from './cards';
 
 /**
- * 翠風のリーネ（草属性）のためのカード。草属性なので、リーネは戦闘報酬で、ほかのエージェントはショップでだけ手に入る。
+ * 翠風のリーネ（草属性）のためのカード。草属性なので、リーネの報酬とショップにだけ出る。
  * リーネの軸は 3 つ: 弓（軽いカードを次々使う手数）/ 宿り木（毎ターン削る）/ ムチ（敵全体と連打）。
  * 以前の茨と守りのカード（茨の鎧・茨の垣根など）はリーネに出さない。
  * 2026-10-08 に足した蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ、リーネのブロック軸として報酬に出る。
@@ -56,8 +56,24 @@ export const VERDANT_STARTER_DECK: CardDefinition[] = [
   SEED_ARROW,
 ];
 
+/** リーネ専用。矢を 2 本足し、2 回まで使える。強化で 3 回。 */
+export const SPARE_STRING: CardDefinition = {
+  id: 'spare-string',
+  name: '予備の弦',
+  rarity: 'uncommon',
+  type: 'skill',
+  attribute: 'grass',
+  archetypes: ['tempo'],
+  cost: 1,
+  target: 'self',
+  uses: 2,
+  effects: [{ kind: 'addArrows', amount: 2 }],
+  upgrade: { uses: 3 },
+};
+
 export const VERDANT_CARDS: CardDefinition[] = [
   SEED_ARROW,
+  SPARE_STRING,
 
   // --- 宿り木: かけて、増やして、芽吹かせる ---
   {

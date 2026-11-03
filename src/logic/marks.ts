@@ -102,6 +102,8 @@ function scaleEffect(effect: Effect, multiplier: number): Effect {
     case 'discardFromHand':
     case 'exhaustFromHand':
     case 'damageByExhaustCount':
+    case 'blockByExhaustCount':
+    case 'gainWater':
     case 'damagePerX':
     case 'blockPerX':
       return { ...effect, amount: scale(effect.amount, multiplier) };

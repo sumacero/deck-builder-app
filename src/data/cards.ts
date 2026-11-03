@@ -381,8 +381,24 @@ export const DISCARD_PLAY_CARDS: CardDefinition[] = [
   SLY_READ,
 ];
 
+/** カイル専用。2 回まで強く打てて、使い切るとその戦闘では廃棄される。強化で 3 回。 */
+export const EMBER_OATH: CardDefinition = {
+  id: 'ember-oath',
+  name: '熾火',
+  rarity: 'uncommon',
+  type: 'attack',
+  attribute: 'fire',
+  archetypes: ['strength'],
+  cost: 1,
+  target: 'enemy',
+  uses: 2,
+  effects: [{ kind: 'damage', amount: 12 }],
+  upgrade: { uses: 3 },
+};
+
 /** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。末尾にシナジー札を足す。 */
 export const REWARD_CARDS: CardDefinition[] = [
+  EMBER_OATH,
   {
     id: 'twin-strike',
     name: '二連打',

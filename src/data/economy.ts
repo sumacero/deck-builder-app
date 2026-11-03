@@ -24,4 +24,5 @@ export const STANDARD_ECONOMY: EconomyConfig = {
   shopRelicCount: 2,
   shopPotionCount: 2,
   treasureGold: { min: 25, max: 45 },
+  potionDropChance: 0.3,
 };

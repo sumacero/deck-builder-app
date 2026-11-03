@@ -353,11 +353,34 @@ function grantArteIfReady(state: CombatState): CombatState {
   return callout(withLog(granted, `秘奥義「${state.mysticArte.name}」が使える！`), 'player', '秘奥義解放！');
 }
 
-export function createCombat(setup: CombatSetup, seed: number): CombatState {
-  const instances: CardInstance[] = setup.deck.map((card, index) => ({
-    instanceId: `card-${index}`,
+/** 回数札は、戦闘の開始時に使える回数を札へ載せる。 */
+function withUses(card: CardDefinition, instanceId: string, stack?: number): CardInstance {
+  return {
+    instanceId,
     card,
-  }));
+    ...(stack !== undefined ? { stack } : {}),
+    ...(card.uses !== undefined ? { usesLeft: card.uses } : {}),
+  };
+}
+
+/** 使ったあとに残る回数。回数札でなければ undefined。 */
+function usesAfterPlay(instance: CardInstance): number | undefined {
+  if (instance.card.uses === undefined) return undefined;
+  return (instance.usesLeft ?? instance.card.uses) - 1;
+}
+
+/** 使った札の残り回数。0 以下なら、その場で廃棄札へ移す。 */
+function playedInstance(instance: CardInstance): { instance: CardInstance; exhaust: boolean } {
+  const left = usesAfterPlay(instance);
+  if (left === undefined) return { instance, exhaust: Boolean(instance.card.exhaust) };
+  return {
+    instance: { ...instance, usesLeft: left },
+    exhaust: Boolean(instance.card.exhaust) || left <= 0,
+  };
+}
+
+export function createCombat(setup: CombatSetup, seed: number): CombatState {
+  const instances: CardInstance[] = setup.deck.map((card, index) => withUses(card, `card-${index}`));
   const shuffled = shuffle(instances, seed);
   const eliteSeen = { count: 0 };
 
@@ -881,6 +904,25 @@ function applyEffect(
       }
       return next;
     }
+    case 'blockByExhaustCount': {
+      const times = Math.max(1, state.exhaustPile.length);
+      return gainPlayerBlock(state, effect.amount * times);
+    }
+    case 'gainWater': {
+      const attack = effect.pool === 'attack';
+      const label = attack ? '攻撃の水力' : '守りの水力';
+      return withLog(
+        {
+          ...state,
+          player: {
+            ...state.player,
+            attackWater: state.player.attackWater + (attack ? effect.amount : 0),
+            guardWater: state.player.guardWater + (attack ? 0 : effect.amount),
+          },
+        },
+        `${label} +${effect.amount}`,
+      );
+    }
     case 'block':
       return gainPlayerBlock(state, effect.amount);
     case 'doubleBlock':
@@ -1119,13 +1161,19 @@ function playSly(state: CombatState, instance: CardInstance, suggested: Aim | un
   }
   const breakingSeal = card.type !== 'skill' && aimed.state.player.sealCharges > 0;
   const sealCharges = breakingSeal ? aimed.state.player.sealCharges - 1 : aimed.state.player.sealCharges;
-  const moved = card.exhaust
+  const playedCopy = playedInstance(instance);
+  const moved = playedCopy.exhaust
     ? {
         ...aimed.state,
         discardPile: aimed.state.discardPile.filter((item) => item.instanceId !== instance.instanceId),
-        exhaustPile: [...aimed.state.exhaustPile, instance],
+        exhaustPile: [...aimed.state.exhaustPile, playedCopy.instance],
       }
-    : aimed.state;
+    : {
+        ...aimed.state,
+        discardPile: aimed.state.discardPile.map((item) =>
+          item.instanceId === instance.instanceId ? playedCopy.instance : item,
+        ),
+      };
   const sealed = breakingSeal ? { ...moved, player: { ...moved.player, sealCharges } } : moved;
   const announced = withEvent(withLog(sealed, `昇華で${card.name}を使った`), {
     kind: 'cardPlayed',
@@ -1386,7 +1434,11 @@ function gainPlayerBlock(state: CombatState, amount: number): CombatState {
   return target ? hitEnemy(gained, target.uid, juggernaut, FIXED_HIT) : gained;
 }
 
-/** カードが廃棄されたとき（灰より立つ・燃え殻）。 */
+/** ノアの初期レリック。廃棄 1 枚につきこのブロック。戦闘開始時の水力はレリックの効果。 */
+const CRYSTAL_WEIGHT_ID = 'crystal-weight';
+const CRYSTAL_WEIGHT_BLOCK = 2;
+
+/** カードが廃棄されたとき（灰より立つ・燃え殻・水晶の文鎮）。 */
 function onExhausted(state: CombatState, count: number): CombatState {
   if (count <= 0) return state;
   const counted: CombatState = {
@@ -1397,8 +1449,12 @@ function onExhausted(state: CombatState, count: number): CombatState {
       exhaustsThisCombat: state.player.exhaustsThisCombat + count,
     },
   };
-  const block = powerOf(counted, 'feelNoPain') * count;
-  const blocked = block > 0 ? gainPlayerBlock(counted, block) : counted;
+  const fromRelic = counted.relics.some((relic) => relic.id === CRYSTAL_WEIGHT_ID)
+    ? CRYSTAL_WEIGHT_BLOCK * count
+    : 0;
+  const block = powerOf(counted, 'feelNoPain') * count + fromRelic;
+  const noted = fromRelic > 0 ? withLog(counted, `水晶の文鎮が廃棄を受けた`) : counted;
+  const blocked = block > 0 ? gainPlayerBlock(noted, block) : noted;
   const cinder = powerOf(blocked, 'cinder');
   if (cinder <= 0) return blocked;
   let next = blocked;
@@ -1582,10 +1638,7 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
  * 手札の札を、種類と段が同じもう一枚の上に重ねる。エナジーは要らない。
  * 摘んでいた札が残って段が倍になる。置き場所は下の札があった位置のまま（手札の並びは動かさない）。
  * 下の札は 1 段に戻って廃棄札へ行き、この戦闘ではもう使えない。消えた下の札の段だけ、その種類の水力が溜まる（水面の分だけ多い）。
- * 毎ターン最初の 1 回は、水晶の文鎮が消した札の段と同じだけ、同じ種類の水力を足す。
  */
-const CRYSTAL_WEIGHT_ID = 'crystal-weight';
-
 export function fuseInHand(state: CombatState, sourceId: string, targetId: string): CombatState {
   if (state.status !== 'playerTurn' || state.pendingHandRemoval || sourceId === targetId) {
     return state;
@@ -1596,13 +1649,15 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
 
   const stack = stackOf(source) * 2;
   const gained = waterFromFusion(stackOf(target), powerOf(state, 'fuseEcho'));
-  const firstFuse = state.player.fusesThisTurn === 0;
-  const bonus =
-    firstFuse && state.relics.some((relic) => relic.id === CRYSTAL_WEIGHT_ID) ? stackOf(target) : 0;
-  const total = gained + bonus;
+  const total = gained;
   const guard = target.card.type === 'skill';
   const pool = guard ? '守りの水力' : '攻撃の水力';
-  const stacked: CardInstance = { instanceId: source.instanceId, card: source.card, stack };
+  const stacked: CardInstance = {
+    instanceId: source.instanceId,
+    card: source.card,
+    stack,
+    ...(source.usesLeft !== undefined ? { usesLeft: source.usesLeft } : {}),
+  };
   const hand = state.hand.flatMap((card) => {
     if (card.instanceId === sourceId) return [];
     if (card.instanceId === targetId) return [stacked];
@@ -1620,12 +1675,11 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
       guardWater: state.player.guardWater + (guard ? total : 0),
     },
   };
-  const weight = bonus > 0 ? `（水晶の文鎮 +${bonus}）` : '';
   const announced = withEvent(
     withPileTravel(
       withLog(
         fused,
-        `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段、${pool} +${total}${weight}）。${target.card.name}は廃棄札へ。この戦闘では使えない`,
+        `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段、${pool} +${total}）。${target.card.name}は廃棄札へ。この戦闘では使えない`,
       ),
       target,
       'hand',
@@ -1660,6 +1714,7 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const breakingSeal = card.type !== 'skill' && state.player.sealCharges > 0;
   const sealCharges = breakingSeal ? state.player.sealCharges - 1 : state.player.sealCharges;
   const xEnergy = card.xCost ? Math.max(0, state.player.energy - card.cost) : 0;
+  const playedCopy = playedInstance(instance);
 
   const spent = {
     ...state,
@@ -1672,21 +1727,21 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
       guardWater: state.player.guardWater - (spendingGuard ? waterCost : 0),
       sealCharges,
     },
-    discardPile: [...state.discardPile, ...(card.exhaust ? [] : [instance])],
-    exhaustPile: card.exhaust ? [...state.exhaustPile, instance] : state.exhaustPile,
+    discardPile: [...state.discardPile, ...(playedCopy.exhaust ? [] : [playedCopy.instance])],
+    exhaustPile: playedCopy.exhaust ? [...state.exhaustPile, playedCopy.instance] : state.exhaustPile,
   };
   const copied = card.addCopyToDiscard
     ? {
         ...spent,
-        discardPile: [...spent.discardPile, { instanceId: `copy-${state.nextEventId}`, card }],
+        discardPile: [...spent.discardPile, withUses(card, `copy-${state.nextEventId}`)],
       }
     : spent;
   const played = withEvent(
     withPileTravel(
       withLog(copied, `${card.name}を使用`),
-      instance,
+      playedCopy.instance,
       'hand',
-      card.exhaust ? 'exhaust' : 'discard',
+      playedCopy.exhaust ? 'exhaust' : 'discard',
       handIndex,
       handCount,
     ),
@@ -1772,8 +1827,13 @@ function finishPlay(
   state = { ...state, xEnergy: 0 };
   const { instance, eventsBefore } = follow;
   const { card } = instance;
-  const exhausted = card.exhaust ? onExhausted(state, 1) : state;
-  const grown = growPlayedCard(exhausted, instance, livingEnemies(state).length);
+  const left = usesAfterPlay(instance);
+  const exhausted = card.exhaust || left === 0 ? onExhausted(state, 1) : state;
+  const limited =
+    left === undefined
+      ? exhausted
+      : withLog(exhausted, left <= 0 ? `${card.name}を使い切って廃棄した` : `${card.name}はあと ${left} 回使える`);
+  const grown = growPlayedCard(limited, instance, livingEnemies(state).length);
   const lashed = card.whip && card.type === 'attack' ? plantLashSeed(grown, card, aim) : grown;
   const shot = quickdrawShot(lashed, powerOf(state, 'quickdraw'));
   const weakHit =

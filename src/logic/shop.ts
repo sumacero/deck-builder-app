@@ -38,7 +38,7 @@ export function removalPrice(economy: EconomyConfig, removalCount: number): numb
 
 /**
  * relicPool にはまだ持っていないレリックだけを渡す。
- * exclusivePool（エージェントと違う属性のカード）からは 1 枚を必ず並べる。ここでしか手に入らないため。
+ * exclusivePool は空で渡す。他のキャラの報酬カードは、ショップにも並べない。
  */
 export function generateShopStock(
   cardPool: readonly CardDefinition[],

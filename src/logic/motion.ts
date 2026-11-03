@@ -32,7 +32,7 @@ export function cardMotion(card: CardDefinition): CardMotion {
   if (card.type === 'power' || empowers) {
     return 'empower';
   }
-  if (card.effects.some((effect) => effect.kind === 'block' || effect.kind === 'doubleBlock' || effect.kind === 'blockFromGuardWater' || effect.kind === 'blockPerX')) {
+  if (card.effects.some((effect) => effect.kind === 'block' || effect.kind === 'doubleBlock' || effect.kind === 'blockFromGuardWater' || effect.kind === 'blockPerX' || effect.kind === 'blockByExhaustCount')) {
     return 'guard';
   }
   return 'focus';
