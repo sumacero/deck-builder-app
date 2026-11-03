@@ -80,6 +80,8 @@ export type PlayerState = Fighter & {
   sealCharges: number;
   /** 戦闘の終わりまで残る凍え。毎ターンの引く枚数は、これと次ターンの凍えの大きい方。 */
   chillLock: number;
+  /** 次に使うカードの効果を、追加で何回行うか。ターンの始めに 0 へ戻る。 */
+  replayCharges: number;
 };
 
 /** 戦闘中の敵 1 体の識別子。同じ種類の敵が 2 体いても区別できるよう、並び順から振る。 */
@@ -269,6 +271,11 @@ export type CombatState = {
    * 枚数を選び終わるまで、ターン終了やほかのカードは使えない。
    */
   pendingHandRemoval: PendingHandRemoval | null;
+  /**
+   * いま解決中のカードが X として払ったエナジー。
+   * そのカードの効果のあいだだけ意味があり、使い終わると 0 に戻る。
+   */
+  xEnergy: number;
 };
 
 /** 手札から手放す札を選ぶ待ち。rest は、選び終わったあとに続ける効果。 */

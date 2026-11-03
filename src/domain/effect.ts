@@ -98,7 +98,18 @@ export type Effect =
   /** 狙った敵のブロックを半分にする（切り捨て。0 なら何もしない）。 */
   | { kind: 'halveBlock' }
   /** 狙った敵の次の攻撃のヒット数を amount 減らす（0 未満にはしない。攻撃したら消える）。 */
-  | { kind: 'cutHits'; amount: number };
+  | { kind: 'cutHits'; amount: number }
+  /** このカードの X で払ったエナジーの数だけ、amount ダメージを与える（1 回ごとに筋力などが乗る）。 */
+  | { kind: 'damagePerX'; amount: number }
+  /** このカードの X で払ったエナジー 1 につき amount のブロックを、まとめて得る。 */
+  | { kind: 'blockPerX'; amount: number }
+  /**
+   * 捨て札の、このカードの直前の札の効果を、コストを払わずにもう一度行う。
+   * 再演と「次のカードをもう一度」は繰り返さない。X で伸びた分は含まない。
+   */
+  | { kind: 'replayPrevious' }
+  /** 次に使うカードの効果を、もう 1 回行う。このターンを終えると消える。 */
+  | { kind: 'gainReplay' };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

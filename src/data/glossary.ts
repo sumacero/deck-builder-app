@@ -42,7 +42,33 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'ethereal',
     name: '消える',
     icon: '💨',
-    description: 'ターン終了時に手札にあると、廃棄されて戦闘中は戻ってこない。',
+    description: 'ターン終了時に手札にあると、廃棄されて戦闘中は戻ってこない。保留より先に消える。',
+  },
+  retain: {
+    id: 'retain',
+    name: '保留',
+    icon: '✋',
+    description: 'ターン終了時も捨て札へ行かず、手札に残る。次のターンもそのまま使える。',
+  },
+  xCost: {
+    id: 'xCost',
+    name: 'Xコスト',
+    icon: '✖',
+    description:
+      '残っているエナジーをすべて払って使う。払った数だけ効果が増える。エナジーが 0 でも使えるが、そのときは効果が出ない。',
+  },
+  replay: {
+    id: 'replay',
+    name: '再演',
+    icon: '🔁',
+    description:
+      '捨て札の直前の札の効果を、コストを払わずにもう一度行う。または、次に使うカードの効果をもう 1 回行う。Xで伸びた分は、もう一度には含まれない。',
+  },
+  innate: {
+    id: 'innate',
+    name: '天賦',
+    icon: '🌅',
+    description: '戦闘が始まるとき、通常のドローとは別に手札へ入る。手札が上限なら、入りきらない分は山札に残る。',
   },
   damage: {
     id: 'damage',

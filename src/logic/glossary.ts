@@ -71,6 +71,13 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['block'];
     case 'cutHits':
       return ['intentAttack'];
+    case 'damagePerX':
+      return ['damage', 'xCost'];
+    case 'blockPerX':
+      return ['block', 'xCost'];
+    case 'replayPrevious':
+    case 'gainReplay':
+      return ['replay'];
     case 'ifTargetHas':
       return [effect.status, ...effect.effects.flatMap(keywordsForEffect)];
     case 'consumeBlock':
@@ -148,6 +155,9 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.turnEndInHand ?? []).flatMap(keywordsForEffect),
     ...(card.growth ? (['growth'] as const) : []),
     ...(card.ethereal ? (['ethereal'] as const) : []),
+    ...(card.retain ? (['retain'] as const) : []),
+    ...(card.innate ? (['innate'] as const) : []),
+    ...(card.xCost ? (['xCost'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
     ...(card.waterCost ? (['water'] as const) : []),

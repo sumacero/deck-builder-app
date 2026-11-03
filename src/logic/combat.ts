@@ -233,6 +233,27 @@ export function drawCards(state: CombatState, count: number): CombatState {
   });
 }
 
+/** 戦闘の最初だけ。天賦の札を、通常のドローの前に手札へ移す。 */
+function drawInnate(state: CombatState): CombatState {
+  const innate: CardInstance[] = [];
+  const rest: CardInstance[] = [];
+  for (const card of state.drawPile) {
+    if (card.card.innate && state.hand.length + innate.length < MAX_HAND_SIZE) innate.push(card);
+    else rest.push(card);
+  }
+  if (innate.length === 0) return state;
+  const next: CombatState = { ...state, drawPile: rest, hand: [...state.hand, ...innate] };
+  const logged = withLog(
+    next,
+    innate.length === 1 ? `天賦で${innate[0].card.name}が手札にある` : `天賦の札が ${innate.length} 枚、手札にある`,
+  );
+  return innate.reduce(
+    (current, card, index) =>
+      withPileTravel(current, card, 'draw', 'hand', state.hand.length + index, state.hand.length + innate.length),
+    logged,
+  );
+}
+
 export const NO_HINDRANCE: Hindrance = { paralysis: 0, chill: 0, seal: false, bind: false };
 
 const powerOf = (state: CombatState, power: PowerId): number => state.player.powers[power] ?? 0;
@@ -283,6 +304,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
       lashSeedThisTurn: 0,
       evade: 0,
       fusesThisTurn: 0,
+      replayCharges: 0,
       hindrance,
       pendingHindrance: NO_HINDRANCE,
       statuses: turn > 1 ? tickStatuses(state.player.statuses) : state.player.statuses,
@@ -294,7 +316,8 @@ export function startPlayerTurn(state: CombatState): CombatState {
     ...hindranceLogs(hindrance),
   ];
   const logged = logs.reduce(withLog, withLog(started, `ターン ${turn} 開始`));
-  const drawn = drawCards(logged, Math.max(0, state.drawPerTurn - hindrance.chill));
+  const opening = turn === 1 ? drawInnate(logged) : logged;
+  const drawn = drawCards(opening, Math.max(0, state.drawPerTurn - hindrance.chill));
   const tide = powerOf(drawn, 'tidecall');
   const tided = tide > 0 ? drawCards(withLog(drawn, `潮招きで ${tide} 枚引く`), tide) : drawn;
   return grantArteIfReady(tided);
@@ -372,6 +395,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       guardWater: 0,
       sealCharges: 0,
       chillLock: 0,
+      replayCharges: 0,
       statuses: {},
     },
     enemies: setup.enemies.map((enemy, index) => {
@@ -419,6 +443,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
     events: [],
     nextEventId: 0,
     pendingHandRemoval: null,
+    xEnergy: 0,
   };
   const names = groupedNames(setup.enemies.map((enemy) => enemy.name));
   const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
@@ -946,6 +971,26 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       return aimedUids(state, aim).reduce((current, uid) => halveEnemyBlock(current, uid), state);
     case 'cutHits':
       return aimedUids(state, aim).reduce((current, uid) => cutEnemyHits(current, uid, effect.amount), state);
+    case 'damagePerX': {
+      if (state.xEnergy <= 0) return withLog(state, '払ったエナジーが無かった');
+      const amount = attackDamage(state, effect.amount);
+      let next = state;
+      for (let i = 0; i < state.xEnergy; i++) {
+        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), next);
+      }
+      return next;
+    }
+    case 'blockPerX': {
+      if (state.xEnergy <= 0) return withLog(state, '払ったエナジーが無かった');
+      return gainPlayerBlock(state, effect.amount * state.xEnergy);
+    }
+    case 'replayPrevious':
+      return replayPreviousCard(state, aim, hitKind);
+    case 'gainReplay':
+      return withLog(
+        { ...state, player: { ...state.player, replayCharges: state.player.replayCharges + 1 } },
+        '次に使うカードの効果を、もう 1 回行う',
+      );
     case 'ifTargetHas': {
       const met = aimedUids(state, aim).some((uid) => {
         const enemy = findEnemy(state, uid);
@@ -1495,13 +1540,15 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
   const spendingGuard = card.type === 'skill';
   const breakingSeal = card.type !== 'skill' && state.player.sealCharges > 0;
   const sealCharges = breakingSeal ? state.player.sealCharges - 1 : state.player.sealCharges;
+  const xEnergy = card.xCost ? Math.max(0, state.player.energy - card.cost) : 0;
 
   const spent = {
     ...state,
     hand: state.hand.filter((c) => c.instanceId !== instanceId),
+    xEnergy,
     player: {
       ...state.player,
-      energy: state.player.energy - card.cost,
+      energy: card.xCost ? 0 : state.player.energy - card.cost,
       attackWater: state.player.attackWater - (spendingGuard ? 0 : waterCost),
       guardWater: state.player.guardWater - (spendingGuard ? waterCost : 0),
       sealCharges,
@@ -1551,17 +1598,50 @@ export function playCard(state: CombatState, instanceId: string, target?: EnemyU
       ? withLog(guarded, `水札の ${stackOf(instance)} 段で ${multiplier} 倍`)
       : guarded;
   const eventsBefore = boosted.events.length;
-  const resolved = applyEffects(boosted, scaledEffects(card, multiplier), aim, {
-    attributes: playedAttributes(state, card),
-  });
   const follow = { instance, eventsBefore };
+  const repeats = boosted.player.replayCharges > 0 ? 1 : 0;
+  const charged =
+    repeats > 0
+      ? { ...boosted, player: { ...boosted.player, replayCharges: boosted.player.replayCharges - 1 } }
+      : boosted;
+  const effects = scaledEffects(card, multiplier);
+  const hit = { attributes: playedAttributes(state, card) };
+  const priced = card.xCost ? withLog(charged, `エナジーを ${xEnergy} 払った`) : charged;
+  const resolved = applyEffects(priced, effects, aim, hit);
   if (resolved.pendingHandRemoval) {
     return {
       ...resolved,
       pendingHandRemoval: { ...resolved.pendingHandRemoval, follow },
     };
   }
-  return finishPlay(resolved, follow, aim);
+  const replayed =
+    repeats > 0 && resolved.status === 'playerTurn'
+      ? applyEffects(withLog(resolved, `${card.name}の効果をもう一度`), effects, aim, hit)
+      : resolved;
+  if (replayed.pendingHandRemoval) {
+    return {
+      ...replayed,
+      pendingHandRemoval: { ...replayed.pendingHandRemoval, follow },
+    };
+  }
+  return finishPlay(replayed, follow, aim);
+}
+
+/** 捨て札の直前の札。今使った札が捨て札の一番上に載っている前提で、その一つ下を取る。 */
+function replayPreviousCard(state: CombatState, aim: Aim, hitKind: HitKind): CombatState {
+  const previous = state.discardPile.length >= 2 ? state.discardPile[state.discardPile.length - 2] : undefined;
+  if (!previous || previous.card.unplayable) return withLog(state, '再演する札が無かった');
+  const effects = previous.card.effects.filter(
+    (effect) => effect.kind !== 'replayPrevious' && effect.kind !== 'gainReplay',
+  );
+  if (effects.length === 0) return withLog(state, `${previous.card.name}には、もう一度行える効果が無かった`);
+  const replayAim: Aim = previous.card.target === 'allEnemies' ? 'all' : aim;
+  const savedX = state.xEnergy;
+  const replayed = applyEffects({ ...state, xEnergy: 0 }, effects, replayAim, {
+    attributes: cardAttributes(previous.card),
+    pierce: hitKind.pierce,
+  });
+  return withLog({ ...replayed, xEnergy: savedX }, `${previous.card.name}を再演した`);
 }
 
 /** 効果が出終わったあとの、使った枚数・ムチ・勢い・秘奥義。選んで手放すあいだはまだ走らない。 */
@@ -1570,6 +1650,7 @@ function finishPlay(
   follow: { instance: CardInstance; eventsBefore: number; sawWeak?: boolean },
   aim: Aim,
 ): CombatState {
+  state = { ...state, xEnergy: 0 };
   const { instance, eventsBefore } = follow;
   const { card } = instance;
   const exhausted = card.exhaust ? onExhausted(state, 1) : state;
@@ -2037,23 +2118,27 @@ function advanceEnemy(state: CombatState, uid: EnemyUid): CombatState {
   return updateEnemy(state, uid, (e) => ({ ...e, moveIndex: e.moveIndex + 1 }));
 }
 
-/** 手札に残ったお邪魔カードの効果をかけ、消えるカードは廃棄する。残りは捨て札へ。 */
+/** 手札に残ったお邪魔カードの効果をかけ、消えるカードは廃棄する。保留は残し、残りは捨て札へ。 */
 function discardHand(state: CombatState): CombatState {
   const afterEffects = state.hand.reduce((current, { card }) => {
     if (!card.turnEndInHand) return current;
     return applyEffects(withLog(current, `手札の${card.name}`), card.turnEndInHand, 'all');
   }, state);
   const retainArrows = powerOf(afterEffects, 'arrowRetain') > 0;
-  const isRetained = (instance: CardInstance) => retainArrows && instance.card.arrow === true;
+  const stays = (instance: CardInstance) =>
+    !instance.card.ethereal && (instance.card.retain === true || (retainArrows && instance.card.arrow === true));
   const hand = afterEffects.hand;
   let next = afterEffects;
   const vanishing: CardInstance[] = [];
   const kept: CardInstance[] = [];
   hand.forEach((instance, index) => {
-    if (isRetained(instance)) return;
     if (instance.card.ethereal) {
       vanishing.push(instance);
       next = withPileTravel(next, instance, 'hand', 'exhaust', index, hand.length);
+      return;
+    }
+    if (stays(instance)) {
+      if (instance.card.retain) next = withLog(next, `${instance.card.name}を手札に残した`);
       return;
     }
     kept.push(instance);
@@ -2061,7 +2146,7 @@ function discardHand(state: CombatState): CombatState {
   });
   const piled = {
     ...next,
-    hand: hand.filter(isRetained),
+    hand: hand.filter(stays),
     discardPile: [...next.discardPile, ...kept],
     exhaustPile: [...next.exhaustPile, ...vanishing],
     player: {

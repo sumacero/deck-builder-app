@@ -1,6 +1,19 @@
 import type { CardDefinition } from '../domain/card';
 import type { EventDefinition } from '../domain/event';
-import { DEFEND, STRIKE, ULTIMATE_DEFEND, ULTIMATE_STRIKE } from './cards';
+import {
+  BULWARK_X,
+  DEFEND,
+  DOUBLE_CALL,
+  ENCORE_STRIKE,
+  FADING_BLADE,
+  HEAT_HAZE,
+  LINGERING_GUARD,
+  OPENING_GUARD,
+  OPENING_STRIKE,
+  STRIKE,
+  ULTIMATE_DEFEND,
+  ULTIMATE_STRIKE,
+} from './cards';
 import { MIRROR_CARDS } from './mirrorCards';
 import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
@@ -579,6 +592,138 @@ const CHAPTER_EVENTS: EventDefinition[] = [
           { kind: 'gainGold', amount: 120 },
         ],
         outcome: '冠は熱を持って崩れ、金貨の山になった。手のひらがまだ熱い。',
+      },
+    ],
+  },
+  {
+    id: 'roadside-rehearsal',
+    title: '路傍の稽古',
+    icon: '🥋',
+    chapters: [1],
+    text: '道端で、旅の武芸者が素振りをしている。「少し付き合わないか。技を一つ、残していく」',
+    options: [
+      {
+        id: 'haze',
+        label: 'HP を 6 払い、陽炎を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: HEAT_HAZE },
+        ],
+        outcome: 'かげろうのような受けを、一度だけ教わった。',
+      },
+      {
+        id: 'linger',
+        label: 'HP を 6 払い、残心を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 6 },
+          { kind: 'addCard', card: LINGERING_GUARD },
+        ],
+        outcome: '打ち終えたあとも、構えを解かない型を覚えた。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 8 }],
+        outcome: '素振りを見ているうちに、息が整った。',
+      },
+    ],
+  },
+  {
+    id: 'gate-warrior',
+    title: '門前の武者',
+    icon: '⚔️',
+    chapters: [1],
+    text: '門の前で、武者が朝の型を繰り返している。「最初の一手は、考える前に出るものだ」',
+    options: [
+      {
+        id: 'strike',
+        label: 'HP を 5 払い、先陣打ちを受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 5 },
+          { kind: 'addCard', card: OPENING_STRIKE },
+        ],
+        outcome: '戦いの最初に出す一撃を、体が覚えた。',
+      },
+      {
+        id: 'guard',
+        label: 'HP を 5 払い、幕開けを受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 5 },
+          { kind: 'addCard', card: OPENING_GUARD },
+        ],
+        outcome: '幕が開く瞬間の受けを、一つ教わった。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 6 }],
+        outcome: '門の陰で一息つき、軽い傷が閉じた。',
+      },
+    ],
+  },
+  {
+    id: 'forgotten-stage',
+    title: '忘れられた舞台',
+    icon: '🎭',
+    chapters: [2],
+    text: '誰もいない舞台に、書きかけの台本と、光る武具が残されている。',
+    options: [
+      {
+        id: 'blade',
+        label: 'HP を 8 払い、消えゆく刃を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: FADING_BLADE },
+        ],
+        outcome: '光の刃は手の中で薄れ、一度きりの斬撃になった。',
+      },
+      {
+        id: 'bulwark',
+        label: 'HP を 8 払い、堅陣を受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 8 },
+          { kind: 'addCard', card: BULWARK_X },
+        ],
+        outcome: '舞台の盾は、残した力の分だけ厚くなる型だった。',
+      },
+      {
+        id: 'leave',
+        label: '金貨を 25 受け取って離れる',
+        effects: [{ kind: 'gainGold', amount: 25 }],
+        outcome: '客席に落ちていた金貨を拾い、舞台を後にした。',
+      },
+    ],
+  },
+  {
+    id: 'encore-wing',
+    title: '袖の合図',
+    icon: '🎬',
+    chapters: [3],
+    text: '幕の袖から、小さな鈴の音がする。もう一度、同じ技を見せてほしいという合図だ。',
+    options: [
+      {
+        id: 'encore',
+        label: 'HP を 10 払い、追憶打ちを受け取る',
+        effects: [
+          { kind: 'loseHp', amount: 10 },
+          { kind: 'addCard', card: ENCORE_STRIKE },
+        ],
+        outcome: '直前の技が、もう一度舞台に戻ってくる打ち方を覚えた。',
+      },
+      {
+        id: 'call',
+        label: '最大 HP を 4 払い、二重の号令を受け取る',
+        effects: [
+          { kind: 'loseMaxHp', amount: 4 },
+          { kind: 'addCard', card: DOUBLE_CALL },
+        ],
+        outcome: '体の芯が細くなった代わりに、次の一手を二度行う号令が残った。',
+      },
+      {
+        id: 'leave',
+        label: '傷を癒して離れる',
+        effects: [{ kind: 'heal', amount: 10 }],
+        outcome: '袖の暗がりで息を整え、舞台には上がらなかった。',
       },
     ],
   },

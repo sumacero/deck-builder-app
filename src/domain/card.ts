@@ -86,8 +86,17 @@ export type CardDefinition = {
    * ショップや出来事の削除でだけ抜ける。
    */
   curse?: boolean;
-  /** ターン終了時に手札にあると廃棄される。 */
+  /** ターン終了時に手札にあると廃棄される。保留より先に消える。 */
   ethereal?: boolean;
+  /** ターン終了時に手札へ残す。消える札には効かない。 */
+  retain?: boolean;
+  /** 戦闘の最初の手札に、引く枚数とは別に入る。手札の上限を超えた分は山札に残る。 */
+  innate?: boolean;
+  /**
+   * コストが X。cost の固定分を払えるとき使え、残りのエナジーをすべて払う。
+   * 効果の X は、固定分を引いた残り。
+   */
+  xCost?: boolean;
   /** ターン終了時に手札にあるとかかる効果。 */
   turnEndInHand?: Effect[];
   growth?: CardGrowth;

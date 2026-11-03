@@ -16,6 +16,10 @@ export function cardMotion(card: CardDefinition): CardMotion {
     return card.target === 'allEnemies' ? 'sweep' : 'flurry';
   }
   if (card.effects.some((effect) => effect.kind === 'damageFromAttackWater')) return 'strike';
+  if (card.effects.some((effect) => effect.kind === 'damagePerX')) {
+    return card.target === 'allEnemies' ? 'sweep' : 'strike';
+  }
+  if (card.effects.some((effect) => effect.kind === 'replayPrevious')) return 'strike';
   const heavy = card.effects.some(
     (effect) => effect.kind === 'damageFromBlock' || effect.kind === 'consumeBlock' || effect.kind === 'detonateDebuffs',
   );
@@ -28,7 +32,7 @@ export function cardMotion(card: CardDefinition): CardMotion {
   if (card.type === 'power' || empowers) {
     return 'empower';
   }
-  if (card.effects.some((effect) => effect.kind === 'block' || effect.kind === 'doubleBlock' || effect.kind === 'blockFromGuardWater')) {
+  if (card.effects.some((effect) => effect.kind === 'block' || effect.kind === 'doubleBlock' || effect.kind === 'blockFromGuardWater' || effect.kind === 'blockPerX')) {
     return 'guard';
   }
   return 'focus';

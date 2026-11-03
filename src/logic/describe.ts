@@ -114,6 +114,14 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}ブロックを半分にする。`;
     case 'cutHits':
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}次の攻撃の回数を ${effect.amount} 減らす。`;
+    case 'damagePerX':
+      return `${target === 'allEnemies' ? '敵全体に、' : ''}払ったエナジーの数だけ ${effect.amount} ダメージを与える。`;
+    case 'blockPerX':
+      return `払ったエナジー 1 につきブロック ${effect.amount} を得る。`;
+    case 'replayPrevious':
+      return 'このカードより前に捨て札へ行ったカードの効果を、コストを払わずにもう一度行う。';
+    case 'gainReplay':
+      return '次に使うカードの効果を、もう 1 回行う。';
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
@@ -289,6 +297,9 @@ export function describeCard(card: CardDefinition): string {
       ? `ターン終了時に手札にあると、${describeEffects(card.turnEndInHand, 'self')}`
       : '',
     card.ethereal ? 'ターン終了時に手札にあると消える。' : '',
+    card.retain ? '保留。ターンが終わっても手札に残る。' : '',
+    card.innate ? '天賦。戦闘開始時、手札にある。' : '',
+    card.xCost ? 'Xコスト。残っているエナジーをすべて払う。' : '',
     card.growth ? describeGrowth(card.growth) : '',
     card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
