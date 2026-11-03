@@ -105,12 +105,7 @@
   1. ゲームの開発サーバー（スマホの Expo Go で QR を読む）: `cd ~/projects/deck-builder-app && npx expo start --tunnel ngrok`
   2. スマホから指示するためのワーカー（My Machines）: `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`
   - `--tunnel` を付けないと QR が WSL 内部のアドレス（`exp://172.x.x.x:8081`）になり、Expo Go が「Something went wrong」になる（2026-10-13 に実際に起きた）。起動ログの `libasound.so.2` のエラーは PC 用デバッグツールのもので、実機確認には関係ない。
-<<<<<<< Updated upstream
-- 実機確認: Android 端末の Expo Go。`npx expo start --tunnel ngrok` で起動（WSL のネットワーク分離のため tunnel を使用。`@expo/ngrok` はグローバルにインストール済み）。`--tunnel` だけだと Expo アカウント未ログインで署名付きトンネルが作れず止まる（2026-11-04）。
-=======
-  - SDK 58 以降、素の `--tunnel` は Expo ログインが必要なことがある。未ログインなら `npx expo start --tunnel ngrok`（2026-10-24 確認）。
-- 実機確認: Android 端末の Expo Go（SDK 58 対応版）。WSL のため tunnel 必須。
->>>>>>> Stashed changes
+- 実機確認: Android 端末の Expo Go（SDK 58 対応版）。`npx expo start --tunnel ngrok` で起動（WSL のネットワーク分離のため tunnel を使用。`@expo/ngrok` はグローバルにインストール済み）。SDK 58 以降、素の `--tunnel` は Expo へのログインが必要なことがある。未ログインのときは `ngrok` を付ける（2026-10-24 に確認、2026-11-04 にも同じエラー）。
 - **スマホ（Android）から指示する（2026-10-06）**: Cursor の **My Machines**（自分の PC で動くクラウドエージェント）。作業はこの PC のフォルダで直接行われる。全体図と仕組みは `docs/DEV_ENVIRONMENT.md`。
   - Cursor CLI を `~/.local/bin/agent` に導入（PATH は `~/.bashrc`）。`agent login` 済み（`agent status` で確認）。
   - ワーカー起動: `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`。動かしている間だけ受け付ける。Windows がスリープすると止まる。
