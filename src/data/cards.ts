@@ -134,6 +134,142 @@ export const CRIMSON_STARTER_DECK: CardDefinition[] = [
   SPIRIT_SLASH,
 ];
 
+/**
+ * 手札の扱い（消える・保留・天賦・Xコスト・再演）。
+ * 無属性で、ブロック軸にはしない。盾のフィルターでノアから消えないようにするため。
+ * 絵はまだ無いので、種類の色の枠で出す。
+ */
+export const HEAT_HAZE: CardDefinition = {
+  id: 'heat-haze',
+  name: '陽炎',
+  rarity: 'common',
+  type: 'skill',
+  cost: 1,
+  target: 'self',
+  ethereal: true,
+  effects: [{ kind: 'block', amount: 8 }],
+  upgrade: { effects: [{ kind: 'block', amount: 11 }] },
+};
+
+export const FADING_BLADE: CardDefinition = {
+  id: 'fading-blade',
+  name: '消えゆく刃',
+  rarity: 'uncommon',
+  type: 'attack',
+  cost: 1,
+  target: 'enemy',
+  ethereal: true,
+  effects: [{ kind: 'damage', amount: 10 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 13 }] },
+};
+
+export const LINGERING_GUARD: CardDefinition = {
+  id: 'lingering-guard',
+  name: '残心',
+  rarity: 'uncommon',
+  type: 'skill',
+  cost: 1,
+  target: 'self',
+  retain: true,
+  effects: [{ kind: 'block', amount: 5 }],
+  upgrade: { effects: [{ kind: 'block', amount: 8 }] },
+};
+
+export const BULWARK_X: CardDefinition = {
+  id: 'bulwark-x',
+  name: '堅陣',
+  rarity: 'uncommon',
+  type: 'skill',
+  cost: 0,
+  target: 'self',
+  xCost: true,
+  retain: true,
+  effects: [{ kind: 'blockPerX', amount: 4 }],
+  upgrade: { effects: [{ kind: 'blockPerX', amount: 6 }] },
+};
+
+export const BARRAGE_X: CardDefinition = {
+  id: 'barrage-x',
+  name: '掃射',
+  rarity: 'uncommon',
+  type: 'attack',
+  cost: 0,
+  target: 'allEnemies',
+  xCost: true,
+  effects: [{ kind: 'damagePerX', amount: 4 }],
+  upgrade: { effects: [{ kind: 'damagePerX', amount: 5 }] },
+  motion: 'sweep',
+};
+
+export const ENCORE_STRIKE: CardDefinition = {
+  id: 'encore-strike',
+  name: '追憶打ち',
+  rarity: 'uncommon',
+  type: 'attack',
+  cost: 1,
+  target: 'enemy',
+  effects: [
+    { kind: 'damage', amount: 4 },
+    { kind: 'replayPrevious' },
+  ],
+  upgrade: {
+    effects: [
+      { kind: 'damage', amount: 6 },
+      { kind: 'replayPrevious' },
+    ],
+  },
+};
+
+export const DOUBLE_CALL: CardDefinition = {
+  id: 'double-call',
+  name: '二重の号令',
+  rarity: 'rare',
+  type: 'skill',
+  cost: 1,
+  target: 'self',
+  exhaust: true,
+  effects: [{ kind: 'gainReplay' }],
+  upgrade: { cost: 0 },
+};
+
+export const OPENING_STRIKE: CardDefinition = {
+  id: 'opening-strike',
+  name: '先陣打ち',
+  rarity: 'uncommon',
+  type: 'attack',
+  cost: 1,
+  target: 'enemy',
+  innate: true,
+  effects: [{ kind: 'damage', amount: 8 }],
+  upgrade: { effects: [{ kind: 'damage', amount: 11 }] },
+};
+
+/** 使えば捨て札に戻り、後から引ける。使わずに残すと、そのターンの終わりに消える。 */
+export const OPENING_GUARD: CardDefinition = {
+  id: 'opening-guard',
+  name: '幕開け',
+  rarity: 'uncommon',
+  type: 'skill',
+  cost: 0,
+  target: 'self',
+  innate: true,
+  ethereal: true,
+  effects: [{ kind: 'block', amount: 5 }],
+  upgrade: { effects: [{ kind: 'block', amount: 8 }] },
+};
+
+export const HAND_MECHANIC_CARDS: CardDefinition[] = [
+  HEAT_HAZE,
+  FADING_BLADE,
+  LINGERING_GUARD,
+  BULWARK_X,
+  BARRAGE_X,
+  ENCORE_STRIKE,
+  DOUBLE_CALL,
+  OPENING_STRIKE,
+  OPENING_GUARD,
+];
+
 /** 戦闘報酬・ショップ用。スレスパの鉄甲のカードに近い効果。末尾にシナジー札を足す。 */
 export const REWARD_CARDS: CardDefinition[] = [
   {
@@ -1105,5 +1241,6 @@ export const REWARD_CARDS: CardDefinition[] = [
       ],
     },
   },
+  ...HAND_MECHANIC_CARDS,
   ...SYNERGY_CARDS,
 ];

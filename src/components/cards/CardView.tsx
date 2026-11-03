@@ -212,7 +212,7 @@ export function CardView({
           />
         )}
         <View style={styles.costGem}>
-          <Text style={styles.costText}>{card.unplayable ? '✕' : card.cost}</Text>
+          <Text style={styles.costText}>{card.unplayable ? '✕' : card.xCost ? 'X' : card.cost}</Text>
         </View>
         {dimmed && <View pointerEvents="none" style={styles.dimGem} />}
         {stack > 1 && card.water && (
