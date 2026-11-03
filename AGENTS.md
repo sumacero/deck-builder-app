@@ -41,6 +41,8 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
   - 1 つのコンポーネントは 1 つの責務に保ち、肥大化したら分割する。
   - 状態の更新はイミュータブルに行う。
 - コンポーネントを追加・修正したら、`npx tsc --noEmit`（型チェック）と `npx expo lint` がエラーなしで通ることを確認してから完了とする。
+- チャットの指示で作業している間だけ、1分おきにチャットへ日本語で一言だけ進捗を書く。いま何をしているかでよい。指示が無いとき、待機中の報告はしない。
+- Expo Go の QR に出るのは、手元の `~/projects/deck-builder-app` だけ。クラウドのコピーと GitHub へ送っただけでは手元は変わらない。手元のフォルダを直接編集できないセッションでは、その旨を先に書く。手元に未コミットの変更があるときは、退避してからブランチを合わせ、退避を戻して両方残す。
 
 ## 4. エンジニアの学習戦略
 
@@ -71,7 +73,7 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 ## Commands
 
 - オーナーに「ローカル開発環境の立ち上げコマンド」と聞かれたら、説明より先に次の 2 つをそのまま答える（ターミナル 2 つで実行。詳細は `docs/KNOWLEDGE.md` の環境の節）:
-  1. `cd ~/projects/deck-builder-app && npx expo start --tunnel`（WSL なので `--tunnel` 必須。無いと Expo Go が「Something went wrong」）
+  1. `cd ~/projects/deck-builder-app && npx expo start --tunnel ngrok`（WSL なので `--tunnel` 必須。無いと Expo Go が「Something went wrong」。Expo アカウントに入っていないので、トンネルは `ngrok` を指定する）
   2. `cd ~/projects/deck-builder-app && agent worker start --name deck-pc`（スマホから指示するための My Machines ワーカー）
 
 Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
