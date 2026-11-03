@@ -68,6 +68,16 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `ターン終了時、ブロック ${effect.amount} を得る。`;
     case 'damageFromBlock':
       return target === 'allEnemies' ? '敵全体に、今のブロック値と同じダメージを与える。' : '今のブロック値と同じダメージを与える。';
+    case 'damageFromAttackWater':
+      return effect.stackScale && effect.stackScale !== 1
+        ? `今の攻撃の水力の ${effect.stackScale} 倍のダメージを与える。水力は減らない。`
+        : '今の攻撃の水力と同じダメージを与える。水力は減らない。';
+    case 'blockFromGuardWater':
+      return effect.stackScale && effect.stackScale !== 1
+        ? `今の守りの水力の ${effect.stackScale} 倍のブロックを得る。水力は減らない。`
+        : '今の守りの水力と同じブロックを得る。水力は減らない。';
+    case 'damageByExhaustCount':
+      return `${target === 'allEnemies' ? '敵全体に' : ''}${effect.amount} ダメージ。廃棄札 1 枚につき 1 回（最低 1 回）。`;
     case 'doubleBlock':
       return '今のブロック値を 2 倍にする。';
     case 'applyDebuff':

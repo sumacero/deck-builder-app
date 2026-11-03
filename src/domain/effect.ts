@@ -13,6 +13,15 @@ export type Effect =
   | { kind: 'damagePerSelfHpLost'; base: number; perHp: number }
   /** 今のブロック値と同じダメージを与える（筋力などの補正も乗る）。 */
   | { kind: 'damageFromBlock' }
+  /**
+   * 今の攻撃の水力と同じダメージ（水力は減らない）。
+   * stackScale は段の倍率。カード定義には書かず、使うときに段から入る。
+   */
+  | { kind: 'damageFromAttackWater'; stackScale?: number }
+  /** 今の守りの水力と同じブロック（水力は減らない）。stackScale は段の倍率。 */
+  | { kind: 'blockFromGuardWater'; stackScale?: number }
+  /** 廃棄札 1 枚につき 1 回、amount ダメージ（最低 1 回）。使っているこの札は、まだ廃棄札に無いので数えない。 */
+  | { kind: 'damageByExhaustCount'; amount: number }
   | { kind: 'block'; amount: number }
   /** 今のブロック値を 2 倍にする。 */
   | { kind: 'doubleBlock' }

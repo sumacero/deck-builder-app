@@ -75,6 +75,54 @@ export const MIST_VEIL: CardDefinition = {
   art: 'rain-steps',
 };
 
+/** 溜めた攻撃の水力を、減らさずにダメージへ変える。段は水力の数字にだけかかる。 */
+export const TIDE_STRIKE: CardDefinition = {
+  ...NOA,
+  id: 'tide-strike',
+  name: '潮撃',
+  rarity: 'uncommon',
+  type: 'attack',
+  archetypes: ['element'],
+  water: true,
+  cost: 1,
+  target: 'enemy',
+  effects: [{ kind: 'damageFromAttackWater' }],
+  upgrade: { cost: 0 },
+  art: 'crack-tide',
+};
+
+/** 廃棄札が増えるほど殴る回数だけ増える。重ねて消した下の札が、次の残波を増やす。 */
+export const ECHO_WAVE: CardDefinition = {
+  ...NOA,
+  id: 'echo-wave',
+  name: '残波',
+  rarity: 'uncommon',
+  type: 'attack',
+  archetypes: ['element'],
+  water: true,
+  cost: 1,
+  target: 'enemy',
+  effects: [{ kind: 'damageByExhaustCount', amount: 3 }],
+  upgrade: { effects: [{ kind: 'damageByExhaustCount', amount: 4 }] },
+  art: 'drizzle',
+};
+
+/** 溜めた守りの水力を、減らさずにブロックへ変える。ブロック軸にはせず、水の報酬に残す。 */
+export const GUARD_TIDE: CardDefinition = {
+  ...NOA,
+  id: 'guard-tide',
+  name: '受け潮',
+  rarity: 'uncommon',
+  type: 'skill',
+  archetypes: ['element'],
+  water: true,
+  cost: 1,
+  target: 'self',
+  effects: [{ kind: 'blockFromGuardWater' }],
+  upgrade: { cost: 0 },
+  art: 'shoreline',
+};
+
 /** ノアの秘奥義。水札を待たずに、小さなダメージとブロックとドローをまとめて出す。 */
 export const MIRROR_TRIAD: CardDefinition = {
   id: 'mirror-triad',
@@ -128,6 +176,9 @@ export const MIRROR_CARDS: CardDefinition[] = [
   THIN_ICE,
   DROPLET,
   MIST_VEIL,
+  TIDE_STRIKE,
+  ECHO_WAVE,
+  GUARD_TIDE,
   // --- 単体の高火力・大きなブロック ---
   {
     ...NOA,

@@ -135,7 +135,7 @@ export function MapNodeView({
             backgroundColor: selected || current ? COLORS.goldDark : COLORS.panel,
             borderColor: current || reachable || selected ? COLORS.gold : color,
             borderWidth: current || reachable || selected ? 3 : 2,
-            opacity: visited && !current && !reachable && !selected ? 0.55 : 1,
+            opacity: visited && !current && !reachable && !selected ? 0.82 : 1,
             transform: [{ scale: nodeScale }],
           },
         ]}
@@ -149,7 +149,7 @@ export function MapNodeView({
 }
 
 const styles = StyleSheet.create({
-  anchor: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  anchor: { position: 'absolute', zIndex: 1, alignItems: 'center', justifyContent: 'center' },
   glow: {
     position: 'absolute',
     top: 0,

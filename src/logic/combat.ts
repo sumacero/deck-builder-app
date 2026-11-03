@@ -830,6 +830,26 @@ function applyEffect(state: CombatState, effect: Effect, aim: Aim, hitKind: HitK
       const amount = attackDamage(state, state.player.block);
       return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), state);
     }
+    case 'damageFromAttackWater': {
+      const base = Math.floor(state.player.attackWater * (effect.stackScale ?? 1));
+      if (base <= 0) return withLog(state, '攻撃の水力が無かった');
+      const amount = attackDamage(state, base);
+      return aimedUids(state, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), state);
+    }
+    case 'blockFromGuardWater': {
+      const amount = Math.floor(state.player.guardWater * (effect.stackScale ?? 1));
+      if (amount <= 0) return withLog(state, '守りの水力が無かった');
+      return gainPlayerBlock(state, amount);
+    }
+    case 'damageByExhaustCount': {
+      const hits = Math.max(1, state.exhaustPile.length);
+      const amount = attackDamage(state, effect.amount);
+      let next = state;
+      for (let i = 0; i < hits; i++) {
+        next = aimedUids(next, aim).reduce((current, uid) => hitEnemy(current, uid, amount, hitKind), next);
+      }
+      return next;
+    }
     case 'block':
       return gainPlayerBlock(state, effect.amount);
     case 'doubleBlock':
@@ -1397,7 +1417,7 @@ export function discardPotion(state: CombatState, slot: number): CombatState {
 /**
  * 手札の札を、種類と段が同じもう一枚の上に重ねる。エナジーは要らない。
  * 摘んでいた札が残って段が倍になる。置き場所は下の札があった位置のまま（手札の並びは動かさない）。
- * 下の札は 1 段に戻って廃棄札へ。この戦闘ではもう引けない。消えた下の札の段だけ、その種類の水力が溜まる（水面の分だけ多い）。
+ * 下の札は 1 段に戻って廃棄札へ行き、この戦闘ではもう使えない。消えた下の札の段だけ、その種類の水力が溜まる（水面の分だけ多い）。
  * 毎ターン最初の 1 回は、水晶の文鎮が消した札の段と同じだけ、同じ種類の水力を足す。
  */
 const CRYSTAL_WEIGHT_ID = 'crystal-weight';
@@ -1439,7 +1459,10 @@ export function fuseInHand(state: CombatState, sourceId: string, targetId: strin
   const weight = bonus > 0 ? `（水晶の文鎮 +${bonus}）` : '';
   const announced = withEvent(
     withPileTravel(
-      withLog(fused, `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段、${pool} +${total}${weight}）`),
+      withLog(
+        fused,
+        `${source.card.name}を${target.card.name}の上に重ねた（${stack} 段、${pool} +${total}${weight}）。${target.card.name}は廃棄札へ。この戦闘では使えない`,
+      ),
       target,
       'hand',
       'exhaust',
