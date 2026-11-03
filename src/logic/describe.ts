@@ -296,10 +296,11 @@ export function describeCard(card: CardDefinition): string {
     card.turnEndInHand
       ? `ターン終了時に手札にあると、${describeEffects(card.turnEndInHand, 'self')}`
       : '',
-    card.ethereal ? 'ターン終了時に手札にあると消える。' : '',
+    card.ethereal ? '幻影。ターン終了時に手札にあると廃棄される。' : '',
     card.retain ? '保留。ターンが終わっても手札に残る。' : '',
-    card.innate ? '天賦。戦闘開始時、手札にある。' : '',
+    card.innate ? '先制。戦闘開始時、手札にある。' : '',
     card.xCost ? 'Xコスト。残っているエナジーをすべて払う。' : '',
+    card.sly ? '昇華。捨てられたとき、コストを払わずに使う。' : '',
     card.growth ? describeGrowth(card.growth) : '',
     card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',

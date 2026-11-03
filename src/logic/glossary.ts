@@ -158,6 +158,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.retain ? (['retain'] as const) : []),
     ...(card.innate ? (['innate'] as const) : []),
     ...(card.xCost ? (['xCost'] as const) : []),
+    ...(card.sly ? (['sly'] as const) : []),
     ...(card.addCopyToDiscard ? (['copyToDiscard'] as const) : []),
     ...(card.exhaust ? (['exhaust'] as const) : []),
     ...(card.waterCost ? (['water'] as const) : []),

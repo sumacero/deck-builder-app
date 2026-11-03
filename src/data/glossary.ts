@@ -40,9 +40,9 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   },
   ethereal: {
     id: 'ethereal',
-    name: '消える',
-    icon: '💨',
-    description: 'ターン終了時に手札にあると、廃棄されて戦闘中は戻ってこない。保留より先に消える。',
+    name: '幻影',
+    icon: '👻',
+    description: 'ターン終了時に手札にあると、廃棄されて戦闘中は戻ってこない。保留より先に廃棄される。',
   },
   retain: {
     id: 'retain',
@@ -66,9 +66,17 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   },
   innate: {
     id: 'innate',
-    name: '天賦',
-    icon: '🌅',
-    description: '戦闘が始まるとき、通常のドローとは別に手札へ入る。手札が上限なら、入りきらない分は山札に残る。',
+    name: '先制',
+    icon: '⚡',
+    description:
+      '戦闘が始まるとき、山札より先に、通常のドローとは別に手札へ入る。手札が上限なら、入りきらない分は山札に残る。',
+  },
+  sly: {
+    id: 'sly',
+    name: '昇華',
+    icon: '✨',
+    description:
+      '手札から捨てられたとき、エナジーを払わずに使う。ターンの終わりに手札を捨てるときも使う。敵を狙う札は、捨てさせた技の狙いがいればそこへ当たり、無ければ生きている敵へ当たる。',
   },
   damage: {
     id: 'damage',
