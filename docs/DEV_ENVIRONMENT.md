@@ -23,7 +23,7 @@ flowchart TB
     CursorApp["Cursor デスクトップ<br/>PC から指示するときのチャット"]
     Worker["ワーカー deck-pc<br/>agent worker start --name deck-pc"]
     Repo[("プロジェクトフォルダ<br/>~/projects/deck-builder-app")]
-    Metro["Expo 開発サーバー（Metro）<br/>npx expo start --tunnel"]
+    Metro["Expo 開発サーバー（Metro）<br/>npx expo start --tunnel ngrok"]
   end
 
   Chrome <-->|"指示・進捗"| CursorCloud
