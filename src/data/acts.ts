@@ -1,4 +1,5 @@
 import type { ActConfig, Region } from '../domain/act';
+import type { RoadTier } from '../domain/enemy';
 import { scaleEncounter, scaleEnemy, type ChapterScale } from '../logic/scaling';
 import { STAR_DEVOURER } from './enemies';
 import { REGION_ENEMIES } from './encounters';
@@ -93,7 +94,9 @@ function buildAct(chapter: ChapterDef, region: RegionDef): ActConfig {
     name: `第 ${chapter.number} 章　${region.name}`,
     region: region.region,
     map: STANDARD_ACT_MAP,
-    enemyPool: enemies.normal.map((encounter) => scaleEncounter(encounter, chapter.road)),
+    enemyPool: (['early', 'mid', 'late'] as const satisfies readonly RoadTier[]).flatMap((tier) =>
+      enemies.normal[tier].map((encounter) => scaleEncounter(encounter, chapter.road)),
+    ),
     elitePool: enemies.elite.map((encounter) => scaleEncounter(encounter, chapter.road)),
     bossPool: enemies.boss.map((encounter) => scaleEncounter(encounter, chapter.boss)),
     greeting: `${chapter.greetingBefore}${region.greeting}${chapter.greetingAfter}`,

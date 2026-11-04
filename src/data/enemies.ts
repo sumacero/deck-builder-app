@@ -59,12 +59,12 @@ export const ROCK_SOLDIER: EnemyDefinition = {
   name: '岩の兵士',
   icon: '🪨',
   rank: 'normal',
-  maxHp: 42,
+  maxHp: 54,
   attribute: 'fire',
   moves: [
-    { id: 'shield-up', name: '盾構え', actions: [blk(9), atk(6)] },
-    { id: 'cleave', name: '叩き斬り', actions: [atk(13)] },
-    { id: 'stomp', name: '踏み込み', actions: [atk(5, 2)] },
+    { id: 'shield-up', name: '盾構え', actions: [blk(12), atk(7)] },
+    { id: 'cleave', name: '叩き斬り', actions: [atk(16)] },
+    { id: 'stomp', name: '踏み込み', actions: [atk(6, 2)] },
   ],
   traits: [{ kind: 'artifact', charges: 1 }],
 };
@@ -75,12 +75,12 @@ export const OBSIDIAN_KNIGHT: EnemyDefinition = {
   name: '黒曜の甲騎士',
   icon: '🛡️',
   rank: 'normal',
-  maxHp: 46,
+  maxHp: 58,
   attribute: 'fire',
   moves: [
-    { id: 'shell-guard', name: '殻の構え', actions: [blk(10), atk(5)] },
-    { id: 'shell-break', name: '殻割り', actions: [atk(13)] },
-    { id: 'drill', name: '連打', actions: [atk(4, 2)] },
+    { id: 'shell-guard', name: '殻の構え', actions: [blk(12), atk(6)] },
+    { id: 'shell-break', name: '殻割り', actions: [atk(16)] },
+    { id: 'drill', name: '連打', actions: [atk(5, 2)] },
   ],
   traits: [{ kind: 'hitCap', amount: 6 }],
 };
@@ -194,12 +194,12 @@ export const GRASS_WOLF: EnemyDefinition = {
   name: '草原の狼',
   icon: '🐺',
   rank: 'normal',
-  maxHp: 36,
+  maxHp: 52,
   attribute: 'grass',
   moves: [
-    { id: 'growl', name: '威嚇の唸り', actions: [atk(4), debuff('vulnerable')] },
-    { id: 'pounce', name: '飛びかかり', actions: [atk(10)] },
-    { id: 'rest', name: '草陰で休む', actions: [heal(6), blk(5)] },
+    { id: 'growl', name: '威嚇の唸り', actions: [atk(6), debuff('vulnerable')] },
+    { id: 'pounce', name: '飛びかかり', actions: [atk(15)] },
+    { id: 'rest', name: '草陰で休む', actions: [heal(8), blk(8)] },
   ],
 };
 
@@ -273,12 +273,12 @@ export const DROWNED_GUARD: EnemyDefinition = {
   name: '沈都の衛兵',
   icon: '🔱',
   rank: 'normal',
-  maxHp: 44,
+  maxHp: 54,
   attribute: 'water',
   moves: [
-    { id: 'thrust', name: '突き', actions: [atk(11)] },
-    { id: 'water-shield', name: '水の盾', actions: [blk(8), atk(5)] },
-    { id: 'sealing-spear', name: '封水の槍', actions: [atk(6), SEAL] },
+    { id: 'thrust', name: '突き', actions: [atk(15)] },
+    { id: 'water-shield', name: '水の盾', actions: [blk(10), atk(6)] },
+    { id: 'sealing-spear', name: '封水の槍', actions: [atk(8), SEAL] },
   ],
   traits: [{ kind: 'artifact', charges: 1 }],
 };
@@ -363,12 +363,12 @@ export const ANCIENT_PHANTOM: EnemyDefinition = {
   name: '古都の亡霊',
   icon: '👻',
   rank: 'normal',
-  maxHp: 30,
+  maxHp: 48,
   attribute: 'water',
   moves: [
     { id: 'fade', name: '霧に溶ける', actions: [INTANGIBLE] },
-    { id: 'chilling-touch', name: '凍える手', actions: [atk(7), debuff('weak')] },
-    { id: 'wail', name: '嘆きの声', actions: [atk(4, 2)] },
+    { id: 'chilling-touch', name: '凍える手', actions: [atk(10), debuff('weak')] },
+    { id: 'wail', name: '嘆きの声', actions: [atk(6, 2)] },
   ],
 };
 
@@ -379,11 +379,11 @@ export const GEAR_SOLDIER: EnemyDefinition = {
   name: '歯車の兵',
   icon: '🤖',
   rank: 'normal',
-  maxHp: 42,
+  maxHp: 54,
   moves: [
-    { id: 'thrust', name: '突き', actions: [atk(10)] },
-    { id: 'armor', name: '装甲展開', actions: [blk(8), atk(5)] },
-    { id: 'shock-spear', name: '放電の槍', actions: [atk(5), paralyze()] },
+    { id: 'thrust', name: '突き', actions: [atk(14)] },
+    { id: 'armor', name: '装甲展開', actions: [blk(12), atk(6)] },
+    { id: 'shock-spear', name: '放電の槍', actions: [atk(7), paralyze()] },
   ],
   traits: [{ kind: 'artifact', charges: 1 }],
 };
@@ -514,7 +514,7 @@ export const CINDER_IMP: EnemyDefinition = {
   maxHp: 14,
   attribute: 'fire',
   moves: [
-    { id: 'claw', name: '火の爪', actions: [atk(5)] },
+    { id: 'claw', name: '火の爪', actions: [atk(4)] },
     { id: 'guard', name: '構え', actions: [blk(4), atk(3)] },
   ],
   traits: [{ kind: 'vengeance', strength: 2 }],
@@ -525,11 +525,11 @@ export const PEBBLE_GOLEM: EnemyDefinition = {
   name: '小石のゴーレム',
   icon: '⛰️',
   rank: 'normal',
-  maxHp: 17,
+  maxHp: 14,
   attribute: 'fire',
   moves: [
-    { id: 'stone-wall', name: '石の壁', actions: [blk(6), atk(2)] },
-    { id: 'tackle', name: '体当たり', actions: [atk(6)] },
+    { id: 'stone-wall', name: '石の壁', actions: [blk(5), atk(2)] },
+    { id: 'tackle', name: '体当たり', actions: [atk(4)] },
   ],
   traits: [{ kind: 'guardian' }],
 };
@@ -542,8 +542,8 @@ export const FIRE_BAT: EnemyDefinition = {
   maxHp: 12,
   attribute: 'fire',
   moves: [
-    { id: 'fire-wing', name: '火の羽', actions: [atk(3, 2)] },
-    { id: 'bite', name: '噛みつき', actions: [atk(5)] },
+    { id: 'fire-wing', name: '火の羽', actions: [atk(2, 2)] },
+    { id: 'bite', name: '噛みつき', actions: [atk(4)] },
   ],
 };
 
@@ -571,8 +571,8 @@ export const GUST_SPRITE: EnemyDefinition = {
   maxHp: 12,
   attribute: 'grass',
   moves: [
-    { id: 'whirlwind', name: 'つむじ風', actions: [atk(2, 3)] },
-    { id: 'wind-blade', name: '風の刃', actions: [atk(3, 2)] },
+    { id: 'whirlwind', name: 'つむじ風', actions: [atk(2, 2)] },
+    { id: 'wind-blade', name: '風の刃', actions: [atk(3)] },
   ],
 };
 
@@ -584,8 +584,8 @@ export const HORN_RABBIT: EnemyDefinition = {
   maxHp: 13,
   attribute: 'grass',
   moves: [
-    { id: 'horn', name: '角突き', actions: [atk(5)] },
-    { id: 'hop', name: '跳ね回る', actions: [atk(2, 3)] },
+    { id: 'horn', name: '角突き', actions: [atk(4)] },
+    { id: 'hop', name: '跳ね回る', actions: [atk(2, 2)] },
   ],
   traits: [{ kind: 'vengeance', strength: 2 }],
 };
@@ -624,11 +624,11 @@ export const RUIN_CRAB: EnemyDefinition = {
   name: '遺跡ガニ',
   icon: '🦀',
   rank: 'normal',
-  maxHp: 16,
+  maxHp: 14,
   attribute: 'water',
   moves: [
-    { id: 'pinch', name: 'はさみ', actions: [atk(3, 2)] },
-    { id: 'shell', name: '甲羅', actions: [blk(6), atk(2)] },
+    { id: 'pinch', name: 'はさみ', actions: [atk(2, 2)] },
+    { id: 'shell', name: '甲羅', actions: [blk(5), atk(2)] },
   ],
   traits: [{ kind: 'guardian' }, { kind: 'hitCap', amount: 6 }],
 };
@@ -669,6 +669,36 @@ export const TESLA_ORB: EnemyDefinition = {
   maxHp: 13,
   moves: [
     { id: 'store', name: '蓄電', actions: [CHARGE, blk(3)] },
-    { id: 'flash', name: '雷光', actions: [atk(9)] },
+    { id: 'flash', name: '雷光', actions: [atk(6)] },
   ],
+};
+
+/** 草原の終盤。狼より重く、突進の前に一度地を蹴って予告する。 */
+export const MOSS_BOAR: EnemyDefinition = {
+  id: 'moss-boar',
+  name: '苔の猪',
+  icon: '🐗',
+  rank: 'normal',
+  maxHp: 58,
+  attribute: 'grass',
+  moves: [
+    { id: 'brace', name: '地を蹴る', actions: [blk(12)] },
+    { id: 'charge', name: '突進', actions: [atk(17)] },
+    { id: 'trample', name: '踏み荒らし', actions: [atk(8, 2)] },
+  ],
+};
+
+/** 歯車塔の終盤。構えと蓄電のあとに、大きな雷槌を落とす。 */
+export const BRONZE_SENTRY: EnemyDefinition = {
+  id: 'bronze-sentry',
+  name: '青銅の歩哨',
+  icon: '🗿',
+  rank: 'normal',
+  maxHp: 60,
+  moves: [
+    { id: 'plate', name: '青銅の構え', actions: [blk(14)] },
+    { id: 'wind', name: '蓄電', actions: [CHARGE, blk(6)] },
+    { id: 'slam', name: '雷槌', actions: [atk(18)] },
+  ],
+  traits: [{ kind: 'artifact', charges: 1 }],
 };

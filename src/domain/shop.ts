@@ -35,7 +35,7 @@ export type EconomyConfig = {
   /** レリックのレア度の出現しやすさ（重み）。エリート・宝箱・ショップ・イベントで共通。 */
   relicTierWeight: Record<RelicTier, number>;
   potionPrice: number;
-  /** 通常戦の報酬で、強化の代わりにもらえるゴールド。 */
+  /** 以前の通常戦報酬（強化の代わりのゴールド）。新しい戦闘では出さない。進行中のその画面だけが読む。 */
   growthGold: number;
   /** 0.1 なら基準価格の ±10% の範囲でばらつく。 */
   priceVariance: number;
@@ -48,8 +48,8 @@ export type EconomyConfig = {
   /** 宝箱に入っているゴールド（レリックと一緒にもらえる）。 */
   treasureGold: { min: number; max: number };
   /**
-   * エリート・ボスに勝ったとき、ポーションの 3 択が出る確率。
-   * 0.3 なら 10 戦中およそ 3 戦。通常戦はカードの強化かゴールドだけで、ここには入らない。
+   * 戦闘に勝ったとき、カード報酬のあとにポーションの 3 択が出る確率。
+   * 0.3 なら 10 戦中およそ 3 戦。通常戦・エリート・ボスで同じ。外れた戦闘はカードだけで終わる。
    */
   potionDropChance: number;
 };

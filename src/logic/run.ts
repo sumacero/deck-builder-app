@@ -166,9 +166,9 @@ export function moveTo(run: RunState, nodeId: string): RunState {
 const REWARD_CHOICES = 3;
 
 /**
- * 勝てばゴールド。通常戦はそのあと、カードを 1 枚強化するかゴールドを追加でもらう。
- * エリートとボスはカード 3 択のあとポーション 3 択。エリートはレリックも、ボスはそのあとボスレリック。
- * ラスボスを倒したらクリア。
+ * 勝てばゴールド。どの戦闘でもカード 3 択は必ず出し、そのあとポーション 3 択を確率で出す。
+ * エリートはレリックも、ボスはそのあとボスレリック。ラスボスを倒したらクリア。
+ * 強化の報酬は出さない（休憩所と、出来事の強化はそのまま）。
  */
 export function finishCombat(run: RunState, result: CombatResult): RunState {
   if (run.phase.kind !== 'combat') return run;
@@ -194,22 +194,6 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
   const { min, max } = run.economy.encounterGold[rank];
   const gold = randomInt(min, max, survived.rngSeed);
   const withGold: RunState = { ...survived, gold: survived.gold + gold.value, rngSeed: gold.seed };
-  if (rank === 'normal') {
-    return {
-      ...withGold,
-      phase: {
-        kind: 'reward',
-        step: 'growth',
-        choices: [],
-        growthGold: run.economy.growthGold,
-        potionChoices: [],
-        gold: gold.value,
-        relic: null,
-        next: 'map',
-        canSkip: true,
-      },
-    };
-  }
   const looted = rank === 'elite' ? grantRandomRelic(withGold) : { run: withGold, relic: null };
   const offered = pickRewardChoices(
     rewardCandidates(looted.run),
