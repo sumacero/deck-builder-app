@@ -1,4 +1,4 @@
-import type { EnemyDefinition, Encounter } from '../domain/enemy';
+import type { EnemyDefinition, Encounter, RoadTier } from '../domain/enemy';
 import type { RunState } from '../domain/run';
 import { nextRandom, pickOne } from './random';
 import { scaleEncounter } from './scaling';
@@ -13,6 +13,23 @@ export const soloEncounter = (enemy: EnemyDefinition): Encounter => ({
 /** 戦闘の主役（エリート・ボスなど一番格の高い敵）。取り巻きと一緒に出ても、名前を出すときはこの敵。 */
 export function encounterLeader(encounter: Encounter): EnemyDefinition {
   return encounter.enemies.find((enemy) => enemy.rank === encounter.rank) ?? encounter.enemies[0];
+}
+
+/**
+ * ボスを除く 10 階を三等分に近い幅で分ける。0 がスタート。
+ * 序盤 0〜2、中盤 3〜6、終盤 7〜9。
+ */
+export function roadTier(floor: number): RoadTier {
+  if (floor <= 2) return 'early';
+  if (floor <= 6) return 'mid';
+  return 'late';
+}
+
+/** 今の階の通常戦だけを残す。印の無い候補しか無いときは、そのまま使う。 */
+export function encountersForFloor(pool: readonly Encounter[], floor: number): readonly Encounter[] {
+  const tier = roadTier(floor);
+  const band = pool.filter((encounter) => encounter.tier === tier);
+  return band.length > 0 ? band : pool;
 }
 
 /** 今いる階での、章の中の強さの倍率（1 階目が一番弱く、ボスの階で 1）。 */
@@ -45,7 +62,8 @@ export function startRandomCombat(
   nodeId: string,
   pool: readonly Encounter[],
 ): RunState {
-  const picked = pickOne(pool, run.rngSeed);
+  const node = run.map.nodes.find((item) => item.id === run.currentNodeId);
+  const picked = pickOne(encountersForFloor(pool, node?.floor ?? 0), run.rngSeed);
   if (!picked.item) return run;
   return startCombat({ ...run, rngSeed: picked.seed }, nodeId, picked.item);
 }

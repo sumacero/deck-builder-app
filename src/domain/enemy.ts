@@ -101,10 +101,18 @@ export type EnemyDefinition = {
   attribute?: Attribute;
 };
 
+/** 通常戦が、マップのどの時期に出るか。同じ敵を弱・中・強に分けず、時期ごとに別の敵を出す。 */
+export type RoadTier = 'early' | 'mid' | 'late';
+
 /** 1 回の戦闘で出てくる敵の組み合わせ。rank で報酬や BGM が変わる。 */
 export type Encounter = {
   id: string;
   rank: EnemyRank;
   /** 左から順に並び、この順に行動する。 */
   enemies: EnemyDefinition[];
+  /**
+   * 通常戦だけ。序盤・中盤・終盤のどれに出すか。
+   * 無いプール（古いセーブ、エリート、ボス）は、階で絞り込まない。
+   */
+  tier?: RoadTier;
 };

@@ -44,6 +44,8 @@ const ENEMY_ART: Record<string, ImageSourcePropType> = {
   'bolt-bug': require('../../../assets/enemies/bolt-bug.png'),
   'cog-rat': require('../../../assets/enemies/cog-rat.png'),
   'tesla-orb': require('../../../assets/enemies/tesla-orb.png'),
+  'moss-boar': require('../../../assets/enemies/moss-boar.png'),
+  'bronze-sentry': require('../../../assets/enemies/bronze-sentry.png'),
 };
 
 export function enemyArt(enemyId: string): ImageSourcePropType | undefined {
