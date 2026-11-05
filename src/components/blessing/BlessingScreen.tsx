@@ -22,6 +22,7 @@ type BlessingScreenProps = {
 export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const act = currentAct(run);
+  const offer = run.phase.kind === 'blessing' ? run.phase.offer : undefined;
 
   return (
     <ScreenScroll contentStyle={styles.root}>
@@ -45,6 +46,7 @@ export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
         <Text style={styles.guideName}>{run.guide.name}</Text>
         <View style={styles.bubble}>
           <Text style={styles.greeting}>{act.greeting}</Text>
+          {offer ? <Text style={styles.offer}>{offer}</Text> : null}
         </View>
 
         <View style={styles.options}>
@@ -114,6 +116,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   greeting: { color: COLORS.text, fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  offer: { color: COLORS.gold, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: SPACING.sm },
   options: { alignSelf: 'stretch', gap: SPACING.sm, marginTop: SPACING.md },
   option: {
     backgroundColor: COLORS.surface,

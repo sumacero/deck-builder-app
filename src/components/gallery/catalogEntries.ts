@@ -61,6 +61,6 @@ const BLESSING_GROUP_LABEL: Record<BlessingGroup, string> = {
 export const BLESSING_ITEMS: CatalogItem[] = ALL_BLESSINGS.map((blessing) => ({
   key: blessing.id,
   icon: '✨',
-  title: BLESSING_GROUP_LABEL[blessing.group],
+  title: `第${blessing.act}章・${BLESSING_GROUP_LABEL[blessing.group]}`,
   lines: describeBlessing(blessing),
 }));

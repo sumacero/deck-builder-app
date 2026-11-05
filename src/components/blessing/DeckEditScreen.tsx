@@ -1,7 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 import type { RunPhase, RunState } from '../../domain/run';
 import type { BlessingActions } from '../../hooks/useRun';
-import { canUpgrade, stackCards, upgradeCard } from '../../logic/cards';
+import type { CardStamp } from '../../domain/runEffect';
+import { canStamp, canUpgrade, stackCards, stampCard, upgradeCard } from '../../logic/cards';
 import { CardPickerModal } from '../cards/CardPickerModal';
 
 type DeckEditPhase = Extract<RunPhase, { kind: 'deckEdit' }>;
@@ -12,11 +13,30 @@ type DeckEditScreenProps = {
   actions: BlessingActions;
 };
 
-/** 恩恵・出来事で「カードを選んで強化 / 削除」を選んだあとの画面。 */
+const STAMP_NAME: Record<CardStamp, string> = {
+  replay: '再演',
+  sly: '昇華',
+  innate: '先制',
+  retain: '保留',
+};
+
+/** 恩恵・出来事で「カードを選んで強化 / 削除 / 性質を付与」を選んだあとの画面。 */
 export function DeckEditScreen({ run, phase, actions }: DeckEditScreenProps) {
   const upgrading = phase.mode === 'upgrade';
-  const stacks = stackCards(upgrading ? run.deck.filter(canUpgrade) : run.deck);
-  const title = upgrading ? '強化するカードを選ぶ' : '削除するカードを選ぶ';
+  const stamp = phase.mode === 'stamp' ? phase.stamp : null;
+  const pool =
+    phase.mode === 'upgrade'
+      ? run.deck.filter(canUpgrade)
+      : phase.mode === 'stamp'
+        ? run.deck.filter((card) => canStamp(card, phase.stamp))
+        : run.deck;
+  const stacks = stackCards(pool);
+  const title =
+    phase.mode === 'stamp'
+      ? `${STAMP_NAME[phase.stamp]}を付与するカードを選ぶ${phase.remaining > 1 ? `（あと ${phase.remaining} 枚）` : ''}`
+      : upgrading
+        ? '強化するカードを選ぶ'
+        : '削除するカードを選ぶ';
   // 出来事はカードを選ばずに抜けられない。選べる札が無いときだけ先へ進める。
   const canLeave = phase.cancellable !== false || stacks.length === 0;
   return (
@@ -24,9 +44,9 @@ export function DeckEditScreen({ run, phase, actions }: DeckEditScreenProps) {
       <CardPickerModal
         title={title}
         stacks={stacks}
-        confirmLabel={upgrading ? '強化する' : '削除する'}
+        confirmLabel={stamp ? '付与する' : upgrading ? '強化する' : '削除する'}
         cancelLabel={phase.cancellable === false ? '先へ進む' : '受け取らない'}
-        preview={upgrading ? upgradeCard : undefined}
+        preview={stamp ? (card) => stampCard(card, stamp) : upgrading ? upgradeCard : undefined}
         onConfirm={(card) => actions.finishDeckEdit(card)}
         onCancel={canLeave ? () => actions.finishDeckEdit(null) : undefined}
       />

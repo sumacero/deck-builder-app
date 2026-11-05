@@ -39,7 +39,11 @@ function startAct(run: RunState, actIndex: number): RunState {
     rngSeed: boss.seed,
   };
   const blessing = generateBlessingOptions(entered);
-  return { ...entered, rngSeed: blessing.seed, phase: { kind: 'blessing', options: blessing.options } };
+  return {
+    ...entered,
+    rngSeed: blessing.seed,
+    phase: { kind: 'blessing', options: blessing.options, offer: blessing.offer },
+  };
 }
 
 /**

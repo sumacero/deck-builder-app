@@ -35,4 +35,9 @@ export type RelicDefinition = {
   /** 効果の並びだけでは書けない説明。あるときは、こちらをそのまま出す。 */
   summary?: string;
   onObtain?: RunEffect[];
+  /**
+   * ボス戦とラスボス戦で、戦闘開始時の手札をすべて強化する。
+   * 強化はそのカードに残り、その後の戦闘でも強化されたまま。
+   */
+  upgradeBossOpeningHand?: boolean;
 };

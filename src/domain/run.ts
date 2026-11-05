@@ -8,6 +8,7 @@ import type { EventDefinition } from './event';
 import type { GameMap } from './map';
 import type { PotionDefinition } from './potion';
 import type { RelicDefinition } from './relic';
+import type { CardStamp } from './runEffect';
 import type { EconomyConfig, ShopStock } from './shop';
 
 /** 1 回の挑戦（ラン）を始めるための設定。 */
@@ -53,9 +54,15 @@ type DeckEditFollowUp = {
 
 /** ラン全体が今どの画面にいるか。 */
 export type RunPhase =
-  | { kind: 'blessing'; options: BlessingDefinition[] }
+  | { kind: 'blessing'; options: BlessingDefinition[]; /** 案内役がこの組について言う一言。古いセーブには無い。 */ offer?: string }
   | ({ kind: 'deckEdit'; mode: 'upgrade' } & DeckEditFollowUp)
   | ({ kind: 'deckEdit'; mode: 'remove' } & DeckEditFollowUp)
+  | ({
+      kind: 'deckEdit';
+      mode: 'stamp';
+      stamp: CardStamp;
+      remaining: number;
+    } & DeckEditFollowUp)
   | { kind: 'map' }
   | { kind: 'combat'; nodeId: string; encounter: Encounter; seed: number }
   | {

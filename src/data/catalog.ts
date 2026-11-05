@@ -4,7 +4,9 @@ import type { EventDefinition } from '../domain/event';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import { forgeArrow } from '../logic/arrows';
+import { toBerserk } from '../logic/cards';
 import { ALL_AGENTS } from './agents';
+import { ACT_CARDS } from './actCards';
 import { STANDARD_BLESSINGS } from './blessings';
 import {
   CRIMSON_PHOENIX,
@@ -20,6 +22,7 @@ import { MIRROR_CARDS, MIRROR_STARTER_DECK, MIRROR_TRIAD } from './mirrorCards';
 import { STATUS_CARDS } from './statusCards';
 import { ALL_POTIONS } from './potions';
 import {
+  ACT_RELICS,
   BOSS_RELIC_POOL,
   CRYSTAL_WEIGHT,
   FIGHTING_SPIRIT,
@@ -60,6 +63,9 @@ export const ALL_CARDS: CardDefinition[] = uniqueById([
   /** リーネの弓が戦闘中に作る「矢」（パワー無しの基本形）。 */
   forgeArrow({}),
   ...STATUS_CARDS,
+  ...ACT_CARDS,
+  toBerserk(STRIKE),
+  toBerserk(DEFEND),
 ]);
 
 export const ALL_RELICS: RelicDefinition[] = uniqueById([
@@ -68,6 +74,7 @@ export const ALL_RELICS: RelicDefinition[] = uniqueById([
   CRYSTAL_WEIGHT,
   ...RELIC_POOL,
   ...BOSS_RELIC_POOL,
+  ...ACT_RELICS,
 ]);
 
 export const CATALOG_POTIONS: PotionDefinition[] = uniqueById(ALL_POTIONS);

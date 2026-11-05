@@ -1,9 +1,24 @@
 import type { CardDefinition, CardGrowth, CardInstance, CardStack, CardUpgrade } from '../domain/card';
 import type { Effect } from '../domain/effect';
+import type { CardStamp } from '../domain/runEffect';
 
 /** 同じカードでも成長回数が違えば別の山。削除で、どれを選んだか分かるようにする。 */
+/** 性質や数値が違う同じ id は、別の山にする。 */
 export function cardStackKey(card: CardDefinition): string {
-  return `${card.id}#${card.timesGrown ?? 0}`;
+  const numbers = card.effects
+    .map((effect) =>
+      effect.kind === 'damage' || effect.kind === 'block' ? `${effect.kind}${effect.amount}` : effect.kind,
+    )
+    .join(',');
+  return [
+    card.id,
+    card.timesGrown ?? 0,
+    card.sly ? 'sly' : '',
+    card.innate ? 'innate' : '',
+    card.retain ? 'retain' : '',
+    card.priority ? 'priority' : '',
+    numbers,
+  ].join('#');
 }
 
 /** 同じ id・成長回数の 1 枚。強化の有無は id の末尾で分かれる。 */
@@ -140,6 +155,117 @@ export function growCard(card: CardDefinition): CardDefinition {
     upgrade: card.upgrade && growUpgrade(card.upgrade, growth),
     timesGrown: (card.timesGrown ?? 0) + 1,
   };
+}
+
+const BASIC_IDS = { strike: 'strike', defend: 'defend' } as const;
+
+export function isStrike(card: CardDefinition): boolean {
+  return baseCardId(card.id) === BASIC_IDS.strike;
+}
+
+export function isDefend(card: CardDefinition): boolean {
+  return baseCardId(card.id) === BASIC_IDS.defend;
+}
+
+/** 性質を足せるカードか。呪い・使えない札・秘奥義には足さない。 */
+export function canStamp(card: CardDefinition, stamp: CardStamp): boolean {
+  if (card.curse || card.unplayable || card.mysticArte) return false;
+  switch (stamp) {
+    case 'replay':
+      return !card.effects.some((effect) => effect.kind === 'gainReplay');
+    case 'sly':
+      return card.sly !== true;
+    case 'innate':
+      return card.innate !== true;
+    case 'retain':
+      return card.retain !== true && card.ethereal !== true;
+  }
+}
+
+const REPLAY: Effect = { kind: 'gainReplay' };
+
+function withReplay(card: CardDefinition): CardDefinition {
+  if (!canStamp(card, 'replay')) return card;
+  const upgrade = card.upgrade?.effects
+    ? { ...card.upgrade, effects: [...card.upgrade.effects, REPLAY] }
+    : card.upgrade;
+  return { ...card, effects: [...card.effects, REPLAY], upgrade };
+}
+
+/** カードに性質を 1 つ足す。足せないときは元のまま。 */
+export function stampCard(card: CardDefinition, stamp: CardStamp): CardDefinition {
+  switch (stamp) {
+    case 'replay':
+      return withReplay(card);
+    case 'sly':
+      return canStamp(card, stamp) ? { ...card, sly: true } : card;
+    case 'innate':
+      return canStamp(card, stamp) ? { ...card, innate: true } : card;
+    case 'retain':
+      return canStamp(card, stamp) ? { ...card, retain: true } : card;
+  }
+}
+
+/** 選んだ 1 枚に性質を足したデッキ。 */
+export function stampInDeck(
+  deck: readonly CardDefinition[],
+  target: CardDefinition,
+  stamp: CardStamp,
+): CardDefinition[] {
+  const index = deck.findIndex((card) => cardsMatch(card, target) && canStamp(card, stamp));
+  if (index < 0) return [...deck];
+  return deck.map((card, i) => (i === index ? stampCard(card, stamp) : card));
+}
+
+function mapStat(effects: readonly Effect[], stat: 'damage' | 'block', bonus: number): Effect[] {
+  return effects.map((effect) =>
+    effect.kind === stat ? { ...effect, amount: effect.amount + bonus } : effect,
+  );
+}
+
+function scaleStat(effects: readonly Effect[], stat: 'damage' | 'block'): Effect[] {
+  return effects.map((effect) =>
+    effect.kind === stat ? { ...effect, amount: effect.amount * 2 } : effect,
+  );
+}
+
+/** ストライクのダメージと、防御のブロックを amount ずつ増やす。強化後の数値も同じだけ増やす。 */
+export function honeCard(card: CardDefinition, amount: number): CardDefinition {
+  const stat = isStrike(card) ? 'damage' : isDefend(card) ? 'block' : null;
+  if (!stat) return card;
+  const upgrade = card.upgrade?.effects
+    ? { ...card.upgrade, effects: mapStat(card.upgrade.effects, stat, amount) }
+    : card.upgrade;
+  return { ...card, effects: mapStat(card.effects, stat, amount), upgrade };
+}
+
+/** ストライクか防御を、手札にあるあいだ他の札を止める狂鬼の札にする。数値は 2 倍。 */
+export function toBerserk(card: CardDefinition): CardDefinition {
+  const strike = isStrike(card);
+  if (!strike && !isDefend(card)) return card;
+  const stat = strike ? 'damage' : 'block';
+  const id = strike ? 'berserk-strike' : 'berserk-defend';
+  const name = strike ? '狂鬼のストライク' : '狂鬼の防御';
+  const upgrade = card.upgrade?.effects
+    ? { ...card.upgrade, effects: scaleStat(card.upgrade.effects, stat) }
+    : card.upgrade;
+  return {
+    ...card,
+    id: card.upgraded ? `${id}+` : id,
+    name: card.upgraded ? `${name}+` : name,
+    art: card.art ?? (strike ? 'ultimate-strike' : 'steadfast-guard'),
+    priority: true,
+    effects: scaleStat(card.effects, stat),
+    upgrade,
+  };
+}
+
+/** 強化していない方から 1 枚の位置を返す。無ければ -1。 */
+export function findBasicIndex(deck: readonly CardDefinition[], kind: 'strike' | 'defend'): number {
+  const match = kind === 'strike' ? isStrike : isDefend;
+  const plain = deck.findIndex((card) => match(card) && !card.upgraded);
+  if (plain >= 0) return plain;
+  return deck.findIndex(match);
 }
 
 /** 選んだ 1 枚を取り除いたデッキ。 */

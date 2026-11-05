@@ -307,6 +307,7 @@ export function describeCard(card: CardDefinition): string {
     card.innate ? '先制。戦闘開始時、手札にある。' : '',
     card.xCost ? 'Xコスト。残っているエナジーをすべて払う。' : '',
     card.sly ? '昇華。捨てられたとき、コストを払わずに使う。' : '',
+    card.priority ? '手札にあるあいだ、このカード以外は使えない。' : '',
     card.uses !== undefined ? `${card.uses} 回使える。使い切ると、その戦闘では廃棄される。` : '',
     card.growth ? describeGrowth(card.growth) : '',
     card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
@@ -574,8 +575,37 @@ export function describeRunEffect(effect: RunEffect): string {
       return `毎ターン引く枚数 ${signed(effect.amount)}`;
     case 'fuseCards':
       return `${effect.from.name} ${effect.count} 枚を融合し「${effect.into.name}」にする（コスト ${effect.into.cost}：${describeCard(effect.into)}）`;
+    case 'addRandomCards':
+      return `ランダムなカードを ${effect.count} 枚加える`;
+    case 'transformRandom':
+      return effect.count === 1
+        ? 'カードを 1 枚、別のランダムなカードに変える'
+        : `カードを ${effect.count} 枚、別のランダムなカードに変える`;
+    case 'removeBasics':
+      return `ストライクを ${effect.strikes} 枚、防御を ${effect.defends} 枚削除する`;
+    case 'honeBasics':
+      return `すべてのストライクに鋭利（ダメージ +${effect.amount}）、すべての防御に硬化（ブロック +${effect.amount}）`;
+    case 'upgradeAll':
+      return '強化できるカードを、残らず強化する';
+    case 'upgradeStarters':
+      return 'ストライクと防御を、残らず強化する';
+    case 'berserkBasics':
+      return 'ストライク 1 枚と防御 1 枚を、狂鬼のストライクと狂鬼の防御に変える。手札にあるあいだ、その札を先に使わないと他の札は使えない。ダメージとブロックは 2 倍';
+    case 'addCurses':
+      return `呪い「${effect.card.name}」を ${effect.count} 枚受け取る`;
+    case 'stampCards':
+      return `${STAMP_LABEL[effect.stamp]}を、カード ${effect.count} 枚に付与する`;
+    case 'gainNamedRelic':
+      return `レリック「${effect.relic.name}」を得る。${effect.relic.summary ?? ''}`.trim();
   }
 }
+
+const STAMP_LABEL = {
+  replay: '再演',
+  sly: '昇華',
+  innate: '先制',
+  retain: '保留',
+} as const;
 
 function isNegative(effect: RunEffect): boolean {
   switch (effect.kind) {
@@ -587,7 +617,9 @@ function isNegative(effect: RunEffect): boolean {
     case 'changeDrawPerTurn':
       return effect.amount < 0;
     case 'addCard':
-      return effect.card.type === 'status';
+      return effect.card.curse === true || effect.card.type === 'status';
+    case 'addCurses':
+      return true;
     default:
       return false;
   }

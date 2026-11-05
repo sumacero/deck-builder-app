@@ -368,3 +368,58 @@ export const BOSS_RELIC_POOL: RelicDefinition[] = [
     ],
   },
 ];
+
+/**
+ * 章の開始の贈り物だけで渡すレリック。ショップやエリートの抽選には入れない。
+ */
+export const FINALE_LAMP: RelicDefinition = {
+  id: 'finale-lamp',
+  name: '終幕の灯',
+  icon: '🏮',
+  rarity: 'rare',
+  effects: [],
+  upgradeBossOpeningHand: true,
+  summary: 'ボス戦と、最後の決戦で、戦闘開始時の手札をすべて強化する。強化はその後も残る。',
+};
+
+export const OPENING_FANFARE: RelicDefinition = {
+  id: 'opening-fanfare',
+  name: '開幕のラッパ',
+  icon: '🎺',
+  rarity: 'rare',
+  trigger: 'combatStart',
+  effects: [
+    { kind: 'draw', amount: 1 },
+    { kind: 'gainEnergy', amount: 1 },
+  ],
+  summary: '戦闘開始時、カードを 1 枚多く引き、エナジーを 1 得る。',
+};
+
+export const BLOOD_PULSE: RelicDefinition = {
+  id: 'blood-pulse',
+  name: '血の拍動',
+  icon: '💓',
+  rarity: 'rare',
+  trigger: 'turnStart',
+  effects: [
+    { kind: 'loseHp', amount: 2 },
+    { kind: 'gainEnergy', amount: 1 },
+  ],
+  summary: '毎ターンの開始時、HP を 2 失い、エナジーを 1 得る。HP が尽きると、その場で倒れる。',
+};
+
+export const TWIN_PULSE: RelicDefinition = {
+  id: 'twin-pulse',
+  name: '二重の鼓動',
+  icon: '💞',
+  rarity: 'rare',
+  effects: [],
+  onObtain: [
+    { kind: 'loseMaxHp', amount: 12 },
+    { kind: 'changeEnergyPerTurn', amount: 1 },
+    { kind: 'changeDrawPerTurn', amount: 1 },
+  ],
+  summary: '最大 HP が 12 減る。その代わり、毎ターンのエナジーと引く枚数が 1 ずつ増える。',
+};
+
+export const ACT_RELICS: RelicDefinition[] = [FINALE_LAMP, OPENING_FANFARE, BLOOD_PULSE, TWIN_PULSE];

@@ -78,6 +78,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     description:
       '手札から捨てられたとき、エナジーを払わずに使う。ターンの終わりに手札を捨てるときも使う。敵を狙う札は、捨てさせた技の狙いがいればそこへ当たり、無ければ生きている敵へ当たる。',
   },
+  priority: {
+    id: 'priority',
+    name: '先に出す',
+    icon: '👹',
+    description: '手札にあるあいだ、この印の無いカードは使えない。このカードを先に使う。',
+  },
   uses: {
     id: 'uses',
     name: '回数',

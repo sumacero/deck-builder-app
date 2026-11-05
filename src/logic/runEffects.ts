@@ -1,7 +1,18 @@
 import type { RelicDefinition, RelicTier } from '../domain/relic';
 import type { RunState } from '../domain/run';
 import type { RunChoice, RunEffect } from '../domain/runEffect';
-import { canUpgrade, countBase, fuseInDeck, upgradeCard } from './cards';
+import {
+  canStamp,
+  canUpgrade,
+  countBase,
+  findBasicIndex,
+  honeCard,
+  isDefend,
+  isStrike,
+  toBerserk,
+  upgradeCard,
+  fuseInDeck,
+} from './cards';
 import { pickRewardChoices, rewardCandidates } from './archetype';
 import { attuneDeck } from './attribute';
 import { pickOne, shuffle } from './random';
@@ -104,7 +115,89 @@ export function applyRunEffect(run: RunState, effect: RunEffect): RunState {
       const deck = fuseInDeck(run.deck, effect.from.id, effect.count, into);
       return deck ? { ...run, deck } : run;
     }
+    case 'addRandomCards':
+      return addRandomCards(run, effect.count);
+    case 'transformRandom':
+      return transformRandomCards(run, effect.count);
+    case 'removeBasics':
+      return removeBasics(run, effect.strikes, effect.defends);
+    case 'honeBasics':
+      return { ...run, deck: run.deck.map((card) => honeCard(card, effect.amount)) };
+    case 'upgradeAll':
+      return { ...run, deck: run.deck.map(upgradeCard) };
+    case 'upgradeStarters':
+      return {
+        ...run,
+        deck: run.deck.map((card) => (isStrike(card) || isDefend(card) ? upgradeCard(card) : card)),
+      };
+    case 'berserkBasics':
+      return berserkBasics(run);
+    case 'addCurses':
+      return {
+        ...run,
+        deck: [...run.deck, ...Array.from({ length: effect.count }, () => effect.card)],
+      };
+    case 'stampCards':
+      return run;
+    case 'gainNamedRelic':
+      return run.relics.some((owned) => owned.id === effect.relic.id) ? run : obtainRelic(run, effect.relic);
   }
+}
+
+function addRandomCards(run: RunState, count: number): RunState {
+  const offered = pickRewardChoices(
+    rewardCandidates(run),
+    run.deck,
+    count,
+    run.rngSeed,
+    run.economy.cardTierWeight,
+  );
+  return {
+    ...run,
+    rngSeed: offered.seed,
+    deck: [...run.deck, ...attuneDeck(offered.items, run.agent.attribute)],
+  };
+}
+
+function transformRandomCards(run: RunState, count: number): RunState {
+  let seed = run.rngSeed;
+  const deck = [...run.deck];
+  for (let i = 0; i < count; i += 1) {
+    const indexes = deck.flatMap((card, index) =>
+      card.curse || card.unplayable || card.mysticArte ? [] : [index],
+    );
+    const picked = pickOne(indexes, seed);
+    seed = picked.seed;
+    if (picked.item === undefined) break;
+    const offered = pickRewardChoices(rewardCandidates(run), deck, 1, seed, run.economy.cardTierWeight);
+    seed = offered.seed;
+    const [next] = attuneDeck(offered.items, run.agent.attribute);
+    if (next) deck[picked.item] = next;
+  }
+  return { ...run, rngSeed: seed, deck };
+}
+
+function removeBasics(run: RunState, strikes: number, defends: number): RunState {
+  let deck = [...run.deck];
+  const drop = (kind: 'strike' | 'defend', count: number) => {
+    for (let i = 0; i < count; i += 1) {
+      const index = findBasicIndex(deck, kind);
+      if (index < 0) return;
+      deck = deck.filter((_, at) => at !== index);
+    }
+  };
+  drop('strike', strikes);
+  drop('defend', defends);
+  return { ...run, deck };
+}
+
+function berserkBasics(run: RunState): RunState {
+  const deck = [...run.deck];
+  const strike = findBasicIndex(deck, 'strike');
+  const defend = findBasicIndex(deck, 'defend');
+  if (strike >= 0 && deck[strike]) deck[strike] = toBerserk(deck[strike]);
+  if (defend >= 0 && deck[defend]) deck[defend] = toBerserk(deck[defend]);
+  return { ...run, deck };
 }
 
 /**
@@ -125,6 +218,25 @@ export function canApplyRunEffect(run: RunState, effect: RunEffect): boolean {
       return run.potions.includes(null);
     case 'fuseCards':
       return countBase(run.deck, effect.from.id) >= effect.count;
+    case 'addRandomCards':
+      return true;
+    case 'transformRandom':
+      return run.deck.some((card) => !card.curse && !card.unplayable && !card.mysticArte);
+    case 'removeBasics':
+    case 'berserkBasics':
+      return run.deck.some(isStrike) && run.deck.some(isDefend);
+    case 'honeBasics':
+      return run.deck.some((card) => isStrike(card) || isDefend(card));
+    case 'upgradeAll':
+      return run.deck.some(canUpgrade);
+    case 'upgradeStarters':
+      return run.deck.some((card) => (isStrike(card) || isDefend(card)) && canUpgrade(card));
+    case 'addCurses':
+      return true;
+    case 'stampCards':
+      return run.deck.filter((card) => canStamp(card, effect.stamp)).length >= effect.count;
+    case 'gainNamedRelic':
+      return !run.relics.some((owned) => owned.id === effect.relic.id);
     default:
       return true;
   }
@@ -143,10 +255,27 @@ export function applyEffectsThenChoice(
   choice: RunChoice | undefined,
   after: RunState['phase'],
 ): RunState {
+  const stamp = effects.find((effect) => effect.kind === 'stampCards');
   const applied = effects.reduce(applyRunEffect, run);
+  if (stamp?.kind === 'stampCards') {
+    const followUp = after.kind === 'event' ? { cancellable: false, resume: after } : { cancellable: true };
+    return {
+      ...applied,
+      phase: {
+        kind: 'deckEdit',
+        mode: 'stamp',
+        stamp: stamp.stamp,
+        remaining: stamp.count,
+        ...followUp,
+      },
+    };
+  }
   if (choice === undefined) return { ...applied, phase: after };
   // 出来事の選択肢は、カードを選び終えても選択肢の画面には戻さない。
-  const followUp = after.kind === 'event' ? { cancellable: false, resume: after } : { cancellable: true };
+  // 効果をすでに受け取った贈り物も、カード選びを飛ばせない（最大 HP だけ取って削除を避ける、などを防ぐ）。
+  const paid = effects.some((effect) => effect.kind !== 'stampCards');
+  const followUp =
+    after.kind === 'event' ? { cancellable: false, resume: after } : { cancellable: !paid };
   if (choice === 'upgradeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'upgrade', ...followUp } };
   if (choice === 'removeCard') return { ...applied, phase: { kind: 'deckEdit', mode: 'remove', ...followUp } };
   return offerCardPick(applied, after);
