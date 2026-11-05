@@ -192,6 +192,31 @@ function traitViews(enemy: EnemyState): StatusView[] {
         return enemy.awakened ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
       case 'phase':
         return enemy.phased ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
+      case 'spines':
+        return [{ keyword: trait.kind, value: trait.count }];
+      case 'call':
+      case 'split':
+      case 'leech':
+      case 'link':
+      case 'devour':
+        return [{ keyword: trait.kind, value: 1, flag: true }];
+      case 'pact':
+        return [{ keyword: trait.kind, value: enemy.reviveIn > 0 ? enemy.reviveIn : trait.turns }];
+      case 'burst':
+      case 'riposte':
+        return [{ keyword: trait.kind, value: trait.damage }];
+      case 'stun':
+        return [{ keyword: trait.kind, value: trait.threshold }];
+      case 'wick':
+        return [{ keyword: trait.kind, value: enemy.wick }];
+      case 'molt':
+        return enemy.molted ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
+      case 'spite':
+        return enemy.spited ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
+      case 'plague':
+        return [{ keyword: trait.kind, value: trait.count }];
+      case 'weight':
+        return [{ keyword: trait.kind, value: trait.energy }];
     }
   });
 }
@@ -262,7 +287,7 @@ function keywordForIntent(action: EnemyAction): KeywordId {
     case 'shiftAttribute':
       return 'intentBanner';
     case 'idle':
-      return 'intentSleep';
+      return action.reason === 'stun' ? 'intentStun' : 'intentSleep';
   }
 }
 

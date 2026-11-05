@@ -18,7 +18,7 @@ import type {
   Vitals,
 } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
-import type { EnemyAction, EnemyMove } from '../domain/enemy';
+import type { EnemyAction, EnemyDefinition, EnemyMove } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
 import type { DebuffId, PowerId } from '../domain/status';
 import {
@@ -33,10 +33,10 @@ import { arrowDamage, forgeArrow } from './arrows';
 import { baseCardId, growCard, upgradeCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import { canStackOnto, handMultiplier, releaseFusion, scaledEffects, stackOf, waterFromFusion } from './marks';
-import { SLEEP_MOVE, WINDUP_MOVE, traitOf } from './enemyTraits';
+import { SLEEP_MOVE, STUN_MOVE, WINDUP_MOVE, traitOf } from './enemyTraits';
 import { routineAttackMultiplier, routineRank } from './routine';
 import { cardMotion } from './motion';
-import { shuffle } from './random';
+import { pickOne, shuffle } from './random';
 import {
   addStatus,
   BUFF_IDS,
@@ -74,6 +74,15 @@ export function gainBlock<T extends Fighter>(target: T, amount: number): T {
 export function currentIntent(enemy: EnemyState): EnemyMove {
   if (enemy.asleep > 0) return SLEEP_MOVE;
   if (enemy.windup > 0) return WINDUP_MOVE;
+  if (enemy.stunned) return STUN_MOVE;
+  const wick = traitOf(enemy, 'wick');
+  if (wick && enemy.wick <= 1) {
+    return {
+      id: 'wick-blow',
+      name: '爆発',
+      actions: [{ kind: 'attack', damage: wick.damage, hits: 1, flat: true }],
+    };
+  }
   return enemy.moves[enemy.moveIndex % enemy.moves.length];
 }
 
@@ -320,7 +329,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
   const drawn = drawCards(opening, Math.max(0, state.drawPerTurn - hindrance.chill));
   const tide = powerOf(drawn, 'tidecall');
   const tided = tide > 0 ? drawCards(withLog(drawn, `潮招きで ${tide} 枚引く`), tide) : drawn;
-  return grantArteIfReady(tided);
+  return grantArteIfReady(openingAuras(tided));
 }
 
 export const EMPTY_STATS: CombatStats = {
@@ -448,6 +457,11 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       artifact: traitOf(enemy, 'artifact')?.charges ?? 0,
       awakened: false,
       phased: false,
+      stunned: false,
+      wick: traitOf(enemy, 'wick')?.turns ?? 0,
+      molted: false,
+      spited: false,
+      reviveIn: 0,
       frost: 0,
       hitCut: 0,
       };
@@ -559,8 +573,20 @@ const FIXED_HIT: HitKind = { attributes: [], fixed: true };
 /** レリック・ポーションなど、属性の無い攻撃。 */
 const NO_ATTRIBUTE: HitKind = { attributes: [] };
 
+/** 攻撃への反応をどこまで返すか。echo は共鳴の跳ね返りで、棘札や共鳴を重ねない。 */
+type HitReaction = 'full' | 'echo';
+
+/** 同時に場に出せる敵の数。戦闘画面が 4 体までなので、呼び声と分裂もここで止める。 */
+const MAX_ON_FIELD = 4;
+
 /** base は筋力込みの値。熱血・衰弱・弱体・相性の倍率は敵ごとにここでかける。 */
-function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind): CombatState {
+function hitEnemy(
+  state: CombatState,
+  uid: EnemyUid,
+  base: number,
+  kind: HitKind,
+  reaction: HitReaction = 'full',
+): CombatState {
   const enemy = findEnemy(state, uid);
   if (!enemy || !isAlive(enemy)) return state;
   const weak = !kind.fixed && hasAdvantage(kind.attributes, enemy.attribute);
@@ -574,36 +600,90 @@ function hitEnemy(state: CombatState, uid: EnemyUid, base: number, kind: HitKind
   const scaled = cap !== undefined && raw > cap;
   const amount = cap === undefined ? raw : Math.min(raw, cap);
   const result = holdUntilAwakened(enemy, kind.pierce ? pierceDamage(enemy, amount) : applyDamage(enemy, amount));
+  const spiteSave = !isAlive(result.target) && traitOf(enemy, 'spite') !== undefined && !enemy.spited;
+  const target: EnemyState = spiteSave ? { ...result.target, hp: 1, spited: true, stunned: true } : result.target;
+  const hpLoss = enemy.hp - target.hp;
   const recorded: CombatState = {
-    ...updateEnemy(state, uid, () => result.target),
+    ...updateEnemy(state, uid, () => target),
     stats: {
       ...state.stats,
-      maxHit: Math.max(state.stats.maxHit, Math.min(result.hpLoss, enemy.hp)),
-      enemiesDefeated: state.stats.enemiesDefeated + (isAlive(result.target) ? 0 : 1),
+      maxHit: Math.max(state.stats.maxHit, Math.min(hpLoss, enemy.hp)),
+      enemiesDefeated: state.stats.enemiesDefeated + (isAlive(target) ? 0 : 1),
       weakHits: state.stats.weakHits + (weak ? 1 : 0),
     },
   };
-  const hit = withEvent(
-    withLog(recorded, formatHit(enemy.name, result) + (weak ? '（弱点）' : '') + (scaled ? '（鉄鱗）' : '')),
+  let hit = withEvent(
+    withLog(
+      recorded,
+      formatHit(enemy.name, { blocked: result.blocked, hpLoss }) + (weak ? '（弱点）' : '') + (scaled ? '（鉄鱗）' : ''),
+    ),
     {
       kind: 'hit',
       target: uid,
-      hpLoss: result.hpLoss,
+      hpLoss,
       blocked: result.blocked,
       before: vitalsOf(enemy),
-      after: vitalsOf(result.target),
+      after: vitalsOf(target),
       weak,
     },
   );
-  if (isAlive(result.target)) {
-    const threshold = awakeningThreshold(result.target);
-    if (threshold !== null && result.target.hp <= threshold) return awakenEnemy(hit, uid);
-    const phaseAt = phaseThreshold(result.target);
-    if (phaseAt !== null && result.target.hp <= phaseAt) return phaseEnemy(hit, uid);
-    return result.hpLoss > 0 && enemy.asleep > 0 ? wakeEnemy(hit, uid) : hit;
+  if (spiteSave) hit = callout(withLog(hit, `${enemy.name}は崩れ落ちず、膝をついた`), uid, '執念');
+  if (isAlive(target)) {
+    return reactToHit(hit, uid, enemy, {
+      hpLoss,
+      attack: reaction === 'full' && !kind.fixed,
+    });
+  }
+  if (reaction === 'full' && !kind.fixed && traitOf(enemy, 'link') && hpLoss > 0) {
+    hit = echoLink(hit, uid, hpLoss);
+    if (hit.player.hp <= 0) return hit;
   }
   const defeated = withEvent(withLog(hit, `${enemy.name}を倒した！`), { kind: 'defeated', target: uid });
   return onEnemyDefeated(defeated, uid);
+}
+
+/** 生き残った敵が、受けた攻撃に返す。 */
+function reactToHit(
+  state: CombatState,
+  uid: EnemyUid,
+  before: EnemyState,
+  info: { hpLoss: number; attack: boolean },
+): CombatState {
+  let next = info.hpLoss > 0 && before.asleep > 0 ? wakeEnemy(state, uid) : state;
+  if (info.attack) {
+    const stun = traitOf(before, 'stun');
+    const living = findEnemy(next, uid);
+    if (stun && living && isAlive(living) && !living.stunned && info.hpLoss >= stun.threshold) {
+      next = callout(
+        withLog(updateEnemy(next, uid, (e) => ({ ...e, stunned: true })), `${before.name}は大きな一撃によろめいた`),
+        uid,
+        'スタン',
+      );
+    }
+    const spines = traitOf(before, 'spines');
+    if (spines && info.hpLoss > 0) {
+      next = applyEnemyAction(next, uid, { kind: 'addCard', card: spines.card, count: spines.count });
+    }
+    const riposte = traitOf(before, 'riposte');
+    if (riposte) {
+      next = hurtPlayer(next, before.name, riposte.damage, '返し棘');
+      if (next.player.hp <= 0) return next;
+    }
+    if (traitOf(before, 'link') && info.hpLoss > 0) next = echoLink(next, uid, info.hpLoss);
+  }
+  const lived = findEnemy(next, uid);
+  if (!lived || !isAlive(lived)) return next;
+  const molt = traitOf(lived, 'molt');
+  if (molt && !lived.molted && lived.hp <= Math.floor(lived.maxHp * molt.threshold)) {
+    next = moltEnemy(next, uid, molt.heal);
+  }
+  const after = findEnemy(next, uid);
+  if (!after || !isAlive(after)) return next;
+  const threshold = awakeningThreshold(after);
+  if (threshold !== null && after.hp <= threshold) return awakenEnemy(next, uid);
+  const phaseAt = phaseThreshold(after);
+  if (phaseAt !== null && after.hp <= phaseAt) return phaseEnemy(next, uid);
+  return next;
 }
 
 /** ブロックを無視して HP に当てる。ブロックはそのまま残る。 */
@@ -711,7 +791,7 @@ function wakeEnemy(state: CombatState, uid: EnemyUid): CombatState {
   return callout(withLog(woken, text), uid, '目覚めた！');
 }
 
-/** 仇討ち（残った仲間の筋力が上がる）と、倒れた敵の死に際の行動。 */
+/** 仇討ち、連命、爆散、死に際、分裂。 */
 function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
   const avenged = livingEnemies(state).reduce((current, ally) => {
     const vengeance = traitOf(ally, 'vengeance');
@@ -723,10 +803,194 @@ function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
       '怒り！',
     );
   }, state);
-  const dead = findEnemy(avenged, uid);
-  const throes = dead ? traitOf(dead, 'deathThroes') : undefined;
-  if (!dead || !throes) return avenged;
-  return applyEnemyAction(withLog(avenged, `${dead.name}の死に際の一撃！`), uid, throes.action, false);
+  let next = markPact(avenged, uid);
+  const dead = findEnemy(next, uid);
+  if (!dead) return next;
+  const burst = traitOf(dead, 'burst');
+  if (burst) {
+    next = hurtPlayer(next, dead.name, burst.damage, '爆散');
+    if (next.player.hp <= 0) return next;
+  }
+  const throes = traitOf(dead, 'deathThroes');
+  if (throes) {
+    next = applyEnemyAction(withLog(next, `${dead.name}の死に際の一撃！`), uid, throes.action, false);
+    if (next.player.hp <= 0) return next;
+  }
+  const split = traitOf(dead, 'split');
+  if (!split) return next;
+  for (let i = 0; i < split.count; i += 1) {
+    if (livingEnemies(next).length >= MAX_ON_FIELD) break;
+    next = spawnEnemy(next, split.into, `${dead.name}が分裂して${split.into.name}が現れた`);
+  }
+  return next;
+}
+
+/** 連命の仲間が生きていれば起き上がりを予約し、全滅していれば予約を取り消す。 */
+function markPact(state: CombatState, uid: EnemyUid): CombatState {
+  const dead = findEnemy(state, uid);
+  const pact = dead ? traitOf(dead, 'pact') : undefined;
+  const partnerAlive = livingEnemies(state).some((enemy) => traitOf(enemy, 'pact'));
+  if (pact && partnerAlive) {
+    return withLog(updateEnemy(state, uid, (e) => ({ ...e, reviveIn: pact.turns })), `${dead?.name}は連命で倒れ、まだ起き上がれる`);
+  }
+  if (partnerAlive) return state;
+  return {
+    ...state,
+    enemies: state.enemies.map((enemy) => (enemy.reviveIn > 0 ? { ...enemy, reviveIn: 0 } : enemy)),
+  };
+}
+
+function hurtPlayer(state: CombatState, sourceName: string, amount: number, label: string): CombatState {
+  if (amount <= 0 || state.player.hp <= 0) return state;
+  const result = applyDamage(state.player, amount);
+  const harmed = { ...state, player: result.target };
+  return withEvent(withLog(harmed, `${sourceName}の${label}: ${formatHit('あなた', result)}`), {
+    kind: 'hit',
+    target: 'player',
+    hpLoss: result.hpLoss,
+    blocked: result.blocked,
+    before: vitalsOf(state.player),
+    after: vitalsOf(result.target),
+    weak: false,
+  });
+}
+
+function echoLink(state: CombatState, sourceUid: EnemyUid, hpLoss: number): CombatState {
+  const partners = livingEnemies(state).filter((enemy) => enemy.uid !== sourceUid && traitOf(enemy, 'link'));
+  return partners.reduce((current, partner) => {
+    if (current.player.hp <= 0) return current;
+    const live = findEnemy(current, partner.uid);
+    if (!live || !isAlive(live)) return current;
+    const echoed = withLog(current, `${live.name}に共鳴が走った`);
+    return hitEnemy(echoed, partner.uid, hpLoss, { attributes: [], fixed: true, pierce: true }, 'echo');
+  }, state);
+}
+
+function moltEnemy(state: CombatState, uid: EnemyUid, heal: number): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || !isAlive(enemy)) return state;
+  const shed = updateEnemy(state, uid, (e) => ({
+    ...e,
+    molted: true,
+    statuses: addStatus(e.statuses, 'intangible', 1 + ACROSS_TICK),
+  }));
+  const healed = healEnemy(withLog(shed, `${enemy.name}は脱皮して体が透けた`), uid, heal);
+  return callout(healed, uid, '脱皮');
+}
+
+function nextEnemyUid(state: CombatState): EnemyUid {
+  const max = state.enemies.reduce((highest, enemy) => {
+    const index = Number(enemy.uid.replace('enemy-', ''));
+    return Number.isFinite(index) ? Math.max(highest, index) : highest;
+  }, -1);
+  return enemyUid(max + 1);
+}
+
+function instantiateEnemy(enemy: EnemyDefinition, uid: EnemyUid): EnemyState {
+  return {
+    uid,
+    id: enemy.id,
+    name: enemy.name,
+    icon: enemy.icon,
+    rank: enemy.rank,
+    strength: 0,
+    hp: enemy.maxHp,
+    maxHp: enemy.maxHp,
+    block: 0,
+    statuses: {},
+    moves: enemy.moves,
+    moveIndex: 0,
+    windup: 0,
+    traits: enemy.traits ?? [],
+    asleep: traitOf(enemy, 'sleep')?.turns ?? 0,
+    attribute: enemy.attribute ?? null,
+    weaknesses: weaknessesOf(enemy.attribute),
+    artifact: traitOf(enemy, 'artifact')?.charges ?? 0,
+    awakened: false,
+    phased: false,
+    stunned: false,
+    wick: traitOf(enemy, 'wick')?.turns ?? 0,
+    molted: false,
+    spited: false,
+    reviveIn: 0,
+    frost: 0,
+    hitCut: 0,
+  };
+}
+
+function spawnEnemy(state: CombatState, definition: EnemyDefinition, log: string): CombatState {
+  if (livingEnemies(state).length >= MAX_ON_FIELD) {
+    return withLog(state, `${definition.name}を出そうとしたが、場が埋まっている`);
+  }
+  const uid = nextEnemyUid(state);
+  const enemy = instantiateEnemy(definition, uid);
+  return callout(withLog({ ...state, enemies: [...state.enemies, enemy] }, log), uid, '仲間！');
+}
+
+function openingAuras(state: CombatState): CombatState {
+  const revived = tickRevives(state);
+  const drain = livingEnemies(revived).reduce((sum, enemy) => sum + (traitOf(enemy, 'weight')?.energy ?? 0), 0);
+  const drained =
+    drain > 0
+      ? withLog(
+          { ...revived, player: { ...revived.player, energy: Math.max(0, revived.player.energy - drain) } },
+          `重圧でエナジー -${drain}`,
+        )
+      : revived;
+  return livingEnemies(drained).reduce((current, enemy) => {
+    const plague = traitOf(enemy, 'plague');
+    if (!plague) return current;
+    return applyEnemyAction(current, enemy.uid, { kind: 'addCard', card: plague.card, count: plague.count });
+  }, drained);
+}
+
+function tickRevives(state: CombatState): CombatState {
+  return state.enemies.reduce((current, enemy) => {
+    if (enemy.reviveIn <= 0) return current;
+    const pact = traitOf(enemy, 'pact');
+    if (!pact) return updateEnemy(current, enemy.uid, (e) => ({ ...e, reviveIn: 0 }));
+    if (enemy.reviveIn > 1) return updateEnemy(current, enemy.uid, (e) => ({ ...e, reviveIn: e.reviveIn - 1 }));
+    const hp = Math.max(1, Math.floor(enemy.maxHp * pact.hpRatio));
+    const stood = updateEnemy(current, enemy.uid, (e) => ({ ...e, hp, reviveIn: 0, stunned: false, block: 0 }));
+    return callout(withLog(stood, `${enemy.name}が起き上がった（HP ${hp}）`), enemy.uid, '起き上がった');
+  }, state);
+}
+
+function devourDiscard(state: CombatState, enemyName: string): CombatState {
+  if (state.discardPile.length === 0) return state;
+  const picked = pickOne(state.discardPile, state.rngSeed);
+  const eaten = picked.item;
+  if (!eaten) return state;
+  return withLog(
+    {
+      ...state,
+      rngSeed: picked.seed,
+      discardPile: state.discardPile.filter((card) => card.instanceId !== eaten.instanceId),
+      exhaustPile: [...state.exhaustPile, eaten],
+    },
+    `${enemyName}が捨て札の「${eaten.card.name}」を喰った`,
+  );
+}
+
+function callAlly(state: CombatState, uid: EnemyUid): CombatState {
+  const enemy = findEnemy(state, uid);
+  const call = enemy ? traitOf(enemy, 'call') : undefined;
+  if (!enemy || !call || !isAlive(enemy)) return state;
+  const present = livingEnemies(state).filter((ally) => ally.id === call.summon.id).length;
+  if (present >= call.limit) return state;
+  return spawnEnemy(state, call.summon, `${enemy.name}が${call.summon.name}を呼んだ`);
+}
+
+function defeatEnemy(state: CombatState, uid: EnemyUid, text: string): CombatState {
+  const enemy = findEnemy(state, uid);
+  if (!enemy || !isAlive(enemy)) return state;
+  const killed = updateEnemy(state, uid, (e) => ({ ...e, hp: 0, wick: 0 }));
+  const logged = withEvent(withLog(killed, text), { kind: 'defeated', target: uid });
+  const counted = {
+    ...logged,
+    stats: { ...logged.stats, enemiesDefeated: logged.stats.enemiesDefeated + 1 },
+  };
+  return onEnemyDefeated(counted, uid);
 }
 
 function debuffEnemy(
@@ -2082,6 +2346,7 @@ function applyEnemyAction(
       const thorns = powerOf(state, 'thorns');
       const hits = Math.max(0, action.hits - enemy.hitCut);
       let next = enemy.hitCut > 0 ? updateEnemy(state, uid, (e) => ({ ...e, hitCut: 0 })) : state;
+      let bitten = false;
       for (let i = 0; i < hits && next.player.hp > 0; i++) {
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
@@ -2107,7 +2372,15 @@ function applyEnemyAction(
           after: vitalsOf(result.target),
           weak,
         });
+        if (result.hpLoss > 0) {
+          bitten = true;
+          if (traitOf(enemy, 'leech')) next = healEnemy(next, uid, result.hpLoss);
+        }
         if (thorns > 0 && next.player.hp > 0) next = hitEnemy(next, uid, thorns, FIXED_HIT);
+      }
+      if (bitten && traitOf(enemy, 'devour')) {
+        const attacker = findEnemy(next, uid);
+        if (attacker && isAlive(attacker)) next = devourDiscard(next, enemy.name);
       }
       const thawed = findEnemy(next, uid);
       return thawed && thawed.frost > 0 ? updateEnemy(next, uid, (e) => ({ ...e, frost: 0 })) : next;
@@ -2216,10 +2489,7 @@ function applyEnemyAction(
       return callout(withLog(acted, `${enemy.name}が${label}の旗を掲げた（${label}属性になった）`), uid, `${label}の旗`);
     }
     case 'idle':
-      return withLog(
-        act(state),
-        `${enemy.name}は眠っている…`,
-      );
+      return withLog(act(state), action.reason === 'stun' ? `${enemy.name}はよろめいている…` : `${enemy.name}は眠っている…`);
   }
 }
 
@@ -2287,8 +2557,35 @@ function runEnemyTurn(state: CombatState): CombatState {
   for (const { uid } of livingEnemies(next)) {
     const enemy = findEnemy(next, uid);
     if (!enemy || !isAlive(enemy)) continue;
-    const move = currentIntent(enemy);
-    next = withLog(next, `${enemy.name}の「${move.name}」`);
+    if (enemy.stunned) {
+      next = withLog(updateEnemy(next, uid, (e) => ({ ...e, stunned: false })), `${enemy.name}はよろめいて、行動できなかった`);
+      next = advanceEnemy(next, uid);
+      continue;
+    }
+    const wick = traitOf(enemy, 'wick');
+    if (wick && enemy.wick <= 1) {
+      next = applyEnemyAction(next, uid, { kind: 'attack', damage: wick.damage, hits: 1, flat: true });
+      if (next.player.hp <= 0) {
+        return withEvent(withLog({ ...next, status: 'lost' }, 'あなたは力尽きた…'), {
+          kind: 'defeated',
+          target: 'player',
+        });
+      }
+      next = defeatEnemy(next, uid, `${enemy.name}は爆発して砕けた`);
+      if (next.player.hp <= 0) {
+        return withEvent(withLog({ ...next, status: 'lost' }, 'あなたは力尽きた…'), {
+          kind: 'defeated',
+          target: 'player',
+        });
+      }
+      if (livingEnemies(next).length === 0) return finishIfWon(next);
+      continue;
+    }
+    next = callAlly(next, uid);
+    const acting = findEnemy(next, uid);
+    if (!acting || !isAlive(acting)) continue;
+    const move = currentIntent(acting);
+    next = withLog(next, `${acting.name}の「${move.name}」`);
     for (const action of move.actions) {
       next = applyEnemyAction(next, uid, action);
       if (next.player.hp <= 0) {
@@ -2299,7 +2596,10 @@ function runEnemyTurn(state: CombatState): CombatState {
       }
     }
     // 行動中に（茨の鎧などで）覚醒したら、第二形態の先頭の行動から始めるため順番を進めない。
-    if (findEnemy(next, uid)?.moves === enemy.moves) next = advanceEnemy(next, uid);
+    if (findEnemy(next, uid)?.moves === enemy.moves) {
+      if (wick && enemy.wick > 1) next = updateEnemy(next, uid, (e) => ({ ...e, wick: e.wick - 1 }));
+      next = advanceEnemy(next, uid);
+    }
     if (livingEnemies(next).length === 0) return finishIfWon(next);
   }
   // 敵のバフ・デバフは敵のターンの終わりに 1 ターン進む（かけたターンの敵の行動までは効く）。

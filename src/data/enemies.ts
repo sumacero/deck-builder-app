@@ -66,7 +66,10 @@ export const ROCK_SOLDIER: EnemyDefinition = {
     { id: 'cleave', name: '叩き斬り', actions: [atk(16), addCard(BURN)] },
     { id: 'stomp', name: '踏み込み', actions: [atk(6, 2)] },
   ],
-  traits: [{ kind: 'artifact', charges: 1 }],
+  traits: [
+    { kind: 'artifact', charges: 1 },
+    { kind: 'stun', threshold: 12 },
+  ],
 };
 
 /** 殻が厚く、攻撃 1 ヒットは 6 まで。大剣のような一撃は頭打ちになり、多段攻撃はヒット数だけ通る。 */
@@ -100,7 +103,22 @@ export const MAGMA_SLIME: EnemyDefinition = {
   traits: [{ kind: 'deathThroes', action: addCard(BURN, 3) }],
 };
 
-/** スキルを使うたびに激昂する。守りを重ねるほど噛みが重くなるので、攻撃で早く倒す。 */
+/** 群れでも出る。多頭竜が呼ぶ個体でもある。 */
+export const CINDER_IMP: EnemyDefinition = {
+  id: 'cinder-imp',
+  name: '火の小鬼',
+  icon: '😈',
+  rank: 'normal',
+  maxHp: 14,
+  attribute: 'fire',
+  moves: [
+    { id: 'claw', name: '火の爪', actions: [atk(4), addCard(BURN)] },
+    { id: 'guard', name: '構え', actions: [blk(4), atk(3)] },
+  ],
+  traits: [{ kind: 'vengeance', strength: 2 }],
+};
+
+/** スキルを使うたびに激昂する。守りを重ねるほど噛みが重くなるので、攻撃で早く倒す。空いた場には小鬼を呼ぶ。 */
 export const MAGMA_HYDRA: EnemyDefinition = {
   id: 'magma-hydra',
   name: '溶岩の多頭竜',
@@ -113,7 +131,10 @@ export const MAGMA_HYDRA: EnemyDefinition = {
     { id: 'grow-heads', name: '頭を増やす', actions: [buff(1), blk(8)] },
     { id: 'crunch', name: '噛み砕き', actions: [flat(5)] },
   ],
-  traits: [{ kind: 'enrage', strength: 1 }],
+  traits: [
+    { kind: 'enrage', strength: 1 },
+    { kind: 'call', summon: CINDER_IMP, limit: 1 },
+  ],
 };
 
 /** 2 ターン眠る。起きてから一周ごとに筋力が残る。ダメージそのものは小さい。 */
@@ -201,6 +222,7 @@ export const GRASS_WOLF: EnemyDefinition = {
     { id: 'pounce', name: '飛びかかり', actions: [atk(15)] },
     { id: 'rest', name: '草陰で休む', actions: [heal(8), blk(8), addCard(TANGLING_VINE, 2)] },
   ],
+  traits: [{ kind: 'leech' }],
 };
 
 /** 回復しながら蔦でデッキを埋め、次のターンのアタックを絡める。殴りは無い。蔦を放置すると手が止まる。 */
@@ -230,7 +252,10 @@ export const GREAT_TREANT: EnemyDefinition = {
     { id: 'blessing', name: '大地の恵み', actions: [healAll(10), blk(6)] },
     { id: 'root-whip', name: '根の鞭', actions: [flat(4, 2), addCard(TANGLING_VINE, 2)] },
   ],
-  traits: [{ kind: 'guardian' }],
+  traits: [
+    { kind: 'guardian' },
+    { kind: 'plague', card: TANGLING_VINE, count: 1 },
+  ],
 };
 
 /**
@@ -265,7 +290,10 @@ export const FROST_JELLY: EnemyDefinition = {
     { id: 'sting', name: '刺す', actions: [atk(4, 2)] },
     { id: 'drift', name: '漂う', actions: [blk(6), atk(4)] },
   ],
-  traits: [{ kind: 'deathThroes', action: chill() }],
+  traits: [
+    { kind: 'deathThroes', action: chill() },
+    { kind: 'link' },
+  ],
 };
 
 export const DROWNED_GUARD: EnemyDefinition = {
@@ -280,7 +308,10 @@ export const DROWNED_GUARD: EnemyDefinition = {
     { id: 'water-shield', name: '水の盾', actions: [blk(10), atk(6)] },
     { id: 'sealing-spear', name: '封水の槍', actions: [atk(8), SEAL, addCard(ICE_SHARD, 2)] },
   ],
-  traits: [{ kind: 'artifact', charges: 1 }],
+  traits: [
+    { kind: 'artifact', charges: 1 },
+    { kind: 'devour' },
+  ],
 };
 
 export const MIST_SIREN: EnemyDefinition = {
@@ -295,6 +326,7 @@ export const MIST_SIREN: EnemyDefinition = {
     { id: 'bewildering-arrow', name: '惑わしの水矢', actions: [atk(7), debuff('weak')] },
     { id: 'freezing-song', name: '凍える歌', actions: [atk(5), chill(), addCard(ICE_SHARD, 2)] },
   ],
+  traits: [{ kind: 'plague', card: ICE_SHARD, count: 1 }],
 };
 
 /** 灯で誘い、スキル以外を 4 枚使うまで封印し、使えない氷をデッキに混ぜる。火力より、打てる札を奪う。 */
@@ -325,6 +357,7 @@ export const ABYSS_SERPENT: EnemyDefinition = {
     { id: 'whirlpool', name: '渦潮', actions: [flat(4, 2), chill(2), addCard(ICE_SHARD, 2)] },
     { id: 'coil', name: '締め上げ', actions: [buff(1), chill(2)] },
   ],
+  traits: [{ kind: 'devour' }],
 };
 
 /**
@@ -370,6 +403,7 @@ export const ANCIENT_PHANTOM: EnemyDefinition = {
     { id: 'chilling-touch', name: '凍える手', actions: [atk(10), debuff('weak')] },
     { id: 'wail', name: '嘆きの声', actions: [atk(6, 2), addCard(ICE_SHARD)] },
   ],
+  traits: [{ kind: 'spite' }],
 };
 
 // ==================== 電・機械（雷鳴の歯車塔） ====================
@@ -388,7 +422,24 @@ export const GEAR_SOLDIER: EnemyDefinition = {
   traits: [{ kind: 'artifact', charges: 1 }],
 };
 
-/** チャージ → 大技の順なので、群れでは行動の開始位置がずれないよう先頭に置く。 */
+/** 死ぬと麻痺させて爆発する。雷眼が呼ぶ個体でもある。 */
+export const BOLT_BUG: EnemyDefinition = {
+  id: 'bolt-bug',
+  name: '雷甲虫',
+  icon: '🐞',
+  rank: 'normal',
+  maxHp: 12,
+  moves: [
+    { id: 'tackle', name: '体当たり', actions: [atk(3, 2)] },
+    { id: 'spark', name: '火花', actions: [atk(5), addCard(SCRAP)] },
+  ],
+  traits: [
+    { kind: 'deathThroes', action: paralyze() },
+    { kind: 'burst', damage: 4 },
+  ],
+};
+
+/** チャージ → 大技の順なので、群れでは行動の開始位置がずれないよう先頭に置く。空いた場には雷甲虫を呼ぶ。 */
 export const SPARK_DRONE: EnemyDefinition = {
   id: 'spark-drone',
   name: 'からくり雷眼',
@@ -400,6 +451,7 @@ export const SPARK_DRONE: EnemyDefinition = {
     { id: 'thunderbolt', name: '雷撃', actions: [atk(15)] },
     { id: 'static', name: '静電気', actions: [atk(3, 2), addCard(SCRAP)] },
   ],
+  traits: [{ kind: 'call', summon: BOLT_BUG, limit: 1 }],
 };
 
 export const IRON_HOUND: EnemyDefinition = {
@@ -413,7 +465,10 @@ export const IRON_HOUND: EnemyDefinition = {
     { id: 'shock-fang', name: '電撃の牙', actions: [atk(5), paralyze(), addCard(SCRAP)] },
     { id: 'drive', name: '駆動', actions: [blk(6), atk(3, 2)] },
   ],
-  traits: [{ kind: 'vengeance', strength: 3 }],
+  traits: [
+    { kind: 'vengeance', strength: 3 },
+    { kind: 'leech' },
+  ],
 };
 
 /** 噛むときはガラクタだけ。チャージの次の放電だけが殴りで、麻痺もする。 */
@@ -459,7 +514,10 @@ export const ENGINE_BEAST: EnemyDefinition = {
     { id: 'full-charge', name: 'フルチャージ', actions: [CHARGE, blk(12)] },
     { id: 'thunder-cannon', name: '雷神砲', actions: [atk(10)] },
   ],
-  traits: [{ kind: 'artifact', charges: 2 }],
+  traits: [
+    { kind: 'artifact', charges: 2 },
+    { kind: 'weight', energy: 1 },
+  ],
 };
 
 // ==================== ラスボス（3 つの章を終えたあと） ====================
@@ -506,20 +564,6 @@ export const STAR_DEVOURER: EnemyDefinition = {
 
 // ---- 火・岩 ----
 
-export const CINDER_IMP: EnemyDefinition = {
-  id: 'cinder-imp',
-  name: '火の小鬼',
-  icon: '😈',
-  rank: 'normal',
-  maxHp: 14,
-  attribute: 'fire',
-  moves: [
-    { id: 'claw', name: '火の爪', actions: [atk(4), addCard(BURN)] },
-    { id: 'guard', name: '構え', actions: [blk(4), atk(3)] },
-  ],
-  traits: [{ kind: 'vengeance', strength: 2 }],
-};
-
 export const PEBBLE_GOLEM: EnemyDefinition = {
   id: 'pebble-golem',
   name: '小石のゴーレム',
@@ -545,9 +589,24 @@ export const FIRE_BAT: EnemyDefinition = {
     { id: 'fire-wing', name: '火の羽', actions: [atk(2, 2)] },
     { id: 'bite', name: '噛みつき', actions: [atk(4), addCard(BURN)] },
   ],
+  traits: [{ kind: 'spite' }],
 };
 
 // ---- 草・風 ----
+
+/** 種の芽が割れて出る。これ以上は分裂しない。 */
+export const SPROUT_BIT: EnemyDefinition = {
+  id: 'sprout-bit',
+  name: '切れ芽',
+  icon: '🌿',
+  rank: 'normal',
+  maxHp: 8,
+  attribute: 'grass',
+  moves: [
+    { id: 'nip', name: 'つつき', actions: [atk(3)] },
+    { id: 'root', name: '根を張る', actions: [blk(3)] },
+  ],
+};
 
 export const SEED_SPROUT: EnemyDefinition = {
   id: 'seed-sprout',
@@ -560,7 +619,10 @@ export const SEED_SPROUT: EnemyDefinition = {
     { id: 'photosynthesis', name: '光合成', actions: [heal(4), blk(3)] },
     { id: 'seed-shot', name: '種飛ばし', actions: [atk(2, 2)] },
   ],
-  traits: [{ kind: 'deathThroes', action: addCard(TANGLING_VINE, 2) }],
+  traits: [
+    { kind: 'deathThroes', action: addCard(TANGLING_VINE, 2) },
+    { kind: 'split', into: SPROUT_BIT, count: 2 },
+  ],
 };
 
 export const GUST_SPRITE: EnemyDefinition = {
@@ -574,6 +636,7 @@ export const GUST_SPRITE: EnemyDefinition = {
     { id: 'whirlwind', name: 'つむじ風', actions: [atk(2, 2)] },
     { id: 'wind-blade', name: '風の刃', actions: [atk(3), addCard(TANGLING_VINE)] },
   ],
+  traits: [{ kind: 'molt', threshold: 0.5, heal: 3 }],
 };
 
 export const HORN_RABBIT: EnemyDefinition = {
@@ -587,7 +650,10 @@ export const HORN_RABBIT: EnemyDefinition = {
     { id: 'horn', name: '角突き', actions: [atk(4)] },
     { id: 'hop', name: '跳ね回る', actions: [atk(2, 2), addCard(TANGLING_VINE)] },
   ],
-  traits: [{ kind: 'vengeance', strength: 2 }],
+  traits: [
+    { kind: 'vengeance', strength: 2 },
+    { kind: 'riposte', damage: 2 },
+  ],
 };
 
 // ---- 水・氷 ----
@@ -603,6 +669,7 @@ export const ICE_WISP: EnemyDefinition = {
     { id: 'cold-air', name: '冷気', actions: [atk(2), chill(), addCard(ICE_SHARD)] },
     { id: 'ice-pebble', name: '氷のつぶて', actions: [atk(4)] },
   ],
+  traits: [{ kind: 'molt', threshold: 0.5, heal: 3 }],
 };
 
 export const BUBBLE_SLIME: EnemyDefinition = {
@@ -616,7 +683,10 @@ export const BUBBLE_SLIME: EnemyDefinition = {
     { id: 'bump', name: 'ぶつかる', actions: [atk(5), addCard(ICE_SHARD)] },
     { id: 'bubble', name: '泡の膜', actions: [blk(5), atk(2)] },
   ],
-  traits: [{ kind: 'deathThroes', action: debuff('weak') }],
+  traits: [
+    { kind: 'deathThroes', action: debuff('weak') },
+    { kind: 'burst', damage: 5 },
+  ],
 };
 
 export const RUIN_CRAB: EnemyDefinition = {
@@ -630,23 +700,14 @@ export const RUIN_CRAB: EnemyDefinition = {
     { id: 'pinch', name: 'はさみ', actions: [atk(2, 2), addCard(ICE_SHARD)] },
     { id: 'shell', name: '甲羅', actions: [blk(5), atk(2)] },
   ],
-  traits: [{ kind: 'guardian' }, { kind: 'hitCap', amount: 6 }],
+  traits: [
+    { kind: 'guardian' },
+    { kind: 'hitCap', amount: 6 },
+    { kind: 'riposte', damage: 3 },
+  ],
 };
 
 // ---- 電・機械 ----
-
-export const BOLT_BUG: EnemyDefinition = {
-  id: 'bolt-bug',
-  name: '雷甲虫',
-  icon: '🐞',
-  rank: 'normal',
-  maxHp: 12,
-  moves: [
-    { id: 'tackle', name: '体当たり', actions: [atk(3, 2)] },
-    { id: 'spark', name: '火花', actions: [atk(5), addCard(SCRAP)] },
-  ],
-  traits: [{ kind: 'deathThroes', action: paralyze() }],
-};
 
 export const COG_RAT: EnemyDefinition = {
   id: 'cog-rat',
@@ -658,6 +719,7 @@ export const COG_RAT: EnemyDefinition = {
     { id: 'gnaw', name: 'かじる', actions: [atk(5)] },
     { id: 'junk-toss', name: 'ガラクタ投げ', actions: [blk(5), addCard(SCRAP, 2)] },
   ],
+  traits: [{ kind: 'spines', card: SCRAP, count: 1 }],
 };
 
 /** チャージ → 大技の 2 手。群れでは偶数番目に置くと、チャージから始まる。 */
@@ -686,6 +748,7 @@ export const MOSS_BOAR: EnemyDefinition = {
     { id: 'charge', name: '突進', actions: [atk(17)] },
     { id: 'trample', name: '踏み荒らし', actions: [atk(8, 2)] },
   ],
+  traits: [{ kind: 'weight', energy: 1 }],
 };
 
 /** 歯車塔の終盤。構えと蓄電のあとに、大きな雷槌を落とす。 */
@@ -700,5 +763,39 @@ export const BRONZE_SENTRY: EnemyDefinition = {
     { id: 'wind', name: '蓄電', actions: [CHARGE, blk(6), addCard(SCRAP)] },
     { id: 'slam', name: '雷槌', actions: [atk(18)] },
   ],
-  traits: [{ kind: 'artifact', charges: 1 }],
+  traits: [
+    { kind: 'artifact', charges: 1 },
+    { kind: 'stun', threshold: 12 },
+  ],
+};
+
+/** 火山の中盤。数ターンで爆発する。先に割れば爆発しない。 */
+export const CINDER_POD: EnemyDefinition = {
+  id: 'cinder-pod',
+  name: '火種の瘤',
+  icon: '💣',
+  rank: 'normal',
+  maxHp: 22,
+  attribute: 'fire',
+  moves: [
+    { id: 'sizzle', name: '焦げる', actions: [atk(5)] },
+    { id: 'swell', name: '膨らむ', actions: [blk(6)] },
+  ],
+  traits: [{ kind: 'wick', turns: 3, damage: 8 }],
+};
+
+/** 水の古都の中盤。片方だけ倒しても、もう片方が生きていれば起き上がる。 */
+export const TWIN_BUBBLE: EnemyDefinition = {
+  id: 'twin-bubble',
+  name: '対の泡',
+  icon: '🫧',
+  rank: 'normal',
+  maxHp: 24,
+  attribute: 'water',
+  moves: [
+    { id: 'pop-slap', name: '泡の平手', actions: [atk(7)] },
+    { id: 'chill-mist', name: '冷たい霧', actions: [atk(4), chill()] },
+    { id: 'film', name: '膜', actions: [blk(8)] },
+  ],
+  traits: [{ kind: 'pact', turns: 2, hpRatio: 0.5 }],
 };

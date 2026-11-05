@@ -461,7 +461,7 @@ export function describeIntent(
       case 'shiftAttribute':
         return { key, tone: action.kind, icon: '🚩', label: ATTRIBUTE_ICON[action.attribute] };
       case 'idle':
-        return { key, tone: action.kind, icon: '💤', label: '' };
+        return { key, tone: action.kind, icon: action.reason === 'stun' ? '💫' : '💤', label: '' };
     }
   });
 }
@@ -502,7 +502,7 @@ function describeEnemyAction(action: EnemyAction): string {
     case 'shiftAttribute':
       return `${ATTRIBUTE_LABEL[action.attribute]}属性になる`;
     case 'idle':
-      return '何もしない';
+      return action.reason === 'stun' ? 'よろめいて何もしない' : '何もしない';
   }
 }
 
@@ -527,6 +527,36 @@ export function describeTrait(trait: EnemyTrait): string {
       return `覚醒: HP が ${Math.round(trait.threshold * 100)}% になると真の姿を現し、筋力 +${trait.strength}・ブロック +${trait.block}。それまでは HP がそれより減らない`;
     case 'phase':
       return `局面の変化: HP が ${Math.round(trait.threshold * 100)}% 以下になると、戦い方が変わる`;
+    case 'spines':
+      return `棘札: 攻撃で HP を削られるたびに「${trait.card.name}」を ${trait.count} 枚混ぜる`;
+    case 'call':
+      return `呼び声: 自分のターンの始めに「${trait.summon.name}」を呼ぶ（同時に ${trait.limit} 体まで）`;
+    case 'pact':
+      return `連命: 仲間が生きていれば、倒れてから自分のターンが ${trait.turns} 回始まるまでに HP ${Math.round(trait.hpRatio * 100)}% で起き上がる。それまでに全滅させると起き上がらない`;
+    case 'burst':
+      return `爆散: 倒れると ${trait.damage} ダメージ。ブロックで防げる`;
+    case 'stun':
+      return `膝折れ: 1 ヒットで HP を ${trait.threshold} 以上削ると、次の行動を飛ばす`;
+    case 'riposte':
+      return `返し棘: 攻撃を受けるたびに ${trait.damage} ダメージを返す。ブロックで防げる`;
+    case 'wick':
+      return `導火: 自分のターンが ${trait.turns} 回来ると ${trait.damage} ダメージで爆発して倒れる。先に倒すと爆発しない`;
+    case 'split':
+      return `分裂: 倒れると「${trait.into.name}」が ${trait.count} 体まで現れる。それ以上は分裂しない`;
+    case 'leech':
+      return '吸血: あなたの HP を削った分だけ回復する';
+    case 'molt':
+      return `脱皮: HP が ${Math.round(trait.threshold * 100)}% 以下になったとき一度だけ、HP を ${trait.heal} 回復して霊体化する`;
+    case 'spite':
+      return '執念: 最初の致死ダメージでは HP 1 で踏みとどまり、次の行動を飛ばす';
+    case 'plague':
+      return `瘴気: あなたのターンの開始時に「${trait.card.name}」を ${trait.count} 枚混ぜる`;
+    case 'weight':
+      return `重圧: 生きているあいだ、毎ターンのエナジーが ${trait.energy} 減る`;
+    case 'link':
+      return '共鳴: HP を削られると、同じ共鳴の仲間も同じだけ HP を失う。仲間のブロックは無視する';
+    case 'devour':
+      return '捕食: あなたの HP を削ったあと、捨て札から 1 枚をその戦闘から消す';
   }
 }
 

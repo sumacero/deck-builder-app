@@ -25,3 +25,10 @@ export const WINDUP_MOVE: EnemyMove = {
   name: '見極める',
   actions: [{ kind: 'block', amount: 6 }],
 };
+
+/** 大きな一撃や執念のあと、次の行動を見せずに飛ばす。 */
+export const STUN_MOVE: EnemyMove = {
+  id: 'stun',
+  name: 'よろめいている',
+  actions: [{ kind: 'idle', reason: 'stun' }],
+};
