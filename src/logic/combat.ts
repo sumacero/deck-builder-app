@@ -30,7 +30,7 @@ import {
   weaknessesOf,
 } from './attribute';
 import { arrowDamage, forgeArrow } from './arrows';
-import { baseCardId, growCard } from './cards';
+import { baseCardId, growCard, upgradeCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import { canStackOnto, handMultiplier, releaseFusion, scaledEffects, stackOf, waterFromFusion } from './marks';
 import { SLEEP_MOVE, WINDUP_MOVE, traitOf } from './enemyTraits';
@@ -470,7 +470,24 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
   };
   const names = groupedNames(setup.enemies.map((enemy) => enemy.name));
   const firstTurn = startPlayerTurn(withLog(initial, `${names}が現れた！`));
-  return triggerRelics(triggerRelics(firstTurn, 'combatStart'), 'turnStart');
+  const triggered = triggerRelics(triggerRelics(firstTurn, 'combatStart'), 'turnStart');
+  const polished = polishBossOpeningHand(triggered, setup.rank);
+  return polished.player.hp <= 0 ? finishIfLost(polished) : polished;
+}
+
+/** ボス戦の最初の手札を強化するレリックを持っているとき、その手札を強化する。 */
+function polishBossOpeningHand(state: CombatState, rank: CombatSetup['rank']): CombatState {
+  if (rank !== 'boss' && rank !== 'final') return state;
+  if (!state.relics.some((relic) => relic.upgradeBossOpeningHand)) return state;
+  let changed = false;
+  const hand = state.hand.map((instance) => {
+    const card = upgradeCard(instance.card);
+    if (card === instance.card) return instance;
+    changed = true;
+    return { ...instance, card };
+  });
+  if (!changed) return state;
+  return withLog({ ...state, hand }, '最初の手札を強化した');
 }
 
 /** ["小スライム", "苔の芽", "小スライム"] → "小スライム×2と苔の芽" */
@@ -522,6 +539,8 @@ export function canPlayCard(state: CombatState, instanceId: string): boolean {
   if ((instance.card.waterCost ?? 0) > waterOf(state.player, instance.card.type)) return false;
   if (skillSealed(state.player) && instance.card.type === 'skill') return false;
   if (state.player.hindrance.bind && instance.card.type === 'attack') return false;
+  const demanded = state.hand.some((card) => card.card.priority);
+  if (demanded && !instance.card.priority) return false;
   return true;
 }
 
@@ -1942,7 +1961,10 @@ export function deckAfterCombat(state: CombatState, deck: readonly CardDefinitio
     ...state.exhaustPile,
   ]) {
     const match = DECK_INSTANCE_ID.exec(instanceId);
-    if (match && card.growth?.scope === 'run') grown.set(Number(match[1]), card);
+    if (!match) continue;
+    const index = Number(match[1]);
+    if (card.growth?.scope === 'run') grown.set(index, card);
+    else if (card.upgraded && deck[index] && !deck[index].upgraded) grown.set(index, card);
   }
   return deck.map((card, index) => grown.get(index) ?? card);
 }
@@ -2351,6 +2373,7 @@ export function endTurn(state: CombatState): CombatState {
     startPlayerTurn(withEvent(afterEnemy, { kind: 'enemyTurnEnd', target: 'player' })),
     'turnStart',
   );
+  if (started.player.hp <= 0) return finishIfLost(started);
   return finishIfWon(spreadOvergrowth(supplyArrows(started)));
 }
 

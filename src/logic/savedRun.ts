@@ -16,7 +16,12 @@ function isPhase(value: unknown): boolean {
     case 'blessing':
       return Array.isArray(value.options);
     case 'deckEdit':
-      return value.mode === 'upgrade' || value.mode === 'remove' || value.mode === 'remark';
+      return (
+        value.mode === 'upgrade' ||
+        value.mode === 'remove' ||
+        value.mode === 'remark' ||
+        value.mode === 'stamp'
+      );
     case 'reward':
       return Array.isArray(value.choices) && typeof value.gold === 'number';
     case 'bossRelic':

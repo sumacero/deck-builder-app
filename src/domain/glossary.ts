@@ -12,6 +12,7 @@ export type KeywordId =
   | 'replay'
   | 'innate'
   | 'sly'
+  | 'priority'
   | 'uses'
   | 'damage'
   | 'areaAttack'
