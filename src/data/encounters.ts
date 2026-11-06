@@ -8,6 +8,7 @@ import {
   BOLT_BUG,
   BUBBLE_SLIME,
   CINDER_IMP,
+  CINDER_POD,
   GEAR_BEETLE,
   COG_RAT,
   DROWNED_GUARD,
@@ -40,6 +41,7 @@ import {
   SPARK_DRONE,
   STORM_GRIFFIN,
   TESLA_ORB,
+  TWIN_BUBBLE,
   THUNDER_GOLEM,
   WIND_HAWK,
 } from './enemies';
@@ -85,7 +87,11 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
         pair('bat-pair', FIRE_BAT, 'early'),
         pair('pebble-pair', PEBBLE_GOLEM, 'early'),
       ],
-      mid: [road(soloEncounter(EMBER_LIZARD), 'mid'), road(soloEncounter(MAGMA_SLIME), 'mid')],
+      mid: [
+        road(soloEncounter(EMBER_LIZARD), 'mid'),
+        road(soloEncounter(MAGMA_SLIME), 'mid'),
+        pair('pod-pair', CINDER_POD, 'mid'),
+      ],
       late: [road(soloEncounter(ROCK_SOLDIER), 'late'), road(soloEncounter(OBSIDIAN_KNIGHT), 'late')],
     },
     elite: [
@@ -122,7 +128,11 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
         pair('bubble-pair', BUBBLE_SLIME, 'early'),
         pair('crab-pair', RUIN_CRAB, 'early'),
       ],
-      mid: [road(soloEncounter(FROST_JELLY), 'mid'), road(soloEncounter(MIST_SIREN), 'mid')],
+      mid: [
+        group('jelly-pair', [withHp(FROST_JELLY, 26), withHp(FROST_JELLY, 26)], 'normal', 'mid'),
+        road(soloEncounter(MIST_SIREN), 'mid'),
+        pair('twin-bubble-pair', TWIN_BUBBLE, 'mid'),
+      ],
       // 亡霊は 1 体だけなので、最初のターンに霊体化する。
       late: [road(soloEncounter(DROWNED_GUARD), 'late'), road(soloEncounter(ANCIENT_PHANTOM), 'late')],
     },

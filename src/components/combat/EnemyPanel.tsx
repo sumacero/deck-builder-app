@@ -60,8 +60,10 @@ export function EnemyPanel({
 }: EnemyPanelProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   const alive = isAlive(enemy);
+  const reviving = enemy.reviveIn > 0;
   // 実 HP が先に 0 でも、ゲージが空になるまで次の行動は残す。消えると倒れたことが先に分かる。
-  const downed = useActorDowned(enemy.uid, events, !alive);
+  // 連命で起き上がる敵は、倒れた見た目のままにしない。
+  const downed = useActorDowned(enemy.uid, events, !alive && !reviving);
   const rawMove = currentIntent(enemy);
   const move =
     enemy.hitCut > 0
@@ -91,21 +93,27 @@ export function EnemyPanel({
         onPress={onSelect ?? (() => setInfoOpen(true))}
       >
         <View style={[styles.intent, downed && styles.hidden]}>
-          {!compact && (
+          {reviving ? (
+            <Text style={styles.caption} numberOfLines={2}>
+              あと {enemy.reviveIn} ターンで起き上がる
+            </Text>
+          ) : !compact ? (
             <Text style={styles.caption} numberOfLines={1}>
               「{move.name}」
             </Text>
+          ) : null}
+          {reviving ? null : (
+            <View style={styles.badges}>
+              {describeIntent(move, (base, flat) => enemyAttackDamage(attacker, base, player, flat)).map((intent) => (
+                <IntentBadge key={intent.key} intent={intent} compact={compact} />
+              ))}
+            </View>
           )}
-          <View style={styles.badges}>
-            {describeIntent(move, (base, flat) => enemyAttackDamage(attacker, base, player, flat)).map((intent) => (
-              <IntentBadge key={intent.key} intent={intent} compact={compact} />
-            ))}
-          </View>
         </View>
         <FighterEffects
           target={enemy.uid}
           events={events}
-          defeated={!alive}
+          defeated={!alive && !reviving}
           defeatDelay={defeatDelay}
           style={[styles.body, figureSize > 0 && { minHeight: figureSize * 0.85 }]}
         >

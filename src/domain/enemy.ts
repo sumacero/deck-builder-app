@@ -34,8 +34,8 @@ export type EnemyAction =
   | { kind: 'lockChill' }
   /** 旗を掲げる: 自分の属性（と弱点）が変わる。同じ行動のあとの攻撃から新しい属性になる。 */
   | { kind: 'shiftAttribute'; attribute: Attribute }
-  /** 眠っていて何もしない（行動パターンには書かない。状態から自動で決まる）。 */
-  | { kind: 'idle'; reason: 'sleep' };
+  /** 眠っていて何もしない、またはスタンで行動を飛ばす（行動パターンには書かない）。 */
+  | { kind: 'idle'; reason: 'sleep' | 'stun' };
 
 export type EnemyMove = {
   id: string;
@@ -77,7 +77,40 @@ export type EnemyTrait =
    * 局面の変化: HP が最大 HP の threshold 倍以下になると、行動が moves に替わる（1 回だけ）。
    * 覚醒と違い、HP は止めず、筋力やブロックは足さない。ルールが変わるだけ。
    */
-  | { kind: 'phase'; threshold: number; moves: EnemyMove[] };
+  | { kind: 'phase'; threshold: number; moves: EnemyMove[] }
+  /** 棘札: 攻撃で HP を削られるたびに、お邪魔カードを捨て札へ混ぜる。 */
+  | { kind: 'spines'; card: CardDefinition; count: number }
+  /** 呼び声: 自分のターンの始めに、生きている召喚が limit 体未満なら 1 体呼ぶ。場は 4 体まで。 */
+  | { kind: 'call'; summon: EnemyDefinition; limit: number }
+  /**
+   * 連命: 仲間が生きていれば、倒れてから turns 回の自分のターン開始で起き上がる。
+   * その前に連命の仲間が全滅すると、起き上がらない。
+   */
+  | { kind: 'pact'; turns: number; hpRatio: number }
+  /** 爆散: 倒れたとき、プレイヤーにダメージ（ブロックで防げる）。 */
+  | { kind: 'burst'; damage: number }
+  /** 膝折れ: 1 ヒットで threshold 以上の HP ダメージを受けると、次の自分の行動を飛ばす。 */
+  | { kind: 'stun'; threshold: number }
+  /** 返し棘: 攻撃を受けるたびに、プレイヤーへダメージ（ブロックで防げる）。 */
+  | { kind: 'riposte'; damage: number }
+  /** 導火: 自分のターンが turns 回来ると爆発して倒れ、そのダメージをプレイヤーに与える。 */
+  | { kind: 'wick'; turns: number; damage: number }
+  /** 分裂: 倒れたとき、into を count 体まで呼ぶ。into 自身は分裂しない。場は 4 体まで。 */
+  | { kind: 'split'; into: EnemyDefinition; count: number }
+  /** 吸血: プレイヤーの HP を削った分だけ、自分の HP を回復する。 */
+  | { kind: 'leech' }
+  /** 脱皮: HP が threshold 以下になったとき一度だけ、少し回復して霊体化する。 */
+  | { kind: 'molt'; threshold: number; heal: number }
+  /** 執念: 最初の致死ダメージでは HP 1 で踏みとどまり、次の行動を飛ばす。 */
+  | { kind: 'spite' }
+  /** 瘴気: 自分のターンの開始時に、お邪魔カードを捨て札へ混ぜる。 */
+  | { kind: 'plague'; card: CardDefinition; count: number }
+  /** 重圧: 生きているあいだ、自分のターンのエナジーが energy 減る。 */
+  | { kind: 'weight'; energy: number }
+  /** 共鳴: HP を削られたとき、同じ性質の仲間も同じだけ HP を失う（ブロックを無視。連鎖しない）。 */
+  | { kind: 'link' }
+  /** 捕食: プレイヤーの HP を削る攻撃のあと、捨て札から 1 枚をその戦闘から消す。 */
+  | { kind: 'devour' };
 
 /** 通常敵 / エリート / ボス / 最後の章のあとに戦うラスボス。報酬や BGM が変わる。 */
 export type EnemyRank = 'normal' | 'elite' | 'boss' | 'final';

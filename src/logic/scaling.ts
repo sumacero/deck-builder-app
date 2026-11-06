@@ -62,7 +62,27 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
     case 'artifact':
     case 'hitCap':
     case 'guardian':
+    case 'spines':
+    case 'pact':
+    case 'stun':
+    case 'leech':
+    case 'spite':
+    case 'plague':
+    case 'weight':
+    case 'link':
+    case 'devour':
       return trait;
+    case 'burst':
+    case 'riposte':
+      return { ...trait, damage: power(trait.damage) };
+    case 'wick':
+      return { ...trait, damage: power(trait.damage) };
+    case 'molt':
+      return { ...trait, heal: Math.round(trait.heal * scale.hp) };
+    case 'call':
+      return { ...trait, summon: scaleEnemy(trait.summon, scale) };
+    case 'split':
+      return { ...trait, into: scaleEnemy(trait.into, scale) };
   }
 }
 
