@@ -74,12 +74,12 @@ export const BASH: CardDefinition = {
   cost: 2,
   target: 'enemy',
   effects: [
-    { kind: 'damage', amount: 5 },
+    { kind: 'damage', amount: 8 },
     { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
   ],
   upgrade: {
     effects: [
-      { kind: 'damage', amount: 7 },
+      { kind: 'damage', amount: 10 },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 3 },
     ],
   },
@@ -511,12 +511,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 2,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 7 },
+      { kind: 'damage', amount: 12 },
       { kind: 'applyDebuff', status: 'weak', turns: 2 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 9 },
+        { kind: 'damage', amount: 15 },
         { kind: 'applyDebuff', status: 'weak', turns: 3 },
       ],
     },
@@ -562,8 +562,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     type: 'attack',
     cost: 1,
     target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 4 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 6 }] },
+    effects: [{ kind: 'damage', amount: 8 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 11 }] },
   },
   {
     id: 'thunderclap',
@@ -769,13 +769,13 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 2,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 10 },
+      { kind: 'damage', amount: 8 },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
       { kind: 'applyDebuff', status: 'weak', turns: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 10 },
+        { kind: 'damage', amount: 8 },
         { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
         { kind: 'applyDebuff', status: 'weak', turns: 2 },
       ],
@@ -897,6 +897,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     attribute: 'water',
+    water: true,
     effects: [
       { kind: 'damage', amount: 6 },
       { kind: 'applyDebuff', status: 'weak', turns: 1 },
@@ -918,6 +919,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 2,
     target: 'enemy',
     attribute: 'water',
+    water: true,
     effects: [{ kind: 'damage', amount: 3, hits: 4 }],
     upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 4 }] },
   },
