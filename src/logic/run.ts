@@ -87,7 +87,7 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     player: { hp: setup.playerMaxHp, maxHp: setup.playerMaxHp },
     gold: setup.economy.startingGold,
     deck: attuneDeck(setup.deck, setup.agent.attribute),
-    relics: setup.relics,
+    relics: [],
     potions: [...setup.potions],
     energyPerTurn: setup.energyPerTurn,
     drawPerTurn: setup.drawPerTurn,
@@ -105,7 +105,9 @@ export function createRun(setup: RunSetup, seed: number): RunState {
     stats: EMPTY_RUN_STATS,
     rngSeed: afterActs,
   };
-  return startAct(base, 0);
+  // 初期レリックの入手時効果（リーネのドロー +1 など）を、ラン開始時にかける。
+  const withStarters = setup.relics.reduce((run, relic) => obtainRelic(run, relic), base);
+  return startAct(withStarters, 0);
 }
 
 export function findNode(map: GameMap, id: string | null): MapNode | undefined {

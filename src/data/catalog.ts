@@ -27,7 +27,7 @@ import {
   CRYSTAL_WEIGHT,
   FIGHTING_SPIRIT,
   RELIC_POOL,
-  WORLD_TREE_SPROUT,
+  VERDANT_QUIVER,
 } from './relics';
 import { THOUSAND_YEAR_TREE, VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 
@@ -70,7 +70,7 @@ export const ALL_CARDS: CardDefinition[] = uniqueById([
 
 export const ALL_RELICS: RelicDefinition[] = uniqueById([
   FIGHTING_SPIRIT,
-  WORLD_TREE_SPROUT,
+  VERDANT_QUIVER,
   CRYSTAL_WEIGHT,
   ...RELIC_POOL,
   ...BOSS_RELIC_POOL,

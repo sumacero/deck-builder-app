@@ -56,7 +56,7 @@ export const VERDANT_STARTER_DECK: CardDefinition[] = [
   SEED_ARROW,
 ];
 
-/** リーネ専用。矢を 2 本足し、2 回まで使える。強化で 3 回。 */
+/** リーネ専用。矢を 1 本足し、2 回まで使える。強化で 3 回。 */
 export const SPARE_STRING: CardDefinition = {
   id: 'spare-string',
   name: '予備の弦',
@@ -67,7 +67,7 @@ export const SPARE_STRING: CardDefinition = {
   cost: 1,
   target: 'self',
   uses: 2,
-  effects: [{ kind: 'addArrows', amount: 2 }],
+  effects: [{ kind: 'addArrows', amount: 1 }],
   upgrade: { uses: 3 },
 };
 
@@ -265,8 +265,8 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo', 'strength'],
     cost: 1,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 3, hits: 3 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 3 }] },
+    effects: [{ kind: 'damage', amount: 2, hits: 3 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 3, hits: 3 }] },
   },
   {
     id: 'world-tree-seed',
@@ -297,12 +297,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 3 },
+      { kind: 'damage', amount: 2 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 5 },
+        { kind: 'damage', amount: 4 },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -318,12 +318,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     target: 'self',
     effects: [
       { kind: 'gainEnergy', amount: 1 },
-      { kind: 'draw', amount: 2 },
+      { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
         { kind: 'gainEnergy', amount: 1 },
-        { kind: 'draw', amount: 3 },
+        { kind: 'draw', amount: 2 },
       ],
     },
     motion: 'focus',
@@ -337,9 +337,9 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'quickdraw', amount: 2 }],
+    effects: [{ kind: 'gainPower', power: 'quickdraw', amount: 1 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'quickdraw', amount: 3 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'quickdraw', amount: 2 }] },
   },
   {
     id: 'thousand-arrows',
@@ -352,8 +352,8 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypePayoff: true,
     cost: 1,
     target: 'enemy',
-    effects: [{ kind: 'damagePerCardPlayed', base: 3, perCard: 3 }],
-    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 4, perCard: 4 }] },
+    effects: [{ kind: 'damagePerCardPlayed', base: 2, perCard: 2 }],
+    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 3, perCard: 3 }] },
     motion: 'heavy',
   },
 
@@ -424,13 +424,13 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 6 },
-      { kind: 'ifTargetHas', status: 'vulnerable', effects: [{ kind: 'damage', amount: 6 }] },
+      { kind: 'damage', amount: 5 },
+      { kind: 'ifTargetHas', status: 'vulnerable', effects: [{ kind: 'damage', amount: 5 }] },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 8 },
-        { kind: 'ifTargetHas', status: 'vulnerable', effects: [{ kind: 'damage', amount: 8 }] },
+        { kind: 'damage', amount: 7 },
+        { kind: 'ifTargetHas', status: 'vulnerable', effects: [{ kind: 'damage', amount: 7 }] },
       ],
     },
   },
@@ -443,8 +443,8 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['strength'],
     cost: 2,
     target: 'enemy',
-    effects: [{ kind: 'damage', amount: 14, strengthMultiplier: 2 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 18, strengthMultiplier: 2 }] },
+    effects: [{ kind: 'damage', amount: 12, strengthMultiplier: 2 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 16, strengthMultiplier: 2 }] },
     motion: 'heavy',
   },
   {
@@ -498,9 +498,9 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo'],
     cost: 0,
     target: 'self',
-    effects: [{ kind: 'draw', amount: 2 }],
+    effects: [{ kind: 'draw', amount: 1 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'draw', amount: 3 }] },
+    upgrade: { effects: [{ kind: 'draw', amount: 2 }] },
     motion: 'focus',
   },
   {
@@ -514,8 +514,8 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypePayoff: true,
     cost: 2,
     target: 'allEnemies',
-    effects: [{ kind: 'damagePerCardPlayed', base: 4, perCard: 2 }],
-    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 6, perCard: 2 }] },
+    effects: [{ kind: 'damagePerCardPlayed', base: 3, perCard: 2 }],
+    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 5, perCard: 2 }] },
     motion: 'heavy',
   },
   {
@@ -528,12 +528,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 4, hits: 2 },
+      { kind: 'damage', amount: 3, hits: 2 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 5, hits: 2 },
+        { kind: 'damage', amount: 4, hits: 2 },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -549,12 +549,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'self',
     effects: [
-      { kind: 'gainStrength', amount: 2, duration: 'turn' },
+      { kind: 'gainStrength', amount: 1, duration: 'turn' },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'gainStrength', amount: 3, duration: 'turn' },
+        { kind: 'gainStrength', amount: 2, duration: 'turn' },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -569,7 +569,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainEnergy', amount: 2 }],
+    effects: [{ kind: 'gainEnergy', amount: 1 }],
     exhaust: true,
     upgrade: { cost: 0 },
     motion: 'empower',
@@ -796,8 +796,8 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'addArrows', amount: 3 }],
-    upgrade: { effects: [{ kind: 'addArrows', amount: 4 }] },
+    effects: [{ kind: 'addArrows', amount: 2 }],
+    upgrade: { effects: [{ kind: 'addArrows', amount: 3 }] },
     motion: 'focus',
   },
   {
@@ -810,12 +810,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'self',
     effects: [
-      { kind: 'addArrows', amount: 2 },
+      { kind: 'addArrows', amount: 1 },
       { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'addArrows', amount: 3 },
+        { kind: 'addArrows', amount: 2 },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -831,12 +831,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 6 },
+      { kind: 'damage', amount: 5 },
       { kind: 'addArrows', amount: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 8 },
+        { kind: 'damage', amount: 7 },
         { kind: 'addArrows', amount: 2 },
       ],
     },
@@ -865,9 +865,9 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo', 'strength'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 2 }],
+    effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 1 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 3 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'arrowEdge', amount: 2 }] },
   },
   {
     id: 'scatter-stance',

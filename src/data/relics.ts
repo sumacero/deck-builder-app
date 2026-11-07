@@ -28,14 +28,15 @@ export const CRYSTAL_WEIGHT: RelicDefinition = {
     '戦闘開始時、攻撃の水力と守りの水力を 1 ずつ得る。カードが廃棄されるたび、ブロック 2 を得る。重ねて消した下の札も廃棄なので、重ねるたびに盾になる。',
 };
 
-/** リーネの初期レリック。戦闘開始時に宿り木を植える。 */
-export const WORLD_TREE_SPROUT: RelicDefinition = {
-  id: 'world-tree-sprout',
-  name: '世界樹の若葉',
-  icon: '🌱',
+/** リーネの初期レリック。毎ターン、通常の 5 枚より 1 枚多く引く。 */
+export const VERDANT_QUIVER: RelicDefinition = {
+  id: 'verdant-quiver',
+  name: '翠風の矢筒',
+  icon: '🏹',
   rarity: 'starter',
-  trigger: 'combatStart',
-  effects: [{ kind: 'applyDebuff', status: 'seed', turns: 3 }],
+  effects: [],
+  onObtain: [{ kind: 'changeDrawPerTurn', amount: 1 }],
+  summary: '毎ターン、通常より 1 枚多くカードを引く。',
 };
 
 /**
