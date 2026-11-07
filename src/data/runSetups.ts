@@ -19,7 +19,7 @@ import {
   CRYSTAL_WEIGHT,
   FIGHTING_SPIRIT,
   RELIC_POOL,
-  WORLD_TREE_SPROUT,
+  VERDANT_QUIVER,
 } from './relics';
 import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 
@@ -140,13 +140,13 @@ export const STANDARD_RUN: RunSetup = {
   restHealRatio: 0.3,
 };
 
-/** リーネは HP を抑えてある。宿り木の初期レリックで戦闘の立ち上がりから削れる。 */
+/** リーネは HP を抑えてある。初期レリックで、毎ターン通常より 1 枚多く引く。 */
 export const VERDANT_RUN: RunSetup = {
   ...STANDARD_RUN,
   agent: VERDANT_ARCHER,
   deck: VERDANT_STARTER_DECK,
   playerMaxHp: 62,
-  relics: [WORLD_TREE_SPROUT],
+  relics: [VERDANT_QUIVER],
   rewardPool: HUNTER_REWARD_CARDS,
   eventPool: [...STANDARD_EVENTS, ...RINE_TECHNIQUE_EVENTS],
 };
