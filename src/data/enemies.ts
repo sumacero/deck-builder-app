@@ -2,7 +2,7 @@ import type { Attribute } from '../domain/attribute';
 import type { CardDefinition } from '../domain/card';
 import type { EnemyAction, EnemyDefinition } from '../domain/enemy';
 import type { DebuffId } from '../domain/status';
-import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
+import { BURN, HEX_BIND, ICE_SHARD, OMEN, REGRET, SCRAP, TANGLING_VINE } from './statusCards';
 
 /**
  * 敵は地域ごとに作る。数値は第 1 章の強さで書き、後の章では logic/scaling.ts の倍率で強くなる。
@@ -112,7 +112,7 @@ export const CINDER_IMP: EnemyDefinition = {
   maxHp: 14,
   attribute: 'fire',
   moves: [
-    { id: 'claw', name: '火の爪', actions: [atk(4), addCard(BURN)] },
+    { id: 'claw', name: '火の爪', actions: [atk(4), addCard(REGRET)] },
     { id: 'guard', name: '構え', actions: [blk(4), atk(3)] },
   ],
   traits: [{ kind: 'vengeance', strength: 2 }],
@@ -250,7 +250,7 @@ export const GREAT_TREANT: EnemyDefinition = {
   attribute: 'grass',
   moves: [
     { id: 'blessing', name: '大地の恵み', actions: [healAll(10), blk(6)] },
-    { id: 'root-whip', name: '根の鞭', actions: [flat(4, 2), addCard(TANGLING_VINE, 2)] },
+    { id: 'root-whip', name: '根の鞭', actions: [flat(4, 2), addCard(HEX_BIND)] },
   ],
   traits: [
     { kind: 'guardian' },
@@ -462,7 +462,7 @@ export const IRON_HOUND: EnemyDefinition = {
   maxHp: 38,
   moves: [
     { id: 'bite', name: '噛みつき', actions: [atk(9)] },
-    { id: 'shock-fang', name: '電撃の牙', actions: [atk(5), paralyze(), addCard(SCRAP)] },
+    { id: 'shock-fang', name: '電撃の牙', actions: [atk(5), paralyze(), addCard(OMEN)] },
     { id: 'drive', name: '駆動', actions: [blk(6), atk(3, 2)] },
   ],
   traits: [

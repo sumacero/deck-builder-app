@@ -835,4 +835,31 @@ export const MIRROR_CARDS: CardDefinition[] = [
     upgrade: { effects: [{ kind: 'gainPower', power: 'sadistic', amount: 3 }] },
     motion: 'focus',
   },
+  {
+    ...NOA,
+    id: 'tide-shout',
+    name: '潮叫び',
+    rarity: 'rare',
+    type: 'skill',
+    archetypes: ['element', 'tempo'],
+    water: true,
+    minAct: 2,
+    cost: 0,
+    target: 'self',
+    exhaust: true,
+    effects: [
+      { kind: 'gainWater', pool: 'attack', amount: 2 },
+      { kind: 'gainWater', pool: 'guard', amount: 2 },
+      { kind: 'draw', amount: 2 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'gainWater', pool: 'attack', amount: 2 },
+        { kind: 'gainWater', pool: 'guard', amount: 2 },
+        { kind: 'draw', amount: 3 },
+      ],
+    },
+    art: 'high-tide',
+    motion: 'empower',
+  },
 ];

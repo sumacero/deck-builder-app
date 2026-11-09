@@ -983,4 +983,28 @@ export const VERDANT_CARDS: CardDefinition[] = [
     },
     motion: 'guard',
   },
+  {
+    id: 'last-bloom',
+    name: '枯れ際',
+    rarity: 'rare',
+    type: 'attack',
+    attribute: 'grass',
+    archetypes: ['debuff'],
+    minAct: 2,
+    cost: 0,
+    target: 'allEnemies',
+    exhaust: true,
+    effects: [
+      { kind: 'damage', amount: 5 },
+      { kind: 'applyDebuff', status: 'seed', turns: 3 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'damage', amount: 7 },
+        { kind: 'applyDebuff', status: 'seed', turns: 4 },
+      ],
+    },
+    art: 'seed-scatter',
+    motion: 'sweep',
+  },
 ];

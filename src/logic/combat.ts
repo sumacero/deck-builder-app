@@ -1431,11 +1431,31 @@ function aimForSly(
   return { state: rolled, aim: resolveAim(rolled, 'enemy', items[0].uid) };
 }
 
+/**
+ * 使えない昇華。効果があれば捨てられたときにそれをかけ、廃棄ならその戦闘から消す。
+ * 効果が無い札は、これまでどおり何も起きない。
+ */
+function burstUnplayableSly(state: CombatState, instance: CardInstance): CombatState {
+  const { card } = instance;
+  if (card.effects.length === 0) return withLog(state, `${card.name}は使えなかった`);
+  const applied = applyEffects(withLog(state, `${card.name}が捨てられて暴れた`), card.effects, 'all');
+  if (applied.player.hp <= 0) return finishIfLost(applied);
+  if (!card.exhaust) return applied;
+  if (!applied.discardPile.some((item) => item.instanceId === instance.instanceId)) return applied;
+  const exhausted: CombatState = {
+    ...applied,
+    discardPile: applied.discardPile.filter((item) => item.instanceId !== instance.instanceId),
+    exhaustPile: [...applied.exhaustPile, instance],
+  };
+  return onExhausted(exhausted, 1);
+}
+
 /** すでに捨て札へ移した札を、エナジーを払わずに使う。 */
 function playSly(state: CombatState, instance: CardInstance, suggested: Aim | undefined, depth: number): CombatState {
   const { card } = instance;
   if (depth >= MAX_SLY_CHAIN) return withLog(state, '昇華が続きすぎて止まった');
-  if (card.unplayable) return withLog(state, `${card.name}は使えなかった`);
+  // 使えない昇華（悔恨など）は、自分では出せないが、捨てられたときに効果だけ起きる。
+  if (card.unplayable) return burstUnplayableSly(state, instance);
   if (skillSealed(state.player) && card.type === 'skill') return withLog(state, `封印で${card.name}を使えなかった`);
   if (state.player.hindrance.bind && card.type === 'attack') return withLog(state, `絡めで${card.name}を使えなかった`);
   const aimed = aimForSly(state, card, suggested);

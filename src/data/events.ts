@@ -22,7 +22,7 @@ import {
   ARROW_MEASURE,
 } from './cards';
 import { MIRROR_CARDS } from './mirrorCards';
-import { BURN, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
+import { HOLLOW, ICE_SHARD, SCRAP, TANGLING_VINE } from './statusCards';
 
 const mirrorCard = (id: string): CardDefinition => {
   const card = MIRROR_CARDS.find((item) => item.id === id);
@@ -287,10 +287,9 @@ const EVENT_LIST: EventDefinition[] = [
         label: '一番奥の宝を持ち出す',
         effects: [
           { kind: 'gainRelic', tier: 'rare' },
-          { kind: 'addCard', card: BURN },
-          { kind: 'addCard', card: BURN },
+          { kind: 'addCard', card: HOLLOW },
         ],
-        outcome: '宝を抱えて逃げ出した。背中に浴びた火の粉が、まだ燻っている。',
+        outcome: '宝を抱えて逃げ出した。胸の奥に、空っぽの呪いが残っている。',
       },
       {
         id: 'coins',

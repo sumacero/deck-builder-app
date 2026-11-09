@@ -32,6 +32,37 @@ export function CardPickerModal({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = stacks.find((stack) => cardStackKey(stack.card) === selectedKey)?.card;
 
+  // 強化のように変化を見せるときは、一覧と確認を分ける。確認の取り消しは一覧へ戻す。
+  if (selected && preview) {
+    const after = preview(selected);
+    return (
+      <View style={styles.overlay}>
+        <View style={styles.sheet}>
+          <Text style={styles.title}>{title}</Text>
+          <ScrollView horizontal contentContainerStyle={styles.preview}>
+            <CardView card={selected} size="md" />
+            <Text style={styles.arrow}>→</Text>
+            <CardView card={after} size="md" />
+          </ScrollView>
+          <View style={styles.buttons}>
+            <Pressable
+              onPress={() => setSelectedKey(null)}
+              style={({ pressed }) => [styles.button, styles.cancel, pressed && styles.pressed]}
+            >
+              <Text style={styles.cancelText}>戻る</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onConfirm(selected)}
+              style={({ pressed }) => [styles.button, styles.confirm, pressed && styles.pressed]}
+            >
+              <Text style={styles.confirmText}>{confirmLabel}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.overlay}>
       <View style={styles.sheet}>
@@ -46,20 +77,12 @@ export function CardPickerModal({
                 key={cardStackKey(stack.card)}
                 card={stack.card}
                 count={stack.count}
-                selected={cardStackKey(stack.card) === selectedKey}
+                selected={!preview && cardStackKey(stack.card) === selectedKey}
                 onPress={() => setSelectedKey(cardStackKey(stack.card))}
               />
             ))
           )}
         </ScrollView>
-
-        {selected && preview && (
-          <View style={styles.preview}>
-            <CardView card={selected} />
-            <Text style={styles.arrow}>→</Text>
-            <CardView card={preview(selected)} />
-          </View>
-        )}
 
         <View style={styles.buttons}>
           {onCancel && (
@@ -70,18 +93,20 @@ export function CardPickerModal({
               <Text style={styles.cancelText}>{cancelLabel}</Text>
             </Pressable>
           )}
-          <Pressable
-            onPress={() => selected && onConfirm(selected)}
-            disabled={!selected}
-            style={({ pressed }) => [
-              styles.button,
-              styles.confirm,
-              !selected && styles.disabled,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.confirmText}>{confirmLabel}</Text>
-          </Pressable>
+          {!preview && (
+            <Pressable
+              onPress={() => selected && onConfirm(selected)}
+              disabled={!selected}
+              style={({ pressed }) => [
+                styles.button,
+                styles.confirm,
+                !selected && styles.disabled,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.confirmText}>{confirmLabel}</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </View>

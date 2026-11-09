@@ -19,7 +19,7 @@ import {
 } from './cards';
 import { STANDARD_EVENTS } from './events';
 import { MIRROR_CARDS, MIRROR_STARTER_DECK, MIRROR_TRIAD } from './mirrorCards';
-import { STATUS_CARDS } from './statusCards';
+import { CURSE_CARDS, STATUS_CARDS } from './statusCards';
 import { ALL_POTIONS } from './potions';
 import {
   ACT_RELICS,
@@ -63,6 +63,7 @@ export const ALL_CARDS: CardDefinition[] = uniqueById([
   /** リーネの弓が戦闘中に作る「矢」（パワー無しの基本形）。 */
   forgeArrow({}),
   ...STATUS_CARDS,
+  ...CURSE_CARDS,
   ...ACT_CARDS,
   toBerserk(STRIKE),
   toBerserk(DEFEND),

@@ -1,3 +1,4 @@
+import type { CardDefinition } from '../domain/card';
 import type { EventDefinition, EventOption } from '../domain/event';
 import type { RunState } from '../domain/run';
 import { startRandomCombat } from './encounter';
@@ -64,6 +65,25 @@ export function canChooseEventOption(run: RunState, option: EventOption): boolea
     return false;
   }
   return losesOnlyHp(run, option);
+}
+
+/**
+ * 選択肢の説明が名前だけでは足りないカード。
+ * デッキに入る札と、融合の結果だけ。ランダムな 3 択は、まだ中身が決まらない。
+ */
+export function optionPreviewCards(option: EventOption): CardDefinition[] {
+  const cards: CardDefinition[] = [];
+  const seen = new Set<string>();
+  const push = (card: CardDefinition) => {
+    if (seen.has(card.id)) return;
+    seen.add(card.id);
+    cards.push(card);
+  };
+  for (const effect of option.effects) {
+    if (effect.kind === 'addCard' || effect.kind === 'addCurses') push(effect.card);
+    if (effect.kind === 'fuseCards') push(effect.into);
+  }
+  return cards;
 }
 
 /** 選べるものが一つも無いときだけ、最後に「立ち去る」を足す。 */
