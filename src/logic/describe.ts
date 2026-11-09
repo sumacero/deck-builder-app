@@ -595,10 +595,10 @@ export function describeRunEffect(effect: RunEffect): string {
       return `${effect.amount} ゴールドを払う`;
     case 'gainRelic':
       return effect.tier
-        ? `ランダムな${RELIC_RARITY_LABEL[effect.tier]}のレリックを得る`
-        : 'ランダムなレリックを得る';
+        ? `まだ持っていない${RELIC_RARITY_LABEL[effect.tier]}のレリックを 1 つ得る。種類は受け取ったときに分かる`
+        : 'まだ持っていないレリックを 1 つ得る。種類は受け取ったときに分かる';
     case 'addCard':
-      return `「${effect.card.name}」をデッキに加える`;
+      return `「${effect.card.name}」をデッキに加える。${describeCard(effect.card)}`;
     case 'upgradeRandom':
       return `ランダムなカード ${effect.count} 枚を強化`;
     case 'fillPotions':
@@ -626,9 +626,9 @@ export function describeRunEffect(effect: RunEffect): string {
     case 'berserkBasics':
       return 'ストライク 1 枚と防御 1 枚を、狂鬼のストライクと狂鬼の防御に変える。手札にあるあいだ、その札を先に使わないと他の札は使えない。ダメージとブロックは 2 倍';
     case 'addCurses':
-      return `呪い「${effect.card.name}」を ${effect.count} 枚受け取る`;
+      return `呪い「${effect.card.name}」を ${effect.count} 枚受け取る。${describeCard(effect.card)}`;
     case 'stampCards':
-      return `${STAMP_LABEL[effect.stamp]}を、カード ${effect.count} 枚に付与する`;
+      return `${STAMP_LABEL[effect.stamp]}（${STAMP_MEANING[effect.stamp]}）を、カード ${effect.count} 枚に付与する`;
     case 'gainNamedRelic':
       return `レリック「${effect.relic.name}」を得る。${effect.relic.summary ?? ''}`.trim();
   }
@@ -639,6 +639,14 @@ const STAMP_LABEL = {
   sly: '昇華',
   innate: '先制',
   retain: '保留',
+} as const;
+
+/** 性質の名前だけでは、何が起きるか分からない。 */
+const STAMP_MEANING = {
+  replay: '捨て札の直前の札の効果を、コストを払わずにもう一度行う',
+  sly: '捨てられたとき、コストを払わずに使う',
+  innate: '戦闘開始時、通常のドローとは別に手札にある',
+  retain: 'ターンが終わっても手札に残る',
 } as const;
 
 function isNegative(effect: RunEffect): boolean {
@@ -660,9 +668,9 @@ function isNegative(effect: RunEffect): boolean {
 }
 
 function describeRunChoice(choice: RunChoice): string {
-  if (choice === 'upgradeCard') return 'カードを 1 枚選んで強化';
-  if (choice === 'removeCard') return 'カードを 1 枚選んで削除';
-  return '3 枚から 1 枚を選んでデッキに加える';
+  if (choice === 'upgradeCard') return 'このあと、デッキから 1 枚選んで強化する';
+  if (choice === 'removeCard') return 'このあと、デッキから 1 枚選んで削除する';
+  return 'このあと、3 枚の候補を見て 1 枚をデッキに加える';
 }
 
 export type EffectLine = { text: string; negative: boolean };
