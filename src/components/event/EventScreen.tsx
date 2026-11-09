@@ -26,11 +26,16 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
   const review = outcome === null ? options.find((option) => option.id === reviewId) : undefined;
   const previewCards = review ? optionPreviewCards(review) : [];
 
+  const selectOption = (option: EventOption) => {
+    setSelectedId(option.id);
+    // もらう札が決まっている選択肢は、選んだ時点でカードの詳細を出す。
+    setReviewId(optionPreviewCards(option).length > 0 ? option.id : null);
+  };
+
   const confirmSelection = () => {
     if (!selectedId) return;
     const option = options.find((candidate) => candidate.id === selectedId);
     if (!option) return;
-    // カードの中身が名前だけでは分からないときだけ、決める前に詳細を挟む。
     if (optionPreviewCards(option).length > 0) {
       setReviewId(option.id);
       return;
@@ -60,7 +65,7 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
                   option={option}
                   enabled={canChooseEventOption(run, option)}
                   selected={option.id === selectedId}
-                  onPress={() => setSelectedId(option.id)}
+                  onPress={() => selectOption(option)}
                 />
               ))}
             </View>
