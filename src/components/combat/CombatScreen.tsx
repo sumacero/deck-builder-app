@@ -20,7 +20,7 @@ import { eventsDuration, outcomeRevealMs, useEnemyTurnBusy, useOutcomeRevealed }
 import { useCombatSounds } from '../../hooks/useCombatSounds';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
 import { stackInstances } from '../../logic/cards';
-import { deckAfterCombat, livingEnemies } from '../../logic/combat';
+import { canChooseHandCard, deckAfterCombat, livingEnemies } from '../../logic/combat';
 import { describeHandCard } from '../../logic/describe';
 import { stackOf } from '../../logic/marks';
 import { COLORS, COMBAT_LAYOUT, HAND_LAYOUT, ITEM_BAR, MOTION, RADIUS, SPACING } from '../../theme';
@@ -267,7 +267,11 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
   const removalHint = handRemoval
     ? handRemoval.mode === 'exhaust'
       ? `廃棄する札をタップ（あと ${handRemoval.left} 枚）`
-      : `捨てる札をタップ（あと ${handRemoval.left} 枚）`
+      : handRemoval.mode === 'imbueWater'
+        ? '水札にするカードをタップ'
+        : handRemoval.mode === 'transformCurse'
+          ? '変える呪い、またはお邪魔カードをタップ'
+          : `捨てる札をタップ（あと ${handRemoval.left} 枚）`
     : null;
   const hintRow =
     removalHint && choosingHand ? (
@@ -302,6 +306,11 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
     </View>
   );
   const turnLabel = <Text style={styles.turn}>TURN {state.turn}</Text>;
+  const canChoose = (instanceId: string) => {
+    if (!handRemoval) return true;
+    const card = state.hand.find((item) => item.instanceId === instanceId);
+    return card ? canChooseHandCard(handRemoval.mode, card.card) : false;
+  };
   const hand = (
     <Hand
       cards={state.hand}
@@ -310,6 +319,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       concealedIds={concealedIds}
       locked={enemyTurnBusy}
       choosing={choosingHand}
+      canChoose={canChoose}
       isPlayable={isPlayable}
       draggingId={drag?.kind === 'card' ? drag.instanceId : null}
       selectedId={null}

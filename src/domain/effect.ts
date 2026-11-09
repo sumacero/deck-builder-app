@@ -113,7 +113,17 @@ export type Effect =
    */
   | { kind: 'replayPrevious' }
   /** 次に使うカードの効果を、もう 1 回行う。このターンを終えると消える。 */
-  | { kind: 'gainReplay' };
+  | { kind: 'gainReplay' }
+  /** ブロック base。このターンに捨てたカード 1 枚につき perCard を足す。 */
+  | { kind: 'blockPerDiscard'; base: number; perCard: number }
+  /** ブロック base。このターンに引いたカード 1 枚につき perCard を足す。 */
+  | { kind: 'blockPerDraw'; base: number; perCard: number }
+  /** この戦闘で廃棄した枚数だけ引く。max 枚まで。 */
+  | { kind: 'drawByExhaustCount'; max: number }
+  /** 手札のカード 1 枚を選び、このランの間、水札にする。 */
+  | { kind: 'imbueWater' }
+  /** 手札の呪い、またはお邪魔カード 1 枚を、滴の守りに変える。 */
+  | { kind: 'transformCurse' };
 
 /** enemy は敵 1 体を選んで使う。allEnemies は生きている敵全員。self は自分に使う（対象選択なし）。 */
 export type EffectTarget = 'enemy' | 'allEnemies' | 'self';

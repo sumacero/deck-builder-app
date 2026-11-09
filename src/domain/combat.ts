@@ -45,6 +45,8 @@ export type PlayerState = Fighter & {
   skillsThisTurn: number;
   /** このターンに使ったアタックの枚数。 */
   attacksThisTurn: number;
+  /** このターンに山札から引いた枚数（先制は含まない）。 */
+  drawsThisTurn: number;
   /** このターンに手札から捨てた枚数（効果・ターン終了）。 */
   discardsThisTurn: number;
   /** このターンに廃棄した枚数。 */
@@ -290,7 +292,7 @@ export type CombatState = {
 
 /** 手札から手放す札を選ぶ待ち。rest は、選び終わったあとに続ける効果。 */
 export type PendingHandRemoval = {
-  mode: 'discard' | 'exhaust';
+  mode: 'discard' | 'exhaust' | 'imbueWater' | 'transformCurse';
   /** あと何枚選ぶか。 */
   left: number;
   /** この選択で既に手放した枚数。拾い集めのドローは、選び終わってからまとめて行う。 */

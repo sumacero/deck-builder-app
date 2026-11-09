@@ -304,6 +304,18 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '🌊',
     description: 'ターンの始めに、その枚数だけカードを多く引く。手札がいっぱいの分は引けない。',
   },
+  spring: {
+    id: 'spring',
+    name: '泉脈',
+    icon: '💧',
+    description: 'カードを 1 枚引くたびに、その数値だけブロックを得る。先制で手札にある札は数えない。',
+  },
+  shed: {
+    id: 'shed',
+    name: '落葉',
+    icon: '🍂',
+    description: 'カードの効果で手札から捨てるたびに、捨てた枚数 × その数値だけブロックを得る。ターン終了の捨て札では発動しない。',
+  },
   fuseEcho: {
     id: 'fuseEcho',
     name: '水面',

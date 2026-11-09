@@ -39,6 +39,8 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * - scavenge（拾い集め）: 効果で手札から捨てるたびに、その枚数 × N 枚引く
  * - cinder（燃え殻）: カードが廃棄されるたびに、HP が一番低い敵に N ダメージ
  * - tidecall（潮招き）: ターンの始めにカードを N 枚多く引く
+ * - spring（泉脈）: カードを 1 枚引くたびにブロック N
+ * - shed（落葉）: 効果でカードを 1 枚捨てるたびにブロック N
  */
 export type PowerId =
   | 'barricade'
@@ -62,6 +64,8 @@ export type PowerId =
   | 'momentum'
   | 'scavenge'
   | 'cinder'
-  | 'tidecall';
+  | 'tidecall'
+  | 'spring'
+  | 'shed';
 
 export type Powers = Partial<Record<PowerId, number>>;

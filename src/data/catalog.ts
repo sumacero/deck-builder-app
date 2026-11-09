@@ -19,6 +19,7 @@ import {
 } from './cards';
 import { STANDARD_EVENTS } from './events';
 import { MIRROR_CARDS, MIRROR_STARTER_DECK, MIRROR_TRIAD } from './mirrorCards';
+import { BLESSED_DROP } from './synergyCards';
 import { CURSE_CARDS, STATUS_CARDS } from './statusCards';
 import { ALL_POTIONS } from './potions';
 import {
@@ -64,6 +65,7 @@ export const ALL_CARDS: CardDefinition[] = uniqueById([
   forgeArrow({}),
   ...STATUS_CARDS,
   ...CURSE_CARDS,
+  BLESSED_DROP,
   ...ACT_CARDS,
   toBerserk(STRIKE),
   toBerserk(DEFEND),

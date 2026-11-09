@@ -62,6 +62,12 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'scavenge-form',
   'cinder-form',
   'combo-pulse',
+  // 呪い・捨て・廃棄・ドローで伸びる札。誰でも報酬に出る。
+  'curse-drop',
+  'leaf-count',
+  'ash-ledger',
+  'shed-oath',
+  'spring-vein',
   // 3 エナジーの共通大技
   'condemnation',
   'cataclysm',
