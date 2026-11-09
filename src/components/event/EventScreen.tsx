@@ -3,9 +3,11 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { EventDefinition, EventOption } from '../../domain/event';
 import type { RunState } from '../../domain/run';
 import type { EventActions } from '../../hooks/useRun';
-import { describeEventOption } from '../../logic/describe';
-import { canChooseEventOption, shownEventOptions } from '../../logic/event';
+import type { CardDefinition } from '../../domain/card';
+import { describeCard, describeEventOption } from '../../logic/describe';
+import { canChooseEventOption, optionPreviewCards, shownEventOptions } from '../../logic/event';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { CardView } from '../cards/CardView';
 import { RunHud } from '../run/RunHud';
 
 type EventScreenProps = {
@@ -19,7 +21,22 @@ type EventScreenProps = {
 /** 「？」マスの出来事。選択肢を決めたあとは、その画面には戻れない。 */
 export function EventScreen({ run, event, outcome, actions }: EventScreenProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [reviewId, setReviewId] = useState<string | null>(null);
   const options = shownEventOptions(run, event);
+  const review = outcome === null ? options.find((option) => option.id === reviewId) : undefined;
+  const previewCards = review ? optionPreviewCards(review) : [];
+
+  const confirmSelection = () => {
+    if (!selectedId) return;
+    const option = options.find((candidate) => candidate.id === selectedId);
+    if (!option) return;
+    // カードの中身が名前だけでは分からないときだけ、決める前に詳細を挟む。
+    if (optionPreviewCards(option).length > 0) {
+      setReviewId(option.id);
+      return;
+    }
+    actions.choose(selectedId);
+  };
 
   return (
     <View style={styles.root}>
@@ -32,24 +49,43 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
           <Text style={styles.text}>{outcome ?? event.text}</Text>
         </View>
 
-        {outcome === null && (
-          <View style={styles.options}>
-            {options.map((option) => (
-              <EventOptionView
-                key={option.id}
-                option={option}
-                enabled={canChooseEventOption(run, option)}
-                selected={option.id === selectedId}
-                onPress={() => setSelectedId(option.id)}
-              />
-            ))}
-          </View>
+        {outcome === null && review && previewCards.length > 0 ? (
+          <EventChoiceDetail option={review} cards={previewCards} />
+        ) : (
+          outcome === null && (
+            <View style={styles.options}>
+              {options.map((option) => (
+                <EventOptionView
+                  key={option.id}
+                  option={option}
+                  enabled={canChooseEventOption(run, option)}
+                  selected={option.id === selectedId}
+                  onPress={() => setSelectedId(option.id)}
+                />
+              ))}
+            </View>
+          )
         )}
       </ScrollView>
 
-      {outcome === null ? (
+      {outcome === null && review && previewCards.length > 0 ? (
+        <View style={styles.detailActions}>
+          <Pressable
+            onPress={() => setReviewId(null)}
+            style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+          >
+            <Text style={styles.backText}>戻る</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => actions.choose(review.id)}
+            style={({ pressed }) => [styles.confirm, styles.detailConfirm, pressed && styles.pressed]}
+          >
+            <Text style={styles.confirmText}>この選択にする</Text>
+          </Pressable>
+        </View>
+      ) : outcome === null ? (
         <Pressable
-          onPress={() => selectedId && actions.choose(selectedId)}
+          onPress={confirmSelection}
           disabled={!selectedId}
           style={({ pressed }) => [
             styles.confirm,
@@ -77,6 +113,28 @@ type EventOptionViewProps = {
   selected: boolean;
   onPress: () => void;
 };
+
+function EventChoiceDetail({ option, cards }: { option: EventOption; cards: CardDefinition[] }) {
+  const lines = describeEventOption(option);
+  return (
+    <View style={styles.detail}>
+      <Text style={styles.detailLabel}>{option.label}</Text>
+      {lines.map((line, index) => (
+        <Text key={index} style={[styles.line, line.negative && styles.negative]}>
+          {line.negative ? '▼ ' : '◆ '}
+          {line.text}
+        </Text>
+      ))}
+      <Text style={styles.detailNote}>決めると、この出来事には戻れない。</Text>
+      {cards.map((card) => (
+        <View key={card.id} style={styles.cardBlock}>
+          <CardView card={card} size="md" />
+          <Text style={styles.cardText}>{describeCard(card)}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 function EventOptionView({ option, enabled, selected, onPress }: EventOptionViewProps) {
   const lines = describeEventOption(option);
@@ -131,6 +189,31 @@ const styles = StyleSheet.create({
   line: { color: COLORS.textMuted, fontSize: 13, fontWeight: '700' },
   negative: { color: COLORS.damageText },
   blocked: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  detail: { alignSelf: 'stretch', gap: SPACING.sm, marginTop: SPACING.sm },
+  detailLabel: { color: COLORS.text, fontSize: 16, fontWeight: '800' },
+  detailNote: { color: COLORS.textMuted, fontSize: 12 },
+  cardBlock: {
+    alignSelf: 'stretch',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.panelBorder,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+    alignItems: 'center',
+  },
+  cardText: { alignSelf: 'stretch', color: COLORS.text, fontSize: 13, lineHeight: 20 },
+  detailActions: { flexDirection: 'row', gap: SPACING.md },
+  back: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.panelBorder,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+  },
+  backText: { color: COLORS.textMuted, fontSize: 16, fontWeight: '700' },
+  detailConfirm: { flex: 1.4 },
   confirm: {
     backgroundColor: COLORS.gold,
     borderRadius: RADIUS.md,

@@ -1387,6 +1387,32 @@ export const REWARD_CARDS: CardDefinition[] = [
     motion: 'heavy',
   },
   {
+    id: 'setting-sun',
+    name: '落日',
+    rarity: 'rare',
+    type: 'attack',
+    attribute: 'fire',
+    archetypes: ['sacrifice'],
+    minAct: 2,
+    cost: 0,
+    target: 'allEnemies',
+    exhaust: true,
+    effects: [
+      { kind: 'damage', amount: 8 },
+      { kind: 'draw', amount: 1 },
+      { kind: 'loseHp', amount: 3 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'damage', amount: 11 },
+        { kind: 'draw', amount: 1 },
+        { kind: 'loseHp', amount: 3 },
+      ],
+    },
+    art: 'heat-up',
+    motion: 'sweep',
+  },
+  {
     id: 'blood-canon',
     name: '血の法典',
     rarity: 'rare',

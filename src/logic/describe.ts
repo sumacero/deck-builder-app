@@ -298,7 +298,11 @@ const describeEffects = (effects: Effect[], target: EffectTarget) =>
 export function describeCard(card: CardDefinition): string {
   const extras = [
     card.curse ? '呪い。デッキに残り、毎戦闘の山札に入る。ショップや出来事で削除できる。' : '',
-    card.unplayable ? '使用できない。' : '',
+    card.unplayable && card.sly
+      ? '使えない。捨てられたときに、コストを払わず効果が起きる。'
+      : card.unplayable
+        ? '使用できない。'
+        : '',
     card.turnEndInHand
       ? `ターン終了時に手札にあると、${describeEffects(card.turnEndInHand, 'self')}`
       : '',
@@ -306,7 +310,7 @@ export function describeCard(card: CardDefinition): string {
     card.retain ? '保留。ターンが終わっても手札に残る。' : '',
     card.innate ? '先制。戦闘開始時、手札にある。' : '',
     card.xCost ? 'Xコスト。残っているエナジーをすべて払う。' : '',
-    card.sly ? '昇華。捨てられたとき、コストを払わずに使う。' : '',
+    card.sly && !card.unplayable ? '昇華。捨てられたとき、コストを払わずに使う。' : '',
     card.priority ? '手札にあるあいだ、このカード以外は使えない。' : '',
     card.uses !== undefined ? `${card.uses} 回使える。使い切ると、その戦闘では廃棄される。` : '',
     card.growth ? describeGrowth(card.growth) : '',
