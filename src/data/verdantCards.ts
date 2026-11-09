@@ -5,7 +5,7 @@ import { DEFEND, STRIKE } from './cards';
  * 翠風のリーネ（草属性）のためのカード。草属性なので、リーネの報酬とショップにだけ出る。
  * リーネの軸は 3 つ: 弓（軽いカードを次々使う手数）/ 宿り木（毎ターン削る）/ ムチ（敵全体と連打）。
  * 以前の茨と守りのカード（茨の鎧・茨の垣根など）はリーネに出さない。
- * 2026-10-08 に足した蔦の受け・年輪の盾・葉の番え・鞭の牽制だけ、リーネのブロック軸として報酬に出る。
+ * リーネのブロック軸は、年輪の盾・葉の番え・鞭の牽制。数字だけの守りは置かない。
  */
 
 export const SEED_ARROW: CardDefinition = {
@@ -255,19 +255,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     },
   },
 
-  // --- 風の弓と、育つ種 ---
-  {
-    id: 'gale-arrows',
-    name: '疾風の連矢',
-    rarity: 'common',
-    type: 'attack',
-    attribute: 'grass',
-    archetypes: ['tempo', 'strength'],
-    cost: 1,
-    target: 'enemy',
-    effects: [{ kind: 'damage', amount: 2, hits: 3 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 3, hits: 3 }] },
-  },
+  // --- 育つ種 ---
   {
     id: 'world-tree-seed',
     name: '世界樹の種',
@@ -287,26 +275,6 @@ export const VERDANT_CARDS: CardDefinition[] = [
   },
 
   // --- 弓: 軽いカードを次々に使い、使った枚数で押す ---
-  {
-    id: 'quick-shot',
-    name: '速射',
-    rarity: 'common',
-    type: 'attack',
-    attribute: 'grass',
-    archetypes: ['tempo'],
-    cost: 0,
-    target: 'enemy',
-    effects: [
-      { kind: 'damage', amount: 2 },
-      { kind: 'draw', amount: 1 },
-    ],
-    upgrade: {
-      effects: [
-        { kind: 'damage', amount: 4 },
-        { kind: 'draw', amount: 1 },
-      ],
-    },
-  },
   {
     id: 'nocking-rhythm',
     name: '矢継ぎ早',
@@ -488,21 +456,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     upgrade: { effects: [{ kind: 'gainPower', power: 'demonForm', amount: 2 }] },
   },
 
-  // --- 報酬の種類をカイルと揃えるための追加（2026-10-07）。弓 5 / 宿り木 4 / ムチ 4 ---
-  {
-    id: 'wind-read',
-    name: '風読み',
-    rarity: 'uncommon',
-    type: 'skill',
-    attribute: 'grass',
-    archetypes: ['tempo'],
-    cost: 0,
-    target: 'self',
-    effects: [{ kind: 'draw', amount: 1 }],
-    exhaust: true,
-    upgrade: { effects: [{ kind: 'draw', amount: 2 }] },
-    motion: 'focus',
-  },
+  // --- 弓の追加。矢を作る札と、使った枚数で伸びる札 ---
   {
     id: 'arrow-rain',
     name: '矢の雨',
@@ -517,27 +471,6 @@ export const VERDANT_CARDS: CardDefinition[] = [
     effects: [{ kind: 'damagePerCardPlayed', base: 3, perCard: 2 }],
     upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 5, perCard: 2 }] },
     motion: 'heavy',
-  },
-  {
-    id: 'double-shot',
-    name: '二連射',
-    rarity: 'uncommon',
-    type: 'attack',
-    attribute: 'grass',
-    archetypes: ['tempo'],
-    cost: 1,
-    target: 'enemy',
-    effects: [
-      { kind: 'damage', amount: 3, hits: 2 },
-      { kind: 'draw', amount: 1 },
-    ],
-    upgrade: {
-      effects: [
-        { kind: 'damage', amount: 4, hits: 2 },
-        { kind: 'draw', amount: 1 },
-      ],
-    },
-    motion: 'flurry',
   },
   {
     id: 'focused-breath',
@@ -909,21 +842,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     upgrade: { cost: 1 },
   },
 
-  // --- ブロックの取り方（2026-10-08）。盾ではなく、蔦・年輪・葉・鞭で受ける ---
-  {
-    id: 'vine-parry',
-    name: '蔦の受け',
-    rarity: 'common',
-    type: 'skill',
-    attribute: 'grass',
-    archetypes: ['block'],
-    cost: 0,
-    target: 'self',
-    // 0 コスト守りの底上げ。流し受けより狩り向けに少し厚く。
-    effects: [{ kind: 'block', amount: 4 }],
-    upgrade: { effects: [{ kind: 'block', amount: 6 }] },
-    motion: 'guard',
-  },
+  // --- ブロックの取り方。年輪・葉・鞭で受ける。数字だけの守りは置かない ---
   {
     id: 'ring-shield',
     name: '年輪の盾',

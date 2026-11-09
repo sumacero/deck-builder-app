@@ -924,30 +924,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 4 }] },
   },
   {
-    id: 'leaf-flash',
-    name: '若葉の一閃',
-    rarity: 'uncommon',
-    type: 'attack',
-    archetypes: ['element'],
-    cost: 0,
-    target: 'enemy',
-    attribute: 'grass',
-    effects: [{ kind: 'damage', amount: 4 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 6 }] },
-  },
-  {
-    id: 'leaf-storm',
-    name: '木の葉乱舞',
-    rarity: 'common',
-    type: 'attack',
-    archetypes: ['element'],
-    cost: 1,
-    target: 'enemy',
-    attribute: 'grass',
-    effects: [{ kind: 'damage', amount: 3, hits: 3 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 3 }] },
-  },
-  {
     id: 'flame-slash',
     name: '火炎斬',
     rarity: 'common',
@@ -1216,19 +1192,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     upgrade: { growth: { stat: 'block', amount: 3, when: 'play', scope: 'run' } },
   },
 
-  // --- ブロックの取り方を分ける。数値だけの防御の繰り返しにしない ---
-  {
-    id: 'deflect',
-    name: '流し受け',
-    rarity: 'common',
-    type: 'skill',
-    attribute: 'fire',
-    archetypes: ['block'],
-    cost: 0,
-    target: 'self',
-    effects: [{ kind: 'block', amount: 3 }],
-    upgrade: { effects: [{ kind: 'block', amount: 4 }] },
-  },
+  // --- ブロックの取り方を分ける。数値だけの防御は置かない ---
   {
     id: 'stacking-shield',
     name: '積み上げる盾',
