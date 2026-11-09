@@ -5,6 +5,20 @@ import type { CardDefinition } from '../domain/card';
  * 単体の数値は低く、捨て・廃棄・手数・スキル回数と組んで化ける。
  * （残影斬・灰燼の一撃・手数の盾・追撃の律動は下位互換／重複のため削除済み）
  */
+
+/** 滴替えが呪いとお邪魔を変えた先。報酬には出さない。 */
+export const BLESSED_DROP: CardDefinition = {
+  id: 'blessed-drop',
+  name: '滴の守り',
+  rarity: 'common',
+  type: 'skill',
+  cost: 0,
+  target: 'self',
+  effects: [{ kind: 'block', amount: 4 }],
+  exhaust: true,
+  upgrade: { effects: [{ kind: 'block', amount: 6 }] },
+  art: 'shoreline',
+};
 export const SYNERGY_CARDS: CardDefinition[] = [
   {
     id: 'toss-draw',
@@ -179,5 +193,85 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     effects: [{ kind: 'damagePerCardPlayed', base: 6, perCard: 4 }],
     upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 8, perCard: 5 }] },
     motion: 'flurry',
+  },
+  {
+    id: 'curse-drop',
+    name: '滴替え',
+    rarity: 'uncommon',
+    type: 'skill',
+    archetypes: ['tempo'],
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'transformCurse' }],
+    upgrade: {
+      cost: 0,
+      effects: [{ kind: 'transformCurse' }, { kind: 'draw', amount: 1 }],
+    },
+    art: 'shoreline',
+    motion: 'focus',
+  },
+  {
+    id: 'leaf-count',
+    name: '落ち葉の盾',
+    rarity: 'common',
+    type: 'skill',
+    archetypes: ['tempo'],
+    cost: 1,
+    target: 'self',
+    effects: [
+      { kind: 'discardFromHand', amount: 1, choose: true },
+      { kind: 'blockPerDiscard', base: 3, perCard: 3 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'discardFromHand', amount: 1, choose: true },
+        { kind: 'blockPerDiscard', base: 4, perCard: 4 },
+      ],
+    },
+    art: 'leaf-nock',
+    motion: 'guard',
+  },
+  {
+    id: 'ash-ledger',
+    name: '灰の帳簿',
+    rarity: 'uncommon',
+    type: 'skill',
+    archetypes: ['tempo', 'sacrifice'],
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'drawByExhaustCount', max: 2 }],
+    upgrade: { effects: [{ kind: 'drawByExhaustCount', max: 3 }] },
+    art: 'rise-from-ashes',
+    motion: 'focus',
+  },
+  {
+    id: 'shed-oath',
+    name: '落葉の誓い',
+    rarity: 'uncommon',
+    type: 'power',
+    archetypes: ['tempo'],
+    minAct: 2,
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'gainPower', power: 'shed', amount: 2 }],
+    exhaust: true,
+    upgrade: { effects: [{ kind: 'gainPower', power: 'shed', amount: 3 }] },
+    art: 'leaf-nock',
+    motion: 'empower',
+  },
+  {
+    id: 'spring-vein',
+    name: '泉脈',
+    rarity: 'rare',
+    type: 'power',
+    archetypes: ['tempo'],
+    minAct: 2,
+    cost: 1,
+    target: 'self',
+    effects: [{ kind: 'gainPower', power: 'spring', amount: 1 }],
+    exhaust: true,
+    upgrade: { cost: 0 },
+    art: 'high-tide',
+    motion: 'empower',
   },
 ];

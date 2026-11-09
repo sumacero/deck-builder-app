@@ -116,6 +116,8 @@ function scaleEffect(effect: Effect, multiplier: number): Effect {
     case 'damagePerDiscard':
     case 'damagePerExhaust':
     case 'blockPerCardPlayed':
+    case 'blockPerDiscard':
+    case 'blockPerDraw':
       return {
         ...effect,
         base: scale(effect.base, multiplier),
@@ -123,6 +125,8 @@ function scaleEffect(effect: Effect, multiplier: number): Effect {
       };
     case 'applyDebuff':
       return { ...effect, turns: scale(effect.turns, multiplier) };
+    case 'drawByExhaustCount':
+      return { ...effect, max: scale(effect.max, multiplier) };
     case 'cleanse':
       return { ...effect, count: scale(effect.count, multiplier) };
     case 'ifTargetHas':

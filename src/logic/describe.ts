@@ -152,6 +152,18 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `${effect.base} ダメージ。この戦闘で廃棄したカード 1 枚につき +${effect.perCard}。`;
     case 'blockPerCardPlayed':
       return `ブロック ${effect.base}。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
+    case 'blockPerDiscard':
+      return `ブロック ${effect.base}。このターンに捨てたカード 1 枚につき +${effect.perCard}。`;
+    case 'blockPerDraw':
+      return effect.base > 0
+        ? `ブロック ${effect.base}。このターンに引いたカード 1 枚につき +${effect.perCard}。`
+        : `このターンに引いたカード 1 枚につき、ブロック ${effect.perCard}。`;
+    case 'drawByExhaustCount':
+      return `この戦闘で廃棄した枚数だけカードを引く（最大 ${effect.max} 枚）。`;
+    case 'imbueWater':
+      return '手札のカード 1 枚を、このランの間、水札にする。';
+    case 'transformCurse':
+      return '手札の呪い、またはお邪魔カード 1 枚を「滴の守り」に変える。滴の守りはコスト 0、ブロック 4。使ったあと廃棄される。';
     case 'discardFromHand':
       return effect.choose
         ? `手札から ${effect.amount} 枚を選んで捨てる。`
@@ -216,6 +228,8 @@ export const POWER_LABEL: Record<PowerId, string> = {
   scavenge: '拾い集め',
   cinder: '燃え殻',
   tidecall: '潮招き',
+  spring: '泉脈',
+  shed: '落葉',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。 */
@@ -265,6 +279,10 @@ export function describePower(power: PowerId, amount: number): string {
       return `この戦闘中、カードが廃棄されるたびに HP が一番低い敵に ${amount} ダメージ。`;
     case 'tidecall':
       return `この戦闘中、ターンの始めにカードを ${amount} 枚多く引く。`;
+    case 'spring':
+      return `この戦闘中、カードを 1 枚引くたびにブロック ${amount} を得る。`;
+    case 'shed':
+      return `この戦闘中、効果でカードを 1 枚捨てるたびにブロック ${amount} を得る。`;
   }
 }
 

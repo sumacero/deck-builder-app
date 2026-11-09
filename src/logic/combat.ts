@@ -30,6 +30,7 @@ import {
   weaknessesOf,
 } from './attribute';
 import { arrowDamage, forgeArrow } from './arrows';
+import { BLESSED_DROP } from '../data/synergyCards';
 import { baseCardId, growCard, upgradeCard } from './cards';
 import { ATTRIBUTE_LABEL, POWER_LABEL, STATUS_LABEL } from './describe';
 import { canStackOnto, handMultiplier, releaseFusion, scaledEffects, stackOf, waterFromFusion } from './marks';
@@ -182,6 +183,13 @@ export const MAX_HAND_SIZE = 10;
 
 export const isHandFull = (state: CombatState) => state.hand.length >= MAX_HAND_SIZE;
 
+/** 泉脈。引いた枚数だけブロックを得る。引けなかった分は数えない。 */
+function applySpring(state: CombatState, drawn: number): CombatState {
+  if (drawn <= 0) return state;
+  const amount = powerOf(state, 'spring') * drawn;
+  return amount > 0 ? gainPlayerBlock(withLog(state, `泉脈でブロック ${amount}`), amount) : state;
+}
+
 /**
  * 山札から引く。山札が尽きたら捨て札をシャッフルして山札に戻してから引き続ける。
  * 手札が上限に達したらそこで止め、引けなかった枚数を handFull イベントで知らせる。
@@ -218,6 +226,7 @@ export function drawCards(state: CombatState, count: number): CombatState {
     discardPile,
     rngSeed,
     hand: [...state.hand, ...drawn],
+    player: { ...state.player, drawsThisTurn: state.player.drawsThisTurn + drawn.length },
   };
   const shuffledLog = reshuffled ? withLog(next, '捨て札をシャッフルして山札に戻した') : next;
   const drawnLog =
@@ -234,8 +243,9 @@ export function drawCards(state: CombatState, count: number): CombatState {
       ),
     drawnLog,
   );
-  if (blocked === 0) return traveled;
-  return withEvent(withLog(traveled, `手札がいっぱいで ${blocked} 枚引けなかった`), {
+  const sprung = applySpring(traveled, drawn.length);
+  if (blocked === 0) return sprung;
+  return withEvent(withLog(sprung, `手札がいっぱいで ${blocked} 枚引けなかった`), {
     kind: 'handFull',
     target: 'player',
     blocked,
@@ -308,6 +318,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
       cardsThisTurn: 0,
       skillsThisTurn: 0,
       attacksThisTurn: 0,
+      drawsThisTurn: 0,
       discardsThisTurn: 0,
       exhaustsThisTurn: 0,
       lashSeedThisTurn: 0,
@@ -411,6 +422,7 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       cardsThisTurn: 0,
       skillsThisTurn: 0,
       attacksThisTurn: 0,
+      drawsThisTurn: 0,
       discardsThisTurn: 0,
       exhaustsThisTurn: 0,
       exhaustsThisCombat: 0,
@@ -1391,6 +1403,17 @@ function applyEffect(
     }
     case 'blockPerCardPlayed':
       return gainPlayerBlock(state, effect.base + state.player.cardsThisTurn * effect.perCard);
+    case 'blockPerDiscard':
+      return gainPlayerBlock(state, effect.base + state.player.discardsThisTurn * effect.perCard);
+    case 'blockPerDraw':
+      return gainPlayerBlock(state, effect.base + state.player.drawsThisTurn * effect.perCard);
+    case 'drawByExhaustCount': {
+      const count = Math.min(state.player.exhaustsThisCombat, effect.max);
+      return count > 0 ? drawCards(state, count) : state;
+    }
+    case 'imbueWater':
+    case 'transformCurse':
+      return state;
     case 'discardFromHand':
       return effect.choose ? state : discardFromHand(state, effect.amount, aim, depth);
     case 'exhaustFromHand':
@@ -1569,7 +1592,9 @@ function discardSpecific(
     next,
     picked.length === 1 ? `手札から${picked[0].card.name}を捨てた` : `手札から ${picked.length} 枚捨てた`,
   );
-  const sly = playSlyCards(logged, picked, aim, depth);
+  const shed = powerOf(logged, 'shed') * picked.length;
+  const leafed = shed > 0 ? gainPlayerBlock(withLog(logged, `落葉でブロック ${shed}`), shed) : logged;
+  const sly = playSlyCards(leafed, picked, aim, depth);
   if (!drawScavenge || sly.pendingHandRemoval || sly.status !== 'playerTurn') return sly;
   const scavenge = powerOf(sly, 'scavenge') * picked.length;
   return scavenge > 0 ? drawCards(withLog(sly, `拾い集めで ${scavenge} 枚引く`), scavenge) : sly;
@@ -1779,24 +1804,23 @@ const applyEffects = (
   let current = state;
   for (let index = 0; index < effects.length; index += 1) {
     const effect = effects[index];
-    if (
-      (effect.kind === 'discardFromHand' || effect.kind === 'exhaustFromHand') &&
-      effect.choose
-    ) {
-      const mode = effect.kind === 'discardFromHand' ? 'discard' : 'exhaust';
-      if (effect.amount <= 0 || current.hand.length === 0) continue;
-      if (current.hand.length <= effect.amount) {
-        current =
-          mode === 'discard'
-            ? discardSpecific(current, current.hand, true, aim, depth)
-            : exhaustSpecific(current, current.hand);
+    const choice = handChoiceOf(effect);
+    if (choice) {
+      const eligible = current.hand.filter((card) => canChooseHandCard(choice.mode, card.card));
+      if (choice.amount <= 0 || eligible.length === 0) {
+        if (choice.mode === 'imbueWater') current = withLog(current, '水札にできるカードがなかった');
+        if (choice.mode === 'transformCurse') current = withLog(current, '変えられる呪いがなかった');
+        continue;
+      }
+      if (eligible.length <= choice.amount) {
+        current = applyHandChoice(current, eligible, choice.mode, aim, depth, choice.mode === 'discard');
         continue;
       }
       return {
         ...current,
         pendingHandRemoval: {
-          mode,
-          left: effect.amount,
+          mode: choice.mode,
+          left: choice.amount,
           taken: 0,
           rest: effects.slice(index + 1),
           aim,
@@ -1836,24 +1860,101 @@ function drawScavenge(state: CombatState, count: number): CombatState {
   return scavenge > 0 ? drawCards(withLog(state, `拾い集めで ${scavenge} 枚引く`), scavenge) : state;
 }
 
-/** 手札から捨てる・廃棄する札を 1 枚タップしたとき。 */
+/** 手札から選ぶとき、その札を対象にできるか。 */
+export function canChooseHandCard(mode: PendingHandRemoval['mode'], card: CardDefinition): boolean {
+  if (mode === 'discard' || mode === 'exhaust') return true;
+  if (mode === 'imbueWater') {
+    return (
+      (card.type === 'attack' || card.type === 'skill') &&
+      card.water !== true &&
+      card.curse !== true &&
+      card.mysticArte !== true &&
+      card.arrow !== true &&
+      card.unplayable !== true
+    );
+  }
+  return card.curse === true || card.type === 'status';
+}
+
+function handChoiceOf(effect: Effect): { mode: PendingHandRemoval['mode']; amount: number } | null {
+  if (effect.kind === 'imbueWater') return { mode: 'imbueWater', amount: 1 };
+  if (effect.kind === 'transformCurse') return { mode: 'transformCurse', amount: 1 };
+  if ((effect.kind === 'discardFromHand' || effect.kind === 'exhaustFromHand') && effect.choose) {
+    return { mode: effect.kind === 'discardFromHand' ? 'discard' : 'exhaust', amount: effect.amount };
+  }
+  return null;
+}
+
+/** 選んだ手札へ、捨てる・廃棄する・水札にする・呪いに変える、を行う。 */
+function applyHandChoice(
+  state: CombatState,
+  picked: readonly CardInstance[],
+  mode: PendingHandRemoval['mode'],
+  aim: Aim,
+  depth: number,
+  drawScavenge: boolean,
+): CombatState {
+  if (mode === 'discard') return discardSpecific(state, picked, drawScavenge, aim, depth);
+  if (mode === 'exhaust') return exhaustSpecific(state, picked);
+  if (mode === 'imbueWater') return imbueWaterCards(state, picked);
+  return transformCurseCards(state, picked);
+}
+
+function rewriteHand(
+  state: CombatState,
+  picked: readonly CardInstance[],
+  rewrite: (card: CardInstance) => CardInstance,
+  message: string,
+): CombatState {
+  const rewritten = new Map(picked.map((card) => [card.instanceId, rewrite(card)]));
+  return withLog(
+    { ...state, hand: state.hand.map((card) => rewritten.get(card.instanceId) ?? card) },
+    message,
+  );
+}
+
+function imbueWaterCards(state: CombatState, picked: readonly CardInstance[]): CombatState {
+  const names = picked.map((card) => card.card.name).join('、');
+  return rewriteHand(
+    state,
+    picked,
+    (instance) => ({
+      ...instance,
+      card: { ...instance.card, water: true, attribute: 'water' },
+    }),
+    `${names}が水札になった`,
+  );
+}
+
+function transformCurseCards(state: CombatState, picked: readonly CardInstance[]): CombatState {
+  const names = picked.map((card) => card.card.name).join('、');
+  return rewriteHand(
+    state,
+    picked,
+    (instance) => ({ instanceId: instance.instanceId, card: BLESSED_DROP }),
+    `${names}が滴の守りに変わった`,
+  );
+}
+
+/** 手札から捨てる・廃棄する・水札にする・呪いを変える札を 1 枚タップしたとき。 */
 export function resolveHandRemoval(state: CombatState, instanceId: string): CombatState {
   const pending = state.pendingHandRemoval;
   if (!pending || state.status !== 'playerTurn') return state;
   const instance = state.hand.find((card) => card.instanceId === instanceId);
-  if (!instance) return state;
-  const removed =
-    pending.mode === 'discard'
-      ? discardSpecific({ ...state, pendingHandRemoval: null }, [instance], false, pending.aim, 0)
-      : exhaustSpecific({ ...state, pendingHandRemoval: null }, [instance]);
+  if (!instance || !canChooseHandCard(pending.mode, instance.card)) return state;
+  const removed = applyHandChoice(
+    { ...state, pendingHandRemoval: null },
+    [instance],
+    pending.mode,
+    pending.aim,
+    0,
+    false,
+  );
   const taken = pending.taken + 1;
   const left = pending.left - 1;
-  if (left > 0 && removed.hand.length > 0) {
+  if (left > 0 && removed.hand.length > 0 && (pending.mode === 'discard' || pending.mode === 'exhaust')) {
     if (removed.hand.length <= left) {
-      const swept =
-        pending.mode === 'discard'
-          ? discardSpecific(removed, removed.hand, false, pending.aim, 0)
-          : exhaustSpecific(removed, removed.hand);
+      const swept = applyHandChoice(removed, removed.hand, pending.mode, pending.aim, 0, false);
       return continueAfterRemoval(swept, { ...pending, taken: taken + removed.hand.length, left: 0 });
     }
     return { ...removed, pendingHandRemoval: { ...pending, left, taken } };
@@ -2233,8 +2334,10 @@ function growPlayedCard(state: CombatState, instance: CardInstance, livingBefore
 const DECK_INSTANCE_ID = /^card-(\d+)$/;
 
 /**
- * 戦闘後のデッキ。ランの間ずっと成長するカードだけ、戦闘中に成長した状態を持ち帰る。
+ * 戦闘後のデッキ。ランの間残すものだけ書き戻す。
  * 戦闘開始時に deck の i 枚目へ `card-i` を振っているので、それで元の位置を探す。
+ * 水札にした印と、呪いやお邪魔を別の札へ変えた結果も、同じ位置へ残す。
+ * 戦闘中だけの成長は持ち帰らない。
  */
 export function deckAfterCombat(state: CombatState, deck: readonly CardDefinition[]): CardDefinition[] {
   const grown = new Map<number, CardDefinition>();
@@ -2247,10 +2350,29 @@ export function deckAfterCombat(state: CombatState, deck: readonly CardDefinitio
     const match = DECK_INSTANCE_ID.exec(instanceId);
     if (!match) continue;
     const index = Number(match[1]);
-    if (card.growth?.scope === 'run') grown.set(index, card);
-    else if (card.upgraded && deck[index] && !deck[index].upgraded) grown.set(index, card);
+    const original = deck[index];
+    if (!original) continue;
+    const next = lastingDeckCard(original, card);
+    if (next) grown.set(index, next);
   }
   return deck.map((card, index) => grown.get(index) ?? card);
+}
+
+/** デッキへ残す差分。無ければ null。水の印だけなら、戦闘中の成長は元の札に載せない。 */
+function lastingDeckCard(original: CardDefinition, card: CardDefinition): CardDefinition | null {
+  const replaced = baseCardId(card.id) !== baseCardId(original.id);
+  const waterAdded = card.water === true && original.water !== true;
+  const attributeChanged = card.attribute !== original.attribute;
+  const grownRun = card.growth?.scope === 'run' && (card.timesGrown ?? 0) > (original.timesGrown ?? 0);
+  const upgraded = Boolean(card.upgraded) && !original.upgraded;
+  if (replaced) return card;
+  if (grownRun || upgraded) return card;
+  if (!waterAdded && !attributeChanged) return null;
+  return {
+    ...original,
+    ...(waterAdded ? { water: true as const } : {}),
+    ...(attributeChanged ? { attribute: card.attribute } : {}),
+  };
 }
 
 /**

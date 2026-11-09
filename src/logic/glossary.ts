@@ -100,7 +100,16 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
     case 'damagePerExhaust':
       return ['damage'];
     case 'blockPerCardPlayed':
+    case 'blockPerDiscard':
       return ['block'];
+    case 'blockPerDraw':
+      return ['block', 'draw'];
+    case 'drawByExhaustCount':
+      return ['draw', 'exhaust'];
+    case 'imbueWater':
+      return ['waterCard', 'fuse'];
+    case 'transformCurse':
+      return ['curse'];
     case 'discardFromHand':
       return [];
     case 'exhaustFromHand':
@@ -126,6 +135,8 @@ const POWER_IDS: readonly PowerId[] = [
   'scavenge',
   'cinder',
   'tidecall',
+  'spring',
+  'shed',
   'quickdraw',
   'flurry',
   'lashSeed',

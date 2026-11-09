@@ -22,8 +22,10 @@ type HandProps = CardDragHandlers & {
   /** 敵のターンの演出が終わるまで、摘むことも詳細を開くこともできない。 */
   locked: boolean;
   isPlayable: (instanceId: string) => boolean;
-  /** この手札から、捨てる・廃棄する札をタップで選んでいる。 */
+  /** この手札から、捨てる・廃棄する・水札にする・呪いを変える札をタップで選んでいる。 */
   choosing?: boolean;
+  /** 選んでいるあいだ、その札を対象にできるか。省略すると全部が対象。 */
+  canChoose?: (instanceId: string) => boolean;
   /** 持ち上げている最中のカード。 */
   draggingId: string | null;
   /** 少し浮かしている札。波紋の起点も同じだけ上がる。 */
@@ -49,6 +51,7 @@ export function Hand({
   locked,
   isPlayable,
   choosing = false,
+  canChoose,
   draggingId,
   selectedId,
   viewRef,
@@ -94,6 +97,7 @@ export function Hand({
                     width={cardWidth}
                     playable={isPlayable(instance.instanceId)}
                     choosing={choosing}
+                    eligible={!choosing || (canChoose?.(instance.instanceId) ?? true)}
                     dragging={draggingId === instance.instanceId}
                     selected={selectedId === instance.instanceId}
                     linkColor={

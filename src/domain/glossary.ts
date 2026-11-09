@@ -50,6 +50,8 @@ export type KeywordId =
   | 'scavenge'
   | 'cinder'
   | 'tidecall'
+  | 'spring'
+  | 'shed'
   | 'pierce'
   | 'evade'
   | 'frost'
