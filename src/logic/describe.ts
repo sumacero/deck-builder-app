@@ -23,6 +23,22 @@ export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   boss: 'ボス',
 };
 
+/** 章ボスが、報酬とマップでプレイヤーに見せる困らせ方。道中の同じ敵には付かない。 */
+export function bossPreparation(bossId: string): string | null {
+  switch (bossId) {
+    case 'flame-dragon':
+      return '紅蓮竜は、攻撃1発が6まで。溶岩スライムは、1発で12以上削ると次の行動を飛ばす。';
+    case 'storm-griffin':
+      return '嵐のグリフォンは、攻撃1発が6まで。疾風の鷹は、1発で12以上削ると次の行動を飛ばす。';
+    case 'ice-leviathan':
+      return '氷冠のレヴィアタンは、攻撃1発が6まで。沈都の衛兵は、1発で12以上削ると次の行動を飛ばす。';
+    case 'engine-beast':
+      return '炉心獣は、攻撃1発が6まで。歯車の兵は、1発で12以上削ると次の行動を飛ばす。';
+    default:
+      return null;
+  }
+}
+
 export const ARCHETYPE_LABEL: Record<Archetype, string> = {
   debuff: 'デバフ軸',
   block: 'ブロック軸',

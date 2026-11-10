@@ -10,7 +10,7 @@ import { generateBlessingOptions } from './blessing';
 import { soloEncounter, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
-import { draftPool, pickRewardChoices, rewardCandidates } from './archetype';
+import { draftPool, pickRewardChoices, rewardCandidates, rewardFocus } from './archetype';
 import { attuneDeck, regionDisadvantagesPlayer } from './attribute';
 import { canUpgrade, upgradeInDeck } from './cards';
 import { nextRandom, pickOne, pickUnique, randomInt } from './random';
@@ -207,6 +207,7 @@ export function finishCombat(run: RunState, result: CombatResult): RunState {
     REWARD_CHOICES,
     looted.run.rngSeed,
     looted.run.economy.cardTierWeight,
+    rewardFocus(looted.run),
   );
   const potionRoll = nextRandom(offered.seed);
   const dropPotion = potionRoll.value < (looted.run.economy.potionDropChance ?? 0.3);

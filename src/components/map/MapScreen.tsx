@@ -4,6 +4,7 @@ import { playSound } from '../../audio/soundPlayer';
 import type { GameMap } from '../../domain/map';
 import type { RunState } from '../../domain/run';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
+import { bossPreparation } from '../../logic/describe';
 import { encounterLeader } from '../../logic/encounter';
 import { currentAct, mapHint, reachedFloor } from '../../logic/run';
 import { COLORS, MAP_LAYOUT, MOTION, SPACING } from '../../theme';
@@ -106,11 +107,13 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
     </View>
   );
   const boss = encounterLeader(run.boss);
+  const preparation = bossPreparation(boss.id);
   const actLine = (
     <Text style={styles.act}>
       {act.name}　ボス {boss.icon} {boss.name}
     </Text>
   );
+  const bossLine = preparation ? <Text style={styles.hint}>{preparation}</Text> : null;
   const hint = <Text style={styles.hint}>{mapHint(run)}</Text>;
   const map = (
     <ScrollView
@@ -152,6 +155,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
               <SettingsButton />
             </View>
             {actLine}
+            {bossLine}
             {hint}
             <MapLegend compact />
           </ScrollView>
@@ -170,6 +174,7 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
               <SettingsButton />
             </View>
             {actLine}
+            {bossLine}
             {hint}
           </View>
           {map}

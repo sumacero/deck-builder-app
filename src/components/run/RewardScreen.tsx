@@ -39,6 +39,10 @@ type RewardScreenProps = {
   deck: CardDefinition[];
   /** 通常戦で、強化の代わりにもらえるゴールド。 */
   growthGold: number;
+  /** この章のボスがカード選びの前に見せる困らせ方。無ければ出さない。 */
+  bossLine: string | null;
+  /** 第3章は、1枠がボスに通る多段の札になる。 */
+  lateAct: boolean;
   onPick: (card: CardDefinition | null) => void;
   /** null はポーションを受け取らない。 */
   onPickPotion: (choice: PotionChoice | null) => void;
@@ -58,6 +62,8 @@ export function RewardScreen({
   canSkip,
   deck,
   growthGold,
+  bossLine,
+  lateAct,
   onPick,
   onPickPotion,
   onUpgrade,
@@ -122,7 +128,14 @@ export function RewardScreen({
       ) : step === 'card' ? (
         <>
           <Text style={styles.title}>カード報酬</Text>
-          <Text style={styles.subtitle}>1 枚選んでデッキに加える</Text>
+          <Text style={styles.subtitle}>
+            {lateAct
+              ? canSkip
+                ? '1枚は、このボスに通る多段の札です。合わなければスキップできます。'
+                : '1枚は、このボスに通る多段の札です。'
+              : '1 枚選んでデッキに加える'}
+          </Text>
+          {bossLine && <Text style={styles.boss}>{bossLine}</Text>}
           {archetype && (
             <Text style={styles.archetype}>今のデッキの軸: {ARCHETYPE_LABEL[archetype]}</Text>
           )}
@@ -281,7 +294,8 @@ const styles = StyleSheet.create({
   },
   gold: { color: COLORS.gold, fontSize: 18, fontWeight: '800' },
   title: { color: COLORS.gold, fontSize: 26, fontWeight: '800', letterSpacing: 4 },
-  subtitle: { color: COLORS.textMuted, fontSize: 14 },
+  subtitle: { color: COLORS.textMuted, fontSize: 14, textAlign: 'center' },
+  boss: { color: COLORS.text, fontSize: 13, lineHeight: 18, textAlign: 'center', maxWidth: 520 },
   archetype: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
   row: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.md, flexWrap: 'wrap' },
   choice: { alignItems: 'center', gap: SPACING.xs },

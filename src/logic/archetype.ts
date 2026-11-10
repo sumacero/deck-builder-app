@@ -2,6 +2,7 @@ import type { Archetype, CardDefinition, CardRarity } from '../domain/card';
 import type { RunState } from '../domain/run';
 import { isDraftable } from './attribute';
 import { pickWeightedCards, shuffleCards } from './cardRarity';
+import { encounterLeader } from './encounter';
 
 /** 今の章（1 始まり）。 */
 export const actNumber = (run: RunState): number => run.actIndex + 1;
@@ -46,10 +47,25 @@ export function mainArchetype(deck: readonly CardDefinition[]): Archetype | null
   return top && top.count >= ARCHETYPE_THRESHOLD ? top.archetype : null;
 }
 
+/** 第3章の報酬で、1枠をボスへの答えにする。 */
+export type RewardFocus = { act: number; bossId: string };
+
+export function rewardFocus(run: RunState): RewardFocus {
+  return { act: actNumber(run), bossId: encounterLeader(run.boss).id };
+}
+
+/** ボス本体に鉄鱗（1発の上限）が付く章ボス。答えは、1枚で2回以上殴る札。 */
+const HIT_CAP_BOSSES = new Set(['flame-dragon', 'storm-griffin', 'ice-leviathan', 'engine-beast']);
+
+const answersHitCap = (card: CardDefinition): boolean =>
+  card.effects.some((effect) => effect.kind === 'damage' && (effect.hits ?? 1) >= 2);
+
 /**
  * 報酬の候補。レア度の重みで選ぶ（強いカードほど出にくい）。
- * デッキの軸が決まっていれば、そのうち 1 枚は軸に合うカードにする
- * （その 1 枚も、軸の中でレア度の重みに従う）。並びは混ぜて、軸のカードがいつも左に来ないようにする。
+ * 第1章と第2章は、デッキの軸が決まっていれば、そのうち 1 枚を軸に合うカードにする
+ * （その 1 枚も、軸の中でレア度の重みに従う）。
+ * 第3章は軸を押し付けない。1 枚は、その章のボスに通る多段の札にする。残りは全体の重みのまま。
+ * 並びは混ぜて、決まった札がいつも左に来ないようにする。
  */
 export function pickRewardChoices(
   pool: readonly CardDefinition[],
@@ -57,7 +73,19 @@ export function pickRewardChoices(
   count: number,
   seed: number,
   weights: Record<CardRarity, number>,
+  focus?: RewardFocus,
 ): { items: CardDefinition[]; seed: number } {
+  if (focus && focus.act >= 3) {
+    const answers = HIT_CAP_BOSSES.has(focus.bossId) ? pool.filter(answersHitCap) : [];
+    const counter = answers.length > 0 ? pickWeightedCards(answers, 1, weights, seed) : { items: [], seed };
+    const rest = pickWeightedCards(
+      pool.filter((card) => !counter.items.includes(card)),
+      count - counter.items.length,
+      weights,
+      counter.seed,
+    );
+    return shuffleCards([...counter.items, ...rest.items], rest.seed);
+  }
   const filler = pool.filter((card) => !card.archetypePayoff);
   const source = filler.length > 0 ? filler : pool;
   const archetype = mainArchetype(deck);
