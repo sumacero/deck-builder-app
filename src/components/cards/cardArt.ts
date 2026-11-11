@@ -31,7 +31,6 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   inflame: require('../../../assets/cards/inflame.jpg'),
   metallicize: require('../../../assets/cards/metallicize.jpg'),
   bash: require('../../../assets/cards/bash.jpg'),
-  uppercut: require('../../../assets/cards/uppercut.jpg'),
   shockwave: require('../../../assets/cards/shockwave.jpg'),
   'body-slam': require('../../../assets/cards/body-slam.jpg'),
   'steadfast-guard': require('../../../assets/cards/steadfast-guard.jpg'),

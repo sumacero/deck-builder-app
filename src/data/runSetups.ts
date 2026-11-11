@@ -25,7 +25,7 @@ import { VERDANT_CARDS, VERDANT_STARTER_DECK } from './verdantCards';
 
 /**
  * 報酬に出るカードは「共通の無属性カード」+「そのキャラの属性のカード」。
- * 無属性は 3 人とも同じ集合（2026-10-21。剣・盾は火属性。強打・重圧・砕き・力みは共通）。
+ * 無属性は 3 人とも同じ集合（2026-10-21。剣・盾は火属性。重圧・力みは共通。強打はカイル専用）。
  * 2026-10-07 時点では各 38 種、共通 8 種。2026-10-08 にブロックを足した。
  * リーネのブロックは年輪の盾・葉の番え・鞭の牽制。数字だけの守りは置かない。
  * 2026-10-10 のノアは印のカード。波はブロック軸ではなく波の印なので、盾のフィルタには掛からない。
@@ -35,7 +35,7 @@ const ALL_REWARD_CARDS = [...REWARD_CARDS, ...VERDANT_CARDS, ...MIRROR_CARDS];
 
 /**
  * どのキャラの戦闘報酬にも出る無属性。剣・盾はここへ入れず、火属性にする。
- * 強打・重圧・砕き・力みはデバフと筋力の入口なので、2026-10-21 から 3 人共通。
+ * 重圧・力みはデバフと筋力の入口なので、3 人共通。強打は火属性でカイルだけ。
  */
 const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'twin-strike',
@@ -47,9 +47,7 @@ const SHARED_NEUTRAL_CARD_IDS: ReadonlySet<string> = new Set([
   'exploit',
   'dropkick',
   'weak-point',
-  'bash',
   'clothesline',
-  'uppercut',
   'flex',
   // シナジー軸（捨て・廃棄・手数）。誰でも報酬に出る。
   'toss-draw',
