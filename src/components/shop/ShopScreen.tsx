@@ -3,12 +3,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { RunState } from '../../domain/run';
 import type { ShopStock } from '../../domain/shop';
 import { useMusic } from '../../hooks/useMusic';
+import { useSceneCue } from '../../hooks/useSceneCue';
 import type { ShopActions } from '../../hooks/useRun';
 import { isDraftable } from '../../logic/attribute';
 import { stackCards } from '../../logic/cards';
 import { describeCard, describePotion, describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { PlaceBanner } from '../backgrounds/PlaceBanner';
+import { placeImage } from '../backgrounds/sceneImages';
 import { CardPickerModal } from '../cards/CardPickerModal';
 import { KeywordText } from '../glossary/KeywordText';
 import { DeckButton } from '../cards/DeckButton';
@@ -33,6 +36,8 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [removing, setRemoving] = useState(false);
   useMusic('shop');
+  useSceneCue('shop');
+  const shopArt = placeImage('shop');
   const purchase = selection ? describePurchase(selection) : null;
 
   const buy = () => {
@@ -67,6 +72,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        {shopArt && <PlaceBanner source={shopArt} />}
         <Text style={styles.section}>カード</Text>
         <View style={styles.cards}>
           {stock.cards.map((offer) => (

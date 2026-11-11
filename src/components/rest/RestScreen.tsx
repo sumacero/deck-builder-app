@@ -4,7 +4,10 @@ import type { RunState } from '../../domain/run';
 import type { RestActions } from '../../hooks/useRun';
 import { canUpgrade, stackCards, upgradeCard } from '../../logic/cards';
 import { hasUpgradableCard, restHealAmount } from '../../logic/rest';
+import { useSceneCue } from '../../hooks/useSceneCue';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { PlaceBanner } from '../backgrounds/PlaceBanner';
+import { placeImage } from '../backgrounds/sceneImages';
 import { CardPickerModal } from '../cards/CardPickerModal';
 import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
@@ -21,6 +24,8 @@ export function RestScreen({ run, actions }: RestScreenProps) {
   const [picking, setPicking] = useState(false);
   const heal = restHealAmount(run);
   const upgradable = hasUpgradableCard(run);
+  const art = placeImage('rest');
+  useSceneCue('rest');
 
   return (
     <ScreenScroll contentStyle={styles.root}>
@@ -28,7 +33,7 @@ export function RestScreen({ run, actions }: RestScreenProps) {
         <SettingsButton />
         <DeckButton deck={run.deck} />
       </View>
-      <Text style={styles.fire}>🔥</Text>
+      {art ? <PlaceBanner source={art} /> : <Text style={styles.fire}>🔥</Text>}
       <Text style={styles.title}>休憩所</Text>
       <View style={styles.hp}>
         <HpBar hp={run.player.hp} maxHp={run.player.maxHp} block={0} />

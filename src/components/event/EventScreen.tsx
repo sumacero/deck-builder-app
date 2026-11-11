@@ -6,7 +6,10 @@ import type { EventActions } from '../../hooks/useRun';
 import type { CardDefinition } from '../../domain/card';
 import { describeCard, describeEventOption } from '../../logic/describe';
 import { canChooseEventOption, optionPreviewCards, shownEventOptions } from '../../logic/event';
+import { useSceneCue } from '../../hooks/useSceneCue';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { PlaceBanner } from '../backgrounds/PlaceBanner';
+import { placeImage } from '../backgrounds/sceneImages';
 import { CardView } from '../cards/CardView';
 import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { RunHud } from '../run/RunHud';
@@ -26,6 +29,8 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
   const options = shownEventOptions(run, event);
   const review = outcome === null ? options.find((option) => option.id === reviewId) : undefined;
   const previewCards = review ? optionPreviewCards(review) : [];
+  const art = placeImage(event.id);
+  useSceneCue(event.id);
 
   const selectOption = (option: EventOption) => {
     const preview = optionPreviewCards(option).length > 0;
@@ -55,7 +60,7 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
       <RunHud run={run} />
 
       <ScrollView contentContainerStyle={styles.body}>
-        <Text style={styles.icon}>{event.icon}</Text>
+        {art ? <PlaceBanner source={art} /> : <Text style={styles.icon}>{event.icon}</Text>}
         <Text style={styles.title}>{event.title}</Text>
         <View style={styles.bubble}>
           <Text style={styles.text}>{outcome ?? event.text}</Text>

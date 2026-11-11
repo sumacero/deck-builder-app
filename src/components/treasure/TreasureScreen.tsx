@@ -3,7 +3,10 @@ import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { RelicDefinition } from '../../domain/relic';
 import type { RunState } from '../../domain/run';
 import type { TreasureActions } from '../../hooks/useRun';
+import { useSceneCue } from '../../hooks/useSceneCue';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { PlaceBanner } from '../backgrounds/PlaceBanner';
+import { placeImage } from '../backgrounds/sceneImages';
 import { RelicCard } from '../items/RelicCard';
 import { ScreenScroll } from '../layout/ScreenScroll';
 import { RunHud } from '../run/RunHud';
@@ -20,6 +23,8 @@ type TreasureScreenProps = {
 /** 宝箱。開けるとレリックとゴールドが手に入る。 */
 export function TreasureScreen({ run, opened, relic, gold, actions }: TreasureScreenProps) {
   const [pop] = useState(() => new Animated.Value(0));
+  const art = placeImage('treasure');
+  useSceneCue('treasure');
 
   useEffect(() => {
     if (!opened) return;
@@ -33,9 +38,15 @@ export function TreasureScreen({ run, opened, relic, gold, actions }: TreasureSc
       <RunHud run={run} />
 
       <View style={styles.body}>
-        <Animated.Text style={[styles.chest, { transform: [{ scale }] }]}>
-          {opened ? '✨' : '🎁'}
-        </Animated.Text>
+        {art ? (
+          <Animated.View style={{ transform: [{ scale }], alignSelf: 'stretch' }}>
+            <PlaceBanner source={art} />
+          </Animated.View>
+        ) : (
+          <Animated.Text style={[styles.chest, { transform: [{ scale }] }]}>
+            {opened ? '✨' : '🎁'}
+          </Animated.Text>
+        )}
         <Text style={styles.title}>宝箱</Text>
         {opened ? (
           <View style={styles.loot}>

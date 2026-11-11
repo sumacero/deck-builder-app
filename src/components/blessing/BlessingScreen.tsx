@@ -5,7 +5,10 @@ import type { RunState } from '../../domain/run';
 import type { BlessingActions } from '../../hooks/useRun';
 import { describeBlessing } from '../../logic/describe';
 import { currentAct } from '../../logic/run';
+import { useSceneCue } from '../../hooks/useSceneCue';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { PlaceBanner } from '../backgrounds/PlaceBanner';
+import { placeImage } from '../backgrounds/sceneImages';
 import { DeckButton } from '../cards/DeckButton';
 import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { SettingsButton } from '../settings/SettingsButton';
@@ -24,6 +27,8 @@ export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const act = currentAct(run);
   const offer = run.phase.kind === 'blessing' ? run.phase.offer : undefined;
+  const art = placeImage('blessing');
+  useSceneCue('blessing');
 
   return (
     <ScreenScroll contentStyle={styles.root}>
@@ -43,7 +48,7 @@ export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
 
       <View style={styles.body}>
         <Text style={styles.actName}>{act.name}</Text>
-        <Text style={styles.guideIcon}>{run.guide.icon}</Text>
+        {art ? <PlaceBanner source={art} /> : <Text style={styles.guideIcon}>{run.guide.icon}</Text>}
         <Text style={styles.guideName}>{run.guide.name}</Text>
         <View style={styles.bubble}>
           <Text style={styles.greeting}>{act.greeting}</Text>

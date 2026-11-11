@@ -1928,11 +1928,21 @@ function imbueWaterCards(state: CombatState, picked: readonly CardInstance[]): C
 
 function transformCurseCards(state: CombatState, picked: readonly CardInstance[]): CombatState {
   const names = picked.map((card) => card.card.name).join('、');
-  return rewriteHand(
+  const rewritten = rewriteHand(
     state,
     picked,
     (instance) => ({ instanceId: instance.instanceId, card: BLESSED_DROP }),
     `${names}が滴の守りに変わった`,
+  );
+  return picked.reduce(
+    (current, instance) =>
+      withEvent(current, {
+        kind: 'cardExchanged',
+        target: 'player',
+        before: instance.card,
+        after: BLESSED_DROP,
+      }),
+    rewritten,
   );
 }
 

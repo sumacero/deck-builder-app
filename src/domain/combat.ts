@@ -219,6 +219,8 @@ export type CombatEventBody =
       handIndex: number;
       handCount: number;
     }
+  /** 手札の呪いを別の札に変えた。交換前と交換後を見せる。 */
+  | { kind: 'cardExchanged'; target: 'player'; before: CardDefinition; after: CardDefinition }
   /** 敵が全滅した。 */
   | { kind: 'won'; target: 'player' };
 

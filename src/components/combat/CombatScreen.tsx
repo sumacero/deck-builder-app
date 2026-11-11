@@ -35,6 +35,7 @@ import { CombatFooter, type CombatPile } from './CombatFooter';
 import { CombatLog } from './CombatLog';
 import { CombatResultOverlay } from './CombatResultOverlay';
 import { ArteCutIn } from './effects/ArteCutIn';
+import { CombatExchange } from '../run/effects/ExchangeReveal';
 import { DamageVignette } from './effects/DamageVignette';
 import { EnemyRow } from './EnemyRow';
 import { EnergyOrb } from './EnergyOrb';
@@ -413,6 +414,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
         />
         <DamageVignette events={state.events} />
         <ArteCutIn events={state.events} agentName={setup.agent.name} />
+        <CombatExchange events={state.events} />
         {drag && (
           <Animated.View style={[styles.ghost, { transform: ghost.getTranslateTransform() }]}>
             {drag.kind === 'card' ? (

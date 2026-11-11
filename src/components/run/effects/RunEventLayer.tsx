@@ -2,6 +2,7 @@ import type { QueuedRunEvent } from '../../../domain/runEvent';
 import { describeRelic } from '../../../logic/describe';
 import { slotKey } from '../acquire/AcquireContext';
 import { AcquireFlyer } from '../acquire/AcquireFlyer';
+import { ExchangeReveal } from './ExchangeReveal';
 import { HealBurst } from './HealBurst';
 import { UpgradeReveal } from './UpgradeReveal';
 
@@ -56,6 +57,14 @@ export function RunEventLayer({ queued, onDone }: RunEventLayerProps) {
           item={{ kind: 'card', card: event.card }}
           targetKey={slotKey.deck}
           sound="cardPlay"
+          onDone={done}
+        />
+      );
+    case 'exchange':
+      return (
+        <ExchangeReveal
+          key={queued.id}
+          pairs={[{ lost: event.lost, gained: event.gained }]}
           onDone={done}
         />
       );
