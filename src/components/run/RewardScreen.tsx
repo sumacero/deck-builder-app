@@ -79,7 +79,7 @@ export function RewardScreen({
   const rememberMeasure = useCallback((measure: () => void) => {
     remeasure.current = measure;
   }, []);
-  const armedCard = choices.find((card) => card.id === armedId) ?? null;
+  const armedCard = step === 'card' ? (choices.find((card) => card.id === armedId) ?? null) : null;
   const [replacing, setReplacing] = useState<PotionDefinition | null>(null);
   const [pickingUpgrade, setPickingUpgrade] = useState(false);
   const emptySlot = potions.findIndex((slot) => slot === null);
@@ -156,8 +156,11 @@ export function RewardScreen({
                 card={card}
                 armed={armedId === card.id}
                 onPress={() => {
-                  if (armedId === card.id) onPick(card);
-                  else {
+                  if (armedId === card.id) {
+                    setArmedId(null);
+                    setAnchor(null);
+                    onPick(card);
+                  } else {
                     setAnchor(null);
                     setArmedId(card.id);
                   }
