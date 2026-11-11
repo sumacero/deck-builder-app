@@ -451,7 +451,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   cinder: {
     id: 'cinder',
     name: '燃え殻',
-    icon: '🔥',
+    icon: '✴️',
     description: 'カードが廃棄されるたびに、HP が一番低い敵にその数値のダメージを与える。灰より立つと組むと守りと攻めが同時に回る。',
   },
   growth: {

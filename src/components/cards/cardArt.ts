@@ -190,6 +190,12 @@ const CARD_ART: Record<string, ImageSourcePropType> = {
   'sly-shot': require('../../../assets/cards/sly-shot.jpg'),
   'sly-ward': require('../../../assets/cards/sly-ward.jpg'),
   'sly-read': require('../../../assets/cards/sly-read.jpg'),
+  'ember-oath': require('../../../assets/cards/ember-oath.jpg'),
+  'spare-string': require('../../../assets/cards/spare-string.jpg'),
+  regret: require('../../../assets/cards/regret.jpg'),
+  'hex-bind': require('../../../assets/cards/hex-bind.jpg'),
+  omen: require('../../../assets/cards/omen.jpg'),
+  hollow: require('../../../assets/cards/hollow.jpg'),
 };
 
 /** イラストの隅に重ねる種類の紋章。小さな手札でも種類がひと目で分かるように。 */
