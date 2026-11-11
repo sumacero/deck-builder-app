@@ -1,4 +1,5 @@
-import { type AudioPlayer, createAudioPlayer } from 'expo-audio';
+import { type AudioPlayer, type AudioStatus, createAudioPlayer } from 'expo-audio';
+import { Platform } from 'react-native';
 import { getAudioSettings, subscribeAudioSettings } from './audioSettings';
 import { clampPlaybackVolume, outputVolume } from './levels';
 import { MUSIC, type MusicId } from './music';
@@ -9,6 +10,16 @@ const FADE_IN_MS = 600;
 const FADE_OUT_MS = 900;
 
 const players = new Map<MusicId, AudioPlayer>();
+/** 読み込み待ちの購読。プレイヤーを捨てるときに外す。 */
+const readyWatch = new Map<MusicId, { remove: () => void }>();
+/**
+ * 一度でも再生できる状態になった曲。
+ * Android の isLoaded は「いま READY」だけを見て、止めたあとを未読み込みと返す。
+ * 効果音と同じく、そこを待つと 2 回目以降が遅れ、待たずに play すると最初の 1 回が捨てられて無音になる。
+ */
+const primed = new Set<MusicId>();
+/** まだ届いていない曲で、届いたら鳴らすもの。画面を離れたら鳴らさない。 */
+let pending: MusicId | null = null;
 /** いま流している（フェードアウト中は含まない）曲。 */
 let current: MusicId | null = null;
 let fadeTimer: ReturnType<typeof setInterval> | null = null;
@@ -23,10 +34,18 @@ function setPlayerVolume(player: AudioPlayer, volume: number): void {
   player.volume = clampPlaybackVolume(volume);
 }
 
+function unwatch(id: MusicId): void {
+  readyWatch.get(id)?.remove();
+  readyWatch.delete(id);
+}
+
 function playerFor(id: MusicId): AudioPlayer {
   const existing = players.get(id);
   if (existing) return existing;
-  const player = createAudioPlayer(MUSIC[id].source);
+  // ブラウザは URL をその場で鳴らせる。スマホは、落ちきる前の play が捨てられて無音になる。
+  const player = createAudioPlayer(MUSIC[id].source, {
+    downloadFirst: Platform.OS !== 'web',
+  });
   player.loop = true;
   players.set(id, player);
   return player;
@@ -34,6 +53,8 @@ function playerFor(id: MusicId): AudioPlayer {
 
 /** WAV を端末メモリから外す。createAudioPlayer は remove しないと溜まる（Expo の注意）。 */
 function disposePlayer(id: MusicId): void {
+  unwatch(id);
+  if (pending === id) pending = null;
   const player = players.get(id);
   if (!player) return;
   players.delete(id);
@@ -92,6 +113,49 @@ function fadeTo(
   }, FADE_STEP_MS);
 }
 
+/** 頭からフェードインする。シークが要るときだけ、シークが届いてから再生する。 */
+function fadeInFromStart(id: MusicId, player: AudioPlayer): void {
+  if (current !== id) return;
+  setPlayerVolume(player, 0);
+  const start = () => {
+    if (current !== id) return;
+    try {
+      player.play();
+    } catch (error: unknown) {
+      console.warn(`BGM ${id} の再生に失敗しました`, error);
+      return;
+    }
+    fadeTo(player, () => musicVolume(id), FADE_IN_MS);
+  };
+  if (player.currentTime <= 0.02) start();
+  else void player.seekTo(0).then(start, start);
+}
+
+/** 届いている曲はすぐ流す。まだなら、届いた瞬間に流す。 */
+function startWhenReady(id: MusicId, player: AudioPlayer): void {
+  let started = false;
+  const begin = () => {
+    if (started || current !== id) return;
+    started = true;
+    primed.add(id);
+    if (pending === id) pending = null;
+    unwatch(id);
+    fadeInFromStart(id, player);
+  };
+  if (Platform.OS === 'web' || primed.has(id) || player.isLoaded) {
+    begin();
+    return;
+  }
+  pending = id;
+  unwatch(id);
+  const subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
+    if (!status.isLoaded || current !== id) return;
+    begin();
+  });
+  readyWatch.set(id, subscription);
+  if (player.isLoaded) begin();
+}
+
 /** 曲を頭からフェードインで流す。他の曲は止める。BGM の失敗でゲームが止まらないよう例外は警告だけにする。 */
 export function playMusic(id: MusicId): void {
   if (current === id) return;
@@ -100,11 +164,7 @@ export function playMusic(id: MusicId): void {
   void configureAudioMode().catch((error: unknown) => console.warn('音声モードの設定に失敗しました', error));
   try {
     disposeOthers(id);
-    const player = playerFor(id);
-    setPlayerVolume(player, 0);
-    void player.seekTo(0);
-    player.play();
-    fadeTo(player, () => musicVolume(id), FADE_IN_MS);
+    startWhenReady(id, playerFor(id));
   } catch (error: unknown) {
     console.warn(`BGM ${id} の再生に失敗しました`, error);
   }
@@ -119,6 +179,8 @@ export function stopMusic(id?: MusicId): void {
   const stopping = current;
   const player = players.get(stopping);
   current = null;
+  if (pending === stopping) pending = null;
+  unwatch(stopping);
   if (!player) return;
   fadeTo(player, 0, FADE_OUT_MS, () => disposePlayer(stopping));
 }
