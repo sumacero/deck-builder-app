@@ -5,26 +5,28 @@ import { outputVolume } from './levels';
 import { SOUND_MASTER_VOLUME, type SoundId, SOUNDS } from './sounds';
 
 const players = new Map<SoundId, AudioPlayer>();
-/** 一度でも鳴り始めた音。準備直後の play が捨てられたときだけ、もう一度鳴らす。 */
-const heard = new WeakSet<AudioPlayer>();
-/** 読み込み通知が来ないとき、自分で見る上限（100ms × 150）。 */
-const READY_POLLS = 150;
 /**
- * 一度でも再生できる状態になった音。
- * Android の isLoaded は「いま READY」だけを見て、鳴らし終わった ENDED を未読み込みと返す。
- * そこを待つと、2 回目以降の効果音が遅れたり、鳴らさずに終わったりする。
+ * 一度でも実際に鳴った音。
+ * ファイルが読めただけでは足りない。スマホは、その再生機の最初の play を捨てることがある。
+ * 鳴ったあとは、Android が鳴らし終わった音を未読み込みと返しても、待たずに頭から鳴らす。
  */
-const primed = new Set<SoundId>();
+const heard = new WeakSet<AudioPlayer>();
+/** いま、最初の再生を待っている音。同じ音を重ねて何本も作らない。 */
+const arming = new WeakSet<AudioPlayer>();
+/** 最初の再生を待っているあいだに、もう一度鳴らしてほしい回数。 */
+const followUp = new WeakMap<AudioPlayer, number>();
 /** まだ準備中の音で、準備ができたら鳴らすもの。 */
 const pending = new Set<SoundId>();
 let preparing: Promise<void> | null = null;
+/** 同時に初めて鳴らす音は、少しずらす。同じ瞬間の play はまとめて捨てられる。 */
+let firstWave = 0;
 
 /** 各音の大きさ × 効果音全体のバランス × 設定（50 で今までどおり）。 */
 function soundVolume(id: SoundId): number {
   return outputVolume(SOUNDS[id].volume * SOUND_MASTER_VOLUME, getAudioSettings().se);
 }
 
-/** 頭から鳴らす。シークが要るときだけ、シークが届いてから再生する。 */
+/** 頭から鳴らす。シークが要るときだけ、シークが届いてから再生する。鳴ったことのある音向け。 */
 function playFromStart(player: AudioPlayer): void {
   const start = () => {
     try {
@@ -33,70 +35,86 @@ function playFromStart(player: AudioPlayer): void {
       console.warn('効果音の再生に失敗しました', error);
     }
   };
-  const kick = () => {
-    start();
-    if (Platform.OS === 'web' || heard.has(player)) return;
-    // 準備直後の play は、スマホだと一度だけ捨てられる。頭が出ていなければもう一度。
-    setTimeout(() => {
-      if (player.playing || player.currentTime > 0.05) {
-        heard.add(player);
-        return;
-      }
-      heard.add(player);
-      start();
-    }, 400);
-  };
   if (player.currentTime <= 0.02) {
-    kick();
+    start();
     return;
   }
-  void player.seekTo(0).then(kick, kick);
+  void player.seekTo(0).then(start, start);
 }
 
-function noteReady(id: SoundId, player: AudioPlayer): void {
-  if (primed.has(id)) return;
-  primed.add(id);
-  if (!pending.has(id)) return;
-  pending.delete(id);
-  player.volume = soundVolume(id);
-  playFromStart(player);
+/** 再生位置が進んだ、または鳴っている。読み込み完了の通知は来ないことがあるので、自分で見る。 */
+function audible(player: AudioPlayer): boolean {
+  try {
+    if (player.playing || player.currentTime > 0.02) return true;
+    const status = player.currentStatus;
+    return status.playing || status.didJustFinish || status.currentTime > 0.02;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * 読み込めたら一度だけ知らせる。
- * スマホは、読み込みの通知が来ないことがある。通知だけを待つと、最初の 1 回が永遠に無音になる。
- * 届いたかどうかは自分でも見る。
+ * その再生機の最初の音。作った直後の play は、スマホに捨てられる。
+ * 鳴ったのが分かるまで、間を空けてやり直す。鳴り終わった短い音を、もう一度鳴らさない。
  */
-function watchReady(id: SoundId, player: AudioPlayer): void {
-  if (Platform.OS === 'web' || primed.has(id)) return;
-  let done = false;
-  let armed = false;
-  let polls = 0;
-  let timer: ReturnType<typeof setInterval> | undefined;
-  const stop = () => {
-    if (done) return;
-    done = true;
-    armed = false;
-    subscription.remove();
-    if (timer) clearInterval(timer);
+function playUntilHeard(player: AudioPlayer): void {
+  if (Platform.OS === 'web' || heard.has(player)) {
+    heard.add(player);
+    playFromStart(player);
+    return;
+  }
+  if (arming.has(player)) {
+    followUp.set(player, (followUp.get(player) ?? 0) + 1);
+    return;
+  }
+  arming.add(player);
+  const release = holdSoundPreload();
+  let tries = 0;
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let subscription: { remove: () => void } | undefined;
+  const finish = (ok: boolean) => {
+    if (stopped) return;
+    stopped = true;
+    if (timer) clearTimeout(timer);
+    subscription?.remove();
+    arming.delete(player);
+    if (ok) heard.add(player);
+    release();
+    if (ok && (followUp.get(player) ?? 0) > 0) {
+      followUp.set(player, 0);
+      playFromStart(player);
+    }
   };
-  const finish = (force: boolean) => {
-    if (done || !armed) return;
-    if (!force && !player.isLoaded) return;
-    stop();
-    noteReady(id, player);
-  };
-  // リスナーが同期で呼ばれても、タイマーを消す前に参照しない。
-  const subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
-    if (status.isLoaded) finish(false);
+  // リスナーが同期で呼ばれても、代入前の購読は消せるように、戻ってから片づける。
+  subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
+    if (status.playing || status.didJustFinish || status.currentTime > 0.02) finish(true);
   });
-  timer = setInterval(() => {
-    polls += 1;
-    if (player.isLoaded) finish(false);
-    else if (polls >= READY_POLLS) finish(true);
-  }, 100);
-  armed = true;
-  finish(false);
+  if (stopped) {
+    subscription.remove();
+    return;
+  }
+  const attempt = () => {
+    if (stopped) return;
+    if (audible(player)) {
+      finish(true);
+      return;
+    }
+    if (tries >= 6) {
+      finish(false);
+      return;
+    }
+    tries += 1;
+    try {
+      player.play();
+    } catch (error: unknown) {
+      console.warn('効果音の再生に失敗しました', error);
+    }
+    timer = setTimeout(attempt, 180);
+  };
+  const gap = 70 + (firstWave % 4) * 50;
+  firstWave += 1;
+  timer = setTimeout(attempt, gap);
 }
 
 function createPlayer(id: SoundId): AudioPlayer {
@@ -107,7 +125,6 @@ function createPlayer(id: SoundId): AudioPlayer {
     downloadFirst: Platform.OS !== 'web',
   });
   player.volume = soundVolume(id);
-  watchReady(id, player);
   return player;
 }
 
@@ -126,16 +143,31 @@ subscribeAudioSettings(() => {
 });
 
 let configuring: Promise<void> | null = null;
-/** 曲の切り替え中は、効果音の一斉先読みを止める。全部作ると、スマホは新しい曲を捨てる。 */
-let preloadHold: Promise<void> = Promise.resolve();
+/**
+ * 曲の切り替え中や、効果音の最初の再生中は、先読みを止める。
+ * その瞬間に再生機をまとめて作ると、スマホは鳴らし始めた音を捨てる。
+ */
+let preloadHolds = 0;
+let preloadWaiters: (() => void)[] = [];
 
-/** 曲を切り替える直前に呼ぶ。戻した関数を、新しい曲を鳴らし始めてから呼ぶ。 */
+/** 先読みを止める。戻した関数を、鳴らし始めてから呼ぶ。重なっても、全部終わるまで待つ。 */
 export function holdSoundPreload(): () => void {
-  let release!: () => void;
-  preloadHold = new Promise((resolve) => {
-    release = resolve;
-  });
-  return release;
+  preloadHolds += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    preloadHolds -= 1;
+    if (preloadHolds > 0) return;
+    const waiters = preloadWaiters;
+    preloadWaiters = [];
+    for (const resolve of waiters) resolve();
+  };
+}
+
+function whenPreloadAllowed(): Promise<void> {
+  if (preloadHolds === 0) return Promise.resolve();
+  return new Promise((resolve) => preloadWaiters.push(resolve));
 }
 
 /** 音声モードは効果音と BGM で共通。最初に呼ばれたときに 1 回だけ設定する。失敗したら次回やり直す。 */
@@ -160,7 +192,7 @@ function wait(ms: number): Promise<void> {
 async function preloadSlowly(): Promise<void> {
   const ids = Object.keys(SOUNDS) as SoundId[];
   for (let index = 0; index < ids.length; index += 1) {
-    await preloadHold;
+    await whenPreloadAllowed();
     if (index === 0) await wait(700);
     const id = ids[index];
     if (id) playerFor(id);
@@ -195,12 +227,7 @@ export function playSound(id: SoundId): void {
     if (!pending.has(id)) return;
     const player = playerFor(id);
     player.volume = soundVolume(id);
-    if (Platform.OS === 'web' || primed.has(id) || player.isLoaded) {
-      if (player.isLoaded || Platform.OS === 'web') primed.add(id);
-      pending.delete(id);
-      playFromStart(player);
-      return;
-    }
-    watchReady(id, player);
+    pending.delete(id);
+    playUntilHeard(player);
   });
 }
