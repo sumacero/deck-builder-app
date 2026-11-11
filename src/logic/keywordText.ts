@@ -1,4 +1,4 @@
-import { KEYWORDS } from '../data/glossary';
+import { KEYWORDS, UNEXPLAINED_KEYWORD_IDS } from '../data/glossary';
 import type { KeywordId } from '../domain/glossary';
 
 export type KeywordPiece = {
@@ -7,7 +7,9 @@ export type KeywordPiece = {
 };
 
 /** 長い名前を先に当てる。ブロック保持が、ブロックと保持に割れないようにする。 */
-const TERMS = Object.values(KEYWORDS).sort((a, b) => b.name.length - a.name.length);
+const TERMS = Object.values(KEYWORDS)
+  .filter((entry) => !UNEXPLAINED_KEYWORD_IDS.includes(entry.id))
+  .sort((a, b) => b.name.length - a.name.length);
 
 const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 

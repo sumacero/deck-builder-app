@@ -4,6 +4,7 @@ import type { Effect } from '../domain/effect';
 import type { EnemyAction, EnemyMove } from '../domain/enemy';
 import type { KeywordId, StatusView } from '../domain/glossary';
 import type { PowerId, StatusId, Statuses } from '../domain/status';
+import { UNEXPLAINED_KEYWORD_IDS } from '../data/glossary';
 import { cardAttributes } from './attribute';
 import { BUFF_IDS, DEBUFF_IDS, ENEMY_STATUS_IDS, statusTurns } from './status';
 
@@ -155,7 +156,7 @@ function statusViews(statuses: Statuses, ids: readonly StatusId[]): StatusView[]
 
 const unique = (ids: KeywordId[]): KeywordId[] => [...new Set(ids)];
 
-/** カードの説明文に出てくる用語。種類 → 効果の順 → 廃棄などの特性。 */
+/** カードの説明文に出てくる用語。種類 → 効果の順 → 廃棄などの特性。アタック・スキル・パワー・ダメージは除く。 */
 export function keywordsForCard(card: CardDefinition): KeywordId[] {
   return unique([
     card.curse ? 'curse' : card.type,
@@ -179,7 +180,7 @@ export function keywordsForCard(card: CardDefinition): KeywordId[] {
     ...(card.exhaust ? (['exhaust'] as const) : []),
     ...(card.waterCost ? (['water'] as const) : []),
     ...(card.water ? (['waterCard', 'fuse', 'stack'] as const) : []),
-  ]);
+  ]).filter((id) => !UNEXPLAINED_KEYWORD_IDS.includes(id));
 }
 
 /** 敵の性質。量のある性質（眠りのターン数、アーティファクトの残り回数など）は数値も出す。 */

@@ -1,5 +1,8 @@
 import type { KeywordDefinition, KeywordId } from '../domain/glossary';
 
+/** 見ただけで分かるので、色も説明も出さない。 */
+export const UNEXPLAINED_KEYWORD_IDS: readonly KeywordId[] = ['attack', 'skill', 'power', 'damage'];
+
 export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   attack: {
     id: 'attack',
