@@ -271,7 +271,7 @@ export function CombatScreen({ setup, seed, region, onFinish }: CombatScreenProp
       : handRemoval.mode === 'imbueWater'
         ? '水札にするカードをタップ'
         : handRemoval.mode === 'transformCurse'
-          ? '変える呪い、またはお邪魔カードをタップ'
+          ? '変える呪い、またはお邪魔をタップ'
           : `捨てる札をタップ（あと ${handRemoval.left} 枚）`
     : null;
   const hintRow =

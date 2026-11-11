@@ -32,6 +32,15 @@ function rejected(text: string, index: number, name: string): boolean {
   );
 }
 
+/** 説明文に色が付いている用語だけ。出てきた順。色の付いていない言葉は説明しない。 */
+export function keywordsInText(text: string): KeywordId[] {
+  const ids: KeywordId[] = [];
+  for (const piece of splitKeywordText(text)) {
+    if (piece.keywordId && !ids.includes(piece.keywordId)) ids.push(piece.keywordId);
+  }
+  return ids;
+}
+
 /** 説明文を、普通の文と専門用語の断片に分ける。 */
 export function splitKeywordText(text: string): KeywordPiece[] {
   const pieces: KeywordPiece[] = [];

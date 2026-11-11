@@ -56,6 +56,11 @@ export const CARD_TYPE_LABEL: Record<CardType, string> = {
   status: 'お邪魔',
 };
 
+/** 全体が狙いのときだけ、文の先頭に用語を置く。単体の札には足さない。 */
+function toFoes(target: EffectTarget): string {
+  return target === 'allEnemies' ? '敵全体に' : '';
+}
+
 function describeEffect(effect: Effect, target: EffectTarget): string {
   switch (effect.kind) {
     case 'damage': {
@@ -75,13 +80,13 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'heal':
       return `HP を ${effect.amount} 回復する。`;
     case 'loseHp':
-      return `HP を ${effect.amount} 失う。`;
+      return `HP を失う（${effect.amount}）。`;
     case 'gainStrength':
       return effect.duration === 'turn'
-        ? `このターン、筋力 ${effect.amount} を得る。`
+        ? `一時的な筋力 ${effect.amount} を得る。`
         : `筋力 ${effect.amount} を得る。`;
     case 'gainEndTurnBlock':
-      return `ターン終了時、ブロック ${effect.amount} を得る。`;
+      return `鉄壁 ${effect.amount}。この戦闘中、毎ターンの終わりにブロックを得る。`;
     case 'damageFromBlock':
       return target === 'allEnemies' ? '敵全体に、今のブロック値と同じダメージを与える。' : '今のブロック値と同じダメージを与える。';
     case 'damageFromAttackWater':
@@ -113,11 +118,11 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'gainPower':
       return describePower(effect.power, effect.amount);
     case 'damagePerSelfHpLost':
-      return `${effect.base} ダメージ。この戦闘でカードの効果で失った HP 1 につき +${effect.perHp}。`;
+      return `${toFoes(target)}${effect.base} ダメージ。この戦闘でカードの効果で失った HP 1 につき +${effect.perHp}。`;
     case 'damagePerDebuff':
-      return `${effect.base} ダメージ。敵のデバフ 1 ターンにつき +${effect.perTurn}。`;
+      return `${toFoes(target)}${effect.base} ダメージ。敵のデバフ 1 ターンにつき +${effect.perTurn}。`;
     case 'detonateDebuffs':
-      return `敵のデバフをすべて消し、消したターン数 × ${effect.perTurn} のダメージを与える。`;
+      return `${target === 'allEnemies' ? '敵全体の' : '敵の'}デバフをすべて消し、消したターン数 × ${effect.perTurn} のダメージを与える。`;
     case 'addArrows':
       return `矢 ${effect.amount} 本を手札に加える。`;
     case 'volleySpentArrows':
@@ -131,7 +136,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'stripStrength':
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}筋力を ${effect.amount} 消す。`;
     case 'cleanse':
-      return `自分の悪い効果を ${effect.count} つ消す。`;
+      return `悪い効果を消す（${effect.count}）。`;
     case 'halveBlock':
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}ブロックを半分にする。`;
     case 'cutHits':
@@ -147,9 +152,9 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'ifTargetHas':
       return `敵が${STATUS_LABEL[effect.status]}なら、${describeEffects(effect.effects, target)}`;
     case 'consumeBlock':
-      return `ブロックをすべて失い、その ${effect.multiplier} 倍のダメージを与える。`;
+      return `${toFoes(target)}ブロックをすべて失い、その ${effect.multiplier} 倍のダメージを与える。`;
     case 'feed':
-      return `${effect.damage} ダメージを与える。これで敵を倒すと最大 HP +${effect.maxHp}（ランの間ずっと）。`;
+      return `${toFoes(target)}${effect.damage} ダメージを与える。これで敵を倒すと最大 HP +${effect.maxHp}（ランの間ずっと）。`;
     case 'enchant':
       return `このターン、アタックに${ATTRIBUTE_LABEL[effect.attribute]}属性が加わる。`;
     case 'multiplyDebuff':
@@ -157,15 +162,15 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'bloomSeed':
       return `${target === 'allEnemies' ? '敵全体の' : '敵の'}宿り木を今すぐ発動させる（数値は減らない）。`;
     case 'damagePerCardPlayed':
-      return `${effect.base} ダメージ。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
+      return `${toFoes(target)}${effect.base} ダメージ。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
     case 'damagePerSkillPlayed':
-      return `${effect.base} ダメージ。このターンに先に使ったスキル 1 枚につき +${effect.perCard}。`;
+      return `${toFoes(target)}${effect.base} ダメージ。このターンに先に使ったスキル 1 枚につき +${effect.perCard}。`;
     case 'damagePerAttackPlayed':
-      return `${effect.base} ダメージ。このターンに先に使ったアタック 1 枚につき +${effect.perCard}。`;
+      return `${toFoes(target)}${effect.base} ダメージ。このターンに先に使ったアタック 1 枚につき +${effect.perCard}。`;
     case 'damagePerDiscard':
-      return `${effect.base} ダメージ。このターンに捨てたカード 1 枚につき +${effect.perCard}。`;
+      return `${toFoes(target)}${effect.base} ダメージ。このターンに捨てたカード 1 枚につき +${effect.perCard}。`;
     case 'damagePerExhaust':
-      return `${effect.base} ダメージ。この戦闘で廃棄したカード 1 枚につき +${effect.perCard}。`;
+      return `${toFoes(target)}${effect.base} ダメージ。この戦闘で廃棄したカード 1 枚につき +${effect.perCard}。`;
     case 'blockPerCardPlayed':
       return `ブロック ${effect.base}。このターンに先に使ったカード 1 枚につき +${effect.perCard}。`;
     case 'blockPerDiscard':
@@ -179,7 +184,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'imbueWater':
       return '手札のカード 1 枚を、このランの間、水札にする。';
     case 'transformCurse':
-      return '手札の呪い、またはお邪魔カード 1 枚を「滴の守り」に変える。滴の守りはコスト 0、ブロック 4。使ったあと廃棄される。';
+      return '手札の呪い、またはお邪魔 1 枚を「滴の守り」に変える。滴の守りはコスト 0、ブロック 4。使ったあと廃棄される。';
     case 'discardFromHand':
       return effect.choose
         ? `手札から ${effect.amount} 枚を選んで捨てる。`
@@ -189,7 +194,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
         ? `手札から ${effect.amount} 枚を選んで廃棄する。`
         : `手札から ${effect.amount} 枚を無作為に廃棄する。`;
     case 'gainLashSeed':
-      return `このターン、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${effect.amount} を与える。`;
+      return `蔓の構え。このターン、ムチの攻撃が 1 回当たるたびに、その敵に宿り木 ${effect.amount} を与える。`;
   }
 }
 
@@ -248,8 +253,8 @@ export const POWER_LABEL: Record<PowerId, string> = {
   shed: '落葉',
 };
 
-/** パワーの効果（amount は 1 枚分の量）。 */
-export function describePower(power: PowerId, amount: number): string {
+/** パワーの効果（amount は 1 枚分の量）。名前を文頭に置き、その用語の説明と対応させる。 */
+function powerBody(power: PowerId, amount: number): string {
   switch (power) {
     case 'barricade':
       return 'この戦闘中、ブロックがターンの始めに消えなくなる。';
@@ -288,7 +293,7 @@ export function describePower(power: PowerId, amount: number): string {
     case 'stackDepth':
       return `この戦闘中、重ねた札の倍率が +${amount} される。`;
     case 'momentum':
-      return `この戦闘中、カードを使うたびにこのターンの筋力 ${amount} を得る。`;
+      return `この戦闘中、カードを使うたびに一時的な筋力 ${amount} を得る。`;
     case 'scavenge':
       return `この戦闘中、効果で手札から捨てるたびに、捨てた枚数 × ${amount} 枚引く。`;
     case 'cinder':
@@ -300,6 +305,10 @@ export function describePower(power: PowerId, amount: number): string {
     case 'shed':
       return `この戦闘中、効果でカードを 1 枚捨てるたびにブロック ${amount} を得る。`;
   }
+}
+
+export function describePower(power: PowerId, amount: number): string {
+  return `${POWER_LABEL[power]}。${powerBody(power, amount)}`;
 }
 
 function describeGrowth(growth: CardGrowth): string {
@@ -333,7 +342,7 @@ export function describeCard(card: CardDefinition): string {
   const extras = [
     card.curse ? '呪い。デッキに残り、毎戦闘の山札に入る。ショップや出来事で削除できる。' : '',
     card.unplayable && card.sly
-      ? '使えない。捨てられたときに、コストを払わず効果が起きる。'
+      ? '使用できない。昇華。捨てられたときに、コストを払わず効果が起きる。'
       : card.unplayable
         ? '使用できない。'
         : '',
@@ -345,7 +354,7 @@ export function describeCard(card: CardDefinition): string {
     card.innate ? '先制。戦闘開始時、手札にある。' : '',
     card.xCost ? 'Xコスト。残っているエナジーをすべて払う。' : '',
     card.sly && !card.unplayable ? '昇華。捨てられたとき、コストを払わずに使う。' : '',
-    card.priority ? '手札にあるあいだ、このカード以外は使えない。' : '',
+    card.priority ? '先に出す。手札にあるあいだ、このカード以外は使えない。' : '',
     card.uses !== undefined ? `${card.uses} 回使える。使い切ると、その戦闘では廃棄される。` : '',
     card.growth ? describeGrowth(card.growth) : '',
     card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
@@ -355,7 +364,8 @@ export function describeCard(card: CardDefinition): string {
   const waterCost = card.waterCost
     ? `水力 ${card.waterCost}（${card.type === 'skill' ? '守り' : '攻撃'}）。`
     : '';
-  return waterCost + (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
+  const arrow = card.arrow ? '矢。' : '';
+  return waterCost + arrow + (card.whip ? 'ムチ。' : '') + describeEffects(card.effects, card.target) + extras;
 }
 
 /** 手札の札。段と深みが入った、いま使うと出る数字。 */

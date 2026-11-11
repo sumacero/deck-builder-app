@@ -2,7 +2,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { KEYWORDS } from '../../data/glossary';
 import type { CardDefinition } from '../../domain/card';
 import type { KeywordId } from '../../domain/glossary';
-import { keywordsForCard } from '../../logic/glossary';
+import { describeCard } from '../../logic/describe';
+import { keywordsInText } from '../../logic/keywordText';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 
 export type KeywordEntry = {
@@ -15,9 +16,9 @@ type KeywordListProps = {
   entries: KeywordEntry[];
 };
 
-/** カードをタップしたとき、その札の用語を全部出す。 */
+/** カードをタップしたとき、その札の文に色が付いている用語だけ出す。 */
 export function CardGlossary({ card }: { card: CardDefinition }) {
-  const entries = keywordsForCard(card).map((keyword) => ({ keyword }));
+  const entries = keywordsInText(describeCard(card)).map((keyword) => ({ keyword }));
   if (entries.length === 0) return null;
   return (
     <View style={styles.cardBox}>

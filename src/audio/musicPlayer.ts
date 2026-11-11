@@ -131,16 +131,30 @@ function fadeInFromStart(id: MusicId, player: AudioPlayer): void {
   else void player.seekTo(0).then(start, start);
 }
 
-/** 届いている曲はすぐ流す。まだなら、届いた瞬間に流す。 */
+/** 読み込み通知が来ないとき、自分で見る上限（100ms × 150）。 */
+const READY_POLLS = 150;
+
+/** 届いている曲はすぐ流す。まだなら、届いたら流す。通知が来なくても、自分で見てから鳴らす。 */
 function startWhenReady(id: MusicId, player: AudioPlayer): void {
   let started = false;
-  const begin = () => {
+  const begin = (force = false) => {
     if (started || current !== id) return;
+    if (Platform.OS !== 'web' && !force && !player.isLoaded && !primed.has(id)) return;
     started = true;
     primed.add(id);
     if (pending === id) pending = null;
     unwatch(id);
     fadeInFromStart(id, player);
+    if (Platform.OS === 'web') return;
+    // 準備直後の play は、スマホだと一度だけ捨てられることがある。鳴っていなければもう一度。
+    setTimeout(() => {
+      if (current !== id || player.playing) return;
+      try {
+        player.play();
+      } catch (error: unknown) {
+        console.warn(`BGM ${id} の再生に失敗しました`, error);
+      }
+    }, 400);
   };
   if (Platform.OS === 'web' || primed.has(id) || player.isLoaded) {
     begin();
@@ -148,12 +162,31 @@ function startWhenReady(id: MusicId, player: AudioPlayer): void {
   }
   pending = id;
   unwatch(id);
+  let polls = 0;
+  let armed = false;
+  let timer: ReturnType<typeof setInterval> | undefined;
   const subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
-    if (!status.isLoaded || current !== id) return;
-    begin();
+    if (armed && status.isLoaded) begin();
   });
-  readyWatch.set(id, subscription);
-  if (player.isLoaded) begin();
+  timer = setInterval(() => {
+    if (!armed) return;
+    if (current !== id) {
+      unwatch(id);
+      return;
+    }
+    polls += 1;
+    if (player.isLoaded) begin();
+    else if (polls >= READY_POLLS) begin(true);
+  }, 100);
+  readyWatch.set(id, {
+    remove: () => {
+      armed = false;
+      subscription.remove();
+      if (timer) clearInterval(timer);
+    },
+  });
+  armed = true;
+  begin();
 }
 
 /** 曲を頭からフェードインで流す。他の曲は止める。BGM の失敗でゲームが止まらないよう例外は警告だけにする。 */
@@ -161,13 +194,16 @@ export function playMusic(id: MusicId): void {
   if (current === id) return;
   current = id;
   cancelFade();
-  void configureAudioMode().catch((error: unknown) => console.warn('音声モードの設定に失敗しました', error));
-  try {
-    disposeOthers(id);
-    startWhenReady(id, playerFor(id));
-  } catch (error: unknown) {
-    console.warn(`BGM ${id} の再生に失敗しました`, error);
-  }
+  // 音声モードが済む前にプレイヤーを作ると、スマホは最初の曲を捨てる。
+  void configureAudioMode()
+    .then(() => {
+      if (current !== id) return;
+      disposeOthers(id);
+      startWhenReady(id, playerFor(id));
+    })
+    .catch((error: unknown) => {
+      console.warn(`BGM ${id} の再生に失敗しました`, error);
+    });
 }
 
 /**

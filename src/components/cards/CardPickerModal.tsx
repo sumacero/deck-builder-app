@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition, CardStack } from '../../domain/card';
 import { cardStackKey } from '../../logic/cards';
-import { keywordsForCard } from '../../logic/glossary';
+import { describeCard } from '../../logic/describe';
+import { keywordsInText } from '../../logic/keywordText';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardGlossaryPopover, useGlossaryAnchor, type WindowRect } from '../glossary/CardGlossaryPopover';
 import { CardGlossary } from '../glossary/KeywordList';
@@ -61,7 +62,7 @@ export function CardPickerModal({
               <CardView card={after} size="md" detailOnHold={false} />
             </View>
           </ScrollView>
-          {keywordsForCard(selected).length > 0 && (
+          {keywordsInText(describeCard(selected)).length > 0 && (
             <ScrollView style={styles.previewGlossary} contentContainerStyle={styles.previewGlossaryContent}>
               <CardGlossary card={selected} />
             </ScrollView>

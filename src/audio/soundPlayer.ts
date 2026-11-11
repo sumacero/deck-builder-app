@@ -5,6 +5,10 @@ import { outputVolume } from './levels';
 import { SOUND_MASTER_VOLUME, type SoundId, SOUNDS } from './sounds';
 
 const players = new Map<SoundId, AudioPlayer>();
+/** 一度でも鳴り始めた音。準備直後の play が捨てられたときだけ、もう一度鳴らす。 */
+const heard = new WeakSet<AudioPlayer>();
+/** 読み込み通知が来ないとき、自分で見る上限（100ms × 150）。 */
+const READY_POLLS = 150;
 /**
  * 一度でも再生できる状態になった音。
  * Android の isLoaded は「いま READY」だけを見て、鳴らし終わった ENDED を未読み込みと返す。
@@ -29,11 +33,24 @@ function playFromStart(player: AudioPlayer): void {
       console.warn('効果音の再生に失敗しました', error);
     }
   };
-  if (player.currentTime <= 0.02) {
+  const kick = () => {
     start();
+    if (Platform.OS === 'web' || heard.has(player)) return;
+    // 準備直後の play は、スマホだと一度だけ捨てられる。頭が出ていなければもう一度。
+    setTimeout(() => {
+      if (player.playing || player.currentTime > 0.05) {
+        heard.add(player);
+        return;
+      }
+      heard.add(player);
+      start();
+    }, 400);
+  };
+  if (player.currentTime <= 0.02) {
+    kick();
     return;
   }
-  void player.seekTo(0).then(start, start);
+  void player.seekTo(0).then(kick, kick);
 }
 
 function noteReady(id: SoundId, player: AudioPlayer): void {
@@ -45,18 +62,41 @@ function noteReady(id: SoundId, player: AudioPlayer): void {
   playFromStart(player);
 }
 
-/** 読み込めたという通知を一度だけ受け取る。鳴らし終わりの未読み込みフラグは見ない。 */
+/**
+ * 読み込めたら一度だけ知らせる。
+ * スマホは、読み込みの通知が来ないことがある。通知だけを待つと、最初の 1 回が永遠に無音になる。
+ * 届いたかどうかは自分でも見る。
+ */
 function watchReady(id: SoundId, player: AudioPlayer): void {
   if (Platform.OS === 'web' || primed.has(id)) return;
+  let done = false;
+  let armed = false;
+  let polls = 0;
+  let timer: ReturnType<typeof setInterval> | undefined;
+  const stop = () => {
+    if (done) return;
+    done = true;
+    armed = false;
+    subscription.remove();
+    if (timer) clearInterval(timer);
+  };
+  const finish = (force: boolean) => {
+    if (done || !armed) return;
+    if (!force && !player.isLoaded) return;
+    stop();
+    noteReady(id, player);
+  };
+  // リスナーが同期で呼ばれても、タイマーを消す前に参照しない。
   const subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
-    if (!status.isLoaded) return;
-    subscription.remove();
-    noteReady(id, player);
+    if (status.isLoaded) finish(false);
   });
-  if (player.isLoaded) {
-    subscription.remove();
-    noteReady(id, player);
-  }
+  timer = setInterval(() => {
+    polls += 1;
+    if (player.isLoaded) finish(false);
+    else if (polls >= READY_POLLS) finish(true);
+  }, 100);
+  armed = true;
+  finish(false);
 }
 
 function createPlayer(id: SoundId): AudioPlayer {
@@ -122,14 +162,18 @@ export function prepareSounds(): Promise<void> {
  * 失敗してもゲームは止めない。
  */
 export function playSound(id: SoundId): void {
-  void prepareSounds();
-  const player = playerFor(id);
-  player.volume = soundVolume(id);
-  if (Platform.OS === 'web' || primed.has(id) || player.isLoaded) {
-    if (player.isLoaded) primed.add(id);
-    pending.delete(id);
-    playFromStart(player);
-    return;
-  }
   pending.add(id);
+  // 音声モードが済む前にプレイヤーを作って play すると、スマホは最初の 1 回を捨てる。
+  void prepareSounds().then(() => {
+    if (!pending.has(id)) return;
+    const player = playerFor(id);
+    player.volume = soundVolume(id);
+    if (Platform.OS === 'web' || primed.has(id) || player.isLoaded) {
+      if (player.isLoaded || Platform.OS === 'web') primed.add(id);
+      pending.delete(id);
+      playFromStart(player);
+      return;
+    }
+    watchReady(id, player);
+  });
 }

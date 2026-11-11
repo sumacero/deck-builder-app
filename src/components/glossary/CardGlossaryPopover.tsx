@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
-import { keywordsForCard } from '../../logic/glossary';
+import { describeCard } from '../../logic/describe';
+import { keywordsInText } from '../../logic/keywordText';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardGlossary } from './KeywordList';
 
@@ -43,7 +44,7 @@ export function CardGlossaryPopover({ card, anchor }: CardGlossaryPopoverProps) 
   const openBelow = spaceBelow >= spaceAbove;
   const maxHeight = Math.min(360, Math.max(0, openBelow ? spaceBelow : spaceAbove));
   const top = (openBelow ? anchor.y + anchor.height + gap : Math.max(8, anchor.y - gap - maxHeight)) - origin.y;
-  if (keywordsForCard(card).length === 0) return null;
+  if (keywordsInText(describeCard(card)).length === 0) return null;
 
   return (
     <View ref={layerRef} pointerEvents="box-none" style={styles.layer} onLayout={measureOrigin}>

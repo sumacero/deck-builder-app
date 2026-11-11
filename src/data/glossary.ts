@@ -1,7 +1,19 @@
 import type { KeywordDefinition, KeywordId } from '../domain/glossary';
 
-/** 見ただけで分かるので、色も説明も出さない。 */
-export const UNEXPLAINED_KEYWORD_IDS: readonly KeywordId[] = ['attack', 'skill', 'power', 'damage'];
+/**
+ * 色も説明も出さない。
+ * ダメージ・アタック・スキル・パワーは見ただけで分かる。
+ * ドローはカードに「引く」と書いてあるだけで、用語ではない。
+ * お邪魔カードは会話で使った呼び方で、ゲームの用語ではない。
+ */
+export const UNEXPLAINED_KEYWORD_IDS: readonly KeywordId[] = [
+  'attack',
+  'skill',
+  'power',
+  'damage',
+  'draw',
+  'status',
+];
 
 export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   attack: {
@@ -24,9 +36,9 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   },
   status: {
     id: 'status',
-    name: 'お邪魔カード',
+    name: 'お邪魔',
     icon: '💢',
-    description: '敵に捨て札へ混ぜられるカード。手札を圧迫する。この戦闘が終わるとデッキから消える。',
+    description: '敵に捨て札へ混ぜられる札。手札を圧迫する。この戦闘が終わるとデッキから消える。',
   },
   curse: {
     id: 'curse',
@@ -618,9 +630,9 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
   },
   intentAddCard: {
     id: 'intentAddCard',
-    name: 'お邪魔カード',
+    name: '札を混ぜる',
     icon: '🃏',
-    description: 'あなたの捨て札にお邪魔カードを数値の枚数だけ混ぜる。',
+    description: '捨て札に、この戦闘が終わると消える札を数値の枚数だけ混ぜる。',
   },
   intentIntangible: {
     id: 'intentIntangible',
@@ -657,7 +669,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'spines',
     name: '棘札',
     icon: '🌵',
-    description: '攻撃で HP を削るたびに、数値の枚数だけお邪魔カードが捨て札に混ざる。多段攻撃はヒットごとに混ざる。',
+    description: '攻撃で HP を削るたびに、数値の枚数だけ、この戦闘が終わると消える札が捨て札に混ざる。多段攻撃はヒットごとに混ざる。',
   },
   call: {
     id: 'call',
@@ -724,7 +736,7 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'plague',
     name: '瘴気',
     icon: '🌫️',
-    description: '自分のターンが始まるたびに、お邪魔カードが捨て札に混ざる。生きている限り続く。',
+    description: '自分のターンが始まるたびに、この戦闘が終わると消える札が捨て札に混ざる。生きている限り続く。',
   },
   weight: {
     id: 'weight',
