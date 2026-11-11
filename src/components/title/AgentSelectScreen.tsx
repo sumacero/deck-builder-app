@@ -7,6 +7,7 @@ import { attributeText, describeRelic } from '../../logic/describe';
 import { useMusic } from '../../hooks/useMusic';
 import { ACTOR_FIGURE, COLORS, RADIUS, SPACING } from '../../theme';
 import { AgentPortrait } from '../agents/AgentPortrait';
+import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { SceneBackground } from '../backgrounds/SceneBackground';
 import { ScreenScroll } from '../layout/ScreenScroll';
 
@@ -64,7 +65,7 @@ function AgentOption({ setup, selected, onPress }: AgentOptionProps) {
   const strong = STRONG_AGAINST[agent.attribute];
   const weak = weaknessesOf(agent.attribute);
   return (
-    <Pressable
+    <GuardedPressable
       onPress={onPress}
       style={({ pressed }) => [styles.option, selected && styles.selected, pressed && styles.pressed]}
     >
@@ -80,15 +81,17 @@ function AgentOption({ setup, selected, onPress }: AgentOptionProps) {
         <Text style={styles.affinity}>
           {attributeText(strong)}の敵に強く、{weak.map(attributeText).join('・')}の敵に弱い
         </Text>
-        <Text style={styles.style}>{agent.playStyle}</Text>
+        <KeywordText text={agent.playStyle} style={styles.style} />
         {setup.relics.map((relic) => (
-          <Text key={relic.id} style={styles.detail}>
-            {relic.icon} {relic.name}: {describeRelic(relic)}
-          </Text>
+          <KeywordText
+            key={relic.id}
+            text={`${relic.icon} ${relic.name}: ${describeRelic(relic)}`}
+            style={styles.detail}
+          />
         ))}
         <Text style={styles.detail}>✨ 秘奥義「{agent.mysticArte.name}」</Text>
       </View>
-    </Pressable>
+    </GuardedPressable>
   );
 }
 

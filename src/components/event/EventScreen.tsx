@@ -8,6 +8,7 @@ import { describeCard, describeEventOption } from '../../logic/describe';
 import { canChooseEventOption, optionPreviewCards, shownEventOptions } from '../../logic/event';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardView } from '../cards/CardView';
+import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { RunHud } from '../run/RunHud';
 
 type EventScreenProps = {
@@ -27,9 +28,15 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
   const previewCards = review ? optionPreviewCards(review) : [];
 
   const selectOption = (option: EventOption) => {
+    const preview = optionPreviewCards(option).length > 0;
+    // 札をもらわない選択肢は、2 回目のタップで決める。1 回目は用語を読める。
+    if (selectedId === option.id && !preview) {
+      actions.choose(option.id);
+      return;
+    }
     setSelectedId(option.id);
     // もらう札が決まっている選択肢は、選んだ時点でカードの詳細を出す。
-    setReviewId(optionPreviewCards(option).length > 0 ? option.id : null);
+    setReviewId(preview ? option.id : null);
   };
 
   const confirmSelection = () => {
@@ -125,16 +132,17 @@ function EventChoiceDetail({ option, cards }: { option: EventOption; cards: Card
     <View style={styles.detail}>
       <Text style={styles.detailLabel}>{option.label}</Text>
       {lines.map((line, index) => (
-        <Text key={index} style={[styles.line, line.negative && styles.negative]}>
-          {line.negative ? '▼ ' : '◆ '}
-          {line.text}
-        </Text>
+        <KeywordText
+          key={index}
+          text={`${line.negative ? '▼ ' : '◆ '}${line.text}`}
+          style={[styles.line, line.negative && styles.negative]}
+        />
       ))}
       <Text style={styles.detailNote}>決めると、この出来事には戻れない。</Text>
       {cards.map((card) => (
         <View key={card.id} style={styles.cardBlock}>
           <CardView card={card} size="md" />
-          <Text style={styles.cardText}>{describeCard(card)}</Text>
+          <KeywordText text={describeCard(card)} style={styles.cardText} />
         </View>
       ))}
     </View>
@@ -144,7 +152,7 @@ function EventChoiceDetail({ option, cards }: { option: EventOption; cards: Card
 function EventOptionView({ option, enabled, selected, onPress }: EventOptionViewProps) {
   const lines = describeEventOption(option);
   return (
-    <Pressable
+    <GuardedPressable
       onPress={onPress}
       disabled={!enabled}
       style={({ pressed }) => [
@@ -156,13 +164,17 @@ function EventOptionView({ option, enabled, selected, onPress }: EventOptionView
     >
       <Text style={styles.label}>{option.label}</Text>
       {lines.map((line, index) => (
-        <Text key={index} style={[styles.line, line.negative && styles.negative]}>
-          {line.negative ? '▼ ' : '◆ '}
-          {line.text}
-        </Text>
+        <KeywordText
+          key={index}
+          text={`${line.negative ? '▼ ' : '◆ '}${line.text}`}
+          style={[styles.line, line.negative && styles.negative]}
+        />
       ))}
+      {selected && enabled && optionPreviewCards(option).length === 0 && (
+        <Text style={styles.again}>もう一度タップで決める</Text>
+      )}
       {!enabled && <Text style={styles.blocked}>今は選べない</Text>}
-    </Pressable>
+    </GuardedPressable>
   );
 }
 
@@ -193,6 +205,7 @@ const styles = StyleSheet.create({
   label: { color: COLORS.text, fontSize: 15, fontWeight: '800', marginBottom: 2 },
   line: { color: COLORS.textMuted, fontSize: 13, fontWeight: '700' },
   negative: { color: COLORS.damageText },
+  again: { color: COLORS.keyword, fontSize: 11, fontWeight: '700', marginTop: 2 },
   blocked: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
   detail: { alignSelf: 'stretch', gap: SPACING.sm, marginTop: SPACING.sm },
   detailLabel: { color: COLORS.text, fontSize: 16, fontWeight: '800' },

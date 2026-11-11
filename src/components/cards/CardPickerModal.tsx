@@ -78,7 +78,11 @@ export function CardPickerModal({
                 card={stack.card}
                 count={stack.count}
                 selected={!preview && cardStackKey(stack.card) === selectedKey}
-                onPress={() => setSelectedKey(cardStackKey(stack.card))}
+                onPress={() => {
+                  const key = cardStackKey(stack.card);
+                  if (!preview && selectedKey === key) onConfirm(stack.card);
+                  else setSelectedKey(key);
+                }}
               />
             ))
           )}

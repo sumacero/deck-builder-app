@@ -16,6 +16,8 @@ export const COLORS = {
   textMuted: '#9AA3BF',
   /** アクセント（ボタン・見出し・選択中の枠）。紋章のような落ち着いた金。 */
   gold: '#E2B84A',
+  /** 説明文の中の専門用語。本文の白とも見出しの金とも違い、触ると意味が出る。 */
+  keyword: '#FFB347',
   goldDark: '#4A3A18',
   onGold: '#241A06',
   hp: '#E0474C',

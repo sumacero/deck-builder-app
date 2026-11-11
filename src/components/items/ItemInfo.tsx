@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { KeywordText } from '../glossary/KeywordText';
 
 type ItemInfoProps = {
   icon: string;
@@ -22,7 +23,7 @@ export function ItemInfo({ icon, name, description, action, onDiscard, onClose }
         <Text style={styles.icon}>{icon}</Text>
         <Text style={styles.name}>{name}</Text>
       </View>
-      <Text style={styles.description}>{description}</Text>
+      <KeywordText text={description} style={styles.description} />
       <View style={styles.buttons}>
         {onDiscard && (
           <Pressable

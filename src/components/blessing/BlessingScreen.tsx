@@ -7,6 +7,7 @@ import { describeBlessing } from '../../logic/describe';
 import { currentAct } from '../../logic/run';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { DeckButton } from '../cards/DeckButton';
+import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { ScreenScroll } from '../layout/ScreenScroll';
@@ -55,7 +56,10 @@ export function BlessingScreen({ run, options, actions }: BlessingScreenProps) {
               key={option.id}
               blessing={option}
               selected={option.id === selectedId}
-              onPress={() => setSelectedId(option.id)}
+              onPress={() => {
+                if (selectedId === option.id) actions.choose(option.id);
+                else setSelectedId(option.id);
+              }}
             />
           ))}
         </View>
@@ -84,17 +88,19 @@ type BlessingOptionProps = {
 
 function BlessingOption({ blessing, selected, onPress }: BlessingOptionProps) {
   return (
-    <Pressable
+    <GuardedPressable
       onPress={onPress}
       style={({ pressed }) => [styles.option, selected && styles.selected, pressed && styles.pressed]}
     >
       {describeBlessing(blessing).map((line, index) => (
-        <Text key={index} style={[styles.line, line.negative && styles.negative]}>
-          {line.negative ? '▼ ' : '◆ '}
-          {line.text}
-        </Text>
+        <KeywordText
+          key={index}
+          text={`${line.negative ? '▼ ' : '◆ '}${line.text}`}
+          style={[styles.line, line.negative && styles.negative]}
+        />
       ))}
-    </Pressable>
+      {selected && <Text style={styles.again}>もう一度タップで受ける</Text>}
+    </GuardedPressable>
   );
 }
 
@@ -129,6 +135,7 @@ const styles = StyleSheet.create({
   selected: { borderColor: COLORS.gold, backgroundColor: COLORS.goldDark },
   line: { color: COLORS.text, fontSize: 14, fontWeight: '700' },
   negative: { color: COLORS.damageText },
+  again: { color: COLORS.keyword, fontSize: 11, fontWeight: '700', marginTop: 2 },
   confirm: {
     backgroundColor: COLORS.gold,
     borderRadius: RADIUS.md,

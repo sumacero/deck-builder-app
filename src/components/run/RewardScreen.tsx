@@ -11,6 +11,7 @@ import { COLORS, RADIUS, SPACING } from '../../theme';
 import { ArchetypeChips } from '../cards/ArchetypeChips';
 import { CardPickerModal } from '../cards/CardPickerModal';
 import { CardView } from '../cards/CardView';
+import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { MarkPreviewSheet } from '../cards/MarkPreviewSheet';
 import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
@@ -71,6 +72,8 @@ export function RewardScreen({
 }: RewardScreenProps) {
   const archetype = mainArchetype(deck);
   const [preview, setPreview] = useState<CardDefinition | null>(null);
+  const [armedId, setArmedId] = useState<string | null>(null);
+  const [frontId, setFrontId] = useState<string | null>(null);
   const [replacing, setReplacing] = useState<PotionDefinition | null>(null);
   const [pickingUpgrade, setPickingUpgrade] = useState(false);
   const emptySlot = potions.findIndex((slot) => slot === null);
@@ -141,8 +144,20 @@ export function RewardScreen({
           )}
           <View style={styles.row}>
             {choices.map((card) => (
-              <View key={card.id} style={styles.choice}>
-                <CardView card={card} size="md" onPress={() => onPick(card)} />
+              <View key={card.id} style={[styles.choice, frontId === card.id && styles.choiceFront]}>
+                <CardView
+                  card={card}
+                  size="md"
+                  selected={armedId === card.id}
+                  onTipChange={(open) =>
+                    setFrontId((current) => (open ? card.id : current === card.id ? null : current))
+                  }
+                  onPress={() => {
+                    if (armedId === card.id) onPick(card);
+                    else setArmedId(card.id);
+                  }}
+                />
+                {armedId === card.id && <Text style={styles.again}>もう一度タップで加える</Text>}
                 <ArchetypeChips archetypes={card.archetypes ?? []} highlight={archetype} />
                 {card.water && (
                   <Pressable onPress={() => setPreview(card)} hitSlop={8}>
@@ -218,6 +233,7 @@ function PotionReward({
   onCancelReplace,
   onSkip,
 }: PotionRewardProps) {
+  const [armedId, setArmedId] = useState<string | null>(null);
   return (
     <>
       <Text style={styles.title}>ポーション報酬</Text>
@@ -229,7 +245,7 @@ function PotionReward({
           <PotionRow potion={replacing} onPress={undefined} />
           {potions.map((held, slot) =>
             held ? (
-              <Pressable
+              <GuardedPressable
                 key={slot}
                 onPress={() => onReplace(slot)}
                 style={({ pressed }) => [styles.potion, pressed && styles.pressed]}
@@ -237,9 +253,9 @@ function PotionReward({
                 <Text style={styles.potionIcon}>{held.icon}</Text>
                 <View style={styles.potionBody}>
                   <Text style={styles.potionName}>{held.name} と入れ替え</Text>
-                  <Text style={styles.potionText}>{describePotion(held)}</Text>
+                  <KeywordText text={describePotion(held)} style={styles.potionText} />
                 </View>
-              </Pressable>
+              </GuardedPressable>
             ) : null,
           )}
           <Pressable onPress={onCancelReplace} style={({ pressed }) => [styles.skip, pressed && styles.pressed]}>
@@ -250,7 +266,15 @@ function PotionReward({
         <View style={styles.list}>
           {emptySlot < 0 && <Text style={styles.note}>枠がいっぱいです。選ぶと入れ替えになります</Text>}
           {choices.map((potion) => (
-            <PotionRow key={potion.id} potion={potion} onPress={() => onChoose(potion)} />
+            <PotionRow
+              key={potion.id}
+              potion={potion}
+              selected={armedId === potion.id}
+              onPress={() => {
+                if (armedId === potion.id) onChoose(potion);
+                else setArmedId(potion.id);
+              }}
+            />
           ))}
           <Pressable onPress={onSkip} style={({ pressed }) => [styles.skip, pressed && styles.pressed]}>
             <Text style={styles.skipText}>スキップ</Text>
@@ -261,19 +285,28 @@ function PotionReward({
   );
 }
 
-function PotionRow({ potion, onPress }: { potion: PotionDefinition; onPress: (() => void) | undefined }) {
+function PotionRow({
+  potion,
+  onPress,
+  selected = false,
+}: {
+  potion: PotionDefinition;
+  onPress: (() => void) | undefined;
+  selected?: boolean;
+}) {
   return (
-    <Pressable
+    <GuardedPressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [styles.potion, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.potion, selected && styles.potionSelected, pressed && styles.pressed]}
     >
       <Text style={styles.potionIcon}>{potion.icon}</Text>
       <View style={styles.potionBody}>
         <Text style={styles.potionName}>{potion.name}</Text>
-        <Text style={styles.potionText}>{describePotion(potion)}</Text>
+        <KeywordText text={describePotion(potion)} style={styles.potionText} />
+        {selected && <Text style={styles.again}>もう一度タップで加える</Text>}
       </View>
-    </Pressable>
+    </GuardedPressable>
   );
 }
 
@@ -299,6 +332,8 @@ const styles = StyleSheet.create({
   archetype: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
   row: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.md, flexWrap: 'wrap' },
   choice: { alignItems: 'center', gap: SPACING.xs },
+  choiceFront: { zIndex: 5 },
+  again: { color: COLORS.keyword, fontSize: 11, fontWeight: '700', textAlign: 'center' },
   stackLink: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
   list: { alignSelf: 'stretch', gap: SPACING.sm, maxWidth: 420 },
   potion: {
@@ -314,6 +349,7 @@ const styles = StyleSheet.create({
   potionIcon: { fontSize: 30 },
   potionBody: { flex: 1, gap: 2 },
   potionName: { color: COLORS.gold, fontSize: 15, fontWeight: '800' },
+  potionSelected: { borderColor: COLORS.gold, backgroundColor: COLORS.goldDark },
   potionText: { color: COLORS.text, fontSize: 13, lineHeight: 18 },
   skip: {
     marginTop: SPACING.md,

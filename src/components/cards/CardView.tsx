@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { cardAttributes } from '../../logic/attribute';
 import {
@@ -20,6 +20,7 @@ import {
   RELIC_RARITY_COLORS,
   SPACING,
 } from '../../theme';
+import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { CardDetailSheet } from './CardDetailSheet';
 import { CARD_TYPE_EMBLEM, cardArt } from './cardArt';
 import { FusedBadge } from './FusedBadge';
@@ -41,6 +42,8 @@ type CardViewProps = {
   onPress?: () => void;
   /** 長押しで用語の解説を出す。解説の中の拡大表示では false。 */
   detailOnHold?: boolean;
+  /** 用語の説明が開いたとき。並べたカードの手前に出す。 */
+  onTipChange?: (open: boolean) => void;
 };
 
 const LONG_PRESS_MS = 350;
@@ -111,8 +114,19 @@ export function CardView({
   width,
   onPress,
   detailOnHold = true,
+  onTipChange,
 }: CardViewProps) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const [typeTip, setTypeTip] = useState(false);
+  const [bodyTip, setBodyTip] = useState(false);
+  const tipOpen = typeTip || bodyTip;
+  const onTipChangeRef = useRef(onTipChange);
+  useEffect(() => {
+    onTipChangeRef.current = onTipChange;
+  }, [onTipChange]);
+  useEffect(() => {
+    onTipChangeRef.current?.(tipOpen);
+  }, [tipOpen]);
   const typeColor = card.mysticArte ? COLORS.arte : CARD_TYPE_COLORS[card.type];
   const attributes = cardAttributes(card);
   const attributeColor = card.mysticArte ? COLORS.arte : card.attribute && ATTRIBUTE_COLORS[card.attribute];
@@ -128,7 +142,7 @@ export function CardView({
   const borderWidth = emphasized ? EMPHASIZED_BORDER_WIDTH : BORDER_WIDTH;
   return (
     <>
-      <Pressable
+      <GuardedPressable
         onPress={onPress}
         onLongPress={detailOnHold ? () => setDetailOpen(true) : undefined}
         delayLongPress={LONG_PRESS_MS}
@@ -139,6 +153,7 @@ export function CardView({
           scaled?.card,
           { borderColor: linkColor ?? (selected ? COLORS.gold : frameColor) },
           { borderWidth },
+          tipOpen && styles.tipping,
           pressed && onPress && styles.pressed,
         ]}
       >
@@ -189,21 +204,30 @@ export function CardView({
             attributeColor !== undefined && { backgroundColor: blend(attributeColor) },
           ]}
         >
-          <Text style={[styles.type, scaled?.type, { color: typeColor }]} numberOfLines={1}>
-            {card.curse ? '呪い' : CARD_TYPE_LABEL[card.type]}
+          <View style={styles.typeRow}>
+            <KeywordText
+              text={card.curse ? '呪い' : CARD_TYPE_LABEL[card.type]}
+              style={[styles.type, scaled?.type, { color: typeColor }]}
+              onOpenChange={setTypeTip}
+            />
             {attributes.length > 0 && !narrow && (
               <Text style={[styles.attribute, attributeColor !== undefined && { color: attributeColor }]}>
                 {' '}
                 {describeAttributes(attributes)}
               </Text>
             )}
-          </Text>
+          </View>
           {showRarity && (
             <Text style={[styles.rarity, { color: RELIC_RARITY_COLORS[card.rarity] }]}>
               {CARD_RARITY_LABEL[card.rarity]}
             </Text>
           )}
-          <Text style={[styles.description, scaled?.description]}>{description ?? describeCard(card)}</Text>
+          <KeywordText
+            text={description ?? describeCard(card)}
+            style={[styles.description, scaled?.description]}
+            containerStyle={styles.descriptionWrap}
+            onOpenChange={setBodyTip}
+          />
         </View>
         {dimmed && (
           <View
@@ -225,7 +249,7 @@ export function CardView({
             <Text style={styles.countText}>×{count}</Text>
           </View>
         )}
-      </Pressable>
+      </GuardedPressable>
       {detailOpen && (
         <CardDetailSheet card={card} description={description} visible onClose={() => setDetailOpen(false)} />
       )}
@@ -362,7 +386,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: GEM_SIZE / 2,
   },
   upgradedName: { color: COLORS.upgraded },
+  tipping: { zIndex: 30, elevation: 12 },
+  typeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   type: { fontSize: 10, fontWeight: '600' },
+  descriptionWrap: { alignSelf: 'stretch' },
   rarity: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   attribute: { color: COLORS.text, fontWeight: '800' },
   description: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },

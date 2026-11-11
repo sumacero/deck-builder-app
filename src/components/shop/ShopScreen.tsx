@@ -10,6 +10,7 @@ import { describeCard, describePotion, describeRelic, RELIC_RARITY_LABEL } from 
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { CardPickerModal } from '../cards/CardPickerModal';
+import { KeywordText } from '../glossary/KeywordText';
 import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
@@ -27,7 +28,7 @@ type Selection = { kind: 'card' | 'relic' | 'potion'; offerId: string };
 
 type Purchase = { name: string; detail: string; price: number; blocked: string | null };
 
-/** ショップ。商品をタップで選び、下のバーの「購入」で買う。 */
+/** ショップ。商品をタップで選び、もう一度タップするか下のバーで買う。 */
 export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -40,6 +41,15 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
     else if (selection.kind === 'relic') actions.buyRelic(selection.offerId);
     else actions.buyPotion(selection.offerId);
     setSelection(null);
+  };
+
+  const selectOrBuy = (next: Selection) => {
+    if (selection?.kind === next.kind && selection.offerId === next.offerId) {
+      const current = describePurchase(next);
+      if (current && current.blocked === null) buy();
+      return;
+    }
+    setSelection(next);
   };
 
   return (
@@ -66,7 +76,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
               affordable={canAfford(run, offer.price)}
               selected={selection?.offerId === offer.offerId}
               exclusive={!isDraftable(offer.item, run.agent)}
-              onPress={() => setSelection({ kind: 'card', offerId: offer.offerId })}
+              onPress={() => selectOrBuy({ kind: 'card', offerId: offer.offerId })}
             />
           ))}
         </View>
@@ -82,7 +92,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
             affordable={canAfford(run, offer.price)}
             sold={offer.sold}
             selected={selection?.offerId === offer.offerId}
-            onPress={() => setSelection({ kind: 'relic', offerId: offer.offerId })}
+            onPress={() => selectOrBuy({ kind: 'relic', offerId: offer.offerId })}
           />
         ))}
 
@@ -97,7 +107,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
             affordable={canAfford(run, offer.price)}
             sold={offer.sold}
             selected={selection?.offerId === offer.offerId}
-            onPress={() => setSelection({ kind: 'potion', offerId: offer.offerId })}
+            onPress={() => selectOrBuy({ kind: 'potion', offerId: offer.offerId })}
           />
         ))}
 
@@ -121,9 +131,11 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
           <View style={styles.purchase}>
             <View style={styles.purchaseText}>
               <Text style={styles.purchaseName}>{purchase.name}</Text>
-              <Text style={styles.purchaseDetail} numberOfLines={2}>
-                {purchase.blocked ?? purchase.detail}
-              </Text>
+              <KeywordText
+                text={purchase.blocked ?? purchase.detail}
+                style={styles.purchaseDetail}
+                numberOfLines={2}
+              />
             </View>
             <Pressable
               onPress={buy}

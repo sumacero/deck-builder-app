@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     gap: SPACING.xs,
   },
-  name: { color: COLORS.gold, fontSize: 14, fontWeight: '800' },
+  name: { color: COLORS.keyword, fontSize: 14, fontWeight: '800' },
   value: { color: COLORS.text, fontWeight: '800' },
   description: { color: COLORS.text, fontSize: 13, lineHeight: 19 },
 });
