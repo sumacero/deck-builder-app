@@ -126,6 +126,17 @@ subscribeAudioSettings(() => {
 });
 
 let configuring: Promise<void> | null = null;
+/** 曲の切り替え中は、効果音の一斉先読みを止める。全部作ると、スマホは新しい曲を捨てる。 */
+let preloadHold: Promise<void> = Promise.resolve();
+
+/** 曲を切り替える直前に呼ぶ。戻した関数を、新しい曲を鳴らし始めてから呼ぶ。 */
+export function holdSoundPreload(): () => void {
+  let release!: () => void;
+  preloadHold = new Promise((resolve) => {
+    release = resolve;
+  });
+  return release;
+}
 
 /** 音声モードは効果音と BGM で共通。最初に呼ばれたときに 1 回だけ設定する。失敗したら次回やり直す。 */
 export function configureAudioMode(): Promise<void> {
@@ -141,10 +152,26 @@ export function configureAudioMode(): Promise<void> {
   return configuring;
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** 効果音は少しずつ先読みする。曲を鳴らした直後にまとめて作らない。 */
+async function preloadSlowly(): Promise<void> {
+  const ids = Object.keys(SOUNDS) as SoundId[];
+  for (let index = 0; index < ids.length; index += 1) {
+    await preloadHold;
+    if (index === 0) await wait(700);
+    const id = ids[index];
+    if (id) playerFor(id);
+    if (index % 3 === 2) await wait(80);
+  }
+}
+
 async function configureAndPreload(): Promise<void> {
   await configureAudioMode();
   if (Platform.OS === 'web') return;
-  for (const id of Object.keys(SOUNDS) as SoundId[]) playerFor(id);
+  void preloadSlowly();
 }
 
 /** 音声モードを設定し、全ての効果音を先読みしておく（初回再生の遅れを防ぐ）。失敗したら次回やり直す。 */

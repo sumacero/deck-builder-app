@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { getAudioSettings, subscribeAudioSettings } from './audioSettings';
 import { clampPlaybackVolume, outputVolume } from './levels';
 import { MUSIC, type MusicId } from './music';
-import { configureAudioMode } from './soundPlayer';
+import { configureAudioMode, holdSoundPreload } from './soundPlayer';
 
 const FADE_STEP_MS = 50;
 const FADE_IN_MS = 600;
@@ -54,6 +54,7 @@ function playerFor(id: MusicId): AudioPlayer {
 /** WAV を端末メモリから外す。createAudioPlayer は remove しないと溜まる（Expo の注意）。 */
 function disposePlayer(id: MusicId): void {
   unwatch(id);
+  primed.delete(id);
   if (pending === id) pending = null;
   const player = players.get(id);
   if (!player) return;
@@ -131,79 +132,127 @@ function fadeInFromStart(id: MusicId, player: AudioPlayer): void {
   else void player.seekTo(0).then(start, start);
 }
 
-/** 読み込み通知が来ないとき、自分で見る上限（100ms × 150）。 */
-const READY_POLLS = 150;
-
-/** 届いている曲はすぐ流す。まだなら、届いたら流す。通知が来なくても、自分で見てから鳴らす。 */
-function startWhenReady(id: MusicId, player: AudioPlayer): void {
-  let started = false;
-  const begin = (force = false) => {
-    if (started || current !== id) return;
-    if (Platform.OS !== 'web' && !force && !player.isLoaded && !primed.has(id)) return;
-    started = true;
-    primed.add(id);
-    if (pending === id) pending = null;
-    unwatch(id);
-    fadeInFromStart(id, player);
-    if (Platform.OS === 'web') return;
-    // 準備直後の play は、スマホだと一度だけ捨てられることがある。鳴っていなければもう一度。
-    setTimeout(() => {
-      if (current !== id || player.playing) return;
-      try {
-        player.play();
-      } catch (error: unknown) {
-        console.warn(`BGM ${id} の再生に失敗しました`, error);
-      }
-    }, 400);
-  };
-  if (Platform.OS === 'web' || primed.has(id) || player.isLoaded) {
-    begin();
-    return;
+function pauseOthers(keep: MusicId): void {
+  for (const id of players.keys()) {
+    if (id === keep) continue;
+    try {
+      players.get(id)?.pause();
+    } catch (error: unknown) {
+      console.warn(`BGM ${id} の停止に失敗しました`, error);
+    }
   }
-  pending = id;
+}
+
+const WATCH_MS = 250;
+/** 前の曲を捨てたあと、スマホが再生を何回か捨てる。鳴っているのが見えるまで見る。 */
+const WATCH_LIMIT = 24;
+
+/** 届いている曲はすぐ流す。まだなら、届いたら流す。鳴るまで何度かやり直す。 */
+function startWhenReady(id: MusicId, player: AudioPlayer): void {
   unwatch(id);
-  let polls = 0;
+  pending = id;
+  let plays = 0;
+  let ticks = 0;
+  let faded = false;
   let armed = false;
-  let timer: ReturnType<typeof setInterval> | undefined;
-  const subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
-    if (armed && status.isLoaded) begin();
-  });
-  timer = setInterval(() => {
+  let ticking = false;
+
+  const silent = () => !player.playing && player.currentTime <= 0.05;
+
+  const tick = () => {
+    if (!armed || ticking) return;
+    ticking = true;
+    try {
+      tickBody();
+    } finally {
+      ticking = false;
+    }
+  };
+
+  const tickBody = () => {
     if (!armed) return;
     if (current !== id) {
       unwatch(id);
       return;
     }
-    polls += 1;
-    if (player.isLoaded) begin();
-    else if (polls >= READY_POLLS) begin(true);
-  }, 100);
+    ticks += 1;
+    // 効果音の先読みが終わるまで見る。その途中で音が落ちたら、もう一度鳴らす。
+    if (!silent()) {
+      primed.add(id);
+      if (pending === id) pending = null;
+      if (ticks >= 16) unwatch(id);
+      return;
+    }
+    const loaded = Platform.OS === 'web' || player.isLoaded;
+    if ((loaded || plays < 3) && (plays === 0 || ticks % 2 === 0)) {
+      plays += 1;
+      if (!faded) {
+        faded = true;
+        fadeInFromStart(id, player);
+      } else {
+        try {
+          player.play();
+        } catch (error: unknown) {
+          console.warn(`BGM ${id} の再生に失敗しました`, error);
+        }
+        if (player.volume <= 0.01 && !fadeTimer) fadeTo(player, () => musicVolume(id), FADE_IN_MS);
+      }
+    }
+    if (ticks >= WATCH_LIMIT) {
+      if (pending === id) pending = null;
+      unwatch(id);
+    }
+  };
+
+  const subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
+    if (status.isLoaded || status.playing) tick();
+  });
+  const timer = setInterval(tick, WATCH_MS);
   readyWatch.set(id, {
     remove: () => {
       armed = false;
       subscription.remove();
-      if (timer) clearInterval(timer);
+      clearInterval(timer);
     },
   });
   armed = true;
-  begin();
+  tick();
 }
 
 /** 曲を頭からフェードインで流す。他の曲は止める。BGM の失敗でゲームが止まらないよう例外は警告だけにする。 */
 export function playMusic(id: MusicId): void {
-  if (current === id) return;
+  const existing = players.get(id);
+  if (current === id) {
+    // 同じ曲が指定されても、鳴っていなければやり直す。マップと出来事は同じ曲なので、一度捨てると戻らない。
+    if (existing && !existing.playing && existing.currentTime <= 0.05 && pending !== id) startWhenReady(id, existing);
+    return;
+  }
   current = id;
   cancelFade();
+  const releasePreload = holdSoundPreload();
   // 音声モードが済む前にプレイヤーを作ると、スマホは最初の曲を捨てる。
+  // 鳴っている曲を同じ瞬間に捨てると、次の曲も捨てられる。止めてから、少し間を空けて外す。
   void configureAudioMode()
     .then(() => {
       if (current !== id) return;
-      disposeOthers(id);
-      startWhenReady(id, playerFor(id));
+      pauseOthers(id);
+      return wait(80).then(() => {
+        if (current !== id) return;
+        disposeOthers(id);
+        return wait(80).then(() => {
+          if (current !== id) return;
+          startWhenReady(id, playerFor(id));
+        });
+      });
     })
     .catch((error: unknown) => {
       console.warn(`BGM ${id} の再生に失敗しました`, error);
-    });
+    })
+    .finally(releasePreload);
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
