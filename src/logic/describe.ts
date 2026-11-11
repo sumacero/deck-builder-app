@@ -82,9 +82,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'loseHp':
       return `HP を失う（${effect.amount}）。`;
     case 'gainStrength':
-      return effect.duration === 'turn'
-        ? `一時的な筋力 ${effect.amount} を得る。`
-        : `筋力 ${effect.amount} を得る。`;
+      return `筋力 ${effect.amount} を得る。`;
     case 'gainEndTurnBlock':
       return `鉄壁 ${effect.amount}。この戦闘中、毎ターンの終わりにブロックを得る。`;
     case 'damageFromBlock':
@@ -293,7 +291,7 @@ function powerBody(power: PowerId, amount: number): string {
     case 'stackDepth':
       return `この戦闘中、重ねた札の倍率が +${amount} される。`;
     case 'momentum':
-      return `この戦闘中、カードを使うたびに一時的な筋力 ${amount} を得る。`;
+      return `この戦闘中、カードを使うたびに筋力 ${amount} を得る。`;
     case 'scavenge':
       return `この戦闘中、効果で手札から捨てるたびに、捨てた枚数 × ${amount} 枚引く。`;
     case 'cinder':

@@ -155,11 +155,11 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     id: 'strength',
     name: '筋力',
     icon: '💪',
-    description: '攻撃のダメージが、その数値の分だけ増える。連続攻撃なら 1 回ごとに増える。戦闘の終わりまで続く。',
+    description: '攻撃のダメージが、その数値の分だけ増える。連続攻撃なら 1 回ごとに増える。',
   },
   tempStrength: {
     id: 'tempStrength',
-    name: '一時的な筋力',
+    name: '筋力',
     icon: '🔥',
     description: '筋力と同じく攻撃のダメージが増えるが、このターンの終わりに消える。',
   },
