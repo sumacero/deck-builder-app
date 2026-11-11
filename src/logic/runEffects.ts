@@ -13,7 +13,7 @@ import {
   upgradeCard,
   fuseInDeck,
 } from './cards';
-import { pickRewardChoices, rewardCandidates } from './archetype';
+import { pickRewardChoices, rewardCandidates, rewardFocus } from './archetype';
 import { attuneDeck } from './attribute';
 import { pickOne, shuffle } from './random';
 import { pickWeightedRelic, weightsFor } from './relics';
@@ -151,6 +151,7 @@ function addRandomCards(run: RunState, count: number): RunState {
     count,
     run.rngSeed,
     run.economy.cardTierWeight,
+    rewardFocus(run),
   );
   return {
     ...run,
@@ -169,7 +170,7 @@ function transformRandomCards(run: RunState, count: number): RunState {
     const picked = pickOne(indexes, seed);
     seed = picked.seed;
     if (picked.item === undefined) break;
-    const offered = pickRewardChoices(rewardCandidates(run), deck, 1, seed, run.economy.cardTierWeight);
+    const offered = pickRewardChoices(rewardCandidates(run), deck, 1, seed, run.economy.cardTierWeight, rewardFocus(run));
     seed = offered.seed;
     const [next] = attuneDeck(offered.items, run.agent.attribute);
     if (next) deck[picked.item] = next;
@@ -289,6 +290,7 @@ function offerCardPick(run: RunState, after: RunState['phase']): RunState {
     3,
     run.rngSeed,
     run.economy.cardTierWeight,
+    rewardFocus(run),
   );
   const fromEvent = after.kind === 'event';
   if (offered.items.length === 0) return { ...run, rngSeed: offered.seed, phase: after };

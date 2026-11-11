@@ -5,6 +5,8 @@ import { prepareSounds } from '../../audio/soundPlayer';
 import { useMusic } from '../../hooks/useMusic';
 import type { RunSetup, RunState } from '../../domain/run';
 import { useRun } from '../../hooks/useRun';
+import { bossPreparation } from '../../logic/describe';
+import { encounterLeader } from '../../logic/encounter';
 import { buildCombatSetup, currentAct } from '../../logic/run';
 import { BlessingScreen } from '../blessing/BlessingScreen';
 import { DeckEditScreen } from '../blessing/DeckEditScreen';
@@ -106,6 +108,8 @@ export function RunRoot({ setup, initialRun, onExitToTitle }: RunRootProps) {
           canSkip={visible.phase.canSkip !== false}
           deck={visible.deck}
           growthGold={visible.phase.growthGold ?? 0}
+          bossLine={bossPreparation(encounterLeader(visible.boss).id)}
+          lateAct={visible.actIndex >= 2}
           onPick={resolveReward}
           onPickPotion={resolvePotionReward}
           onUpgrade={(card) => resolveGrowthReward('upgrade', card)}

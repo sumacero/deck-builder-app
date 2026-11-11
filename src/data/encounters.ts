@@ -1,5 +1,5 @@
 import type { Region } from '../domain/act';
-import type { EnemyDefinition, Encounter, RoadTier } from '../domain/enemy';
+import type { EnemyDefinition, EnemyTrait, Encounter, RoadTier } from '../domain/enemy';
 import { soloEncounter } from '../logic/encounter';
 import {
   ABYSS_SERPENT,
@@ -79,6 +79,17 @@ const pair = (id: string, enemy: EnemyDefinition, tier: RoadTier): Encounter =>
 /** 組んで出るときの HP。相方がいるぶん、単体で出るときより HP を下げる。 */
 const withHp = (enemy: EnemyDefinition, maxHp: number): EnemyDefinition => ({ ...enemy, maxHp });
 
+/** 道中の個体はそのままに、ボス戦のコピーだけ特性を足す。 */
+const withTraits = (enemy: EnemyDefinition, extra: readonly EnemyTrait[]): EnemyDefinition => ({
+  ...enemy,
+  traits: [...(enemy.traits ?? []), ...extra],
+});
+
+/** 1 発の大きい攻撃を止める。多段は素通りする。 */
+const BIG_HIT: EnemyTrait = { kind: 'stun', threshold: 12 };
+/** 1 発の上限。回数で削る札が通る。 */
+const MANY_HITS: EnemyTrait = { kind: 'hitCap', amount: 6 };
+
 export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
   volcano: {
     normal: {
@@ -101,7 +112,12 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('colossus-and-soldier', [withHp(ROCK_SOLDIER, 42), withHp(BASALT_COLOSSUS, 50)], 'elite'),
       group('hydra-and-colossus', [withHp(MAGMA_HYDRA, 34), withHp(BASALT_COLOSSUS, 36)], 'elite'),
     ],
-    boss: [group('dragon-and-slime', [withHp(MAGMA_SLIME, 34), withHp(FLAME_DRAGON, 70)], 'boss')],
+    boss: [
+      group('dragon-and-slime', [
+        withTraits(withHp(MAGMA_SLIME, 34), [BIG_HIT]),
+        withTraits(withHp(FLAME_DRAGON, 70), [MANY_HITS]),
+      ], 'boss'),
+    ],
   },
   grassland: {
     normal: {
@@ -119,7 +135,12 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('treant-grove', [LEAF_FAIRY, withHp(GREAT_TREANT, 60)], 'elite'),
       group('maw-pair', [withHp(BRIAR_MAW, 28), withHp(BRIAR_MAW, 28)], 'elite'),
     ],
-    boss: [group('griffin-and-hawk', [withHp(WIND_HAWK, 32), withHp(STORM_GRIFFIN, 48)], 'boss')],
+    boss: [
+      group('griffin-and-hawk', [
+        withTraits(withHp(WIND_HAWK, 32), [BIG_HIT]),
+        withTraits(withHp(STORM_GRIFFIN, 48), [MANY_HITS]),
+      ], 'boss'),
+    ],
   },
   sunkenCity: {
     normal: {
@@ -141,7 +162,12 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('serpent-and-guard', [withHp(DROWNED_GUARD, 44), withHp(ABYSS_SERPENT, 49)], 'elite'),
       group('angler-and-serpent', [withHp(FROST_ANGLER, 34), withHp(ABYSS_SERPENT, 36)], 'elite'),
     ],
-    boss: [group('leviathan-and-guard', [withHp(DROWNED_GUARD, 34), withHp(ICE_LEVIATHAN, 68)], 'boss')],
+    boss: [
+      group('leviathan-and-guard', [
+        withTraits(withHp(DROWNED_GUARD, 34), [BIG_HIT]),
+        withTraits(withHp(ICE_LEVIATHAN, 68), [MANY_HITS]),
+      ], 'boss'),
+    ],
   },
   clockwork: {
     normal: {
@@ -159,6 +185,11 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
       group('golem-and-soldier', [withHp(GEAR_SOLDIER, 42), withHp(THUNDER_GOLEM, 51)], 'elite'),
       group('beetle-and-golem', [withHp(GEAR_BEETLE, 34), withHp(THUNDER_GOLEM, 36)], 'elite'),
     ],
-    boss: [group('engine-and-soldier', [withHp(GEAR_SOLDIER, 34), withHp(ENGINE_BEAST, 72)], 'boss')],
+    boss: [
+      group('engine-and-soldier', [
+        withTraits(withHp(GEAR_SOLDIER, 34), [BIG_HIT]),
+        withTraits(withHp(ENGINE_BEAST, 72), [MANY_HITS]),
+      ], 'boss'),
+    ],
   },
 };
