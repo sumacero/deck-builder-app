@@ -1,6 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { KEYWORDS } from '../../data/glossary';
+import type { CardDefinition } from '../../domain/card';
 import type { KeywordId } from '../../domain/glossary';
+import { keywordsForCard } from '../../logic/glossary';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 
 export type KeywordEntry = {
@@ -12,6 +14,18 @@ export type KeywordEntry = {
 type KeywordListProps = {
   entries: KeywordEntry[];
 };
+
+/** カードをタップしたとき、その札の用語を全部出す。 */
+export function CardGlossary({ card }: { card: CardDefinition }) {
+  const entries = keywordsForCard(card).map((keyword) => ({ keyword }));
+  if (entries.length === 0) return null;
+  return (
+    <View style={styles.cardBox}>
+      <Text style={styles.cardTitle}>{card.name}</Text>
+      <KeywordList entries={entries} />
+    </View>
+  );
+}
 
 /** 用語ごとに「アイコン・名前（量）・解説」を並べる。 */
 export function KeywordList({ entries }: KeywordListProps) {
@@ -44,4 +58,6 @@ const styles = StyleSheet.create({
   name: { color: COLORS.keyword, fontSize: 14, fontWeight: '800' },
   value: { color: COLORS.text, fontWeight: '800' },
   description: { color: COLORS.text, fontSize: 13, lineHeight: 19 },
+  cardBox: { alignSelf: 'stretch', gap: SPACING.sm },
+  cardTitle: { color: COLORS.gold, fontSize: 14, fontWeight: '800' },
 });

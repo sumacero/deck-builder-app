@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { RunState } from '../../domain/run';
 import type { ShopStock } from '../../domain/shop';
@@ -10,6 +10,7 @@ import { stackCards } from '../../logic/cards';
 import { describeCard, describePotion, describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { CardGlossaryPopover, type WindowRect } from '../glossary/CardGlossaryPopover';
 import { PlaceBanner } from '../backgrounds/PlaceBanner';
 import { placeImage } from '../backgrounds/sceneImages';
 import { CardPickerModal } from '../cards/CardPickerModal';
@@ -34,11 +35,20 @@ type Purchase = { name: string; detail: string; price: number; blocked: string |
 /** ショップ。商品をタップで選び、もう一度タップするか下のバーで買う。 */
 export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [anchor, setAnchor] = useState<WindowRect | null>(null);
+  const remeasure = useRef<(() => void) | null>(null);
+  const rememberMeasure = useCallback((measure: () => void) => {
+    remeasure.current = measure;
+  }, []);
   const [removing, setRemoving] = useState(false);
   useMusic('shop');
   useSceneCue('shop');
   const shopArt = placeImage('shop');
   const purchase = selection ? describePurchase(selection) : null;
+  const selectedCard =
+    selection?.kind === 'card'
+      ? (stock.cards.find((offer) => offer.offerId === selection.offerId)?.item ?? null)
+      : null;
 
   const buy = () => {
     if (!selection) return;
@@ -54,6 +64,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
       if (current && current.blocked === null) buy();
       return;
     }
+    setAnchor(null);
     setSelection(next);
   };
 
@@ -71,7 +82,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} onScroll={() => remeasure.current?.()} scrollEventThrottle={16}>
         {shopArt && <PlaceBanner source={shopArt} />}
         <Text style={styles.section}>カード</Text>
         <View style={styles.cards}>
@@ -83,6 +94,8 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
               selected={selection?.offerId === offer.offerId}
               exclusive={!isDraftable(offer.item, run.agent)}
               onPress={() => selectOrBuy({ kind: 'card', offerId: offer.offerId })}
+              onAnchor={selection?.offerId === offer.offerId ? setAnchor : undefined}
+              onMeasure={selection?.offerId === offer.offerId ? rememberMeasure : undefined}
             />
           ))}
         </View>
@@ -176,6 +189,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
           onCancel={() => setRemoving(false)}
         />
       )}
+      {selectedCard && anchor && <CardGlossaryPopover card={selectedCard} anchor={anchor} />}
     </View>
   );
 

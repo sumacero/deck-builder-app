@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition, CardStack } from '../../domain/card';
 import { cardStackKey } from '../../logic/cards';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { CardGlossaryPopover, useGlossaryAnchor, type WindowRect } from '../glossary/CardGlossaryPopover';
 import { CardView } from './CardView';
 
 type CardPickerModalProps = {
@@ -30,6 +31,11 @@ export function CardPickerModal({
   onCancel,
 }: CardPickerModalProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [anchor, setAnchor] = useState<WindowRect | null>(null);
+  const remeasure = useRef<(() => void) | null>(null);
+  const rememberMeasure = useCallback((measure: () => void) => {
+    remeasure.current = measure;
+  }, []);
   const selected = stacks.find((stack) => cardStackKey(stack.card) === selectedKey)?.card;
 
   // 強化のように変化を見せるときは、一覧と確認を分ける。確認の取り消しは一覧へ戻す。
@@ -40,7 +46,12 @@ export function CardPickerModal({
         <View style={styles.sheet}>
           <Text style={styles.title}>{title}</Text>
           <ScrollView horizontal contentContainerStyle={styles.preview}>
-            <CardView card={selected} size="md" />
+            <PickerCard
+              card={selected}
+              armed
+              onAnchor={setAnchor}
+              onMeasure={rememberMeasure}
+            />
             <Text style={styles.arrow}>→</Text>
             <CardView card={after} size="md" />
           </ScrollView>
@@ -59,6 +70,7 @@ export function CardPickerModal({
             </Pressable>
           </View>
         </View>
+        {anchor && <CardGlossaryPopover card={selected} anchor={anchor} />}
       </View>
     );
   }
@@ -68,23 +80,35 @@ export function CardPickerModal({
       <View style={styles.sheet}>
         <Text style={styles.title}>{title}</Text>
         {note ? <Text style={styles.note}>{note}</Text> : null}
-        <ScrollView contentContainerStyle={styles.grid}>
+        <ScrollView
+          contentContainerStyle={styles.grid}
+          onScroll={() => remeasure.current?.()}
+          scrollEventThrottle={16}
+        >
           {stacks.length === 0 ? (
             <Text style={styles.empty}>選べるカードがありません</Text>
           ) : (
-            stacks.map((stack) => (
-              <CardView
-                key={cardStackKey(stack.card)}
-                card={stack.card}
-                count={stack.count}
-                selected={!preview && cardStackKey(stack.card) === selectedKey}
-                onPress={() => {
-                  const key = cardStackKey(stack.card);
-                  if (!preview && selectedKey === key) onConfirm(stack.card);
-                  else setSelectedKey(key);
-                }}
-              />
-            ))
+            stacks.map((stack) => {
+              const key = cardStackKey(stack.card);
+              const armed = !preview && key === selectedKey;
+              return (
+                <PickerCard
+                  key={key}
+                  card={stack.card}
+                  count={stack.count}
+                  armed={armed}
+                  onPress={() => {
+                    if (armed) onConfirm(stack.card);
+                    else {
+                      setAnchor(null);
+                      setSelectedKey(key);
+                    }
+                  }}
+                  onAnchor={armed ? setAnchor : undefined}
+                  onMeasure={armed ? rememberMeasure : undefined}
+                />
+              );
+            })
           )}
         </ScrollView>
 
@@ -113,6 +137,33 @@ export function CardPickerModal({
           )}
         </View>
       </View>
+      {selected && anchor && <CardGlossaryPopover card={selected} anchor={anchor} />}
+    </View>
+  );
+}
+
+function PickerCard({
+  card,
+  count,
+  armed,
+  onPress,
+  onAnchor,
+  onMeasure,
+}: {
+  card: CardDefinition;
+  count?: number;
+  armed: boolean;
+  onPress?: () => void;
+  onAnchor?: (rect: WindowRect) => void;
+  onMeasure?: (measure: () => void) => void;
+}) {
+  const { ref, measure } = useGlossaryAnchor(armed && onAnchor !== undefined, onAnchor ?? (() => {}));
+  useEffect(() => {
+    if (measure && onMeasure) onMeasure(measure);
+  }, [measure, onMeasure]);
+  return (
+    <View ref={ref} collapsable={false} onLayout={() => measure?.()}>
+      <CardView card={card} count={count} selected={armed} onPress={onPress} />
     </View>
   );
 }

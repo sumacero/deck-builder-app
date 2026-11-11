@@ -40,6 +40,11 @@ type KeywordTextProps = {
   numberOfLines?: number;
   /** 用語の説明が開いたか。重なるカードを前面に出すために使う。 */
   onOpenChange?: (open: boolean) => void;
+  /**
+   * false のときは色だけ変える。カードは札そのものをタップして説明を出すので、
+   * 単語のタップでは説明を出さない。
+   */
+  interactive?: boolean;
 };
 
 type WebHover = {
@@ -47,13 +52,20 @@ type WebHover = {
   onMouseLeave: () => void;
 };
 
-/** 専門用語だけ色を変え、ホバーかタップでその用語の説明を出す。 */
-export function KeywordText({ text, style, containerStyle, numberOfLines, onOpenChange }: KeywordTextProps) {
+/** 専門用語だけ色を変える。interactive のときは、ホバーかタップでその用語の説明を出す。 */
+export function KeywordText({
+  text,
+  style,
+  containerStyle,
+  numberOfLines,
+  onOpenChange,
+  interactive = true,
+}: KeywordTextProps) {
   const pieces = splitKeywordText(text);
   const hold = useContext(KeywordGuardContext);
   const [pinned, setPinned] = useState<KeywordId | null>(null);
   const [hovered, setHovered] = useState<KeywordId | null>(null);
-  const shown = hovered ?? pinned;
+  const shown = interactive ? (hovered ?? pinned) : null;
   const wasOpen = useRef(false);
 
   useEffect(() => {
@@ -76,11 +88,13 @@ export function KeywordText({ text, style, containerStyle, numberOfLines, onOpen
             <Text
               key={index}
               style={[styles.term, shown === piece.keywordId && styles.termOpen]}
-              onPress={() => pressTerm(piece.keywordId as KeywordId)}
-              {...({
-                onMouseEnter: () => setHovered(piece.keywordId ?? null),
-                onMouseLeave: () => setHovered((current) => (current === piece.keywordId ? null : current)),
-              } as WebHover)}
+              onPress={interactive ? () => pressTerm(piece.keywordId as KeywordId) : undefined}
+              {...(interactive
+                ? ({
+                    onMouseEnter: () => setHovered(piece.keywordId ?? null),
+                    onMouseLeave: () => setHovered((current) => (current === piece.keywordId ? null : current)),
+                  } as WebHover)
+                : null)}
             >
               {piece.text}
             </Text>

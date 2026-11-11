@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import { cardAttributes } from '../../logic/attribute';
@@ -42,8 +42,6 @@ type CardViewProps = {
   onPress?: () => void;
   /** 長押しで用語の解説を出す。解説の中の拡大表示では false。 */
   detailOnHold?: boolean;
-  /** 用語の説明が開いたとき。並べたカードの手前に出す。 */
-  onTipChange?: (open: boolean) => void;
 };
 
 const LONG_PRESS_MS = 350;
@@ -114,19 +112,8 @@ export function CardView({
   width,
   onPress,
   detailOnHold = true,
-  onTipChange,
 }: CardViewProps) {
   const [detailOpen, setDetailOpen] = useState(false);
-  const [typeTip, setTypeTip] = useState(false);
-  const [bodyTip, setBodyTip] = useState(false);
-  const tipOpen = typeTip || bodyTip;
-  const onTipChangeRef = useRef(onTipChange);
-  useEffect(() => {
-    onTipChangeRef.current = onTipChange;
-  }, [onTipChange]);
-  useEffect(() => {
-    onTipChangeRef.current?.(tipOpen);
-  }, [tipOpen]);
   const typeColor = card.mysticArte ? COLORS.arte : CARD_TYPE_COLORS[card.type];
   const attributes = cardAttributes(card);
   const attributeColor = card.mysticArte ? COLORS.arte : card.attribute && ATTRIBUTE_COLORS[card.attribute];
@@ -153,7 +140,6 @@ export function CardView({
           scaled?.card,
           { borderColor: linkColor ?? (selected ? COLORS.gold : frameColor) },
           { borderWidth },
-          tipOpen && styles.tipping,
           pressed && onPress && styles.pressed,
         ]}
       >
@@ -208,7 +194,7 @@ export function CardView({
             <KeywordText
               text={card.curse ? '呪い' : CARD_TYPE_LABEL[card.type]}
               style={[styles.type, scaled?.type, { color: typeColor }]}
-              onOpenChange={setTypeTip}
+              interactive={false}
             />
             {attributes.length > 0 && !narrow && (
               <Text style={[styles.attribute, attributeColor !== undefined && { color: attributeColor }]}>
@@ -226,7 +212,7 @@ export function CardView({
             text={description ?? describeCard(card)}
             style={[styles.description, scaled?.description]}
             containerStyle={styles.descriptionWrap}
-            onOpenChange={setBodyTip}
+            interactive={false}
           />
         </View>
         {dimmed && (
@@ -386,7 +372,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: GEM_SIZE / 2,
   },
   upgradedName: { color: COLORS.upgraded },
-  tipping: { zIndex: 30, elevation: 12 },
   typeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   type: { fontSize: 10, fontWeight: '600' },
   descriptionWrap: { alignSelf: 'stretch' },

@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { EventDefinition, EventOption } from '../../domain/event';
 import type { RunState } from '../../domain/run';
 import type { EventActions } from '../../hooks/useRun';
 import type { CardDefinition } from '../../domain/card';
-import { describeCard, describeEventOption } from '../../logic/describe';
+import { describeEventOption } from '../../logic/describe';
 import { canChooseEventOption, optionPreviewCards, shownEventOptions } from '../../logic/event';
 import { useSceneCue } from '../../hooks/useSceneCue';
 import { COLORS, RADIUS, SPACING } from '../../theme';
 import { PlaceBanner } from '../backgrounds/PlaceBanner';
 import { placeImage } from '../backgrounds/sceneImages';
 import { CardView } from '../cards/CardView';
+import { CardGlossaryPopover, useGlossaryAnchor, type WindowRect } from '../glossary/CardGlossaryPopover';
 import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { RunHud } from '../run/RunHud';
 
@@ -26,6 +27,8 @@ type EventScreenProps = {
 export function EventScreen({ run, event, outcome, actions }: EventScreenProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
+  const [cardAnchors, setCardAnchors] = useState<Record<string, WindowRect>>({});
+  const cardMeasures = useRef<Record<string, () => void>>({});
   const options = shownEventOptions(run, event);
   const review = outcome === null ? options.find((option) => option.id === reviewId) : undefined;
   const previewCards = review ? optionPreviewCards(review) : [];
@@ -40,6 +43,7 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
       return;
     }
     setSelectedId(option.id);
+    setCardAnchors({});
     // もらう札が決まっている選択肢は、選んだ時点でカードの詳細を出す。
     setReviewId(preview ? option.id : null);
   };
@@ -49,6 +53,7 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
     const option = options.find((candidate) => candidate.id === selectedId);
     if (!option) return;
     if (optionPreviewCards(option).length > 0) {
+      setCardAnchors({});
       setReviewId(option.id);
       return;
     }
@@ -59,7 +64,13 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
     <View style={styles.root}>
       <RunHud run={run} />
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        onScroll={() => {
+          for (const measure of Object.values(cardMeasures.current)) measure();
+        }}
+        scrollEventThrottle={16}
+      >
         {art ? <PlaceBanner source={art} /> : <Text style={styles.icon}>{event.icon}</Text>}
         <Text style={styles.title}>{event.title}</Text>
         <View style={styles.bubble}>
@@ -67,7 +78,28 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
         </View>
 
         {outcome === null && review && previewCards.length > 0 ? (
-          <EventChoiceDetail option={review} cards={previewCards} />
+          <EventChoiceDetail
+            option={review}
+            cards={previewCards}
+            onAnchor={(id, rect) =>
+              setCardAnchors((prev) => {
+                const current = prev[id];
+                if (
+                  current &&
+                  current.x === rect.x &&
+                  current.y === rect.y &&
+                  current.width === rect.width &&
+                  current.height === rect.height
+                ) {
+                  return prev;
+                }
+                return { ...prev, [id]: rect };
+              })
+            }
+            onMeasure={(id, measure) => {
+              cardMeasures.current[id] = measure;
+            }}
+          />
         ) : (
           outcome === null && (
             <View style={styles.options}>
@@ -88,7 +120,10 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
       {outcome === null && review && previewCards.length > 0 ? (
         <View style={styles.detailActions}>
           <Pressable
-            onPress={() => setReviewId(null)}
+            onPress={() => {
+              setCardAnchors({});
+              setReviewId(null);
+            }}
             style={({ pressed }) => [styles.back, pressed && styles.pressed]}
           >
             <Text style={styles.backText}>戻る</Text>
@@ -120,6 +155,10 @@ export function EventScreen({ run, event, outcome, actions }: EventScreenProps) 
           <Text style={styles.confirmText}>先へ進む</Text>
         </Pressable>
       )}
+      {previewCards.map((card) => {
+        const anchor = cardAnchors[card.id];
+        return anchor ? <CardGlossaryPopover key={card.id} card={card} anchor={anchor} /> : null;
+      })}
     </View>
   );
 }
@@ -131,7 +170,17 @@ type EventOptionViewProps = {
   onPress: () => void;
 };
 
-function EventChoiceDetail({ option, cards }: { option: EventOption; cards: CardDefinition[] }) {
+function EventChoiceDetail({
+  option,
+  cards,
+  onAnchor,
+  onMeasure,
+}: {
+  option: EventOption;
+  cards: CardDefinition[];
+  onAnchor: (id: string, rect: WindowRect) => void;
+  onMeasure: (id: string, measure: () => void) => void;
+}) {
   const lines = describeEventOption(option);
   return (
     <View style={styles.detail}>
@@ -145,11 +194,29 @@ function EventChoiceDetail({ option, cards }: { option: EventOption; cards: Card
       ))}
       <Text style={styles.detailNote}>決めると、この出来事には戻れない。</Text>
       {cards.map((card) => (
-        <View key={card.id} style={styles.cardBlock}>
-          <CardView card={card} size="md" />
-          <KeywordText text={describeCard(card)} style={styles.cardText} />
-        </View>
+        <EventPreviewCard key={card.id} card={card} onAnchor={onAnchor} onMeasure={onMeasure} />
       ))}
+    </View>
+  );
+}
+
+function EventPreviewCard({
+  card,
+  onAnchor,
+  onMeasure,
+}: {
+  card: CardDefinition;
+  onAnchor: (id: string, rect: WindowRect) => void;
+  onMeasure: (id: string, measure: () => void) => void;
+}) {
+  const report = (rect: WindowRect) => onAnchor(card.id, rect);
+  const { ref, measure } = useGlossaryAnchor(true, report);
+  useEffect(() => {
+    if (measure) onMeasure(card.id, measure);
+  }, [card.id, measure, onMeasure]);
+  return (
+    <View ref={ref} collapsable={false} onLayout={() => measure?.()} style={styles.cardBlock}>
+      <CardView card={card} size="md" />
     </View>
   );
 }

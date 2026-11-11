@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
 import type { PotionSlot } from '../../domain/combat';
@@ -11,6 +11,7 @@ import { COLORS, RADIUS, SPACING } from '../../theme';
 import { ArchetypeChips } from '../cards/ArchetypeChips';
 import { CardPickerModal } from '../cards/CardPickerModal';
 import { CardView } from '../cards/CardView';
+import { CardGlossaryPopover, useGlossaryAnchor, type WindowRect } from '../glossary/CardGlossaryPopover';
 import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { MarkPreviewSheet } from '../cards/MarkPreviewSheet';
 import { DeckButton } from '../cards/DeckButton';
@@ -73,13 +74,19 @@ export function RewardScreen({
   const archetype = mainArchetype(deck);
   const [preview, setPreview] = useState<CardDefinition | null>(null);
   const [armedId, setArmedId] = useState<string | null>(null);
-  const [frontId, setFrontId] = useState<string | null>(null);
+  const [anchor, setAnchor] = useState<WindowRect | null>(null);
+  const remeasure = useRef<(() => void) | null>(null);
+  const rememberMeasure = useCallback((measure: () => void) => {
+    remeasure.current = measure;
+  }, []);
+  const armedCard = choices.find((card) => card.id === armedId) ?? null;
   const [replacing, setReplacing] = useState<PotionDefinition | null>(null);
   const [pickingUpgrade, setPickingUpgrade] = useState(false);
   const emptySlot = potions.findIndex((slot) => slot === null);
   const upgradable = deck.some(canUpgrade);
   return (
-    <ScreenScroll contentStyle={styles.root}>
+    <View style={styles.screen}>
+    <ScreenScroll contentStyle={styles.root} onScroll={() => remeasure.current?.()}>
       <View style={styles.bar}>
         <ItemBar relics={relics} potions={potions} />
       </View>
@@ -144,27 +151,27 @@ export function RewardScreen({
           )}
           <View style={styles.row}>
             {choices.map((card) => (
-              <View key={card.id} style={[styles.choice, frontId === card.id && styles.choiceFront]}>
-                <CardView
-                  card={card}
-                  size="md"
-                  selected={armedId === card.id}
-                  onTipChange={(open) =>
-                    setFrontId((current) => (open ? card.id : current === card.id ? null : current))
+              <RewardChoice
+                key={card.id}
+                card={card}
+                armed={armedId === card.id}
+                onPress={() => {
+                  if (armedId === card.id) onPick(card);
+                  else {
+                    setAnchor(null);
+                    setArmedId(card.id);
                   }
-                  onPress={() => {
-                    if (armedId === card.id) onPick(card);
-                    else setArmedId(card.id);
-                  }}
-                />
-                {armedId === card.id && <Text style={styles.again}>もう一度タップで加える</Text>}
+                }}
+                onAnchor={setAnchor}
+                onMeasure={rememberMeasure}
+              >
                 <ArchetypeChips archetypes={card.archetypes ?? []} highlight={archetype} />
                 {card.water && (
                   <Pressable onPress={() => setPreview(card)} hitSlop={8}>
                     <Text style={styles.stackLink}>段の数字</Text>
                   </Pressable>
                 )}
-              </View>
+              </RewardChoice>
             ))}
           </View>
           {canSkip ? (
@@ -208,6 +215,38 @@ export function RewardScreen({
       {toBossRelic && <Text style={styles.note}>このあとボスの宝箱からレリックを選べる</Text>}
       <MarkPreviewSheet card={preview} onClose={() => setPreview(null)} />
     </ScreenScroll>
+    {armedCard && anchor && <CardGlossaryPopover card={armedCard} anchor={anchor} />}
+    </View>
+  );
+}
+
+function RewardChoice({
+  card,
+  armed,
+  onPress,
+  onAnchor,
+  onMeasure,
+  children,
+}: {
+  card: CardDefinition;
+  armed: boolean;
+  onPress: () => void;
+  onAnchor: (rect: WindowRect) => void;
+  onMeasure: (measure: () => void) => void;
+  children: ReactNode;
+}) {
+  const { ref, measure } = useGlossaryAnchor(armed, onAnchor);
+  useEffect(() => {
+    if (measure) onMeasure(measure);
+  }, [measure, onMeasure]);
+  return (
+    <View style={styles.choice}>
+      <View ref={ref} collapsable={false} onLayout={() => measure?.()} style={styles.cardSlot}>
+        <CardView card={card} size="md" selected={armed} onPress={onPress} />
+        {armed && <Text style={styles.again}>もう一度タップで加える</Text>}
+      </View>
+      {children}
+    </View>
   );
 }
 
@@ -330,9 +369,10 @@ const styles = StyleSheet.create({
   subtitle: { color: COLORS.textMuted, fontSize: 14, textAlign: 'center' },
   boss: { color: COLORS.text, fontSize: 13, lineHeight: 18, textAlign: 'center', maxWidth: 520 },
   archetype: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
+  screen: { flex: 1 },
   row: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.md, flexWrap: 'wrap' },
   choice: { alignItems: 'center', gap: SPACING.xs },
-  choiceFront: { zIndex: 5 },
+  cardSlot: { alignItems: 'center', gap: SPACING.xs },
   again: { color: COLORS.keyword, fontSize: 11, fontWeight: '700', textAlign: 'center' },
   stackLink: { color: COLORS.gold, fontSize: 12, fontWeight: '700' },
   list: { alignSelf: 'stretch', gap: SPACING.sm, maxWidth: 420 },
