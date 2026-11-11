@@ -65,11 +65,13 @@ export const SPIRIT_SLASH: CardDefinition = {
   art: 'flame-slash',
 };
 
+/** カイル専用。コスト 2 でダメージと弱体。砕きは同じ枠だったので外した。 */
 export const BASH: CardDefinition = {
   id: 'bash',
   name: '強打',
   rarity: 'common',
   type: 'attack',
+  attribute: 'fire',
   archetypes: ['debuff'],
   cost: 2,
   target: 'enemy',
@@ -759,27 +761,6 @@ export const REWARD_CARDS: CardDefinition[] = [
     effects: [{ kind: 'gainEndTurnBlock', amount: 3 }],
     exhaust: true,
     upgrade: { effects: [{ kind: 'gainEndTurnBlock', amount: 4 }] },
-  },
-  {
-    id: 'uppercut',
-    name: '砕き',
-    rarity: 'uncommon',
-    type: 'attack',
-    archetypes: ['debuff'],
-    cost: 2,
-    target: 'enemy',
-    effects: [
-      { kind: 'damage', amount: 8 },
-      { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
-      { kind: 'applyDebuff', status: 'weak', turns: 1 },
-    ],
-    upgrade: {
-      effects: [
-        { kind: 'damage', amount: 8 },
-        { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },
-        { kind: 'applyDebuff', status: 'weak', turns: 2 },
-      ],
-    },
   },
   {
     id: 'shockwave',
