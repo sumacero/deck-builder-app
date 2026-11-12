@@ -4,7 +4,7 @@ import type { EventDefinition } from '../domain/event';
 import type { PotionDefinition } from '../domain/potion';
 import type { RelicDefinition } from '../domain/relic';
 import { forgeArrow } from '../logic/arrows';
-import { toBerserk } from '../logic/cards';
+import { baseCardId, toBerserk } from '../logic/cards';
 import { ALL_AGENTS } from './agents';
 import { ACT_CARDS } from './actCards';
 import { STANDARD_BLESSINGS } from './blessings';
@@ -43,12 +43,25 @@ function uniqueById<T extends { id: string }>(items: readonly T[]): T[] {
 }
 
 /**
+ * 図鑑用。ストライクと防御は絵が違うと別の欄に出すので、id だけではまとめない。
+ * それ以外は今までどおり id で 1 枚。
+ */
+function uniqueForCatalog(items: readonly CardDefinition[]): CardDefinition[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const base = baseCardId(item.id);
+    const key = base === 'strike' || base === 'defend' ? `${base}:${item.art ?? 'default'}` : item.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
  * 図鑑に並べるカード。報酬プール・初期デッキ・秘奥義・究極・お邪魔・戦闘中の矢をすべて含める。
  * 新しいカードを足したら、元の一覧（`REWARD_CARDS` / `VERDANT_CARDS` / `MIRROR_CARDS` など）に入れれば図鑑にも出る。
  */
-export const ALL_CARDS: CardDefinition[] = uniqueById([
-  STRIKE,
-  DEFEND,
+export const ALL_CARDS: CardDefinition[] = uniqueForCatalog([
   ...CRIMSON_STARTER_DECK,
   ...VERDANT_STARTER_DECK,
   ...MIRROR_STARTER_DECK,
