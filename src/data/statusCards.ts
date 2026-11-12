@@ -46,6 +46,7 @@ export const ICE_SHARD: CardDefinition = {
   effects: [],
   unplayable: true,
   ethereal: true,
+  art: 'frost-chip',
   turnEndInHand: [{ kind: 'loseHp', amount: 3 }],
 };
 

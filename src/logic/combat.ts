@@ -304,6 +304,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
   const retains = hasStatus(state.player.statuses, 'retainBlock') || powerOf(state, 'barricade') > 0;
   const keepBlock = turn > 1 && retains && state.player.block > 0;
   const demonForm = turn > 1 ? powerOf(state, 'demonForm') : 0;
+  const huntInstinct = turn > 1 ? powerOf(state, 'huntInstinct') : 0;
   const started: CombatState = {
     ...state,
     turn,
@@ -312,7 +313,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
       ...state.player,
       block: keepBlock ? state.player.block : 0,
       energy: Math.max(0, state.player.maxEnergy - hindrance.paralysis),
-      strength: state.player.strength + demonForm,
+      strength: state.player.strength + demonForm + huntInstinct,
       tempStrength: 0,
       enchant: [],
       cardsThisTurn: 0,
@@ -333,6 +334,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
   const logs = [
     ...(keepBlock ? [`ブロック ${state.player.block} を引き継いだ`] : []),
     ...(demonForm > 0 ? [`紅蓮の化身で筋力 +${demonForm}`] : []),
+    ...(huntInstinct > 0 ? [`狩猟本能で筋力 +${huntInstinct}`] : []),
     ...hindranceLogs(hindrance),
   ];
   const logged = logs.reduce(withLog, withLog(started, `ターン ${turn} 開始`));
@@ -2496,9 +2498,11 @@ function applyEnemyAction(
       const weak = affinity === 'weak';
       const note = weak ? '（弱点）' : affinity === 'resist' ? '（相性で軽減）' : '';
       const thorns = powerOf(state, 'thorns');
+      const tide = powerOf(state, 'tideReturn');
       const hits = Math.max(0, action.hits - enemy.hitCut);
       let next = enemy.hitCut > 0 ? updateEnemy(state, uid, (e) => ({ ...e, hitCut: 0 })) : state;
       let bitten = false;
+      let tideSwings = 0;
       for (let i = 0; i < hits && next.player.hp > 0; i++) {
         const attacker = findEnemy(next, uid);
         if (!attacker || !isAlive(attacker)) break;
@@ -2511,6 +2515,7 @@ function applyEnemyAction(
             'かわした！',
           );
           if (thorns > 0) next = hitEnemy(next, uid, thorns, FIXED_HIT);
+          if (tide > 0) tideSwings += 1;
           continue;
         }
         const result = applyDamage(next.player, amount);
@@ -2529,13 +2534,16 @@ function applyEnemyAction(
           if (traitOf(enemy, 'leech')) next = healEnemy(next, uid, result.hpLoss);
         }
         if (thorns > 0 && next.player.hp > 0) next = hitEnemy(next, uid, thorns, FIXED_HIT);
+        if (tide > 0 && next.player.hp > 0) tideSwings += 1;
       }
       if (bitten && traitOf(enemy, 'devour')) {
         const attacker = findEnemy(next, uid);
         if (attacker && isAlive(attacker)) next = devourDiscard(next, enemy.name);
       }
       const thawed = findEnemy(next, uid);
-      return thawed && thawed.frost > 0 ? updateEnemy(next, uid, (e) => ({ ...e, frost: 0 })) : next;
+      const cleared = thawed && thawed.frost > 0 ? updateEnemy(next, uid, (e) => ({ ...e, frost: 0 })) : next;
+      // 今の攻撃で消費した霜を消したあと、潮返しの霜を次の攻撃へ残す。
+      return tideSwings > 0 ? frostEnemy(cleared, uid, tide * tideSwings) : cleared;
     }
     case 'block': {
       const amount = action.amount;
@@ -2817,7 +2825,18 @@ export function endTurn(state: CombatState): CombatState {
     afterRelics.player.endTurnBlock > 0
       ? applyEffect(afterRelics, { kind: 'block', amount: afterRelics.player.endTurnBlock }, 'all')
       : afterRelics;
-  const discarded = settle(withLog(discardHand(afterMetal), 'ターン終了'));
+  const dew = powerOf(afterMetal, 'dewMail');
+  const afterDew =
+    dew > 0
+      ? withLog(
+          {
+            ...afterMetal,
+            player: { ...afterMetal.player, guardWater: afterMetal.player.guardWater + dew },
+          },
+          `露の鎧で守りの水力 +${dew}`,
+        )
+      : afterMetal;
+  const discarded = settle(withLog(discardHand(afterDew), 'ターン終了'));
   if (discarded.pendingHandRemoval || discarded.status !== 'playerTurn') return discarded;
   const afterEnemy = runEnemyTurn(withEvent(discarded, { kind: 'enemyTurnStart', target: 'player' }));
   if (afterEnemy.status !== 'playerTurn') return afterEnemy;

@@ -665,14 +665,15 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['sacrifice'],
     cost: 0,
     target: 'self',
+    // 捧げの儀も体力をエナジーに変える。こちらは繰り返せる筋力にする。
     effects: [
       { kind: 'loseHp', amount: 3 },
-      { kind: 'gainEnergy', amount: 2 },
+      { kind: 'gainStrength', amount: 2, duration: 'combat' },
     ],
     upgrade: {
       effects: [
         { kind: 'loseHp', amount: 3 },
-        { kind: 'gainEnergy', amount: 3 },
+        { kind: 'gainStrength', amount: 3, duration: 'combat' },
       ],
     },
   },

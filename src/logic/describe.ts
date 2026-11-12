@@ -227,11 +227,13 @@ export function describeAttributes(attributes: readonly Attribute[], iconOnly = 
 export const POWER_LABEL: Record<PowerId, string> = {
   barricade: '不動',
   demonForm: '紅蓮の化身',
+  huntInstinct: '狩猟本能',
   juggernaut: '鉄壁の闘気',
   sadistic: '弱点看破',
   rupture: '燃える血潮',
   feelNoPain: '灰より立つ',
   thorns: '茨の鎧',
+  tideReturn: '潮返し',
   overgrowth: '森の侵蝕',
   verdure: '命の芽吹き',
   quickdraw: '速射の構え',
@@ -249,6 +251,7 @@ export const POWER_LABEL: Record<PowerId, string> = {
   tidecall: '潮招き',
   spring: '泉脈',
   shed: '落葉',
+  dewMail: '露の鎧',
 };
 
 /** パワーの効果（amount は 1 枚分の量）。名前を文頭に置き、その用語の説明と対応させる。 */
@@ -258,6 +261,8 @@ function powerBody(power: PowerId, amount: number): string {
       return 'この戦闘中、ブロックがターンの始めに消えなくなる。';
     case 'demonForm':
       return `この戦闘中、ターンの始めに筋力 ${amount} を得る。`;
+    case 'huntInstinct':
+      return `この戦闘中、ターンの始めに筋力 ${amount} を得る。長く追うほど、次の矢が鋭くなる。`;
     case 'juggernaut':
       return `この戦闘中、ブロックを得るたびに HP が一番低い敵に ${amount} ダメージ。`;
     case 'sadistic':
@@ -268,6 +273,8 @@ function powerBody(power: PowerId, amount: number): string {
       return `この戦闘中、カードが廃棄されるたびにブロック ${amount} を得る。`;
     case 'thorns':
       return `この戦闘中、敵の攻撃を受けるたびにその敵に ${amount} ダメージ。`;
+    case 'tideReturn':
+      return `この戦闘中、敵の攻撃を 1 回受けるたびに、その敵の次の攻撃へ霜 ${amount} を足す（連続攻撃なら回数分）。今受けた攻撃には乗らない。`;
     case 'overgrowth':
       return `この戦闘中、ターンの始めに敵全体に宿り木 ${amount} を与える。`;
     case 'verdure':
@@ -302,6 +309,8 @@ function powerBody(power: PowerId, amount: number): string {
       return `この戦闘中、カードを 1 枚引くたびにブロック ${amount} を得る。`;
     case 'shed':
       return `この戦闘中、効果でカードを 1 枚捨てるたびにブロック ${amount} を得る。`;
+    case 'dewMail':
+      return `この戦闘中、自分のターンの終わりに守りの水力 ${amount} を得る。`;
   }
 }
 

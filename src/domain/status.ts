@@ -19,6 +19,9 @@ export type Statuses = Partial<Record<StatusId, number>>;
  * パワーカードで得る、戦闘の終わりまで続く能力。値は重ねた量（ターン数ではない）。
  * - barricade（不動）: ターンの始めにブロックが消えない
  * - demonForm（紅蓮の化身）: ターンの始めに筋力 +N
+ * - huntInstinct（狩猟本能）: ターンの始めに筋力 +N。リーネの札。紅蓮の化身とは別の名前
+ * - tideReturn（潮返し）: 敵の攻撃 1 回ごとに、その敵の次の攻撃へ霜 +N。ノアの札
+ * - dewMail（露の鎧）: 自分のターンの終わりに守りの水力 +N。ノアの札
  * - juggernaut（鉄壁の闘気）: ブロックを得るたびに、HP が一番低い敵に N ダメージ
  * - sadistic（弱点看破）: 敵にデバフを与えるたびに、その敵に N ダメージ
  * - rupture（燃える血潮）: HP を失うたびに筋力 +N
@@ -45,11 +48,13 @@ export type Statuses = Partial<Record<StatusId, number>>;
 export type PowerId =
   | 'barricade'
   | 'demonForm'
+  | 'huntInstinct'
   | 'juggernaut'
   | 'sadistic'
   | 'rupture'
   | 'feelNoPain'
   | 'thorns'
+  | 'tideReturn'
   | 'overgrowth'
   | 'verdure'
   | 'quickdraw'
@@ -66,6 +71,7 @@ export type PowerId =
   | 'cinder'
   | 'tidecall'
   | 'spring'
-  | 'shed';
+  | 'shed'
+  | 'dewMail';
 
 export type Powers = Partial<Record<PowerId, number>>;

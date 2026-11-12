@@ -242,6 +242,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '🌋',
     description: '自分のターンの始めに、その数値の分だけ筋力を得る。戦闘が長引くほど強くなる。',
   },
+  huntInstinct: {
+    id: 'huntInstinct',
+    name: '狩猟本能',
+    icon: '🐾',
+    description: '自分のターンの始めに、その数値の分だけ筋力を得る。長く追うほど、次の矢が鋭くなる。',
+  },
   juggernaut: {
     id: 'juggernaut',
     name: '鉄壁の闘気',
@@ -278,6 +284,13 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '茨の鎧',
     icon: '🌹',
     description: '敵の攻撃を 1 回受けるたびに、攻撃してきた敵にその数値のダメージを返す（連続攻撃なら回数分）。',
+  },
+  tideReturn: {
+    id: 'tideReturn',
+    name: '潮返し',
+    icon: '↩️',
+    description:
+      '敵の攻撃を 1 回受けるたびに、攻撃してきた敵の次の攻撃へ、その数値の霜を足す（連続攻撃なら回数分）。今受けた攻撃には乗らない。',
   },
   overgrowth: {
     id: 'overgrowth',
@@ -330,6 +343,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     name: '落葉',
     icon: '🍂',
     description: 'カードの効果で手札から捨てるたびに、捨てた枚数 × その数値だけブロックを得る。ターン終了の捨て札では発動しない。',
+  },
+  dewMail: {
+    id: 'dewMail',
+    name: '露の鎧',
+    icon: '🫧',
+    description: '自分のターンの終わりに、その数値だけ守りの水力を得る。戦闘の終わりまで続く。',
   },
   fuseEcho: {
     id: 'fuseEcho',
