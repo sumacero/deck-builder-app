@@ -86,7 +86,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'gainStrength':
       return `筋力 ${effect.amount} を得る。`;
     case 'gainEndTurnBlock':
-      return `鉄壁 ${effect.amount}。この戦闘中、毎ターンの終わりにブロックを得る。`;
+      return `鉄壁 ${effect.amount}。`;
     case 'damageFromBlock':
       return target === 'allEnemies' ? '敵全体に、今のブロック値と同じダメージを与える。' : '今のブロック値と同じダメージを与える。';
     case 'damageFromAttackWater':
@@ -184,7 +184,7 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
     case 'imbueWater':
       return '手札のカード 1 枚を、このランの間、水札にする。';
     case 'transformCurse':
-      return '手札の呪い、またはお邪魔 1 枚を「滴の守り」に変える。滴の守りはコスト 0、ブロック 4。使ったあと廃棄される。';
+      return '手札の呪い、またはお邪魔 1 枚を「滴の守り」に変える。';
     case 'discardFromHand':
       return effect.choose
         ? `手札から ${effect.amount} 枚を選んで捨てる。`
@@ -264,7 +264,7 @@ function powerBody(power: PowerId, amount: number): string {
     case 'demonForm':
       return `この戦闘中、ターンの始めに筋力 ${amount} を得る。`;
     case 'huntInstinct':
-      return `この戦闘中、ターンの始めに筋力 ${amount} を得る。長く追うほど、次の矢が鋭くなる。`;
+      return `この戦闘中、ターンの始めに筋力 ${amount} を得る。`;
     case 'juggernaut':
       return `この戦闘中、ブロックを得るたびに HP が一番低い敵に ${amount} ダメージ。`;
     case 'sadistic':
@@ -276,7 +276,7 @@ function powerBody(power: PowerId, amount: number): string {
     case 'thorns':
       return `この戦闘中、敵の攻撃を受けるたびにその敵に ${amount} ダメージ。`;
     case 'tideReturn':
-      return `この戦闘中、敵の攻撃を 1 回受けるたびに、その敵の次の攻撃へ霜 ${amount} を足す（連続攻撃なら回数分）。今受けた攻撃には乗らない。`;
+      return `この戦闘中、敵の攻撃を 1 回受けるたびに、その敵の次の攻撃へ霜 ${amount} を足す。`;
     case 'overgrowth':
       return `この戦闘中、ターンの始めに敵全体に宿り木 ${amount} を与える。`;
     case 'verdure':
@@ -349,22 +349,18 @@ const describeEffects = (effects: Effect[], target: EffectTarget) =>
 
 export function describeCard(card: CardDefinition): string {
   const extras = [
-    card.curse ? '呪い。デッキに残り、毎戦闘の山札に入る。ショップや出来事で削除できる。' : '',
-    card.unplayable && card.sly
-      ? '使用できない。昇華。捨てられたときに、コストを払わず効果が起きる。'
-      : card.unplayable
-        ? '使用できない。'
-        : '',
+    card.curse ? '呪い。' : '',
+    card.unplayable && card.sly ? '使用できない。昇華。' : card.unplayable ? '使用できない。' : '',
     card.turnEndInHand
       ? `ターン終了時に手札にあると、${describeEffects(card.turnEndInHand, 'self')}`
       : '',
-    card.ethereal ? '幻影。ターン終了時に手札にあると廃棄される。' : '',
-    card.retain ? '保留。ターンが終わっても手札に残る。' : '',
-    card.innate ? '先制。戦闘開始時、手札にある。' : '',
-    card.xCost ? 'Xコスト。残っているエナジーをすべて払う。' : '',
-    card.sly && !card.unplayable ? '昇華。捨てられたとき、コストを払わずに使う。' : '',
-    card.priority ? '先に出す。手札にあるあいだ、このカード以外は使えない。' : '',
-    card.uses !== undefined ? `${card.uses} 回使える。使い切ると、その戦闘では廃棄される。` : '',
+    card.ethereal ? '幻影。' : '',
+    card.retain ? '保留。' : '',
+    card.innate ? '先制。' : '',
+    card.xCost ? 'Xコスト。' : '',
+    card.sly && !card.unplayable ? '昇華。' : '',
+    card.priority ? '先に出す。' : '',
+    card.uses !== undefined ? `${card.uses} 回使える。` : '',
     card.growth ? describeGrowth(card.growth) : '',
     card.timesGrown ? `（${card.timesGrown} 回成長）` : '',
     card.addCopyToDiscard ? 'このカードのコピーを捨て札に加える。' : '',
@@ -569,7 +565,7 @@ export function describeTrait(trait: EnemyTrait): string {
     case 'vengeance':
       return `仇討ち: 仲間が倒れるたびに筋力 +${trait.strength}`;
     case 'enrage':
-      return `激昂: スキルを使うたびに筋力 +${trait.strength}。早く倒さないと殴りが重くなる`;
+      return `激昂: スキルを使うたびに筋力 +${trait.strength}`;
     case 'sleep':
       return `眠り: 最初の ${trait.turns} ターンは眠っている。目覚めると筋力 +${trait.wakeStrength}`;
     case 'artifact':
@@ -597,7 +593,7 @@ export function describeTrait(trait: EnemyTrait): string {
     case 'riposte':
       return `返し棘: 攻撃を受けるたびに ${trait.damage} ダメージを返す。ブロックで防げる`;
     case 'wick':
-      return `導火: 自分のターンが ${trait.turns} 回来ると ${trait.damage} ダメージで爆発して倒れる。先に倒すと爆発しない`;
+      return `導火: 自分のターンが ${trait.turns} 回来ると ${trait.damage} ダメージで爆発して倒れる。倒すと爆発しない`;
     case 'split':
       return `分裂: 倒れると「${trait.into.name}」が ${trait.count} 体まで現れる。それ以上は分裂しない`;
     case 'leech':
@@ -620,7 +616,7 @@ export function describeTrait(trait: EnemyTrait): string {
 /** エリート以上の、一周で戻る火力。タップした詳細に出す。 */
 export function describeRoutine(rank: EnemyRank): string | null {
   if (rank === 'normal') return null;
-  return '攻勢: 大技の攻撃は一周するあいだ強くなり、先頭に戻ると戻る。ギミックの攻撃は数字が変わらない。戦闘中に上がった筋力は残る。';
+  return '攻勢: 大技の攻撃は一周するあいだ強くなり、先頭に戻ると戻る。';
 }
 
 export const ENEMY_RANK_LABEL: Record<EnemyRank, string | null> = {
