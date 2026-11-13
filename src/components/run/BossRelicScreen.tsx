@@ -26,14 +26,19 @@ export function BossRelicScreen({ run, choices, onChoose }: BossRelicScreenProps
       <View style={styles.body}>
         <Text style={styles.chest}>👑</Text>
         <Text style={styles.title}>ボスの宝箱</Text>
-        <Text style={styles.subtitle}>強力なレリックを 1 つ選ぶ</Text>
+        <Text style={styles.subtitle}>
+          {selectedId ? 'もう一度タップで持っていく' : '強力なレリックを 1 つ選ぶ'}
+        </Text>
         <View style={styles.choices}>
           {choices.map((relic) => (
             <RelicCard
               key={relic.id}
               relic={relic}
               selected={relic.id === selectedId}
-              onPress={() => setSelectedId(relic.id)}
+              onPress={() => {
+                if (selectedId === relic.id) onChoose(relic.id);
+                else setSelectedId(relic.id);
+              }}
             />
           ))}
         </View>

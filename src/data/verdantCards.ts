@@ -320,8 +320,9 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypePayoff: true,
     cost: 1,
     target: 'enemy',
-    effects: [{ kind: 'damagePerCardPlayed', base: 2, perCard: 2 }],
-    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 3, perCard: 3 }] },
+    // 連撃の鼓動・畳みかけは「このターンの札の枚数」。千本矢は放ったアタックだけを数える。
+    effects: [{ kind: 'damagePerAttackPlayed', base: 3, perCard: 3 }],
+    upgrade: { effects: [{ kind: 'damagePerAttackPlayed', base: 4, perCard: 4 }] },
     motion: 'heavy',
   },
 
@@ -451,9 +452,10 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['strength'],
     cost: 2,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'demonForm', amount: 1 }],
+    // 紅蓮の化身と同じ増え方だが、リーネの札なので名前は狩猟本能。
+    effects: [{ kind: 'gainPower', power: 'huntInstinct', amount: 1 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'demonForm', amount: 2 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'huntInstinct', amount: 2 }] },
   },
 
   // --- 弓の追加。矢を作る札と、使った枚数で伸びる札 ---
@@ -468,9 +470,18 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypePayoff: true,
     cost: 2,
     target: 'allEnemies',
-    effects: [{ kind: 'damagePerCardPlayed', base: 3, perCard: 2 }],
-    upgrade: { effects: [{ kind: 'damagePerCardPlayed', base: 5, perCard: 2 }] },
-    motion: 'heavy',
+    // 畳みかけと同じ「使った枚数で伸びる全体攻撃」だったので、矢をばらまいて矢筒を満たす札にする。
+    effects: [
+      { kind: 'damage', amount: 5 },
+      { kind: 'addArrows', amount: 2 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'damage', amount: 7 },
+        { kind: 'addArrows', amount: 3 },
+      ],
+    },
+    motion: 'sweep',
   },
   {
     id: 'focused-breath',
@@ -481,14 +492,15 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo', 'strength'],
     cost: 0,
     target: 'self',
+    // 力みもコスト 0 で筋力とドロー。こちらは矢を番える。
     effects: [
       { kind: 'gainStrength', amount: 1, duration: 'turn' },
-      { kind: 'draw', amount: 1 },
+      { kind: 'addArrows', amount: 1 },
     ],
     upgrade: {
       effects: [
         { kind: 'gainStrength', amount: 2, duration: 'turn' },
-        { kind: 'draw', amount: 1 },
+        { kind: 'addArrows', amount: 2 },
       ],
     },
     motion: 'focus',
@@ -601,10 +613,19 @@ export const VERDANT_CARDS: CardDefinition[] = [
     attribute: 'grass',
     archetypes: ['strength'],
     cost: 2,
-    target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 3, hits: 3 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 4, hits: 3 }] },
-    motion: 'sweep',
+    target: 'enemy',
+    // 鞭嵐は敵全体への二連。こちらは 1 体を巻き、宿り木を残す。
+    effects: [
+      { kind: 'damage', amount: 3, hits: 4 },
+      { kind: 'applyDebuff', status: 'seed', turns: 1 },
+    ],
+    upgrade: {
+      effects: [
+        { kind: 'damage', amount: 4, hits: 4 },
+        { kind: 'applyDebuff', status: 'seed', turns: 2 },
+      ],
+    },
+    motion: 'flurry',
   },
   {
     id: 'snare-whip',

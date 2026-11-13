@@ -15,7 +15,7 @@ export const STAR_BURDEN: CardDefinition = {
   curse: true,
   unplayable: true,
   effects: [],
-  turnEndInHand: [{ kind: 'loseHp', amount: 2 }],
+  turnEndInHand: [{ kind: 'sufferDamage', amount: 2 }],
 };
 
 export const STAR_AFTERGLOW: CardDefinition = {
@@ -26,7 +26,6 @@ export const STAR_AFTERGLOW: CardDefinition = {
   cost: 0,
   target: 'allEnemies',
   exhaust: true,
-  art: 'searing-decree',
   effects: [
     { kind: 'damage', amount: 9 },
     { kind: 'loseHp', amount: 4 },
@@ -47,7 +46,6 @@ export const LAST_BLOW: CardDefinition = {
   cost: 1,
   target: 'enemy',
   exhaust: true,
-  art: 'heavy-blade',
   effects: [
     { kind: 'damage', amount: 16 },
     { kind: 'loseHp', amount: 6 },
@@ -68,7 +66,6 @@ export const REVERSAL_WARD: CardDefinition = {
   cost: 1,
   target: 'self',
   exhaust: true,
-  art: 'steadfast-guard',
   effects: [{ kind: 'doubleBlock' }, { kind: 'block', amount: 8 }],
   upgrade: { effects: [{ kind: 'doubleBlock' }, { kind: 'block', amount: 12 }] },
 };
@@ -81,7 +78,7 @@ export const DESPERATE_FLURRY: CardDefinition = {
   cost: 1,
   target: 'enemy',
   exhaust: true,
-  art: 'twin-strike',
+  art: 'desperate-flurry',
   effects: [
     { kind: 'damage', amount: 7, hits: 2 },
     { kind: 'loseHp', amount: 5 },
@@ -102,7 +99,6 @@ export const NOX_SHARD: CardDefinition = {
   cost: 1,
   target: 'allEnemies',
   exhaust: true,
-  art: 'heat-up',
   effects: [
     { kind: 'damage', amount: 5 },
     { kind: 'applyDebuff', status: 'vulnerable', turns: 2 },

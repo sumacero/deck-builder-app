@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { RunState } from '../../domain/run';
 import type { ShopStock } from '../../domain/shop';
 import { useMusic } from '../../hooks/useMusic';
+import { useSceneCue } from '../../hooks/useSceneCue';
 import type { ShopActions } from '../../hooks/useRun';
 import { isDraftable } from '../../logic/attribute';
 import { stackCards } from '../../logic/cards';
 import { describeCard, describePotion, describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
 import { canAfford, hasEmptyPotionSlot } from '../../logic/shop';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { CardGlossaryPopover, type WindowRect } from '../glossary/CardGlossaryPopover';
+import { PlaceBanner } from '../backgrounds/PlaceBanner';
+import { placeImage } from '../backgrounds/sceneImages';
 import { CardPickerModal } from '../cards/CardPickerModal';
+import { KeywordText } from '../glossary/KeywordText';
 import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
@@ -27,12 +32,23 @@ type Selection = { kind: 'card' | 'relic' | 'potion'; offerId: string };
 
 type Purchase = { name: string; detail: string; price: number; blocked: string | null };
 
-/** ショップ。商品をタップで選び、下のバーの「購入」で買う。 */
+/** ショップ。商品をタップで選び、もう一度タップするか下のバーで買う。 */
 export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [anchor, setAnchor] = useState<WindowRect | null>(null);
+  const remeasure = useRef<(() => void) | null>(null);
+  const rememberMeasure = useCallback((measure: () => void) => {
+    remeasure.current = measure;
+  }, []);
   const [removing, setRemoving] = useState(false);
   useMusic('shop');
+  useSceneCue('shop');
+  const shopArt = placeImage('shop');
   const purchase = selection ? describePurchase(selection) : null;
+  const selectedCard =
+    selection?.kind === 'card'
+      ? (stock.cards.find((offer) => offer.offerId === selection.offerId)?.item ?? null)
+      : null;
 
   const buy = () => {
     if (!selection) return;
@@ -40,6 +56,16 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
     else if (selection.kind === 'relic') actions.buyRelic(selection.offerId);
     else actions.buyPotion(selection.offerId);
     setSelection(null);
+  };
+
+  const selectOrBuy = (next: Selection) => {
+    if (selection?.kind === next.kind && selection.offerId === next.offerId) {
+      const current = describePurchase(next);
+      if (current && current.blocked === null) buy();
+      return;
+    }
+    setAnchor(null);
+    setSelection(next);
   };
 
   return (
@@ -56,7 +82,8 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} onScroll={() => remeasure.current?.()} scrollEventThrottle={16}>
+        {shopArt && <PlaceBanner source={shopArt} />}
         <Text style={styles.section}>カード</Text>
         <View style={styles.cards}>
           {stock.cards.map((offer) => (
@@ -66,7 +93,9 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
               affordable={canAfford(run, offer.price)}
               selected={selection?.offerId === offer.offerId}
               exclusive={!isDraftable(offer.item, run.agent)}
-              onPress={() => setSelection({ kind: 'card', offerId: offer.offerId })}
+              onPress={() => selectOrBuy({ kind: 'card', offerId: offer.offerId })}
+              onAnchor={selection?.offerId === offer.offerId ? setAnchor : undefined}
+              onMeasure={selection?.offerId === offer.offerId ? rememberMeasure : undefined}
             />
           ))}
         </View>
@@ -82,7 +111,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
             affordable={canAfford(run, offer.price)}
             sold={offer.sold}
             selected={selection?.offerId === offer.offerId}
-            onPress={() => setSelection({ kind: 'relic', offerId: offer.offerId })}
+            onPress={() => selectOrBuy({ kind: 'relic', offerId: offer.offerId })}
           />
         ))}
 
@@ -97,7 +126,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
             affordable={canAfford(run, offer.price)}
             sold={offer.sold}
             selected={selection?.offerId === offer.offerId}
-            onPress={() => setSelection({ kind: 'potion', offerId: offer.offerId })}
+            onPress={() => selectOrBuy({ kind: 'potion', offerId: offer.offerId })}
           />
         ))}
 
@@ -121,9 +150,11 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
           <View style={styles.purchase}>
             <View style={styles.purchaseText}>
               <Text style={styles.purchaseName}>{purchase.name}</Text>
-              <Text style={styles.purchaseDetail} numberOfLines={2}>
-                {purchase.blocked ?? purchase.detail}
-              </Text>
+              <KeywordText
+                text={purchase.blocked ?? purchase.detail}
+                style={styles.purchaseDetail}
+                numberOfLines={2}
+              />
             </View>
             <Pressable
               onPress={buy}
@@ -158,6 +189,7 @@ export function ShopScreen({ run, stock, actions }: ShopScreenProps) {
           onCancel={() => setRemoving(false)}
         />
       )}
+      {selectedCard && anchor && <CardGlossaryPopover card={selectedCard} anchor={anchor} />}
     </View>
   );
 

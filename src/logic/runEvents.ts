@@ -30,6 +30,63 @@ export function findUpgrades(
   return upgrades;
 }
 
+/** before にあって after に無いカード。強化で消えた元の札は除く。 */
+export function findRemovedCards(
+  before: readonly CardDefinition[],
+  after: readonly CardDefinition[],
+  upgraded: readonly UpgradedCard[],
+): CardDefinition[] {
+  const nextCounts = countById(after);
+  const upgradedBases = countById(upgraded.map((pair) => pair.before));
+  const removed: CardDefinition[] = [];
+  for (const card of before) {
+    const stillThere = nextCounts.get(card.id) ?? 0;
+    if (stillThere > 0) {
+      nextCounts.set(card.id, stillThere - 1);
+      continue;
+    }
+    const becameUpgrade = upgradedBases.get(card.id) ?? 0;
+    if (becameUpgrade > 0) {
+      upgradedBases.set(card.id, becameUpgrade - 1);
+      continue;
+    }
+    removed.push(card);
+  }
+  return removed;
+}
+
+/**
+ * 減った札と増えた札を交換にまとめる。
+ * 増えた札が 1 枚なら、減った札は全部その 1 枚への交換（祭壇の 2 枚 → 1 枚）。
+ * 枚数が揃うときは 1 対 1。減っただけで増えていない削除は交換にしない。
+ */
+export function cardFlowEvents(
+  before: readonly CardDefinition[],
+  after: readonly CardDefinition[],
+): RunEvent[] {
+  const upgraded = findUpgrades(before, after);
+  const removed = findRemovedCards(before, after, upgraded);
+  const gained = findGainedCards(before, after, upgraded);
+  const events: RunEvent[] = [];
+  if (removed.length > 0 && gained.length > 0) {
+    if (gained.length === 1) {
+      const gainedCard = gained[0];
+      if (gainedCard) events.push({ kind: 'exchange', lost: removed, gained: gainedCard });
+    } else {
+      const count = Math.min(removed.length, gained.length);
+      for (let index = 0; index < count; index++) {
+        const lost = removed[index];
+        const next = gained[index];
+        if (lost && next) events.push({ kind: 'exchange', lost: [lost], gained: next });
+      }
+      for (const card of gained.slice(count)) events.push({ kind: 'cardGain', card });
+    }
+  } else {
+    for (const card of gained) events.push({ kind: 'cardGain', card });
+  }
+  return events;
+}
+
 /** after にあって before に無いカード（同じカードは枚数で比べる）。強化で増えたカードは除く。 */
 export function findGainedCards(
   before: readonly CardDefinition[],
@@ -69,9 +126,7 @@ export function diffRunEvents(prev: RunState, next: RunState): RunEvent[] {
     });
   }
   const upgraded = findUpgrades(prev.deck, next.deck);
-  for (const card of findGainedCards(prev.deck, next.deck, upgraded)) {
-    events.push({ kind: 'cardGain', card });
-  }
+  events.push(...cardFlowEvents(prev.deck, next.deck));
   if (!fromCombat && next.player.hp > prev.player.hp) {
     events.push({
       kind: 'heal',

@@ -68,10 +68,12 @@ export const MIST_VEIL: CardDefinition = {
   type: 'skill',
   archetypes: ['debuff'],
   water: true,
-  cost: 1,
+  // 霧足はコスト 1 でかわすとドロー。こちらは守りの水力を使って、深く隠れる。
+  cost: 0,
+  waterCost: 1,
   target: 'self',
-  effects: [{ kind: 'gainEvade', amount: 1 }],
-  upgrade: { cost: 0 },
+  effects: [{ kind: 'gainEvade', amount: 2 }],
+  upgrade: { effects: [{ kind: 'gainEvade', amount: 3 }] },
   art: 'rain-steps',
 };
 
@@ -564,18 +566,19 @@ export const MIRROR_CARDS: CardDefinition[] = [
     archetypes: ['element'],
     water: true,
     cost: 2,
-    target: 'enemy',
+    // 潮の刃も単体ダメージに霜。こちらは塊を敵全体へ落とす。
+    target: 'allEnemies',
     effects: [
-      { kind: 'damage', amount: 8 },
+      { kind: 'damage', amount: 6 },
       { kind: 'applyFrost', amount: 2 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 10 },
+        { kind: 'damage', amount: 8 },
         { kind: 'applyFrost', amount: 3 },
       ],
     },
-    motion: 'heavy',
+    motion: 'sweep',
   },
   {
     ...NOA,
@@ -774,9 +777,10 @@ export const MIRROR_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainPower', power: 'thorns', amount: 2 }],
+    // 茨の鎧はダメージを返す。潮は次の攻撃を霜で鈍らせる。
+    effects: [{ kind: 'gainPower', power: 'tideReturn', amount: 2 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'thorns', amount: 3 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'tideReturn', amount: 3 }] },
     motion: 'empower',
   },
   {
@@ -802,9 +806,10 @@ export const MIRROR_CARDS: CardDefinition[] = [
     archetypes: ['block'],
     cost: 1,
     target: 'self',
-    effects: [{ kind: 'gainEndTurnBlock', amount: 3 }],
+    // 金属化と同じ「ターンの終わりにブロック」だった。露は守りの水力を溜める。
+    effects: [{ kind: 'gainPower', power: 'dewMail', amount: 1 }],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainEndTurnBlock', amount: 4 }] },
+    upgrade: { effects: [{ kind: 'gainPower', power: 'dewMail', amount: 2 }] },
     motion: 'guard',
   },
   {
@@ -826,13 +831,23 @@ export const MIRROR_CARDS: CardDefinition[] = [
     id: 'mist-eye',
     name: '霧の眼',
     rarity: 'uncommon',
-    type: 'power',
+    type: 'skill',
     archetypes: ['debuff'],
+    water: true,
     cost: 0,
-    target: 'self',
-    effects: [{ kind: 'gainPower', power: 'sadistic', amount: 2 }],
+    target: 'allEnemies',
+    // 弱点看破と同じ「デバフでダメージ」だった。霧は相手の輪郭を霜で縁取る。
+    effects: [
+      { kind: 'applyFrost', amount: 2 },
+      { kind: 'draw', amount: 1 },
+    ],
     exhaust: true,
-    upgrade: { effects: [{ kind: 'gainPower', power: 'sadistic', amount: 3 }] },
+    upgrade: {
+      effects: [
+        { kind: 'applyFrost', amount: 3 },
+        { kind: 'draw', amount: 1 },
+      ],
+    },
     motion: 'focus',
   },
   {

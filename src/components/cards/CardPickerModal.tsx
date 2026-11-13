@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CardDefinition, CardStack } from '../../domain/card';
 import { cardStackKey } from '../../logic/cards';
+import { describeCard } from '../../logic/describe';
+import { keywordsInText } from '../../logic/keywordText';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { CardGlossaryPopover, useGlossaryAnchor, type WindowRect } from '../glossary/CardGlossaryPopover';
+import { CardGlossary } from '../glossary/KeywordList';
 import { CardView } from './CardView';
 
 type CardPickerModalProps = {
@@ -30,6 +34,11 @@ export function CardPickerModal({
   onCancel,
 }: CardPickerModalProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [anchor, setAnchor] = useState<WindowRect | null>(null);
+  const remeasure = useRef<(() => void) | null>(null);
+  const rememberMeasure = useCallback((measure: () => void) => {
+    remeasure.current = measure;
+  }, []);
   const selected = stacks.find((stack) => cardStackKey(stack.card) === selectedKey)?.card;
 
   // 強化のように変化を見せるときは、一覧と確認を分ける。確認の取り消しは一覧へ戻す。
@@ -39,11 +48,25 @@ export function CardPickerModal({
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <Text style={styles.title}>{title}</Text>
-          <ScrollView horizontal contentContainerStyle={styles.preview}>
-            <CardView card={selected} size="md" />
+          <ScrollView
+            horizontal
+            style={styles.previewScroll}
+            contentContainerStyle={styles.preview}
+            showsHorizontalScrollIndicator={false}
+          >
+            <View style={styles.previewCard}>
+              <CardView card={selected} size="md" selected detailOnHold={false} />
+            </View>
             <Text style={styles.arrow}>→</Text>
-            <CardView card={after} size="md" />
+            <View style={styles.previewCard}>
+              <CardView card={after} size="md" detailOnHold={false} />
+            </View>
           </ScrollView>
+          {keywordsInText(describeCard(selected)).length > 0 && (
+            <ScrollView style={styles.previewGlossary} contentContainerStyle={styles.previewGlossaryContent}>
+              <CardGlossary card={selected} />
+            </ScrollView>
+          )}
           <View style={styles.buttons}>
             <Pressable
               onPress={() => setSelectedKey(null)}
@@ -68,19 +91,35 @@ export function CardPickerModal({
       <View style={styles.sheet}>
         <Text style={styles.title}>{title}</Text>
         {note ? <Text style={styles.note}>{note}</Text> : null}
-        <ScrollView contentContainerStyle={styles.grid}>
+        <ScrollView
+          contentContainerStyle={styles.grid}
+          onScroll={() => remeasure.current?.()}
+          scrollEventThrottle={16}
+        >
           {stacks.length === 0 ? (
             <Text style={styles.empty}>選べるカードがありません</Text>
           ) : (
-            stacks.map((stack) => (
-              <CardView
-                key={cardStackKey(stack.card)}
-                card={stack.card}
-                count={stack.count}
-                selected={!preview && cardStackKey(stack.card) === selectedKey}
-                onPress={() => setSelectedKey(cardStackKey(stack.card))}
-              />
-            ))
+            stacks.map((stack) => {
+              const key = cardStackKey(stack.card);
+              const armed = !preview && key === selectedKey;
+              return (
+                <PickerCard
+                  key={key}
+                  card={stack.card}
+                  count={stack.count}
+                  armed={armed}
+                  onPress={() => {
+                    if (armed) onConfirm(stack.card);
+                    else {
+                      setAnchor(null);
+                      setSelectedKey(key);
+                    }
+                  }}
+                  onAnchor={armed ? setAnchor : undefined}
+                  onMeasure={armed ? rememberMeasure : undefined}
+                />
+              );
+            })
           )}
         </ScrollView>
 
@@ -109,6 +148,33 @@ export function CardPickerModal({
           )}
         </View>
       </View>
+      {selected && anchor && <CardGlossaryPopover card={selected} anchor={anchor} />}
+    </View>
+  );
+}
+
+function PickerCard({
+  card,
+  count,
+  armed,
+  onPress,
+  onAnchor,
+  onMeasure,
+}: {
+  card: CardDefinition;
+  count?: number;
+  armed: boolean;
+  onPress?: () => void;
+  onAnchor?: (rect: WindowRect) => void;
+  onMeasure?: (measure: () => void) => void;
+}) {
+  const { ref, measure } = useGlossaryAnchor(armed && onAnchor !== undefined, onAnchor ?? (() => {}));
+  useEffect(() => {
+    if (measure && onMeasure) onMeasure(measure);
+  }, [measure, onMeasure]);
+  return (
+    <View ref={ref} collapsable={false} onLayout={() => measure?.()}>
+      <CardView card={card} count={count} selected={armed} onPress={onPress} />
     </View>
   );
 }
@@ -144,16 +210,23 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
   },
   empty: { color: COLORS.textMuted, textAlign: 'center', paddingVertical: SPACING.xl },
+  previewScroll: { flexGrow: 0 },
   preview: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     gap: SPACING.md,
     paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.panelBorder,
   },
-  arrow: { color: COLORS.gold, fontSize: 22, fontWeight: '800' },
+  previewCard: { flexGrow: 0, flexShrink: 0 },
+  arrow: { color: COLORS.gold, fontSize: 22, fontWeight: '800', alignSelf: 'center' },
+  previewGlossary: {
+    flex: 1,
+    borderColor: COLORS.keyword,
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+  },
+  previewGlossaryContent: { padding: SPACING.md },
   buttons: { flexDirection: 'row', gap: SPACING.md },
   button: {
     flex: 1,

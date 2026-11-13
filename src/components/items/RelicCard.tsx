@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { RelicDefinition } from '../../domain/relic';
 import { describeRelic, RELIC_RARITY_LABEL } from '../../logic/describe';
 import { COLORS, RADIUS, RELIC_RARITY_COLORS, SPACING } from '../../theme';
+import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 
 type RelicCardProps = {
   relic: RelicDefinition;
@@ -16,7 +17,7 @@ type RelicCardProps = {
 export function RelicCard({ relic, caption, selected = false, onPress }: RelicCardProps) {
   const rarityColor = RELIC_RARITY_COLORS[relic.rarity];
   return (
-    <Pressable
+    <GuardedPressable
       onPress={onPress}
       disabled={!onPress}
       style={({ pressed }) => [
@@ -33,9 +34,9 @@ export function RelicCard({ relic, caption, selected = false, onPress }: RelicCa
           {relic.name}
         </Text>
         <Text style={[styles.rarity, { color: rarityColor }]}>{RELIC_RARITY_LABEL[relic.rarity]}</Text>
-        <Text style={styles.text}>{describeRelic(relic)}</Text>
+        <KeywordText text={describeRelic(relic)} style={styles.text} />
       </View>
-    </Pressable>
+    </GuardedPressable>
   );
 }
 

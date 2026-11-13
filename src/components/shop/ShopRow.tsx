@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../../theme';
+import { GuardedPressable, KeywordText } from '../glossary/KeywordText';
 import { PriceTag } from './PriceTag';
 
 type ShopRowProps = {
@@ -25,7 +26,7 @@ export function ShopRow({
   onPress,
 }: ShopRowProps) {
   return (
-    <Pressable
+    <GuardedPressable
       onPress={onPress}
       disabled={sold}
       style={({ pressed }) => [
@@ -38,10 +39,10 @@ export function ShopRow({
       <Text style={styles.icon}>{icon}</Text>
       <View style={styles.body}>
         <Text style={styles.name}>{name}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <KeywordText text={description} style={styles.description} />
       </View>
       <PriceTag price={price} affordable={affordable} sold={sold} />
-    </Pressable>
+    </GuardedPressable>
   );
 }
 

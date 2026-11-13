@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import type { CardDefinition } from '../../domain/card';
-import { keywordsForCard } from '../../logic/glossary';
+import { describeCard } from '../../logic/describe';
+import { keywordsInText } from '../../logic/keywordText';
 import { InfoSheet } from '../glossary/InfoSheet';
 import { KeywordList } from '../glossary/KeywordList';
 import { CardView } from './CardView';
@@ -34,7 +35,7 @@ export function CardDetailSheet({ card, description, stack, visible, onClose }: 
         </View>
       }
     >
-      <KeywordList entries={keywordsForCard(card).map((keyword) => ({ keyword }))} />
+      <KeywordList entries={keywordsInText(description ?? describeCard(card)).map((keyword) => ({ keyword }))} />
     </InfoSheet>
   );
 }

@@ -235,7 +235,217 @@ const SOUNDS = {
       return (up + down) * env + whoosh + pop;
     });
   },
+
+  // ここから下へ足す。途中に入れると、あとの音が使うノイズの並びがずれて、既存の波形が変わる。
+
+  /** 祠の鈴。 */
+  'shrine-bell': () => arpeggio([784, 1175, 1568], 0.11, 0.62, triangle, 0.42),
+  /** 泉の水面。 */
+  'spring-water': () => {
+    const flow = oscillator(sine);
+    const drop = oscillator(sine);
+    const air = lowpass();
+    return render(0.7, (t, p) => {
+      const env = Math.sin(Math.PI * p);
+      let pops = 0;
+      for (const at of [0.12, 0.28, 0.46]) {
+        const local = (t - at) / 0.08;
+        if (local < 0 || local > 1) continue;
+        pops += drop(lerp(980, 1560, local)) * Math.sin(Math.PI * local) * 0.45;
+      }
+      return flow(lerp(620, 980, p)) * 0.35 * env + air(noise(), 0.25) * 0.12 * env + pops;
+    });
+  },
+  /** 店の呼び鈴。 */
+  'shop-bell': () => arpeggio([1046, 1568], 0.08, 0.42, triangle, 0.4),
+  /** 鍛冶の槌。スマホでも聞こえるよう、低い打撃に高い金属音を足す。 */
+  'forge-hammer': () => {
+    const metal = oscillator(triangle);
+    const hit = oscillator(sine);
+    return render(0.42, (t) => {
+      const first = t < 0.16 ? hit(lerp(240, 120, t / 0.16)) * decay(t / 0.16, 4) : 0;
+      const secondAt = t - 0.18;
+      const second = secondAt > 0 && secondAt < 0.2 ? hit(lerp(280, 140, secondAt / 0.2)) * decay(secondAt / 0.2, 4) : 0;
+      const ring = metal(t < 0.18 ? 880 : 1175) * decay(t, 6) * 0.45;
+      return (first + second) * 0.7 + ring;
+    });
+  },
+  /** 寝息。 */
+  snore: () => {
+    const breath = oscillator(sine);
+    const air = lowpass();
+    return render(0.9, (t, p) => {
+      const swell = Math.sin(Math.PI * p);
+      return breath(lerp(180, 260, swell)) * 0.25 * swell + air(noise(), 0.08) * 0.2 * swell;
+    });
+  },
+  /** 吟遊詩人の弦。 */
+  'bard-strings': () => arpeggio([659, 880, 1175, 1568], 0.12, 0.7, triangle, 0.32),
+  /** 本のページ。 */
+  'tome-pages': () => {
+    const lp = lowpass();
+    return render(0.45, (t) => {
+      const burst = (at) => {
+        const local = t - at;
+        if (local < 0 || local > 0.08) return 0;
+        return lp(noise(), 0.35) * decay(local / 0.08, 3);
+      };
+      return burst(0.02) + burst(0.14) + burst(0.28);
+    });
+  },
+  /** 祭壇の低い唸り。 */
+  'altar-hum': () => {
+    const low = oscillator(sine);
+    const high = oscillator(triangle);
+    return render(0.7, (_t, p) => (low(440) * 0.35 + high(880) * 0.4) * Math.sin(Math.PI * p));
+  },
+  /** 落とし穴の土。 */
+  'pit-rubble': () => {
+    const lp = lowpass();
+    const thump = oscillator(sine);
+    return render(0.4, (t, p) => thump(lerp(200, 90, p)) * decay(p, 5) * 0.6 + lp(noise(), 0.4) * decay(p, 8));
+  },
+  /** 妖精の鈴。 */
+  'fairy-chime': () => arpeggio([1318, 1568, 1976], 0.07, 0.4, triangle, 0.28),
+  /** 焚き火。 */
+  campfire: () => {
+    const lp = lowpass();
+    const glow = oscillator(sine);
+    return render(0.8, (t, p) => glow(420 + 40 * sine(t * 6)) * 0.15 + lp(noise(), 0.12 + 0.2 * Math.sin(Math.PI * p)) * 0.35);
+  },
+  /** 竜の寝息。 */
+  'dragon-rumble': () => {
+    const body = oscillator(sine);
+    const grit = lowpass();
+    return render(0.8, (_t, p) => (body(lerp(140, 90, p)) * 0.55 + grit(noise(), 0.15) * 0.3) * Math.sin(Math.PI * p));
+  },
+  /** 湖面。 */
+  'lake-ripple': () => {
+    const wave = oscillator(sine);
+    return render(0.7, (_t, p) => wave(lerp(620, 880, Math.sin(Math.PI * p))) * Math.sin(Math.PI * p) * 0.5);
+  },
+  /** 騎士の鋼。 */
+  'knight-steel': () => arpeggio([880, 1318], 0.06, 0.36, triangle, 0.4),
+  /** 井戸に落ちる硬貨。 */
+  'well-drop': () => {
+    const plink = oscillator(triangle);
+    const splash = lowpass();
+    return render(0.45, (t) => {
+      const coin = t < 0.12 ? plink(1480) * decay(t / 0.12, 3) : 0;
+      const local = t - 0.16;
+      const water = local > 0 ? splash(noise(), 0.3) * decay(local, 8) * 0.7 : 0;
+      return coin * 0.5 + water;
+    });
+  },
+  /** 書庫のページ。本より静か。 */
+  'library-pages': () => {
+    const lp = lowpass();
+    return render(0.5, (t) => {
+      const rustle = (at) => {
+        const local = t - at;
+        if (local < 0 || local > 0.12) return 0;
+        return lp(noise(), 0.2) * Math.sin(Math.PI * (local / 0.12)) * 0.6;
+      };
+      return rustle(0.04) + rustle(0.2);
+    });
+  },
+  /** 小瓶。 */
+  'vial-clink': () => arpeggio([1480, 1760], 0.05, 0.28, triangle, 0.3),
+  /** 木のきしみ。 */
+  'tree-creak': () => {
+    const creak = oscillator(triangle);
+    return render(0.55, (_t, p) => creak(lerp(280, 720, Math.sin(Math.PI * p))) * Math.sin(Math.PI * p) * 0.45);
+  },
+  /** 道端の石。 */
+  'stone-chime': () => arpeggio([988, 1318], 0.1, 0.48, triangle, 0.36),
+  /** 聖櫃の錠。 */
+  'reliquary-lock': () => {
+    const click = oscillator(square);
+    const lp = lowpass();
+    return render(0.36, (t) => {
+      const tick = (at, freq) => {
+        const local = t - at;
+        if (local < 0 || local > 0.05) return 0;
+        return lp(click(freq), 0.25) * decay(local / 0.05, 2);
+      };
+      return tick(0.02, 740) * 0.4 + tick(0.12, 980) * 0.45 + tick(0.24, 620) * 0.35;
+    });
+  },
+  /** 旗の布。 */
+  'banner-cloth': () => {
+    const lp = lowpass();
+    return render(0.55, (_t, p) => lp(noise(), 0.08 + 0.15 * Math.sin(Math.PI * p)) * Math.sin(Math.PI * p));
+  },
+  /** 奈落の風。 */
+  'whisper-wind': () => {
+    const lp = lowpass();
+    const tone = oscillator(sine);
+    return render(0.7, (_t, p) => (lp(noise(), 0.06) * 0.55 + tone(740) * 0.12) * Math.sin(Math.PI * p));
+  },
+  /** 王冠の金属。 */
+  'crown-metal': () => arpeggio([740, 1108, 1480], 0.09, 0.5, triangle, 0.34),
+  /** 素振り。 */
+  'practice-slash': () => {
+    const lp = lowpass();
+    const edge = oscillator(sine);
+    return render(0.22, (_t, p) => lp(noise(), 0.15 + 0.5 * p) * Math.sin(Math.PI * p) + edge(lerp(700, 1600, p)) * Math.sin(Math.PI * p) * 0.35);
+  },
+  /** 弓弦。 */
+  'bow-string': () => {
+    const string = oscillator(triangle);
+    return render(0.28, (t, p) => string(lerp(220, 880, Math.min(1, t / 0.04))) * decay(p, 5) * 0.6);
+  },
+  /** 水滴。 */
+  'water-drop': () => {
+    const drop = oscillator(sine);
+    return render(0.28, (_t, p) => drop(lerp(1500, 900, p)) * Math.sin(Math.PI * p) * decay(p, 2));
+  },
+  /** 宝箱の蓋。 */
+  'chest-open': () => {
+    const lp = lowpass();
+    const chime = oscillator(triangle);
+    return render(0.5, (t, p) => {
+      const creak = t < 0.28 ? lp(noise(), 0.18) * Math.sin(Math.PI * (t / 0.28)) : 0;
+      const ring = t > 0.22 ? chime(660) * decay(t - 0.22, 6) * 0.4 : 0;
+      return creak + ring * (1 - p * 0.2);
+    });
+  },
+  /** 案内役の灯。 */
+  'lantern-chime': () => arpeggio([1175, 1568], 0.1, 0.5, triangle, 0.32),
+  /** カードを別のカードに換える。二筋が交差して入れ替わる。 */
+  exchange: () => {
+    const from = oscillator(sine);
+    const to = oscillator(sine);
+    return render(0.42, (_t, p) => (from(lerp(720, 1400, p)) * 0.45 + to(lerp(1500, 680, p)) * 0.45) * Math.sin(Math.PI * p));
+  },
+  'voice-merchant': voice(150, 700, 1180),
+  'voice-smith': voice(120, 620, 1040, 0.42),
+  'voice-guardian': voice(95, 520, 860, 0.7),
+  'voice-bard': voice(210, 820, 1400, 0.55),
+  'voice-fairy': voice(300, 1100, 1620, 0.4),
+  'voice-knight': voice(130, 660, 1120, 0.45),
+  'voice-alchemist': voice(185, 760, 1320, 0.48),
+  'voice-fortune': voice(165, 700, 1260, 0.58),
+  'voice-whisper': voice(200, 900, 1480, 0.62),
+  'voice-kyle': voice(155, 690, 1200, 0.4),
+  'voice-rine': voice(235, 860, 1460, 0.4),
+  'voice-noah': voice(190, 780, 1360, 0.46),
+  'voice-guide': voice(170, 730, 1280, 0.55),
 };
+
+/** 短い声。基本周波数と二つの倍音を、スマホのスピーカーが出せる帯に置く。ノイズは使わない。 */
+function voice(f0, f1, f2, seconds = 0.48) {
+  return () => {
+    const fundamental = oscillator(sine);
+    const formant = oscillator(triangle);
+    const high = oscillator(sine);
+    return render(seconds, (t, p) => {
+      const env = Math.sin(Math.PI * p) * decay(p, 1.3);
+      const vibrato = 1 + 0.02 * sine(t * 5);
+      return (fundamental(f0 * vibrato) * 0.36 + formant(f1) * 0.4 + high(f2) * 0.22) * env;
+    });
+  };
+}
 
 // ===== 書き出し =====
 

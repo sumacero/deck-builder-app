@@ -14,7 +14,9 @@ export type RunEvent =
   | { kind: 'upgrade'; cards: UpgradedCard[] }
   | { kind: 'relicGain'; relic: RelicDefinition }
   | { kind: 'potionGain'; slot: number; potion: PotionDefinition }
-  | { kind: 'cardGain'; card: CardDefinition };
+  | { kind: 'cardGain'; card: CardDefinition }
+  /** デッキの札を別の札に換えた。lost が交換前、gained が交換後。 */
+  | { kind: 'exchange'; lost: CardDefinition[]; gained: CardDefinition };
 
 /** 演出の順番待ち。id は表示が終わったときに取り除くための通し番号。 */
 export type QueuedRunEvent = { id: number; event: RunEvent };

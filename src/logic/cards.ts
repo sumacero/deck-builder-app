@@ -253,7 +253,7 @@ export function toBerserk(card: CardDefinition): CardDefinition {
     ...card,
     id: card.upgraded ? `${id}+` : id,
     name: card.upgraded ? `${name}+` : name,
-    art: card.art ?? (strike ? 'ultimate-strike' : 'steadfast-guard'),
+    art: card.art ?? (strike ? 'ultimate-strike' : 'berserk-defend'),
     priority: true,
     effects: scaleStat(card.effects, stat),
     upgrade,

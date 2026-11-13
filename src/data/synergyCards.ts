@@ -17,7 +17,6 @@ export const BLESSED_DROP: CardDefinition = {
   effects: [{ kind: 'block', amount: 4 }],
   exhaust: true,
   upgrade: { effects: [{ kind: 'block', amount: 6 }] },
-  art: 'shoreline',
 };
 export const SYNERGY_CARDS: CardDefinition[] = [
   {
@@ -207,7 +206,6 @@ export const SYNERGY_CARDS: CardDefinition[] = [
       cost: 0,
       effects: [{ kind: 'transformCurse' }, { kind: 'draw', amount: 1 }],
     },
-    art: 'shoreline',
     motion: 'focus',
   },
   {
@@ -228,7 +226,6 @@ export const SYNERGY_CARDS: CardDefinition[] = [
         { kind: 'blockPerDiscard', base: 4, perCard: 4 },
       ],
     },
-    art: 'leaf-nock',
     motion: 'guard',
   },
   {
@@ -241,7 +238,6 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     target: 'self',
     effects: [{ kind: 'drawByExhaustCount', max: 2 }],
     upgrade: { effects: [{ kind: 'drawByExhaustCount', max: 3 }] },
-    art: 'rise-from-ashes',
     motion: 'focus',
   },
   {
@@ -256,7 +252,6 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     effects: [{ kind: 'gainPower', power: 'shed', amount: 2 }],
     exhaust: true,
     upgrade: { effects: [{ kind: 'gainPower', power: 'shed', amount: 3 }] },
-    art: 'leaf-nock',
     motion: 'empower',
   },
   {
@@ -271,7 +266,6 @@ export const SYNERGY_CARDS: CardDefinition[] = [
     effects: [{ kind: 'gainPower', power: 'spring', amount: 1 }],
     exhaust: true,
     upgrade: { cost: 0 },
-    art: 'high-tide',
     motion: 'empower',
   },
 ];
