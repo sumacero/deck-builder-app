@@ -6,7 +6,7 @@ import type { CardDefinition } from '../domain/card';
  * エナジーを 2 払わせるお邪魔は置かない。困り方は「使えない」「捨てると暴れる」「出して消す」「手札に居座る」。
  */
 
-/** 火・岩: 使えないまま残り、手札にあるあいだ毎ターン焼ける。山札に戻る。 */
+/** 火・岩: 使えないまま残り、手札にあるあいだ毎ターン焼ける。ダメージはブロックで受けられる。山札に戻る。 */
 export const BURN: CardDefinition = {
   id: 'burn',
   name: '火傷',
@@ -16,11 +16,11 @@ export const BURN: CardDefinition = {
   target: 'self',
   effects: [],
   unplayable: true,
-  turnEndInHand: [{ kind: 'loseHp', amount: 4 }],
+  turnEndInHand: [{ kind: 'sufferDamage', amount: 4 }],
 };
 
 /**
- * 草・風: 0 コストで出して廃棄できる。放置すると痛み、捨て札に戻ってまた来る。
+ * 草・風: 0 コストで出して廃棄できる。放置するとダメージを受け、捨て札に戻ってまた来る。
  * エナジーは奪わない。手札の 1 枚を使って振りほどく。
  */
 export const TANGLING_VINE: CardDefinition = {
@@ -32,10 +32,10 @@ export const TANGLING_VINE: CardDefinition = {
   target: 'self',
   effects: [],
   exhaust: true,
-  turnEndInHand: [{ kind: 'loseHp', amount: 2 }],
+  turnEndInHand: [{ kind: 'sufferDamage', amount: 2 }],
 };
 
-/** 水・氷: 使えない。ターンの終わりに痛みを残して消える。戦闘中は戻ってこない。 */
+/** 水・氷: 使えない。ターンの終わりにダメージを受けて消える。戦闘中は戻ってこない。 */
 export const ICE_SHARD: CardDefinition = {
   id: 'ice-shard',
   name: '氷のかけら',
@@ -47,7 +47,7 @@ export const ICE_SHARD: CardDefinition = {
   unplayable: true,
   ethereal: true,
   art: 'frost-chip',
-  turnEndInHand: [{ kind: 'loseHp', amount: 3 }],
+  turnEndInHand: [{ kind: 'sufferDamage', amount: 3 }],
 };
 
 /**
@@ -67,7 +67,7 @@ export const SCRAP: CardDefinition = {
 };
 
 /**
- * 使えない昇華。自分では出せない。捨てられたとき（ターンの終わりを含む）に痛み、その戦闘から消える。
+ * 使えない昇華。自分では出せない。捨てられたとき（ターンの終わりを含む）にダメージを受け、その戦闘から消える。
  */
 export const REGRET: CardDefinition = {
   id: 'regret',
@@ -76,13 +76,13 @@ export const REGRET: CardDefinition = {
   type: 'status',
   cost: 0,
   target: 'self',
-  effects: [{ kind: 'loseHp', amount: 3 }],
+  effects: [{ kind: 'sufferDamage', amount: 3 }],
   unplayable: true,
   sly: true,
   exhaust: true,
 };
 
-/** 使えないまま手札に居座る。ターンの終わりに痛み、次の手札にも残る。 */
+/** 使えないまま手札に居座る。ターンの終わりにダメージを受け、次の手札にも残る。 */
 export const HEX_BIND: CardDefinition = {
   id: 'hex-bind',
   name: '呪縛',
@@ -93,11 +93,11 @@ export const HEX_BIND: CardDefinition = {
   effects: [],
   unplayable: true,
   retain: true,
-  turnEndInHand: [{ kind: 'loseHp', amount: 2 }],
+  turnEndInHand: [{ kind: 'sufferDamage', amount: 2 }],
 };
 
 /**
- * 手札にあるあいだ、これ以外は使えない。0 コストで出して廃棄できるが、出すと痛む。
+ * 手札にあるあいだ、これ以外は使えない。0 コストで出して廃棄できるが、出すとダメージを受ける。
  */
 export const OMEN: CardDefinition = {
   id: 'omen',
@@ -106,13 +106,13 @@ export const OMEN: CardDefinition = {
   type: 'status',
   cost: 0,
   target: 'self',
-  effects: [{ kind: 'loseHp', amount: 2 }],
+  effects: [{ kind: 'sufferDamage', amount: 2 }],
   priority: true,
   exhaust: true,
 };
 
 /**
- * デッキに残る呪い。毎戦闘、最初の手札に入り、ターンの終わりに痛んで消える。
+ * デッキに残る呪い。毎戦闘、最初の手札に入り、ターンの終わりにダメージを受けて消える。
  * その戦闘の山札には戻らない。
  */
 export const HOLLOW: CardDefinition = {
@@ -127,7 +127,7 @@ export const HOLLOW: CardDefinition = {
   unplayable: true,
   innate: true,
   ethereal: true,
-  turnEndInHand: [{ kind: 'loseHp', amount: 2 }],
+  turnEndInHand: [{ kind: 'sufferDamage', amount: 2 }],
 };
 
 export const STATUS_CARDS: CardDefinition[] = [

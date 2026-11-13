@@ -15,7 +15,7 @@ export const STAR_BURDEN: CardDefinition = {
   curse: true,
   unplayable: true,
   effects: [],
-  turnEndInHand: [{ kind: 'loseHp', amount: 2 }],
+  turnEndInHand: [{ kind: 'sufferDamage', amount: 2 }],
 };
 
 export const STAR_AFTERGLOW: CardDefinition = {

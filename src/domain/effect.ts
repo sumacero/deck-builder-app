@@ -33,6 +33,8 @@ export type Effect =
   | { kind: 'draw'; amount: number }
   | { kind: 'heal'; amount: number }
   | { kind: 'loseHp'; amount: number }
+  /** 自分へのダメージ。敵の攻撃と同じくブロックで受けてから HP が減る。HP を失うとは違い、ブロックを無視しない。 */
+  | { kind: 'sufferDamage'; amount: number }
   | { kind: 'gainStrength'; amount: number; duration: 'combat' | 'turn' }
   | { kind: 'gainEndTurnBlock'; amount: number }
   /** 狙った敵にデバフを turns ターン分かける（かかっていれば加算）。 */

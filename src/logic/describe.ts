@@ -81,6 +81,8 @@ function describeEffect(effect: Effect, target: EffectTarget): string {
       return `HP を ${effect.amount} 回復する。`;
     case 'loseHp':
       return `HP を失う（${effect.amount}）。`;
+    case 'sufferDamage':
+      return `${effect.amount} ダメージを受ける。`;
     case 'gainStrength':
       return `筋力 ${effect.amount} を得る。`;
     case 'gainEndTurnBlock':

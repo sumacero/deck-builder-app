@@ -40,6 +40,8 @@ function keywordsForEffect(effect: Effect): KeywordId[] {
       return ['heal'];
     case 'loseHp':
       return ['loseHp'];
+    case 'sufferDamage':
+      return ['damage'];
     case 'gainStrength':
       return [effect.duration === 'turn' ? 'tempStrength' : 'strength'];
     case 'gainEndTurnBlock':

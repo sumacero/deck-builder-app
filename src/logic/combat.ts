@@ -1144,6 +1144,17 @@ function applyEffect(
       });
       return rupture > 0 ? withLog(lost, `燃える血潮で筋力 +${rupture}`) : lost;
     }
+    case 'sufferDamage': {
+      const result = applyDamage(state.player, effect.amount);
+      return withEvent(withLog({ ...state, player: result.target }, formatHit('あなた', result)), {
+        kind: 'hit',
+        target: 'player',
+        hpLoss: result.hpLoss,
+        blocked: result.blocked,
+        before: vitalsOf(state.player),
+        after: vitalsOf(result.target),
+      });
+    }
     case 'gainStrength': {
       const key = effect.duration === 'turn' ? 'tempStrength' : 'strength';
       return withLog(
