@@ -13,6 +13,8 @@ type MapNodeViewProps = {
   visited: boolean;
   /** 押されて移動を待っているマス。大きく弾み、光の輪が広がる。 */
   selected: boolean;
+  /** エリートのマスに出す、短い困らせ方。 */
+  note: string | null;
   onPress: () => void;
 };
 
@@ -27,6 +29,7 @@ export function MapNodeView({
   reachable,
   visited,
   selected,
+  note,
   onPress,
 }: MapNodeViewProps) {
   const [pulse] = useState(() => new Animated.Value(0));
@@ -144,6 +147,11 @@ export function MapNodeView({
           {MAP_NODE_ICON[node.type]}
         </Text>
       </Animated.View>
+      {note && (
+        <Text style={styles.note} numberOfLines={1}>
+          {note}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -169,4 +177,14 @@ const styles = StyleSheet.create({
   },
   icon: { fontSize: 20 },
   bossIcon: { fontSize: 32 },
+  note: {
+    position: 'absolute',
+    top: '100%',
+    width: 48,
+    marginTop: 1,
+    textAlign: 'center',
+    color: COLORS.gold,
+    fontSize: 10,
+    fontWeight: '800',
+  },
 });

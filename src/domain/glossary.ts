@@ -105,6 +105,7 @@ export type KeywordId =
   | 'weight'
   | 'link'
   | 'devour'
+  | 'lone'
   | 'intentStun'
   | 'intentAttack'
   | 'intentBlock'

@@ -7,7 +7,7 @@ import type { GameMap, MapNode } from '../domain/map';
 import type { PotionDefinition } from '../domain/potion';
 import type { CombatResult, RunSetup, RunState } from '../domain/run';
 import { generateBlessingOptions } from './blessing';
-import { soloEncounter, startCombat, startRandomCombat } from './encounter';
+import { soloEncounter, stampEliteEncounters, startCombat, startRandomCombat } from './encounter';
 import { startEvent } from './event';
 import { generateMap } from './map';
 import { draftPool, pickRewardChoices, rewardCandidates, rewardFocus } from './archetype';
@@ -28,11 +28,12 @@ export const isFinalAct = (run: RunState) => run.actIndex >= run.acts.length - 1
 function startAct(run: RunState, actIndex: number): RunState {
   const act = run.acts[actIndex];
   const generated = generateMap(act.map, run.rngSeed);
-  const boss = pickOne(act.bossPool, generated.seed);
+  const stamped = stampEliteEncounters(generated.map, act.elitePool, generated.seed);
+  const boss = pickOne(act.bossPool, stamped.seed);
   const entered: RunState = {
     ...run,
     actIndex,
-    map: generated.map,
+    map: stamped.map,
     boss: boss.item ?? act.bossPool[0],
     currentNodeId: null,
     visitedNodeIds: [],
@@ -154,8 +155,14 @@ export function moveTo(run: RunState, nodeId: string): RunState {
   switch (node.type) {
     case 'enemy':
       return startRandomCombat(moved, nodeId, act.enemyPool);
-    case 'elite':
-      return startRandomCombat(moved, nodeId, act.elitePool);
+    case 'elite': {
+      const fixed = node.encounterId
+        ? act.elitePool.find((encounter) => encounter.id === node.encounterId)
+        : undefined;
+      return fixed
+        ? startCombat(moved, nodeId, fixed)
+        : startRandomCombat(moved, nodeId, act.elitePool);
+    }
     case 'boss':
       return startCombat(moved, nodeId, run.boss);
     case 'rest':

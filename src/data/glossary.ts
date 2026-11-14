@@ -742,6 +742,12 @@ export const KEYWORDS: Record<KeywordId, KeywordDefinition> = {
     icon: '👄',
     description: 'HP を削ったあと、捨て札から 1 枚消す。',
   },
+  lone: {
+    id: 'lone',
+    name: '単独',
+    icon: '👑',
+    description: '手下がいなくなると、行動が替わる。',
+  },
   intentStun: {
     id: 'intentStun',
     name: 'よろめき',

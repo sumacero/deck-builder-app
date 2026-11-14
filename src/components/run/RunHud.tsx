@@ -5,6 +5,7 @@ import { DeckButton } from '../cards/DeckButton';
 import { SettingsButton } from '../settings/SettingsButton';
 import { ItemBar } from '../items/ItemBar';
 import { GoldBadge } from './GoldBadge';
+import { BossMark } from '../map/BossMark';
 
 type RunHudProps = {
   run: RunState;
@@ -20,6 +21,7 @@ export function RunHud({ run }: RunHudProps) {
           ❤️ {run.player.hp} / {run.player.maxHp}
         </Text>
         <View style={styles.right}>
+          <BossMark boss={run.boss} />
           <GoldBadge gold={run.gold} />
           <DeckButton deck={run.deck} />
           <SettingsButton />

@@ -59,6 +59,8 @@ function scaleTrait(trait: EnemyTrait, scale: ChapterScale): EnemyTrait {
       };
     case 'phase':
       return { ...trait, moves: scaleMoves(trait.moves, scale) };
+    case 'lone':
+      return { ...trait, moves: scaleMoves(trait.moves, scale) };
     case 'artifact':
     case 'hitCap':
     case 'guardian':

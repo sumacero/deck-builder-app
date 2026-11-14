@@ -217,6 +217,8 @@ function traitViews(enemy: EnemyState): StatusView[] {
       case 'link':
       case 'devour':
         return [{ keyword: trait.kind, value: 1, flag: true }];
+      case 'lone':
+        return enemy.lonesome ? [] : [{ keyword: trait.kind, value: 1, flag: true }];
       case 'pact':
         return [{ keyword: trait.kind, value: enemy.reviveIn > 0 ? enemy.reviveIn : trait.turns }];
       case 'burst':

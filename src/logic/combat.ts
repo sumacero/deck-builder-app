@@ -18,7 +18,7 @@ import type {
   Vitals,
 } from '../domain/combat';
 import type { Effect, EffectTarget } from '../domain/effect';
-import type { EnemyAction, EnemyDefinition, EnemyMove } from '../domain/enemy';
+import type { EnemyAction, EnemyDefinition, EnemyMove, EnemyRank } from '../domain/enemy';
 import type { RelicCondition, RelicTrigger } from '../domain/relic';
 import type { DebuffId, PowerId } from '../domain/status';
 import {
@@ -92,6 +92,30 @@ export const sideOf = (actor: ActorId): CombatSide => (actor === 'player' ? 'pla
 export const isAlive = (enemy: EnemyState) => enemy.hp > 0;
 
 export const livingEnemies = (state: CombatState) => state.enemies.filter(isAlive);
+
+const RANK_ORDER: readonly EnemyRank[] = ['final', 'boss', 'elite', 'normal'];
+
+/** 格が一番高い敵が 1 体だけで、格下の仲間がいるとき、その 1 体を首領にする。 */
+function markLeaders(enemies: EnemyState[]): EnemyState[] {
+  const top = RANK_ORDER.find((rank) => enemies.some((enemy) => enemy.rank === rank));
+  if (!top) return enemies;
+  const leaders = enemies.filter((enemy) => enemy.rank === top);
+  const hasMinion = enemies.some((enemy) => enemy.rank !== top);
+  if (leaders.length !== 1 || !hasMinion) return enemies;
+  const leaderId = leaders[0].uid;
+  return enemies.map((enemy) => ({ ...enemy, leader: enemy.uid === leaderId }));
+}
+
+/** 首領が倒れていて、連命で起き上がる予定も無い。 */
+function leaderDown(state: CombatState): boolean {
+  const leader = state.enemies.find((enemy) => enemy.leader);
+  return leader !== undefined && !isAlive(leader) && leader.reviveIn <= 0;
+}
+
+/** 首領がいる戦闘は首領を倒すと終わり。それ以外は、生きている敵がいないと終わり。 */
+function fightCleared(state: CombatState): boolean {
+  return leaderDown(state) || livingEnemies(state).length === 0;
+}
 
 const enemyUid = (index: number): EnemyUid => `enemy-${index}`;
 
@@ -444,7 +468,8 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       replayCharges: 0,
       statuses: {},
     },
-    enemies: setup.enemies.map((enemy, index) => {
+    enemies: markLeaders(
+      setup.enemies.map((enemy, index) => {
       // 通常の敵は並び順で開始位置をずらし、同じ行動を一斉にしない。
       // エリート以上は必ず先頭（いちばん弱い手）から。2 体目は 1 ターン様子を見て、大技が重ならないようにする。
       const ramping = routineRank(enemy.rank);
@@ -478,8 +503,11 @@ export function createCombat(setup: CombatSetup, seed: number): CombatState {
       reviveIn: 0,
       frost: 0,
       hitCut: 0,
-      };
+      leader: false,
+      lonesome: false,
+    };
     }),
+    ),
     drawPerTurn: setup.drawPerTurn,
     mysticArte: setup.agent.mysticArte,
     stats: EMPTY_STATS,
@@ -515,7 +543,10 @@ function polishBossOpeningHand(state: CombatState, rank: CombatSetup['rank']): C
     return { ...instance, card };
   });
   if (!changed) return state;
-  return withLog({ ...state, hand }, '最初の手札を強化した');
+  const relic = state.relics.find((item) => item.upgradeBossOpeningHand);
+  const logged = withLog({ ...state, hand }, '最初の手札を強化した');
+  if (!relic) return logged;
+  return withEvent(logged, { kind: 'relicTriggered', target: 'player', relicId: relic.id });
 }
 
 /** ["小スライム", "苔の芽", "小スライム"] → "小スライム×2と苔の芽" */
@@ -806,6 +837,25 @@ function wakeEnemy(state: CombatState, uid: EnemyUid): CombatState {
 }
 
 /** 仇討ち、連命、爆散、死に際、分裂。 */
+/** 格下の仲間が倒れると、首領の行動が単独のパターンに替わる。 */
+function abandonLeader(state: CombatState, deadUid: EnemyUid): CombatState {
+  const dead = findEnemy(state, deadUid);
+  if (!dead || dead.leader) return state;
+  return livingEnemies(state).reduce((current, ally) => {
+    if (!ally.leader || ally.lonesome) return current;
+    const lone = traitOf(ally, 'lone');
+    if (!lone) return current;
+    const changed = updateEnemy(current, ally.uid, (enemy) => ({
+      ...enemy,
+      lonesome: true,
+      moves: lone.moves,
+      moveIndex: 0,
+      windup: 0,
+    }));
+    return callout(withLog(changed, `${ally.name}は手下を失い、戦い方が変わった`), ally.uid, '単独');
+  }, state);
+}
+
 function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
   const avenged = livingEnemies(state).reduce((current, ally) => {
     const vengeance = traitOf(ally, 'vengeance');
@@ -831,12 +881,13 @@ function onEnemyDefeated(state: CombatState, uid: EnemyUid): CombatState {
     if (next.player.hp <= 0) return next;
   }
   const split = traitOf(dead, 'split');
-  if (!split) return next;
-  for (let i = 0; i < split.count; i += 1) {
-    if (livingEnemies(next).length >= MAX_ON_FIELD) break;
-    next = spawnEnemy(next, split.into, `${dead.name}が分裂して${split.into.name}が現れた`);
-  }
-  return next;
+  const afterSplit = split
+    ? Array.from({ length: split.count }).reduce<CombatState>((current) => {
+        if (livingEnemies(current).length >= MAX_ON_FIELD) return current;
+        return spawnEnemy(current, split.into, `${dead.name}が分裂して${split.into.name}が現れた`);
+      }, next)
+    : next;
+  return abandonLeader(afterSplit, uid);
 }
 
 /** 連命の仲間が生きていれば起き上がりを予約し、全滅していれば予約を取り消す。 */
@@ -929,6 +980,8 @@ function instantiateEnemy(enemy: EnemyDefinition, uid: EnemyUid): EnemyState {
     reviveIn: 0,
     frost: 0,
     hitCut: 0,
+    leader: false,
+    lonesome: false,
   };
 }
 
@@ -1794,7 +1847,14 @@ function onExhausted(state: CombatState, count: number): CombatState {
     ? CRYSTAL_WEIGHT_BLOCK * count
     : 0;
   const block = powerOf(counted, 'feelNoPain') * count + fromRelic;
-  const noted = fromRelic > 0 ? withLog(counted, `水晶の文鎮が廃棄を受けた`) : counted;
+  const noted =
+    fromRelic > 0
+      ? withEvent(withLog(counted, '水晶の文鎮が廃棄を受けた'), {
+          kind: 'relicTriggered',
+          target: 'player',
+          relicId: CRYSTAL_WEIGHT_ID,
+        })
+      : counted;
   const blocked = block > 0 ? gainPlayerBlock(noted, block) : noted;
   const cinder = powerOf(blocked, 'cinder');
   if (cinder <= 0) return blocked;
@@ -2014,8 +2074,9 @@ function triggerRelics(state: CombatState, trigger: RelicTrigger): CombatState {
 }
 
 function finishIfWon(state: CombatState): CombatState {
-  if (state.status !== 'playerTurn' || livingEnemies(state).length > 0) return state;
-  const won = withEvent(withLog({ ...state, status: 'won' }, '敵を全て倒した！'), {
+  if (state.status !== 'playerTurn' || !fightCleared(state)) return state;
+  const text = leaderDown(state) && livingEnemies(state).length > 0 ? '首領を倒した！' : '敵を全て倒した！';
+  const won = withEvent(withLog({ ...state, status: 'won' }, text), {
     kind: 'won',
     target: 'player',
   });
@@ -2724,7 +2785,7 @@ function runEnemyTurn(state: CombatState): CombatState {
     enemies: state.enemies.map((enemy) => (isAlive(enemy) ? { ...enemy, block: 0 } : enemy)),
   };
   let next = livingEnemies(unblocked).reduce((current, { uid }) => bloomEnemySeed(current, uid), unblocked);
-  if (livingEnemies(next).length === 0) return finishIfWon(next);
+  if (fightCleared(next)) return finishIfWon(next);
   for (const { uid } of livingEnemies(next)) {
     const enemy = findEnemy(next, uid);
     if (!enemy || !isAlive(enemy)) continue;
@@ -2749,7 +2810,7 @@ function runEnemyTurn(state: CombatState): CombatState {
           target: 'player',
         });
       }
-      if (livingEnemies(next).length === 0) return finishIfWon(next);
+      if (fightCleared(next)) return finishIfWon(next);
       continue;
     }
     next = callAlly(next, uid);
@@ -2771,7 +2832,7 @@ function runEnemyTurn(state: CombatState): CombatState {
       if (wick && enemy.wick > 1) next = updateEnemy(next, uid, (e) => ({ ...e, wick: e.wick - 1 }));
       next = advanceEnemy(next, uid);
     }
-    if (livingEnemies(next).length === 0) return finishIfWon(next);
+    if (fightCleared(next)) return finishIfWon(next);
   }
   // 敵のバフ・デバフは敵のターンの終わりに 1 ターン進む（かけたターンの敵の行動までは効く）。
   return {
