@@ -87,8 +87,6 @@ const withTraits = (enemy: EnemyDefinition, extra: readonly EnemyTrait[]): Enemy
 
 /** 1 発の大きい攻撃を止める。多段は素通りする。 */
 const BIG_HIT: EnemyTrait = { kind: 'stun', threshold: 12 };
-/** 1 発の上限。回数で削る札が通る。 */
-const MANY_HITS: EnemyTrait = { kind: 'hitCap', amount: 6 };
 
 export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
   volcano: {
@@ -115,7 +113,7 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
     boss: [
       group('dragon-and-slime', [
         withTraits(withHp(MAGMA_SLIME, 34), [BIG_HIT]),
-        withTraits(withHp(FLAME_DRAGON, 70), [MANY_HITS]),
+        withHp(FLAME_DRAGON, 70),
       ], 'boss'),
     ],
   },
@@ -138,7 +136,7 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
     boss: [
       group('griffin-and-hawk', [
         withTraits(withHp(WIND_HAWK, 32), [BIG_HIT]),
-        withTraits(withHp(STORM_GRIFFIN, 48), [MANY_HITS]),
+        withHp(STORM_GRIFFIN, 48),
       ], 'boss'),
     ],
   },
@@ -165,7 +163,7 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
     boss: [
       group('leviathan-and-guard', [
         withTraits(withHp(DROWNED_GUARD, 34), [BIG_HIT]),
-        withTraits(withHp(ICE_LEVIATHAN, 68), [MANY_HITS]),
+        withHp(ICE_LEVIATHAN, 68),
       ], 'boss'),
     ],
   },
@@ -188,7 +186,7 @@ export const REGION_ENEMIES: Record<Region, RegionEnemies> = {
     boss: [
       group('engine-and-soldier', [
         withTraits(withHp(GEAR_SOLDIER, 34), [BIG_HIT]),
-        withTraits(withHp(ENGINE_BEAST, 72), [MANY_HITS]),
+        withHp(ENGINE_BEAST, 72),
       ], 'boss'),
     ],
   },
