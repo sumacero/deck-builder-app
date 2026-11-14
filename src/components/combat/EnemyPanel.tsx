@@ -78,7 +78,7 @@ export function EnemyPanel({
       : rawMove;
   const attacker = attackerFor(enemy, move);
   const routine = describeRoutine(enemy.rank);
-  const rankLabel = ENEMY_RANK_LABEL[enemy.rank];
+  const rankLabel = enemy.leader ? '首領' : ENEMY_RANK_LABEL[enemy.rank];
   const statuses = enemyStatuses(enemy);
   const vitals = useDisplayedVitals(enemy.uid, events, enemy);
   // 被弾や倒れる演出の再生中は、直前の緑のまま見せる（赤に戻すとちらつく）。
@@ -176,6 +176,7 @@ export function EnemyPanel({
           intent={{ moveName: move.name, keywords: keywordsForIntent(move) }}
           traits={[
             describeEnemyAttribute(enemy.attribute, enemy.weaknesses),
+            ...(enemy.leader ? ['首領: この敵を倒すと勝ち。手下を倒すと行動が変わる。'] : []),
             ...(routine ? [routine] : []),
             ...enemy.traits
               .filter((trait) => !(trait.kind === 'awaken' && enemy.awakened))

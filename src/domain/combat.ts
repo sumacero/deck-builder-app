@@ -135,6 +135,10 @@ export type EnemyState = Fighter & {
   frost: number;
   /** 次の攻撃のヒット数をこの分減らす（重ねた瞬間の霞）。攻撃を終えると消える。 */
   hitCut: number;
+  /** この戦闘の首領。倒すと、仲間が残っていても勝ち。 */
+  leader: boolean;
+  /** 手下を失って、すでに単独の行動へ替わった。 */
+  lonesome: boolean;
 };
 
 export type CombatStatus = 'playerTurn' | 'won' | 'lost';

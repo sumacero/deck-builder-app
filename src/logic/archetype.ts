@@ -55,9 +55,9 @@ export function rewardFocus(run: RunState): RewardFocus {
 
 /**
  * 報酬の候補。レア度の重みで選ぶ（強いカードほど出にくい）。
- * 第1章と第2章は、デッキの軸が決まっていれば、そのうち 1 枚を軸に合うカードにする
- * （その 1 枚も、軸の中でレア度の重みに従う）。
- * 第3章は軸を押し付けない。並びは混ぜて、決まった札がいつも左に来ないようにする。
+ * 3 枚揃えるときは、役割をずらす。1 枚はコスト 2 以上かパワー、1 枚はコスト 1 以下のアタック、1 枚はスキル。
+ * 足りない役割は、残りの札から埋める。並びは混ぜて、決まった札がいつも左に来ないようにする。
+ * 1 枚だけのときは、重みのまま選ぶ。
  */
 export function pickRewardChoices(
   pool: readonly CardDefinition[],
@@ -65,24 +65,46 @@ export function pickRewardChoices(
   count: number,
   seed: number,
   weights: Record<CardRarity, number>,
-  focus?: RewardFocus,
+  _focus?: RewardFocus,
 ): { items: CardDefinition[]; seed: number } {
-  if (focus && focus.act >= 3) return pickWeightedCards(pool, count, weights, seed);
-  const filler = pool.filter((card) => !card.archetypePayoff);
-  const source = filler.length > 0 ? filler : pool;
+  if (count < 3) return pickWeightedCards(pool, count, weights, seed);
+  return pickRoleChoices(pool, deck, count, seed, weights);
+}
+
+function pickRoleChoices(
+  pool: readonly CardDefinition[],
+  deck: readonly CardDefinition[],
+  count: number,
+  seed: number,
+  weights: Record<CardRarity, number>,
+): { items: CardDefinition[]; seed: number } {
   const archetype = mainArchetype(deck);
-  const payoffs = archetype
-    ? pool.filter((card) => card.archetypePayoff && card.archetypes?.includes(archetype))
-    : [];
-  const matching = archetype ? source.filter((card) => card.archetypes?.includes(archetype)) : [];
-  const synergyPool = payoffs.length > 0 ? payoffs : matching;
-  if (synergyPool.length === 0) return pickWeightedCards(source, count, weights, seed);
-  const synergy = pickWeightedCards(synergyPool, 1, weights, seed);
-  const rest = pickWeightedCards(
-    source.filter((card) => !synergy.items.includes(card)),
-    count - synergy.items.length,
-    weights,
-    synergy.seed,
-  );
-  return shuffleCards([...synergy.items, ...rest.items], rest.seed);
+  const prefer = (cards: readonly CardDefinition[]) => {
+    if (!archetype) return cards;
+    const themed = cards.filter((card) => card.archetypes?.includes(archetype));
+    return themed.length > 0 ? themed : cards;
+  };
+  const buckets: ((card: CardDefinition) => boolean)[] = [
+    (card) => card.type === 'power' || card.cost >= 2,
+    (card) => card.type === 'attack' && card.cost <= 1,
+    (card) => card.type === 'skill',
+  ];
+  const items: CardDefinition[] = [];
+  let current = seed;
+  let remaining = [...pool];
+  for (const matches of buckets) {
+    if (items.length >= count) break;
+    const picked = pickWeightedCards(prefer(remaining.filter(matches)), 1, weights, current);
+    current = picked.seed;
+    const item = picked.items[0];
+    if (!item) continue;
+    items.push(item);
+    remaining = remaining.filter((card) => card.id !== item.id);
+  }
+  if (items.length < count) {
+    const rest = pickWeightedCards(remaining, count - items.length, weights, current);
+    items.push(...rest.items);
+    current = rest.seed;
+  }
+  return shuffleCards(items, current);
 }

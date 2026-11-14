@@ -11,6 +11,8 @@ export type MapNode = {
   type: MapNodeType;
   /** 1 つ上の階で進めるマスの id。 */
   next: string[];
+  /** エリートだけ。入る前から、どの戦闘か決まっている。 */
+  encounterId?: string;
 };
 
 export type GameMap = {

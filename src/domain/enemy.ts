@@ -110,7 +110,12 @@ export type EnemyTrait =
   /** 共鳴: HP を削られたとき、同じ性質の仲間も同じだけ HP を失う（ブロックを無視。連鎖しない）。 */
   | { kind: 'link' }
   /** 捕食: プレイヤーの HP を削る攻撃のあと、捨て札から 1 枚をその戦闘から消す。 */
-  | { kind: 'devour' };
+  | { kind: 'devour' }
+  /**
+   * 単独: この戦闘の首領が、格下の仲間を 1 体失うと行動が moves に替わる（1 回だけ）。
+   * 首領を倒すと、仲間が残っていても戦いは終わる。
+   */
+  | { kind: 'lone'; moves: EnemyMove[] };
 
 /** 通常敵 / エリート / ボス / 最後の章のあとに戦うラスボス。報酬や BGM が変わる。 */
 export type EnemyRank = 'normal' | 'elite' | 'boss' | 'final';

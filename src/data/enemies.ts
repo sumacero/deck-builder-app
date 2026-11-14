@@ -63,7 +63,7 @@ export const ROCK_SOLDIER: EnemyDefinition = {
   attribute: 'fire',
   moves: [
     { id: 'shield-up', name: '盾構え', actions: [blk(12), atk(7)] },
-    { id: 'cleave', name: '叩き斬り', actions: [atk(16), addCard(BURN)] },
+    { id: 'cleave', name: '叩き斬り', actions: [atk(11), buff(2)] },
     { id: 'stomp', name: '踏み込み', actions: [atk(6, 2)] },
   ],
   traits: [
@@ -134,6 +134,13 @@ export const MAGMA_HYDRA: EnemyDefinition = {
   traits: [
     { kind: 'enrage', strength: 1 },
     { kind: 'call', summon: CINDER_IMP, limit: 1 },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'rage-bite', name: '怒りの噛み', actions: [flat(8), buff(2)] },
+        { id: 'rage-storm', name: '火の嵐', actions: [flat(5, 2)] },
+      ],
+    },
   ],
 };
 
@@ -150,7 +157,17 @@ export const BASALT_COLOSSUS: EnemyDefinition = {
     { id: 'settle', name: '地を溜める', actions: [buff(1), blk(8)] },
     { id: 'tremor', name: '地鳴り', actions: [flat(5), addCard(BURN, 2)] },
   ],
-  traits: [{ kind: 'sleep', turns: 2, wakeStrength: 2 }, { kind: 'artifact', charges: 2 }],
+  traits: [
+    { kind: 'sleep', turns: 2, wakeStrength: 2 },
+    { kind: 'artifact', charges: 2 },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'fist', name: '岩の拳', actions: [flat(8)] },
+        { id: 'split-earth', name: '地割れ', actions: [buff(2), flat(6)] },
+      ],
+    },
+  ],
 };
 
 /**
@@ -175,6 +192,13 @@ export const FLAME_DRAGON: EnemyDefinition = {
       moves: [
         { id: 'detonate', name: '燃え上がり', actions: [DETONATE] },
         { id: 'ember-claw', name: '残り火', actions: [flat(5)] },
+      ],
+    },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'fury', name: '怒り', actions: [buff(2), flat(7)] },
+        { id: 'claw', name: '爪', actions: [flat(6, 2)] },
       ],
     },
   ],
@@ -219,7 +243,7 @@ export const GRASS_WOLF: EnemyDefinition = {
   attribute: 'grass',
   moves: [
     { id: 'growl', name: '威嚇の唸り', actions: [atk(6), debuff('vulnerable')] },
-    { id: 'pounce', name: '飛びかかり', actions: [atk(15)] },
+    { id: 'pounce', name: '飛びかかり', actions: [atk(11), buff(2)] },
     { id: 'rest', name: '草陰で休む', actions: [heal(8), blk(8), addCard(TANGLING_VINE, 2)] },
   ],
   traits: [{ kind: 'leech' }],
@@ -238,6 +262,15 @@ export const BRIAR_MAW: EnemyDefinition = {
     { id: 'vines', name: '蔦', actions: [addCard(TANGLING_VINE, 4)] },
     { id: 'snare', name: '絡め取り', actions: [BIND] },
   ],
+  traits: [
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'thorns', name: '棘', actions: [flat(6), addCard(TANGLING_VINE, 2)] },
+        { id: 'lash', name: '絡め打ち', actions: [BIND, flat(4)] },
+      ],
+    },
+  ],
 };
 
 /** 仲間をかばい、一周ごとに全員を回復する。木を残すと戦いが終わらない。 */
@@ -255,6 +288,13 @@ export const GREAT_TREANT: EnemyDefinition = {
   traits: [
     { kind: 'guardian' },
     { kind: 'plague', card: TANGLING_VINE, count: 1 },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'root-strike', name: '根撃', actions: [flat(8)] },
+        { id: 'crush', name: '締め', actions: [blk(10), flat(5)] },
+      ],
+    },
   ],
 };
 
@@ -273,6 +313,15 @@ export const STORM_GRIFFIN: EnemyDefinition = {
     { id: 'wind-veil', name: '風の衣', actions: [intangibleFor(2), debuff('weak')] },
     { id: 'circle', name: '旋回', actions: [blk(8), addCard(TANGLING_VINE, 2)] },
     { id: 'dive', name: '急降下', actions: [flat(8)] },
+  ],
+  traits: [
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'stoop', name: '急襲', actions: [flat(10)] },
+        { id: 'gale', name: '嵐', actions: [flat(4, 3), debuff('weak')] },
+      ],
+    },
   ],
 };
 
@@ -304,7 +353,7 @@ export const DROWNED_GUARD: EnemyDefinition = {
   maxHp: 54,
   attribute: 'water',
   moves: [
-    { id: 'thrust', name: '突き', actions: [atk(15)] },
+    { id: 'thrust', name: '突き', actions: [atk(11), buff(2)] },
     { id: 'water-shield', name: '水の盾', actions: [blk(10), atk(6)] },
     { id: 'sealing-spear', name: '封水の槍', actions: [atk(8), SEAL, addCard(ICE_SHARD, 2)] },
   ],
@@ -341,7 +390,16 @@ export const FROST_ANGLER: EnemyDefinition = {
     { id: 'lure', name: '灯', actions: [blk(8), flat(4)] },
     { id: 'sealing-light', name: '封印の光', actions: [sealFor(4), addCard(ICE_SHARD, 4)] },
   ],
-  traits: [{ kind: 'artifact', charges: 2 }],
+  traits: [
+    { kind: 'artifact', charges: 2 },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'snap', name: '噛み', actions: [flat(7)] },
+        { id: 'seal-bite', name: '封じ噛み', actions: [sealFor(3), flat(4)] },
+      ],
+    },
+  ],
 };
 
 /** 一周ごとに凍えと筋力が残る。殴りは小さく、放置すると引けないまま筋力が伸びる。 */
@@ -357,7 +415,16 @@ export const ABYSS_SERPENT: EnemyDefinition = {
     { id: 'whirlpool', name: '渦潮', actions: [flat(4, 2), chill(2), addCard(ICE_SHARD, 2)] },
     { id: 'coil', name: '締め上げ', actions: [buff(1), chill(2)] },
   ],
-  traits: [{ kind: 'devour' }],
+  traits: [
+    { kind: 'devour' },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'constrict', name: '締め', actions: [buff(2), flat(7)] },
+        { id: 'rage-pool', name: '渦', actions: [flat(5, 2), chill(2)] },
+      ],
+    },
+  ],
 };
 
 /**
@@ -385,6 +452,13 @@ export const ICE_LEVIATHAN: EnemyDefinition = {
         { id: 'lock', name: '冠氷', actions: [LOCK_CHILL] },
         { id: 'deep-seal', name: '底の封印', actions: [sealFor(4), addCard(ICE_SHARD, 4)] },
         { id: 'icicle-rain', name: '氷柱の雨', actions: [flat(4), chill(2)] },
+      ],
+    },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'ice-ram', name: '氷撃', actions: [flat(8)] },
+        { id: 'deep', name: '底', actions: [sealFor(3), chill(2)] },
       ],
     },
   ],
@@ -415,7 +489,7 @@ export const GEAR_SOLDIER: EnemyDefinition = {
   rank: 'normal',
   maxHp: 54,
   moves: [
-    { id: 'thrust', name: '突き', actions: [atk(14)] },
+    { id: 'thrust', name: '突き', actions: [atk(11), buff(2)] },
     { id: 'armor', name: '装甲展開', actions: [blk(12), atk(6), addCard(SCRAP)] },
     { id: 'shock-spear', name: '放電の槍', actions: [atk(7), paralyze()] },
   ],
@@ -483,6 +557,15 @@ export const GEAR_BEETLE: EnemyDefinition = {
     { id: 'recharge', name: '充電', actions: [CHARGE, blk(8)] },
     { id: 'discharge', name: '放電', actions: [atk(8), paralyze(2)] },
   ],
+  traits: [
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'spark', name: '放電', actions: [atk(12), paralyze()] },
+        { id: 'rush', name: '突進', actions: [atk(8, 2)] },
+      ],
+    },
+  ],
 };
 
 /** 2 ターンは眠って動かない。起きたあとの放電は麻痺とガラクタ。雷鎚は蓄電の次。 */
@@ -497,7 +580,16 @@ export const THUNDER_GOLEM: EnemyDefinition = {
     { id: 'store', name: '蓄電', actions: [CHARGE, blk(10)] },
     { id: 'thunder-hammer', name: '雷鎚', actions: [atk(10)] },
   ],
-  traits: [{ kind: 'sleep', turns: 2, wakeStrength: 2 }],
+  traits: [
+    { kind: 'sleep', turns: 2, wakeStrength: 2 },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'hammer', name: '雷鎚', actions: [atk(14)] },
+        { id: 'arc', name: '放電', actions: [paralyze(2), atk(6)] },
+      ],
+    },
+  ],
 };
 
 /** 短路は麻痺、歯車の嵐はガラクタ。雷神砲はフルチャージの次だけで、ここを止めないと当たる。 */
@@ -517,6 +609,13 @@ export const ENGINE_BEAST: EnemyDefinition = {
   traits: [
     { kind: 'artifact', charges: 2 },
     { kind: 'weight', energy: 1 },
+    {
+      kind: 'lone',
+      moves: [
+        { id: 'cannon', name: '砲', actions: [atk(12)] },
+        { id: 'short-rage', name: '短路', actions: [paralyze(2), atk(6)] },
+      ],
+    },
   ],
 };
 

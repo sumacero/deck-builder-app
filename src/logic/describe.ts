@@ -23,17 +23,45 @@ export const MAP_NODE_LABEL: Record<MapNodeType, string> = {
   boss: 'ボス',
 };
 
-/** 章ボスが、報酬とマップでプレイヤーに見せる困らせ方。道中の同じ敵には付かない。 */
+/** 章ボスの大まかな困らせ方。数字や取り巻きの手順は出さない。 */
 export function bossPreparation(bossId: string): string | null {
   switch (bossId) {
     case 'flame-dragon':
-      return '溶岩スライムは、1発で12以上削ると次の行動を飛ばす。';
+      return '炎と火傷で押してくる。手下を倒すと動きが変わり、この竜を倒すと勝ち。';
     case 'storm-griffin':
-      return '疾風の鷹は、1発で12以上削ると次の行動を飛ばす。';
+      return '体を透かして風で弱らせる。手下を倒すと動きが変わり、この獣を倒すと勝ち。';
     case 'ice-leviathan':
-      return '沈都の衛兵は、1発で12以上削ると次の行動を飛ばす。';
+      return '冷えと封印で動きを止める。手下を倒すと動きが変わり、この獣を倒すと勝ち。';
     case 'engine-beast':
-      return '歯車の兵は、1発で12以上削ると次の行動を飛ばす。';
+      return '力を溜めてから撃つ。手下を倒すと動きが変わり、この獣を倒すと勝ち。';
+    default:
+      return null;
+  }
+}
+
+/** エリートのマスに出す、短い困らせ方。 */
+export function eliteNote(encounterId: string | undefined): string | null {
+  switch (encounterId) {
+    case 'hydra-and-lizard':
+    case 'hydra-and-colossus':
+      return '激昂';
+    case 'colossus-and-soldier':
+      return '眠り';
+    case 'maw-and-wolf':
+    case 'maw-pair':
+      return '絡め';
+    case 'treant-grove':
+      return '回復';
+    case 'angler-and-siren':
+    case 'angler-and-serpent':
+      return '封印';
+    case 'serpent-and-guard':
+      return '凍え';
+    case 'beetle-and-hound':
+    case 'beetle-and-golem':
+      return '麻痺';
+    case 'golem-and-soldier':
+      return '溜め';
     default:
       return null;
   }
@@ -610,6 +638,8 @@ export function describeTrait(trait: EnemyTrait): string {
       return '共鳴: HP を削られると、同じ共鳴の仲間も同じだけ HP を失う。仲間のブロックは無視する';
     case 'devour':
       return '捕食: あなたの HP を削ったあと、捨て札から 1 枚をその戦闘から消す';
+    case 'lone':
+      return '単独: 手下がいなくなると、行動が変わる';
   }
 }
 

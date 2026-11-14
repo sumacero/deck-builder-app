@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import type { MapNode } from '../../domain/map';
 import type { RunState } from '../../domain/run';
 import { findNode, reachableNodeIds } from '../../logic/run';
+import { eliteNote } from '../../logic/describe';
 import { COLORS, MAP_LAYOUT, RADIUS } from '../../theme';
 import { MapCurrentMarker } from './MapCurrentMarker';
 import { MapEdge } from './MapEdge';
@@ -72,6 +73,7 @@ export function MapCanvas({ run, layout, ended, selectedId, onMove }: MapCanvasP
             reachable={!ended && selectedId === null && reachable.has(node.id)}
             visited={visited.has(node.id)}
             selected={selectedId === node.id}
+            note={node.type === 'elite' ? eliteNote(node.encounterId) : null}
             onPress={() => onMove(node.id)}
           />
         );

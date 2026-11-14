@@ -22,12 +22,15 @@ export function RelicIcon({ relic, events, selected, onPress }: RelicIconProps) 
   useCombatEvents(events, (event) => {
     if (event.kind !== 'relicTriggered' || event.relicId !== relic.id) return;
     Animated.sequence([
-      Animated.timing(glow, { toValue: 1, duration: MOTION.flashIn * 2, useNativeDriver: true }),
-      Animated.timing(glow, { toValue: 0, duration: MOTION.flashOut * 2, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 1, duration: MOTION.flashIn, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0.35, duration: MOTION.flashOut, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 1, duration: MOTION.flashIn, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0, duration: MOTION.floatingText, useNativeDriver: true }),
     ]).start();
   });
 
-  const scale = glow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] });
+  const scale = glow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.45] });
+  const rise = glow.interpolate({ inputRange: [0, 1], outputRange: [0, -16] });
 
   return (
     <Pressable onPress={onPress} onLongPress={onPress} hitSlop={4}>
@@ -42,6 +45,9 @@ export function RelicIcon({ relic, events, selected, onPress }: RelicIconProps) 
           <Animated.View style={[styles.glow, { opacity: glow }]} />
           <Text style={styles.emoji}>{relic.icon}</Text>
         </Animated.View>
+        <Animated.Text style={[styles.burst, { opacity: glow, transform: [{ translateY: rise }] }]}>
+          発動
+        </Animated.Text>
       </View>
     </Pressable>
   );
@@ -73,5 +79,13 @@ const styles = StyleSheet.create({
     backgroundColor: `${COLORS.gold}55`,
   },
   emoji: { fontSize: 18 },
+  burst: {
+    position: 'absolute',
+    top: -2,
+    alignSelf: 'center',
+    color: COLORS.gold,
+    fontSize: 11,
+    fontWeight: '800',
+  },
   hidden: { opacity: 0 },
 });

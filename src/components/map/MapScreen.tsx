@@ -4,8 +4,6 @@ import { playSound } from '../../audio/soundPlayer';
 import type { GameMap } from '../../domain/map';
 import type { RunState } from '../../domain/run';
 import { useIsLandscape } from '../../hooks/useIsLandscape';
-import { bossPreparation } from '../../logic/describe';
-import { encounterLeader } from '../../logic/encounter';
 import { currentAct, mapHint, reachedFloor } from '../../logic/run';
 import { COLORS, MAP_LAYOUT, MOTION, SPACING } from '../../theme';
 import { SceneBackground } from '../backgrounds/SceneBackground';
@@ -18,6 +16,7 @@ import { ItemBar } from '../items/ItemBar';
 import { GoldBadge } from '../run/GoldBadge';
 import { RunEndOverlay } from '../run/RunEndOverlay';
 import { MapCanvas } from './MapCanvas';
+import { BossMark } from './BossMark';
 import { layoutMap, layoutMapHorizontal, type MapLayout } from './mapLayout';
 import { MapLegend } from './MapLegend';
 
@@ -106,14 +105,12 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
       <HpBar hp={run.player.hp} maxHp={run.player.maxHp} block={0} />
     </View>
   );
-  const boss = encounterLeader(run.boss);
-  const preparation = bossPreparation(boss.id);
   const actLine = (
-    <Text style={styles.act}>
-      {act.name}　ボス {boss.icon} {boss.name}
-    </Text>
+    <View style={styles.actRow}>
+      <Text style={styles.act}>{act.name}</Text>
+      <BossMark boss={run.boss} />
+    </View>
   );
-  const bossLine = preparation ? <Text style={styles.hint}>{preparation}</Text> : null;
   const hint = <Text style={styles.hint}>{mapHint(run)}</Text>;
   const map = (
     <ScrollView
@@ -155,7 +152,6 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
               <SettingsButton />
             </View>
             {actLine}
-            {bossLine}
             {hint}
             <MapLegend compact />
           </ScrollView>
@@ -174,7 +170,6 @@ export function MapScreen({ run, onMove, onNewRun, onExitToTitle }: MapScreenPro
               <SettingsButton />
             </View>
             {actLine}
-            {bossLine}
             {hint}
           </View>
           {map}
@@ -226,7 +221,8 @@ const styles = StyleSheet.create({
     minWidth: 56,
   },
   hp: { flex: 1 },
-  act: { color: COLORS.gold, fontSize: 13, fontWeight: '800', textAlign: 'center' },
+  act: { color: COLORS.gold, fontSize: 13, fontWeight: '800', textAlign: 'center', flex: 1 },
+  actRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   hint: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center' },
   scroll: { flex: 1 },
   portraitContent: { paddingHorizontal: SPACING.lg },

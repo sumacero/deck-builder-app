@@ -1,4 +1,5 @@
 import type { EnemyDefinition, Encounter, RoadTier } from '../domain/enemy';
+import type { GameMap } from '../domain/map';
 import type { RunState } from '../domain/run';
 import { nextRandom, pickOne } from './random';
 import { scaleEncounter } from './scaling';
@@ -66,4 +67,21 @@ export function startRandomCombat(
   const picked = pickOne(encountersForFloor(pool, node?.floor ?? 0), run.rngSeed);
   if (!picked.item) return run;
   return startCombat({ ...run, rngSeed: picked.seed }, nodeId, picked.item);
+}
+
+/** マップを作ったあと、エリートのマスに戦闘を割り当てる。入る前から、どの困らせ方か見えるようにする。 */
+export function stampEliteEncounters(
+  map: GameMap,
+  pool: readonly Encounter[],
+  seed: number,
+): { map: GameMap; seed: number } {
+  let current = seed;
+  const nodes = map.nodes.map((node) => {
+    if (node.type !== 'elite' || pool.length === 0) return node;
+    const picked = pickOne(pool, current);
+    current = picked.seed;
+    if (!picked.item) return node;
+    return { ...node, encounterId: picked.item.id };
+  });
+  return { map: { ...map, nodes }, seed: current };
 }
