@@ -384,14 +384,10 @@ export const MIRROR_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'self',
     effects: [
-      { kind: 'block', amount: 2 },
-      { kind: 'draw', amount: 1 },
+      { kind: 'block', amount: 4 },
     ],
     upgrade: {
-      effects: [
-        { kind: 'block', amount: 3 },
-        { kind: 'draw', amount: 1 },
-      ],
+      effects: [{ kind: 'block', amount: 6 }],
     },
     art: 'shoreline',
   },
@@ -468,12 +464,12 @@ export const MIRROR_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 3 },
+      { kind: 'damage', amount: 5 },
       { kind: 'stripStrength', amount: 3 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 5 },
+        { kind: 'damage', amount: 7 },
         { kind: 'stripStrength', amount: 4 },
       ],
     },
@@ -490,13 +486,13 @@ export const MIRROR_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'self',
     effects: [
+      { kind: 'block', amount: 2 },
       { kind: 'cleanse', count: 1 },
-      { kind: 'draw', amount: 1 },
     ],
     upgrade: {
       effects: [
+        { kind: 'block', amount: 3 },
         { kind: 'cleanse', count: 2 },
-        { kind: 'draw', amount: 1 },
       ],
     },
     art: 'white-wave',
@@ -569,12 +565,12 @@ export const MIRROR_CARDS: CardDefinition[] = [
     // 潮の刃も単体ダメージに霜。こちらは塊を敵全体へ落とす。
     target: 'allEnemies',
     effects: [
-      { kind: 'damage', amount: 6 },
+      { kind: 'damage', amount: 8 },
       { kind: 'applyFrost', amount: 2 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 8 },
+        { kind: 'damage', amount: 11 },
         { kind: 'applyFrost', amount: 3 },
       ],
     },
@@ -619,12 +615,12 @@ export const MIRROR_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 3, pierce: true },
+      { kind: 'damage', amount: 6, pierce: true },
       { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 4, pierce: true },
+        { kind: 'damage', amount: 8, pierce: true },
         { kind: 'applyDebuff', status: 'vulnerable', turns: 1 },
       ],
     },

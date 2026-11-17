@@ -118,7 +118,12 @@ export const VERDANT_CARDS: CardDefinition[] = [
     cost: 0,
     target: 'enemy',
     effects: [{ kind: 'bloomSeed' }],
-    upgrade: { effects: [{ kind: 'bloomSeed' }, { kind: 'draw', amount: 1 }] },
+    upgrade: {
+      effects: [
+        { kind: 'bloomSeed' },
+        { kind: 'applyDebuff', status: 'seed', turns: 2 },
+      ],
+    },
   },
   {
     id: 'rampant-growth',
@@ -512,11 +517,11 @@ export const VERDANT_CARDS: CardDefinition[] = [
     type: 'skill',
     attribute: 'grass',
     archetypes: ['tempo'],
-    cost: 1,
+    cost: 0,
     target: 'self',
     effects: [{ kind: 'gainEnergy', amount: 1 }],
     exhaust: true,
-    upgrade: { cost: 0 },
+    upgrade: { effects: [{ kind: 'gainEnergy', amount: 2 }] },
     motion: 'empower',
   },
   {
@@ -763,16 +768,8 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo'],
     cost: 0,
     target: 'self',
-    effects: [
-      { kind: 'addArrows', amount: 1 },
-      { kind: 'draw', amount: 1 },
-    ],
-    upgrade: {
-      effects: [
-        { kind: 'addArrows', amount: 2 },
-        { kind: 'draw', amount: 1 },
-      ],
-    },
+    effects: [{ kind: 'addArrows', amount: 1 }],
+    upgrade: { effects: [{ kind: 'addArrows', amount: 2 }] },
     motion: 'focus',
   },
   {

@@ -515,13 +515,13 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 2,
     target: 'enemy',
     effects: [
-      { kind: 'damage', amount: 12 },
-      { kind: 'applyDebuff', status: 'weak', turns: 2 },
+      { kind: 'damage', amount: 10 },
+      { kind: 'applyDebuff', status: 'weak', turns: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 15 },
-        { kind: 'applyDebuff', status: 'weak', turns: 3 },
+        { kind: 'damage', amount: 13 },
+        { kind: 'applyDebuff', status: 'weak', turns: 2 },
       ],
     },
   },
@@ -567,8 +567,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     attribute: 'fire',
     cost: 1,
     target: 'allEnemies',
-    effects: [{ kind: 'damage', amount: 8 }],
-    upgrade: { effects: [{ kind: 'damage', amount: 11 }] },
+    effects: [{ kind: 'damage', amount: 6 }],
+    upgrade: { effects: [{ kind: 'damage', amount: 8 }] },
   },
   {
     id: 'thunderclap',
@@ -636,7 +636,7 @@ export const REWARD_CARDS: CardDefinition[] = [
     ],
     upgrade: {
       effects: [
-        { kind: 'block', amount: 10 },
+        { kind: 'block', amount: 8 },
         { kind: 'draw', amount: 1 },
       ],
     },
@@ -665,15 +665,15 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['sacrifice'],
     cost: 0,
     target: 'self',
-    // 捧げの儀も体力をエナジーに変える。こちらは繰り返せる筋力にする。
+    // 捧げの儀は一度きりのエナジー。こちらは繰り返せるが、1 回の筋力は小さくする。
     effects: [
       { kind: 'loseHp', amount: 3 },
-      { kind: 'gainStrength', amount: 2, duration: 'combat' },
+      { kind: 'gainStrength', amount: 1, duration: 'combat' },
     ],
     upgrade: {
       effects: [
         { kind: 'loseHp', amount: 3 },
-        { kind: 'gainStrength', amount: 3, duration: 'combat' },
+        { kind: 'gainStrength', amount: 2, duration: 'combat' },
       ],
     },
   },
@@ -686,7 +686,8 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['sacrifice'],
     cost: 0,
     target: 'self',
-    // 自傷のわりにドローが薄かったので底上げ。
+    // 0 コストで引き続けると山を一周するので、一度きりにする。
+    exhaust: true,
     effects: [
       { kind: 'loseHp', amount: 2 },
       { kind: 'draw', amount: 3 },
@@ -913,12 +914,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     target: 'enemy',
     attribute: 'fire',
     effects: [
-      { kind: 'damage', amount: 7 },
+      { kind: 'damage', amount: 5 },
       { kind: 'gainBuff', status: 'blazing', turns: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'damage', amount: 9 },
+        { kind: 'damage', amount: 7 },
         { kind: 'gainBuff', status: 'blazing', turns: 1 },
       ],
     },
@@ -1219,12 +1220,12 @@ export const REWARD_CARDS: CardDefinition[] = [
     cost: 1,
     target: 'allEnemies',
     effects: [
-      { kind: 'block', amount: 5 },
+      { kind: 'block', amount: 4 },
       { kind: 'applyDebuff', status: 'weak', turns: 1 },
     ],
     upgrade: {
       effects: [
-        { kind: 'block', amount: 8 },
+        { kind: 'block', amount: 6 },
         { kind: 'applyDebuff', status: 'weak', turns: 1 },
       ],
     },
