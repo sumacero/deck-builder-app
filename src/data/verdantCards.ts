@@ -492,7 +492,7 @@ export const VERDANT_CARDS: CardDefinition[] = [
     archetypes: ['tempo', 'strength'],
     cost: 0,
     target: 'self',
-    // 力みもコスト 0 で筋力とドロー。こちらは矢を番える。
+    // 力みはコスト 0 でこのターンの筋力。こちらは矢を番える。
     effects: [
       { kind: 'gainStrength', amount: 1, duration: 'turn' },
       { kind: 'addArrows', amount: 1 },
