@@ -729,16 +729,10 @@ export const REWARD_CARDS: CardDefinition[] = [
     archetypes: ['strength'],
     cost: 0,
     target: 'self',
-    // このターン複数枚振る前提。単体でもドローで手数が残る。
-    effects: [
-      { kind: 'gainStrength', amount: 2, duration: 'turn' },
-      { kind: 'draw', amount: 1 },
-    ],
+    // このターン複数枚振る前提。0 コストなので、ドローは付けない。
+    effects: [{ kind: 'gainStrength', amount: 2, duration: 'turn' }],
     upgrade: {
-      effects: [
-        { kind: 'gainStrength', amount: 4, duration: 'turn' },
-        { kind: 'draw', amount: 1 },
-      ],
+      effects: [{ kind: 'gainStrength', amount: 3, duration: 'turn' }],
     },
   },
   {

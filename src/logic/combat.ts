@@ -304,9 +304,14 @@ const powerOf = (state: CombatState, power: PowerId): number => state.player.pow
 /** 麻痺・凍えは重ねがけしても、1 ターンにこの値までしか効かない。 */
 export const MAX_HINDRANCE_STACK = 2;
 
-function hindranceLogs(hindrance: Hindrance): string[] {
+/** 麻痺と重圧を重ねても、ターン開始のエナジーは 0 にしない。 */
+const MIN_TURN_ENERGY = 1;
+
+const energyAfterDrain = (current: number, drain: number) => Math.max(MIN_TURN_ENERGY, current - drain);
+
+function hindranceLogs(hindrance: Hindrance, energyLost: number): string[] {
   return [
-    ...(hindrance.paralysis > 0 ? [`麻痺でエナジー -${hindrance.paralysis}`] : []),
+    ...(energyLost > 0 ? [`麻痺でエナジー -${energyLost}`] : []),
     ...(hindrance.chill > 0 ? [`凍えで引く枚数 -${hindrance.chill}`] : []),
     ...(hindrance.seal ? ['封印でスキルを使えない'] : []),
     ...(hindrance.bind ? ['絡めでアタックを使えない'] : []),
@@ -329,6 +334,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
   const keepBlock = turn > 1 && retains && state.player.block > 0;
   const demonForm = turn > 1 ? powerOf(state, 'demonForm') : 0;
   const huntInstinct = turn > 1 ? powerOf(state, 'huntInstinct') : 0;
+  const turnEnergy = energyAfterDrain(state.player.maxEnergy, hindrance.paralysis);
   const started: CombatState = {
     ...state,
     turn,
@@ -336,7 +342,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
     player: {
       ...state.player,
       block: keepBlock ? state.player.block : 0,
-      energy: Math.max(0, state.player.maxEnergy - hindrance.paralysis),
+      energy: turnEnergy,
       strength: state.player.strength + demonForm + huntInstinct,
       tempStrength: 0,
       enchant: [],
@@ -359,7 +365,7 @@ export function startPlayerTurn(state: CombatState): CombatState {
     ...(keepBlock ? [`ブロック ${state.player.block} を引き継いだ`] : []),
     ...(demonForm > 0 ? [`紅蓮の化身で筋力 +${demonForm}`] : []),
     ...(huntInstinct > 0 ? [`狩猟本能で筋力 +${huntInstinct}`] : []),
-    ...hindranceLogs(hindrance),
+    ...hindranceLogs(hindrance, state.player.maxEnergy - turnEnergy),
   ];
   const logged = logs.reduce(withLog, withLog(started, `ターン ${turn} 開始`));
   const opening = turn === 1 ? drawInnate(logged) : logged;
@@ -997,11 +1003,13 @@ function spawnEnemy(state: CombatState, definition: EnemyDefinition, log: string
 function openingAuras(state: CombatState): CombatState {
   const revived = tickRevives(state);
   const drain = livingEnemies(revived).reduce((sum, enemy) => sum + (traitOf(enemy, 'weight')?.energy ?? 0), 0);
+  const energy = energyAfterDrain(revived.player.energy, drain);
+  const lost = revived.player.energy - energy;
   const drained =
-    drain > 0
+    lost > 0
       ? withLog(
-          { ...revived, player: { ...revived.player, energy: Math.max(0, revived.player.energy - drain) } },
-          `重圧でエナジー -${drain}`,
+          { ...revived, player: { ...revived.player, energy } },
+          `重圧でエナジー -${lost}`,
         )
       : revived;
   return livingEnemies(drained).reduce((current, enemy) => {
